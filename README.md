@@ -140,29 +140,6 @@ deno run import
 deno run reset
 ```
 
-## Environment Configuration
-
-Before running the services, you need to set up your environment variables for Supabase following their [self-hosting guide](https://supabase.com/docs/guides/self-hosting/docker#securing-your-services).
-
-Set the following required environment variables in `.env`
-
-```bash
-# N8N Configuration
-N8N_ENCRYPTION_KEY=
-N8N_USER_MANAGEMENT_JWT_SECRET=
-
-# Supabase Secrets
-POSTGRES_PASSWORD=
-JWT_SECRET=
-ANON_KEY=
-SERVICE_ROLE_KEY=
-DASHBOARD_USERNAME=
-DASHBOARD_PASSWORD=
-```
-
-> IMPORTANT:
-> Make sure to generate secure random values for all secrets. Never use the example values in production.
-
 <br />
 
 # ⚡️ n8n WorkflowQuick Start
