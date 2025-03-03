@@ -103,9 +103,6 @@ In a terminal, run the following commands
 git clone https://github.com/llemonstack/llemonstack.git
 cd llemonstack
 
-# Copy .env.example file to .env
-cp .env.example .env
-
 # Install dependencies
 deno install
 
@@ -113,25 +110,11 @@ deno install
 deno run init
 ```
 
-## Setup LLemonStack
-
-Copy `.env.example` to `.env` and configure.
-
-The default env values will work for most people, however, they are insecure.
-
-If you are running LLemonStack on a local machine behind a firewall, then you can leave the default values and reconfigure them later.
-
-> The fastest way to test out the stack is to leave the default values, start the stack and play around with the services. When you're ready to secure the stack, set the .env variables and run the `reset` command to reset the stack with the secure values.
-
-Zep is the only service that will not work properly without first setting the `ZEP_OPENAI_API_KEY` variable. Zep is also the only pre-configured service that will not work offline and requires a paid OpenAI account for the API key. However, Zep is not required for the stack to work.
-
-See [Environment Configuration](#environment-configuration) for details on securing and configuring the stack.
-
 ## Usage
 
 ```bash
 # Initialize the stack
-# Sets up the environment variables
+# Sets up the environment variables, only needs to be run once
 deno run init
 
 # Start the services
