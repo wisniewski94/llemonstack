@@ -1,10 +1,11 @@
 # 🍋 LLemonStack - Local AI Agent Stack
 
-A fully featured, open source, docker compose AI agent stack with superpowers.
+A fully featured, open source, low-code AI agent automation platform.
+Securely running in docker containers.
 
-Pre-configured and ready to squeeze. Get a complete local AI agent platform up and running in minutes
+Pre-configured and ready to squeeze. LLemoStack gets you up and running in minutes
 with [n8n](https://n8n.io/), [Flowise](https://flowiseai.com/),
-[Supabase](https://supabase.com/), [Qdrant](https://qdrant.tech/), [Zep](https://www.getzep.com/), [Ollama](https://ollama.com/), and [Browser-Use](https://browser-use.com/) and more, all running securely in Docker containers.
+[Supabase](https://supabase.com/), [Qdrant](https://qdrant.tech/), [Zep](https://www.getzep.com/), [Ollama](https://ollama.com/), and [Browser-Use](https://browser-use.com/) and more.
 
 ![n8n.io - Screenshot](docs/assets/n8n-demo.gif)
 
