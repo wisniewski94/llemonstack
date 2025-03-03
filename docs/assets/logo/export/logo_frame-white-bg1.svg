@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="310px" height="310px" viewBox="0 0 310 310" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Artboard</title>
+    <g id="Artboard" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Frame" fill="#FFFFFF" fill-rule="nonzero" x="5" y="5" width="300" height="300" rx="20"></rect>
+        <g id="Head" transform="translate(1, 1)" fill-rule="nonzero">
+            <ellipse id="Oval" fill="#FFEB3B" transform="translate(151.1122, 154.7724) rotate(30) translate(-151.1122, -154.7724)" cx="151.112159" cy="154.772413" rx="100" ry="120"></ellipse>
+            <ellipse id="Oval" fill="#FFF59D" opacity="0.7" transform="translate(121.1122, 124.7724) rotate(30) translate(-121.1122, -124.7724)" cx="121.112159" cy="124.772413" rx="85" ry="95"></ellipse>
+        </g>
+        <g id="Mouth" transform="translate(92.1122, 155.7724)" stroke-linecap="round">
+            <path d="M0,30 C40,50 80,50 120,30" id="Path" stroke="#4CAF50" stroke-width="20"></path>
+            <path d="M5,15 C41.6666667,35 78.3333333,35 115,15" id="Path" stroke="#8BC34A" stroke-width="18"></path>
+            <path d="M10,0 C43.3333333,20 76.6666667,20 110,0" id="Path" stroke="#CDDC39" stroke-width="16"></path>
+        </g>
+        <g id="LL" transform="translate(119.7118, 93.1748)" fill="#FF9800" fill-rule="nonzero">
+            <polygon id="Path" points="0 42.5976562 0 0 8.671875 0 8.671875 35.3613281 30.234375 35.3613281 30.234375 42.5976562"></polygon>
+            <polygon id="Path" points="36.6503906 42.5976562 36.6503906 0 45.3222656 0 45.3222656 35.3613281 66.8847656 35.3613281 66.8847656 42.5976562"></polygon>
+        </g>
+        <g id="Stem" transform="translate(149.1122, 57.5894)" fill-rule="nonzero">
+            <path d="M3,3.18299727 C23,-6.81700273 43,8.18299727 33,28.1829973 C23,43.1829973 3,23.1829973 3,3.18299727" id="Path" fill="#4CAF50"></path>
+            <rect id="Rectangle" fill="#795548" x="0" y="3.18299727" width="6" height="15"></rect>
+        </g>
+    </g>
+</svg>

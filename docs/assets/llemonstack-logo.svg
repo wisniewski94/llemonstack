@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <!-- Background -->
+  <rect width="300" height="300" fill="white" rx="20" ry="20"/>
+  
+  <!-- Lemon shape -->
+  <ellipse cx="150" cy="150" rx="100" ry="120" fill="#FFEB3B" transform="rotate(30, 150, 150)"/>
+  
+  <!-- Lemon highlight -->
+  <ellipse cx="120" cy="120" rx="85" ry="95" fill="#FFF59D" transform="rotate(30, 120, 120)" opacity="0.7"/>
+  
+  <!-- Stack layers as a smile (properly curved upward) -->
+  <path d="M90 180 Q150 210 210 180" fill="none" stroke="#4CAF50" stroke-width="20" stroke-linecap="round"/>
+  <path d="M95 165 Q150 195 205 165" fill="none" stroke="#8BC34A" stroke-width="18" stroke-linecap="round"/>
+  <path d="M100 150 Q150 180 200 150" fill="none" stroke="#CDDC39" stroke-width="16" stroke-linecap="round"/>
+  
+  <!-- Text "LL" to emphasize AI/LLM aspect -->
+  <text x="150" y="130" font-family="Arial, sans-serif" font-size="60" font-weight="bold" text-anchor="middle" fill="#FF9800">LL</text>
+  
+  <!-- Lemon leaf -->
+  <path d="M150 55 C170 45, 190 60, 180 80 C170 95, 150 75, 150 55" fill="#4CAF50"/>
+  
+  <!-- Lemon stem -->
+  <rect x="147" y="55" width="6" height="15" fill="#795548"/>
+</svg>

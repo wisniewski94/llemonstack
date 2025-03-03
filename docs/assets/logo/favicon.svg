@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background -->
+  <rect width="32" height="32" fill="white" rx="4" ry="4"/>
+  
+  <!-- Lemon shape -->
+  <ellipse cx="16" cy="16" rx="12" ry="14" fill="#FFEB3B" transform="rotate(30, 16, 16)"/>
+  
+  <!-- Simplified "LL" text -->
+  <text x="16" y="16" font-family="Arial, sans-serif" font-size="10" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#FF9800">LL</text>
+  
+  <!-- Simplified smile -->
+  <path d="M10 20 Q16 24 22 20" fill="none" stroke="#4CAF50" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
