@@ -144,8 +144,12 @@ export async function reset(projectName: string): Promise<void> {
     }
 
     if (!skipCache) {
-      await dockerBuilderCleanUp()
-      await dockerSystemCleanUp()
+      if (!confirm('Do you want to clean the docker cache?')) {
+        showInfo('Skipping docker cache cleanup')
+      } else {
+        await dockerBuilderCleanUp()
+        await dockerSystemCleanUp()
+      }
     } else {
       showAction('\nSkipping docker cache cleanup, --skip-cache was used')
       showInfo('To manually clean the docker cache, run:')
