@@ -1,0 +1,13 @@
+.llemonstack/
+.env
+# Ignore all .env files except .env.example
+.env.*
+!.env.example
+volumes/
+shared/
+.repos/*
+!.repos/README.md
+node_modules/
+.DS_Store
+tmp/
+dist/
