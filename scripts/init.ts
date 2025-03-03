@@ -20,6 +20,7 @@ import { reset } from './reset.ts'
 import {
   confirm,
   DEFAULT_PROJECT_NAME,
+  ENVFILE,
   isInitialized,
   LLEMONSTACK_CONFIG_FILE,
   loadEnv,
@@ -29,7 +30,6 @@ import {
   start,
   VERSION,
 } from './start.ts' // Adjust the path as necessary
-const ENVFILE = join(Deno.cwd(), '.env')
 
 async function envFileExists(): Promise<boolean> {
   try {
@@ -155,6 +155,7 @@ export async function init(
         showError(`Project already initialized: ${projectName}`)
         if (confirm('Do you want to reset the project to the initial state?')) {
           showAction('Resetting project...')
+          // TODO: improve this flow, user should be re-initialize without resetting
           await reset(projectName)
         } else {
           Deno.exit(1)

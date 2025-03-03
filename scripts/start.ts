@@ -29,6 +29,8 @@ import * as yaml from 'jsr:@std/yaml'
 const isArm64 = getArch().includes('arm64')
 export const VERSION = '0.1.0'
 
+export const ENVFILE = path.join(Deno.cwd(), '.env')
+
 await loadEnv() // Load .env file
 
 /*******************************************************************************
@@ -898,8 +900,7 @@ export async function prepareSupabaseEnv(): Promise<void> {
     path.join(repoDir, 'docker', '.env'),
   )
   const supabaseEnv = path.join('docker', 'supabase.env')
-  const env = path.join('.env')
-  if (!fs.existsSync(env)) {
+  if (!fs.existsSync(ENVFILE)) {
     showError('Error: .env file not found')
     showUserAction(
       'Please create a .env file in the root directory and try again.',
@@ -910,7 +911,7 @@ export async function prepareSupabaseEnv(): Promise<void> {
   if (!fs.existsSync(repoDir)) {
     // Try to fix the issue by cloning the repo
     showInfo(`Supabase repo not found: ${repoDir}`)
-    showInfo('Attempting to repare the repos...')
+    showInfo('Attempting to repair the repos...')
     await setupRepos({ all: true })
     if (!fs.existsSync(repoDir)) {
       showError('Supabase repo still not found, unable to continue')
@@ -921,9 +922,10 @@ export async function prepareSupabaseEnv(): Promise<void> {
     }
   }
 
-  await Deno.copyFile(supabaseEnv, supabaseRepoEnv) // Replace repo .env with supabase.env
-  const supabaseEnvContent = await Deno.readTextFile(env)
-  await Deno.writeTextFile(supabaseRepoEnv, supabaseEnvContent, { append: true }) // Append .env contents
+  // Copy .env to supabase repo .env, then append supabase.env contents
+  await Deno.copyFile(ENVFILE, supabaseRepoEnv)
+  const supabaseEnvContent = await Deno.readTextFile(supabaseEnv)
+  await Deno.writeTextFile(supabaseRepoEnv, supabaseEnvContent, { append: true })
 }
 
 /**

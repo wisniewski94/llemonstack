@@ -21,6 +21,7 @@
   "deno.codeLens.test": true,
   "cSpell.words": [
     "browser-use-webui",
+    "ENVFILE",
     "flowise",
     "graphiti",
     "llemonstack",
