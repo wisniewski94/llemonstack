@@ -1097,9 +1097,8 @@ export async function start(projectName: string): Promise<void> {
       if (ollamaProfile === 'ollama-host') {
         showInfo('Using host Ollama, no need to start ollama service')
       } else {
-        await startService(projectName, 'ollama', { envVars })
+        await startService(projectName, 'ollama', { profiles: [ollamaProfile], envVars })
       }
-      // await startOllama(projectName, ollamaProfile)
     }
 
     // Start browser-use if enabled
