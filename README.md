@@ -5,7 +5,9 @@ Securely running in docker containers.
 
 Pre-configured and ready to squeeze. LLemoStack gets you up and running in minutes
 with [n8n](https://n8n.io/), [Flowise](https://flowiseai.com/),
-[Supabase](https://supabase.com/), [Qdrant](https://qdrant.tech/), [Zep](https://www.getzep.com/), [Ollama](https://ollama.com/), and [Browser-Use](https://browser-use.com/) and more.
+[Supabase](https://supabase.com/), [Qdrant](https://qdrant.tech/),
+[Zep](https://www.getzep.com/), [Ollama](https://ollama.com/), and
+[Browser-Use](https://browser-use.com/) and more.
 
 ![n8n.io - Screenshot](docs/assets/n8n-demo.gif)
 
@@ -22,11 +24,13 @@ Check the git history and pull regularly for bug fixes.
 <br />
 
 **LLemonStack** installs and runs a fully featured low code AI
-agent development playground, including local LLMs and chat interfaces, from a single command: `deno run start`
+agent development playground, including local LLMs and chat interfaces, from
+a single command: `deno run start`
 
 Supports running on Linux, Mac, or Windows.\*
 
-\*Built on a Macbook M2, tested on an AMD Linux server, and on the roadmap to test on Windows but likely works everywhere.
+\*Built on a Macbook M2, tested on an AMD Linux server, and on the roadmap to
+test on Windows but likely works everywhere.
 
 ### Main objectives of 🍋 LLemonStack are
 
@@ -42,7 +46,9 @@ Supports running on Linux, Mac, or Windows.\*
 >
 > 🍋🍋🍋🍋🍋 _5 lemon rating FTW_
 
-Ultimately, LLemonStack aims to provide a comprehensive AI configuration framework & education ecosystem... where sh!t just works so you can focus on the fun part of building AI agents.
+Ultimately, LLemonStack aims to provide a comprehensive AI configuration
+framework & education ecosystem... where sh!t just works so you can focus
+on the fun part of building AI agents.
 
 With this first release, we're just scratching the surface of what's possible.
 
@@ -50,7 +56,10 @@ With this first release, we're just scratching the surface of what's possible.
 
 ## What's included in the stack
 
-The core stack (this repo) includes the most powerful & easy to to use open source AI agent services. The services are pre-configured and ready to use. Networking, storage, and other docker related headaches are handled for you. Just run the stack and start building AI agents.
+The core stack (this repo) includes the most powerful & easy to to use
+open source AI agent services. The services are pre-configured and ready to use.
+Networking, storage, and other docker related headaches are handled for you.
+Just run the stack and start building AI agents.
 
 | Tool                                        | Description                                                                                                      |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |

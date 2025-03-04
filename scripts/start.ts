@@ -69,7 +69,7 @@ export const COMPOSE_BUILD_FILES = [
     path.join('docker', 'docker-compose.browser-use.yml'),
     {
       // env vars to pass to build
-      // browser-use has a sepcial Dockerfile for arm64 / Mac silicon
+      // browser-use has a special Dockerfile for arm64 / Mac silicon
       TARGETPLATFORM: isArm64 ? 'linux/arm64' : 'linux/amd64',
       DOCKERFILE: isArm64 ? 'Dockerfile.arm64' : 'Dockerfile',
     },

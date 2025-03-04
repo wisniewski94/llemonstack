@@ -1,8 +1,10 @@
 # Import n8n Workflows and Credentials
 
-Any exported n8n credentials or workflows in this directory can be imported with the `import` script.
+Any exported n8n credentials or workflows in this directory can be imported
+with the `import` script.
 
-Put credentials in the [credentials](credentials) directory and workflows in the [workflows](workflows) directory.
+Put credentials in the [credentials](credentials) directory and workflows
+in the [workflows](workflows) directory.
 
 Subdirectories are supported but only one level deep.
 

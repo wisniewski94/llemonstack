@@ -20,15 +20,27 @@
   "deno.codeLens.references": true,
   "deno.codeLens.test": true,
   "cSpell.words": [
+    "agentic",
+    "airtable",
     "browser-use-webui",
+    "chatflow",
+    "chatflows",
+    "deepseek",
     "ENVFILE",
     "flowise",
     "graphiti",
+    "illumos",
+    "langchain",
     "llemonstack",
+    "macbook",
     "ollama",
     "opencontainers",
+    "openweb",
     "openwebui",
+    "pgvector",
+    "pooler",
     "qdrant",
+    "skyvern",
     "supabase",
     "TARGETPLATFORM"
   ],
@@ -42,6 +54,8 @@
     "*.y*ml",
     ".env*",
     "test/**",
-    "docker/**"
+    "docker/**",
+    "import/**",
+    "shared/**"
   ]
 }

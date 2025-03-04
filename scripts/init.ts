@@ -194,7 +194,7 @@ const ENVVARS = {
   NEO4J_USER: 'neo4j',
   NEO4J_PASSWORD: '',
   // Browser
-  BROWSER_USE_VNC_PASSWORD: 'vncpass123',
+  BROWSER_USE_VNC_PASSWORD: '',
   // OpenAI
   OPENAI_API_KEY: '',
   // Ollama

@@ -35,7 +35,8 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 - [ ] Switch to Open Router for LLM calls
 - [ ] Add skyvern to automate browsers
 - [ ] Update README with instructions on using the n8n-custom-ffmpeg image
-- [ ] Switch to [execa](https://github.com/sindresorhus/execa) for running shell commands if needed on Windows
+- [ ] Switch to [execa](https://github.com/sindresorhus/execa) for running
+      shell commands if needed on Windows
 - [ ] Add log streaming
 - [ ] Create script to populate the supabase and random key.env vars on first install
   - [ ] Use `openssl rand -base64 64` to generate a random key?
@@ -48,7 +49,7 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 <br />
 
-# Resources
+## Resources
 
 **Additional Services:**
 
@@ -117,7 +118,8 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 [Vector Store Evaluations](https://sanjmo.medium.com/vector-data-store-evaluation-criteria-6d7677ef3b60)
 
-[Google Credentials Setup](https://pipedream.com/apps/gmail/#getting-started) - Pipedream doc
+[Google Credentials Setup](https://pipedream.com/apps/gmail/#getting-started) -
+Pipedream doc
 
 <br />
 
@@ -127,7 +129,8 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 Configure n8n logging https://docs.n8n.io/hosting/logging-monitoring/logging/
 
-Maybe use something like rsyslog to watch the log file? Or use something to consolidate all the docker logs?
+Maybe use something like rsyslog to watch the log file? Or use something to
+consolidate all the docker logs?
 
 - https://github.com/rsyslog/rsyslog
 - https://betterstack.com/community/guides/logging/docker-compose-logs/
@@ -136,9 +139,12 @@ Maybe use something like rsyslog to watch the log file? Or use something to cons
 
 ## Acknowledgements & History
 
-This project started as a fork of Cole Medin's [Local AI Starter Kit](https://github.com/coleam00/local-ai-packaged)
+This project started as a fork of Cole [Local AI Starter Kit](https://github.com/coleam00/local-ai-packaged)
 which was a fork of the n8n team's [Self-hosted AI Starter Kit](https://github.com/n8n-io/self-hosted-ai-starter-kit).
 
-See [Cole's YouTube video](https://www.youtube.com/watch?v=pOsO40HSbOo) for an indepth walkthrough of the original project.
+See [Cole's YouTube video](https://www.youtube.com/watch?v=pOsO40HSbOo) for an
+in-depth walkthrough of the original project.
 
-The scripts in this project were rewritten in typescript and significantly enhanced to with support for enabling/disabling services and avoiding common Docker pitfalls.
+The scripts in this project were rewritten in typescript and significantly
+enhanced to with support for enabling/disabling services and avoiding
+common Docker pitfalls.
