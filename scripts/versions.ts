@@ -181,12 +181,12 @@ async function showImageVersions(): Promise<void> {
       const [img, _, version = 'latest'] = image.startsWith('${')
         ? [image, '', '']
         : image.match(/^(.*?)(?::([^:]*))?$/) || ['', '', '']
-      rows.push([colors.yellow(service), colors.green.bold(version), colors.gray(img)])
+      rows.push([service, version, img])
     }
 
-    // If version is "latest", try to get version from the docker inspect
+    // If version is "latest" or "main", try to get version from the docker inspect
     for (const i in rows) {
-      if (rows[i][1] === 'latest') {
+      if (/latest|main/i.test(rows[i][1]?.toString() || '')) {
         try {
           const version = (await runCommand('docker', {
             args: [
@@ -209,6 +209,15 @@ async function showImageVersions(): Promise<void> {
       }
     }
 
+    // Apply colors to each row
+    for (let i = 0; i < rows.length; i++) {
+      rows[i] = [
+        colors.yellow(rows[i][0] as string),
+        colors.green.bold(rows[i][1] as string),
+        colors.gray(rows[i][2] as string),
+      ]
+    }
+
     console.log(colors.gray(`\n Source: ${composeFile}`))
     showTable(['Service', 'Version', 'Docker Image'], rows)
   }
@@ -222,7 +231,7 @@ export async function versions(projectName: string): Promise<void> {
   )
   showHeader('Docker Image Versions')
 
-  await prepareEnv({ silent: false })
+  await prepareEnv({ silent: true })
 
   try {
     await showImageVersions()
