@@ -9,6 +9,16 @@ with [n8n](https://n8n.io/), [Flowise](https://flowiseai.com/),
 
 ![n8n.io - Screenshot](docs/assets/n8n-demo.gif)
 
+## Version
+
+LLemonStack is currently a pre-release version.
+
+It should work as expected, but the scripts and API are in rapid development.
+
+Check the git history and pull regularly for bug fixes.
+
+## Overview
+
 <br />
 
 **LLemonStack** installs and runs a fully featured low code AI
