@@ -31,8 +31,6 @@ export const VERSION = '0.1.0'
 
 export const ENVFILE = path.join(Deno.cwd(), '.env')
 
-await loadEnv() // Load .env file
-
 /*******************************************************************************
  * CONFIG
  *******************************************************************************/
@@ -82,6 +80,7 @@ export const ALL_COMPOSE_FILES = [
 export const COMPOSE_FILES = [
   path.join('docker', 'docker-compose.standalone.yml'), // Standalone uses profiles
   isEnabled('n8n') && path.join('docker', 'docker-compose.n8n.yml'),
+  isEnabled('flowise') && path.join('docker', 'docker-compose.flowise.yml'),
   isEnabled('ollama') && path.join('docker', 'docker-compose.ollama.yml'),
   isEnabled('zep') && path.join('docker', 'docker-compose.zep.yml'),
 ]
@@ -115,6 +114,12 @@ const REPO_SERVICES: Record<string, RepoService> = {
     checkFile: 'docker-compose.yml',
   },
 }
+
+/*******************************************************************************
+ * GLOBAL SETUP
+ *******************************************************************************/
+
+await loadEnv({ silent: false }) // Load .env file
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -376,13 +381,14 @@ export function getOS(): string {
  * @returns {Promise<Record<string, string>>} The environment variables
  */
 export async function loadEnv(
-  { envPath = '.env', reload = false, silent = false }: {
+  { envPath = '.env', reload = false, silent = true }: {
     envPath?: string
     reload?: boolean
     silent?: boolean
   } = {},
 ): Promise<Record<string, string>> {
   let envValues = {}
+  silent = silent || DEBUG // Show info messages if DEBUG is true
   if (!reload) {
     !silent && showInfo('Loading .env file')
     envValues = await loadDotEnv({ envPath, export: true })
@@ -435,7 +441,7 @@ export async function runCommand(
 
   // Auto load env from .env file
   // For security, don't use all Deno.env values, only use .env file values
-  const envVars = !autoLoadEnv ? {} : await loadEnv({ reload: false, silent: false })
+  const envVars = !autoLoadEnv ? {} : await loadEnv({ reload: false, silent: true })
 
   let cmdCmd = cmd
   let cmdArgs = (args?.filter(Boolean) || []) as string[]
