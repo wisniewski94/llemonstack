@@ -49,7 +49,8 @@ export const REPO_DIR_BASE = '.repos'
 // Added as a volume in docker-compose.yml
 export const SHARED_DIR_BASE = 'shared'
 
-export const LLEMONSTACK_CONFIG_FILE = path.join('.llemonstack', 'config')
+export const LLEMONSTACK_CONFIG_DIR = path.join(Deno.cwd(), '.llemonstack')
+export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config.json')
 
 // Docker compose files for services with a custom Dockerfile
 export const COMPOSE_BUILD_FILES = [
@@ -57,6 +58,7 @@ export const COMPOSE_BUILD_FILES = [
     path.join('docker', 'docker-compose.browser-use.yml'),
     {
       // env vars to pass to build
+      // browser-use has a sepcial Dockerfile for arm64 / Mac silicon
       TARGETPLATFORM: isArm64 ? 'linux/arm64' : 'linux/amd64',
       DOCKERFILE: isArm64 ? 'Dockerfile.arm64' : 'Dockerfile',
     },
@@ -335,6 +337,24 @@ export function showInfo(message: string): void {
  */
 export function getArch(): string {
   return Deno.build.arch === 'aarch64' ? 'linux/arm64' : 'linux/amd64'
+}
+
+/**
+ * Get the host platform
+ * @returns macos | linux | windows | other
+ */
+export function getOS(): string {
+  // os: "darwin" | "linux" | "android" | "windows" | "freebsd" | "netbsd" | "aix" | "solaris" | "illumos"
+  switch (Deno.build.os) {
+    case 'darwin':
+      return 'macos'
+    case 'windows':
+      return 'windows'
+    case 'linux':
+      return 'linux'
+    default:
+      return 'other'
+  }
 }
 
 /**

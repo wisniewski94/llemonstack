@@ -8,8 +8,7 @@
  * deno run setup
  * ```
  */
-import { Input, Secret } from '@cliffy/prompt'
-import { join } from 'jsr:@std/path'
+import { Input, Secret, Select } from '@cliffy/prompt'
 import {
   generateJWT,
   generateSecretKey,
@@ -21,12 +20,18 @@ import {
   confirm,
   DEFAULT_PROJECT_NAME,
   ENVFILE,
+  getOS,
   isInitialized,
+  LLEMONSTACK_CONFIG_DIR,
   LLEMONSTACK_CONFIG_FILE,
   loadEnv,
   showAction,
   showError,
+  showHeader,
   showInfo,
+  showService,
+  showUserAction,
+  showWarning,
   start,
   VERSION,
 } from './start.ts' // Adjust the path as necessary
@@ -41,12 +46,14 @@ async function envFileExists(): Promise<boolean> {
 }
 
 async function createConfigFile(): Promise<void> {
-  const file = join(Deno.cwd(), LLEMONSTACK_CONFIG_FILE)
-
+  // Check if the config directory exists
   try {
-    // Create the .llemonstack directory if it doesn't exist
-    await Deno.mkdir('.llemonstack', { recursive: true })
-
+    await Deno.stat(LLEMONSTACK_CONFIG_DIR)
+  } catch (_error) {
+    // Create the config directory if it doesn't exist
+    await Deno.mkdir(LLEMONSTACK_CONFIG_DIR, { recursive: true })
+  }
+  try {
     // Create the config file with initial configuration
     const config = {
       initialized: true,
@@ -54,11 +61,20 @@ async function createConfigFile(): Promise<void> {
       version: VERSION,
     }
     await Deno.writeTextFile(
-      file,
+      LLEMONSTACK_CONFIG_FILE,
       JSON.stringify(config, null, 2),
     )
   } catch (error) {
-    showError(`Error creating config file: ${file}`, error)
+    showError(`Error creating config file: ${LLEMONSTACK_CONFIG_FILE}`, error)
+  }
+}
+
+async function clearConfigFile(): Promise<void> {
+  try {
+    await Deno.stat(LLEMONSTACK_CONFIG_FILE)
+    await Deno.remove(LLEMONSTACK_CONFIG_FILE)
+  } catch (_error) {
+    // File doesn't exist, do nothing
   }
 }
 
@@ -70,6 +86,12 @@ async function createEnvFile(): Promise<void> {
     await Deno.copyFile('.env.example', ENVFILE)
   } catch (error) {
     throw new Error(`Failed to create .env file: ${error}`)
+  }
+}
+
+async function clearEnvFile(): Promise<void> {
+  if (await envFileExists()) {
+    await Deno.remove(ENVFILE)
   }
 }
 
@@ -116,6 +138,43 @@ async function setSecurityKeys(envVars: typeof ENVVARS): Promise<Record<string, 
   return envVars
 }
 
+/**
+ * Prompt user for ollama configuration options
+ * @returns The selected ollama profile
+ */
+async function configOllama(): Promise<string> {
+  const gpuDisabled = getOS() === 'macos'
+  if (gpuDisabled) {
+    showWarning('GPU options are not currently available on macOS due to Docker limitations.\n')
+  }
+
+  const gpuIcon = gpuDisabled ? '🚫' : '🐳'
+  const ollamaProfile: string = await Select.prompt({
+    message: 'How do you want to run Ollama?',
+    options: [
+      { name: '❌ [Disable] turn off ollama service', value: 'false' },
+      Select.separator('----- Run on Host -----'),
+      {
+        name: '🖥️ [Host] creates a network bridge',
+        value: 'host',
+      },
+      Select.separator('----- Run in Docker Container -----'),
+      { name: '🐳 [CPU] slow but compatible, no GPU requirements', value: 'cpu' },
+      {
+        name: `${gpuIcon} [AMD GPU] requires AMD GPU on the host`,
+        value: 'gpu-amd',
+        disabled: gpuDisabled,
+      },
+      {
+        name: `${gpuIcon} [NVIDIA GPU] requires NVIDIA GPU on the host`,
+        value: 'gpu-nvidia',
+        disabled: gpuDisabled,
+      },
+    ],
+  })
+  return ollamaProfile
+}
+
 const ENVVARS = {
   DOCKER_PROJECT_NAME: '',
   // Supabase
@@ -144,31 +203,54 @@ const ENVVARS = {
 
 export async function init(
   projectName: string,
-  { force = false }: { force?: boolean } = {},
 ): Promise<void> {
-  force = force || Deno.args.includes('--force') || Deno.args.includes('-f')
-
   try {
-    const initialized = await isInitialized()
-    if (initialized) {
-      if (!force) {
-        showError(`Project already initialized: ${projectName}`)
-        if (confirm('Do you want to reset the project to the initial state?')) {
+    if (await isInitialized()) {
+      showError(`Project already initialized: ${projectName}`)
+      const resetOption: string = await Select.prompt({
+        message: 'How do you want to proceed?',
+        options: [
+          {
+            name: '💣 [Hard Reset] delete all data, containers and start over',
+            value: 'hard-reset',
+          },
+          {
+            name: '⌫ [Config Reset] start with a fresh .env file',
+            value: 'config-reset',
+          },
+          {
+            name: '↩ [Reinitialize] keep existing .env file and rerun the config setup',
+            value: 'reinitialize',
+          },
+          {
+            name: '↩ [Cancel]',
+            value: 'none',
+          },
+        ],
+      })
+      if (resetOption === 'hard-reset') {
+        if (confirm('Are you sure you want to delete all data and start over?')) {
           showAction('Resetting project...')
-          // TODO: improve this flow, user should be re-initialize without resetting
           await reset(projectName)
+          await clearEnvFile()
+          await clearConfigFile()
         } else {
           Deno.exit(1)
         }
+      } else if (resetOption === 'config-reset') {
+        await clearEnvFile()
+        await clearConfigFile()
+      } else if (resetOption === 'reinitialize') {
+        await clearConfigFile()
       }
     }
 
-    showAction('Initializing project...')
+    showHeader('Initializing project...')
 
     if (await envFileExists()) {
       showInfo('.env file already exists')
-      if (confirm('Do you want to delete .env and start fresh?')) {
-        await Deno.remove(ENVFILE)
+      if (confirm('Do you want to delete .env and start fresh?', false)) {
+        await clearEnvFile()
         await createEnvFile()
         showInfo('.env recreated from .env.example')
       } else {
@@ -178,6 +260,7 @@ export async function init(
       showInfo('.env does not exist, copying from .env.example')
       await createEnvFile()
     }
+
     // Reload .env into Deno.env and show
     await loadEnv({ reload: true, silent: true })
 
@@ -230,6 +313,21 @@ export async function init(
         '\n❗ Zep will not work properly without an OpenAI key. ' +
           'You can set it in .env or disable Zep later on.',
       )
+    }
+
+    showHeader('Ollama Configuration Options')
+    showInfo('Ollama can run on your host machine or inside a Docker container.')
+    showInfo('The host option requires manually starting ollama on your host machine.')
+    showInfo('If running in Docker, you can choose to run it on the CPU (slow) or a GPU (fast).')
+    showInfo("GPU options require a compatible GPU on the host... because it's not magic.\n")
+
+    const ollamaProfile = await configOllama()
+    ENVVARS.ENABLE_OLLAMA = ollamaProfile
+
+    if (ollamaProfile === 'host') {
+      showInfo('\nHost option requires Ollama running on your host machine.')
+      showService('Download Ollama', 'https://ollama.com/docs/installation')
+      showUserAction('Run `ollama run` on your host machine to start the service\n')
     }
 
     // Update .env file with new keys
