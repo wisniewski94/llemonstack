@@ -27,12 +27,10 @@ import {
   startService,
 } from './start.ts'
 
-async function importToN8n(projectName: string): Promise<void> {
-  // Check if -f force flag is present
-  const skipPrompt = Deno.args.includes('-f')
-  // Check if --skip-start flag is present
-  const skipStart = Deno.args.includes('--skip-start') || Deno.args.includes('-s')
-
+async function importToN8n(
+  projectName: string,
+  { skipPrompt = false, skipStart = false }: { skipPrompt?: boolean; skipStart?: boolean } = {},
+): Promise<void> {
   if (!skipPrompt) {
     showWarning(
       'WARNING: Importing will overwrite existing workflows and credentials',
@@ -64,12 +62,20 @@ async function importToN8n(projectName: string): Promise<void> {
   }
 }
 
-export async function importAll(projectName: string): Promise<void> {
+export async function runImport(
+  projectName: string,
+  { skipPrompt = false, skipStart = false }: { skipPrompt?: boolean; skipStart?: boolean } = {},
+): Promise<void> {
+  // Check if -f force flag is present
+  skipPrompt = skipPrompt || Deno.args.includes('-f')
+  // Check if --skip-start flag is present
+  skipStart = skipStart || Deno.args.includes('--skip-start') || Deno.args.includes('-s')
+
   await prepareEnv({ silent: false })
-  await importToN8n(projectName)
+  await importToN8n(projectName, { skipPrompt, skipStart })
 }
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  importAll(Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  runImport(Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }
