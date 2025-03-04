@@ -35,7 +35,7 @@ services:
     image: qdrant/qdrant
     container_name: qdrant
     restart: unless-stopped
-    environment:
+    # environment:
       # See https://qdrant.tech/documentation/guides/configuration/
       # - QDRANT__SERVICE__API_KEY=123
       # - QDRANT__LOG_LEVEL=debug
