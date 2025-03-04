@@ -1,0 +1,45 @@
+# Flowise
+#
+# This config is for running Flowise with a supabase postgres database.
+#
+# https://docs.flowiseai.com/configuration/
+
+# n8n requires a postgres database.
+include:
+  - ../.repos/supabase/docker/docker-compose.yml
+
+volumes:
+  flowise:
+
+services:
+  flowise:
+    profiles:
+      - flowise
+    image: flowiseai/flowise
+    container_name: flowise
+    restart: unless-stopped
+    environment:
+      # See https://docs.flowiseai.com/configuration/environment-variables
+      - PORT=3001
+      # Database
+      - DATABASE_TYPE=postgres # sqlite, postgres, mysql
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=${POSTGRES_PASSWORD}
+      - DATABASE_NAME=postgres
+      - DATABASE_SSL=false
+      # Credentials, if blank auth is disabled
+      # - FLOWISE_USERNAME=admin
+      # - FLOWISE_PASSWORD=admin
+      # Logging
+      # - DEBUG=true
+      # - LOG_LEVEL=debug # error, info, verbose, debug
+      # - LOG_PATH=/Flowise/packages/server/logs
+    ports:
+      - 3001:3001
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - flowise:/root/.flowise
+    entrypoint: /bin/sh -c "sleep 3; flowise start"
