@@ -53,7 +53,7 @@ x-n8n: &service-n8n
 
     # Disable sending diagnostics, notifications, and templates to n8n servers
     # See https://docs.n8n.io/hosting/configuration/configuration-examples/isolation/
-    # - N8N_DIAGNOSTICS_ENABLED=false
+    - N8N_DIAGNOSTICS_ENABLED=false
     # - N8N_VERSION_NOTIFICATIONS_ENABLED=false
     # - N8N_TEMPLATES_ENABLED=false
     # - EXTERNAL_FRONTEND_HOOKS_URLS=
