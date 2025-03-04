@@ -10,13 +10,9 @@
  * deno run start
  * ```
  *
- * To add a new standalone service that does not depend on other services:
- * 1. Add service to docker/docker-compose.standalone.yml
- * 2. Add service to COMPOSE_FILES array in CONFIG section below
- *
- * To add a service that requires it's own docker-compose.yml file:
+ * To add a new service...
  * 1. Add the compose file to the docker/ folder
- * 2. Add the service to the COMPOSE_FILES array below
+ * 2. Add the service to the ALL_COMPOSE_SERVICES array below
  * 3. Add a startService call in the main start function
  */
 
@@ -52,6 +48,21 @@ export const IMPORT_DIR_BASE = 'import'
 export const LLEMONSTACK_CONFIG_DIR = path.join(Deno.cwd(), '.llemonstack')
 export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config.json')
 
+// All services with a docker-compose.yml file
+// Includes services with a custom Dockerfile
+// [service name, compose file, auto run]
+// When auto run is true, the service is started automatically if enabled.
+// When auto run is false, the service needs to be started manually.
+export const ALL_COMPOSE_SERVICES = [
+  ['n8n', path.join('docker', 'docker-compose.n8n.yml'), true],
+  ['flowise', path.join('docker', 'docker-compose.flowise.yml'), true],
+  ['zep', path.join('docker', 'docker-compose.zep.yml'), true],
+  ['browser-use', path.join('docker', 'docker-compose.browser-use.yml'), false],
+  ['qdrant', path.join('docker', 'docker-compose.qdrant.yml'), true],
+  ['openweb-ui', path.join('docker', 'docker-compose.openweb-ui.yml'), true],
+  ['ollama', path.join('docker', 'docker-compose.ollama.yml'), false],
+] as [string, string, boolean][]
+
 // Docker compose files for services with a custom Dockerfile
 export const COMPOSE_BUILD_FILES = [
   isEnabled('browser-use') && [
@@ -65,36 +76,21 @@ export const COMPOSE_BUILD_FILES = [
   ],
 ].filter(Boolean) as [string, Record<string, string>][]
 
-// All docker compose files regardless of service ENABLED status
-// Used by reset.ts to clean up all docker compose files
-export const ALL_COMPOSE_FILES = [
-  path.join('docker', 'docker-compose.standalone.yml'),
-  path.join('docker', 'docker-compose.n8n.yml'),
-  path.join('docker', 'docker-compose.flowise.yml'),
-  path.join('docker', 'docker-compose.zep.yml'),
-  path.join('docker', 'docker-compose.browser-use.yml'),
-  path.join('docker', 'docker-compose.ollama.yml'),
-]
+// All Docker compose files
+export const ALL_COMPOSE_FILES = ALL_COMPOSE_SERVICES.map(
+  ([_service, file]) => file,
+) as string[]
 
 // Docker compose files for enabled services, includes build files
-export const COMPOSE_FILES = [
-  path.join('docker', 'docker-compose.standalone.yml'), // Standalone uses profiles
-  isEnabled('n8n') && path.join('docker', 'docker-compose.n8n.yml'),
-  isEnabled('flowise') && path.join('docker', 'docker-compose.flowise.yml'),
-  isEnabled('ollama') && path.join('docker', 'docker-compose.ollama.yml'),
-  isEnabled('zep') && path.join('docker', 'docker-compose.zep.yml'),
-]
+export const COMPOSE_FILES = ALL_COMPOSE_SERVICES.map(([service, file]) => {
+  return isEnabled(service) ? file : null
+})
+  // Add build files
   .concat(COMPOSE_BUILD_FILES.map((arr) => arr[0] as string))
-  .filter(Boolean) as string[]
+  // Remove false values and duplicates
+  .filter((value, index, self) => value && self.indexOf(value) === index) as string[]
 
-// All available profiles for docker/docker-compose.standalone.yml
-// This will likely be refactored in the near future to use separate
-// compose yaml files for each service.
-export const STANDALONE_COMPOSE_PROFILES = [
-  isEnabled('openwebui') && 'openwebui',
-  isEnabled('qdrant') && 'qdrant',
-].filter(Boolean) as string[]
-
+// Services that require cloning a repo
 const REPO_SERVICES: Record<string, RepoService> = {
   supabase: {
     url: 'https://github.com/supabase/supabase.git',
@@ -985,7 +981,7 @@ export function getProfilesArgs({
   all?: boolean
   profiles?: string[]
 } = {}): string[] {
-  const profilesList = all ? [`"*"`] : profiles || STANDALONE_COMPOSE_PROFILES
+  const profilesList = all ? [`"*"`] : profiles || []
   return profilesList.map((profile) => ['--profile', profile]).flat()
 }
 
@@ -1106,28 +1102,22 @@ export async function start(projectName: string): Promise<void> {
       envVars.OLLAMA_HOST = 'host.docker.internal:11434'
     }
 
-    // Start the services in docker-compose.standalone.yml
-    showAction(`\nStarting standalone services...`)
-    try {
-      // Catch errors when no standalone services are enabled
-      await startService(projectName, 'standalone', { envVars })
-    } catch (_error) {
-      showInfo('Skipping standalone services')
+    // Start enabled services
+    const enabledServices = ALL_COMPOSE_SERVICES.filter(([service, _, autoRun]) => {
+      return isEnabled(service) && autoRun
+    }).map(([service]) => service)
+    for (const service of enabledServices) {
+      showAction(`\nStarting ${service}...`)
+      await startService(projectName, service, { envVars })
     }
 
-    // Start n8n if enabled
-    if (isEnabled('n8n')) {
-      showAction(`\nStarting n8n & Supabase...`)
-      await startService(projectName, 'n8n', { envVars })
+    // Special handling for browser-use
+    if (isEnabled('browser-use')) {
+      showAction(`\nStarting browser-use...`)
+      await startBrowserUse(projectName)
     }
 
-    // Start Zep if enabled
-    if (isEnabled('zep')) {
-      showAction(`\nStarting Zep & dependencies...`)
-      await startService(projectName, 'zep', { envVars })
-    }
-
-    // Start Ollama if enabled
+    // Special handling for Ollama
     if (ollamaProfile !== 'ollama-false') {
       showAction(`\nStarting Ollama...`)
       if (ollamaProfile === 'ollama-host') {
@@ -1135,12 +1125,6 @@ export async function start(projectName: string): Promise<void> {
       } else {
         await startService(projectName, 'ollama', { profiles: [ollamaProfile], envVars })
       }
-    }
-
-    // Start browser-use if enabled
-    if (isEnabled('browser-use')) {
-      showAction(`\nStarting browser-use...`)
-      await startBrowserUse(projectName)
     }
 
     // Check if supabase was started by any of the services that depend on it

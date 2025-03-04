@@ -10,6 +10,10 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
   - after init, the first import of examples should just work and
     have all the local host passwords properly set
 
+- [ ] Update the import script to replace all ${var} style strings with env
+      vars before running import in the container
+
+- [x] Switch to separate compose yml files & simplify process for adding new service
 - [x] Show api endpoints for internal config on start
 - [x] Create export script for n8n workflows to shared folder, use --decrypted flag
 - [x] Always prep supabaseEnv before doing anything else

@@ -1,0 +1,20 @@
+# Qdrant
+#
+# See https://qdrant.tech/documentation/
+
+volumes:
+  qdrant_storage:
+
+services:
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant
+    restart: unless-stopped
+    # environment:
+      # See https://qdrant.tech/documentation/guides/configuration/
+      # - QDRANT__SERVICE__API_KEY=123
+      # - QDRANT__LOG_LEVEL=debug
+    ports:
+      - 6333:6333
+    volumes:
+      - qdrant_storage:/qdrant/storage

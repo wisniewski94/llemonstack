@@ -60,8 +60,6 @@ services:
   # # Flowise with sqlite database: flowise-sqlite
   # flowise-standalone:
   #   <<: *service-flowise
-  #   profiles:
-  #     - flowise-sqlite
   #   environment:
   #     # Database
   #     - DATABASE_TYPE=sqlite
