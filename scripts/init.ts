@@ -231,7 +231,7 @@ export async function init(
       if (resetOption === 'hard-reset') {
         if (confirm('Are you sure you want to delete all data and start over?')) {
           showAction('Resetting project...')
-          await reset(projectName)
+          await reset(projectName, { skipPrompt: true, skipCache: true })
           await clearEnvFile()
           await clearConfigFile()
         } else {
@@ -343,6 +343,7 @@ export async function init(
     } else {
       showInfo('You can start the stack later with `deno run start`')
     }
+    showUserAction('\nSee .env file to enable/disable services in the stack')
   } catch (error) {
     showError(error)
     Deno.exit(1)

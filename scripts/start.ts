@@ -1101,13 +1101,13 @@ export async function start(projectName: string): Promise<void> {
 
     // Start n8n if enabled
     if (isEnabled('n8n')) {
-      showAction(`\nStarting n8n...`)
+      showAction(`\nStarting n8n & Supabase...`)
       await startService(projectName, 'n8n', { envVars })
     }
 
     // Start Zep if enabled
     if (isEnabled('zep')) {
-      showAction(`\nStarting Zep...`)
+      showAction(`\nStarting Zep & dependencies...`)
       await startService(projectName, 'zep', { envVars })
     }
 

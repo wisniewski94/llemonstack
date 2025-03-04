@@ -31,6 +31,7 @@ import {
   REPO_DIR,
   REPO_DIR_BASE,
   runCommand,
+  setupRepos,
   SHARED_DIR,
   showAction,
   showError,
@@ -49,6 +50,8 @@ async function dockerComposeCleanup(
   projectName: string,
   composeFiles: string[],
 ): Promise<void> {
+  // Make sure repos exist before running docker compose cleanup
+  await setupRepos({ all: true })
   // Iterate through each compose file and run the down command individually
   // This catches any errors with compose files that extend a non-existent file.
   for (const composeFile of composeFiles) {
@@ -107,10 +110,13 @@ async function cleanReposDir(): Promise<void> {
   }
 }
 
-export async function reset(projectName: string): Promise<void> {
+export async function reset(
+  projectName: string,
+  { skipPrompt = false, skipCache = false }: { skipPrompt?: boolean; skipCache?: boolean } = {},
+): Promise<void> {
   try {
-    const skipPrompt = Deno.args.includes('-f')
-    const skipCache = Deno.args.includes('--skip-cache')
+    skipPrompt = skipPrompt || Deno.args.includes('-f')
+    skipCache = skipCache || Deno.args.includes('--skip-cache')
 
     if (!skipPrompt) {
       showWarning(
@@ -144,11 +150,11 @@ export async function reset(projectName: string): Promise<void> {
     }
 
     if (!skipCache) {
-      if (!confirm('Do you want to clean the docker cache?')) {
-        showInfo('Skipping docker cache cleanup')
-      } else {
+      if (confirm('Do you want to clean the docker cache?', false)) {
         await dockerBuilderCleanUp()
         await dockerSystemCleanUp()
+      } else {
+        showInfo('Skipping docker cache cleanup')
       }
     } else {
       showAction('\nSkipping docker cache cleanup, --skip-cache was used')
