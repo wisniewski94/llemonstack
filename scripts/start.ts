@@ -416,11 +416,13 @@ export async function runCommand(
     silent = false,
     captureOutput = false,
     env = {},
+    autoLoadEnv = true, // If true, load env from .env file
   }: {
     args?: Array<string | false>
     silent?: boolean
     captureOutput?: boolean
     env?: EnvVars
+    autoLoadEnv?: boolean
   } = {},
 ): Promise<RunCommandOutput> {
   // Turn off silent output if DEBUG is true
@@ -431,11 +433,17 @@ export async function runCommand(
   const stdout = captureOutput ? 'piped' : 'inherit'
   const stderr = stdout
 
+  // Auto load env from .env file
+  // For security, don't use all Deno.env values, only use .env file values
+  const envVars = !autoLoadEnv ? {} : await loadEnv({ reload: false, silent: false })
+
   let cmdCmd = cmd
   let cmdArgs = (args?.filter(Boolean) || []) as string[]
-  const cmdEnv = {
-    ...Deno.env.toObject(),
-    ...Object.fromEntries(Object.entries(env || {}).map(([k, v]) => [k, String(v)])),
+  const cmdEnv: Record<string, string> = {
+    ...envVars,
+    ...Object.fromEntries( // Convert all env values to strings
+      Object.entries(env).map(([k, v]) => [k, String(v)]),
+    ),
   }
 
   // If args not provided, split out the command and args
