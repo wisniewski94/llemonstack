@@ -134,7 +134,7 @@ deno run update
 deno run restart
 
 # Batch import n8n workflows in the import directory
-deno run import
+deno run import-n8n
 
 # Reset the stack to the original default state
 # Deletes all data & images and resets docker cache
