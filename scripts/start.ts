@@ -1156,14 +1156,17 @@ export async function start(projectName: string): Promise<void> {
 
     showHeader('API Endpoints')
     showInfo('Use these endpoints to configure services in the stack, e.g. n8n credentials.')
+    showInfo(
+      'You can also test the endpoints on your host maching by replacing the domain with `localhost`',
+    )
     isEnabled('n8n') && showService('n8n', 'http://n8n:5678')
     isEnabled('flowise') && showService('Flowise', 'http://flowise:3001')
     if (supabaseStarted) {
       showService('Supabase Postgres DB (host:port)', 'db:5432')
-      showService('Supabase API', 'http://db:8000')
+      showService('Supabase API', 'http://kong:8000')
       showService(
         'Supabase Edge Functions',
-        'http://db:8000/functions/v1/hello',
+        'http://kong:8000/functions/v1/hello',
       )
     }
     isEnabled('zep') && showService('Zep', 'http://zep:8010')
@@ -1175,7 +1178,8 @@ export async function start(projectName: string): Promise<void> {
       const ollamaUrl = 'http://host.docker.internal:11434'
       showService('Ollama', ollamaUrl)
       showUserAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
-      isEnabled('n8n') && showUserAction(` -> n8n: set ollama credential url to: ${ollamaUrl}`)
+      showUserAction('  Start ollama on your computer: `ollama serve`')
+      isEnabled('n8n') && showUserAction(`  -> n8n: set ollama credential url to: ${ollamaUrl}`)
     } else if (isEnabled('ollama')) {
       showService('Ollama', 'http://ollama:11434')
     }
