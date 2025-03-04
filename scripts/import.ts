@@ -107,6 +107,10 @@ async function importToN8n(
       showInfo('Skipping start up of services')
     }
 
+    // TODO: change import to run a command in existing n8n container.
+    // See versions.ts for an example of running a command in a container.
+    // After switching to cmd, remove the n8n-import service from the docker-compose.yml file.
+
     // Start the n8n import service
     // This starts a new n8n container and runs the import/import.sh script in the container
     await startService(projectName, 'n8n', {

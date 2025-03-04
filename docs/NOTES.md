@@ -4,6 +4,13 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 ## TODO
 
+- [ ] Switch n8n import to run command in existing container
+- [ ] Create export script for n8n workflows to shared folder, use --decrypted flag
+- [ ] Rebuild n8n examples with pre-configured credentials
+
+  - after init, the first import of examples should just work and
+    have all the local host passwords properly set
+
 - [x] Always prep supabaseEnv before doing anything else
   - fixes issue with update script not pulling images
 - [x] Convert to new runCommands API
