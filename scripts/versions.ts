@@ -42,10 +42,15 @@ const SERVICES_WITH_APP_VERSION = {
   n8n: ['n8n', '--version'],
   // Get flowise version from the package.json file
   flowise: [
-    'node',
-    '-e',
-    `console.log(require('/usr/local/lib/node_modules/flowise/package.json').version)`,
+    'flowise',
+    '--version',
   ],
+  // EXAMPLE: get version from package.json file
+  // serviceName: [
+  //   'node',
+  //   '-e',
+  //   `console.log(require('/usr/local/lib/node_modules/app/package.json').version)`,
+  // ],
 } as Record<string, string[]>
 
 function showTable(header: string[], rows: RowType[]) {
