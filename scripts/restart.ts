@@ -12,6 +12,7 @@ import { DEFAULT_PROJECT_NAME, showError, start } from './start.ts' // Adjust th
 import { stop } from './stop.ts' // Adjust the path as necessary
 
 export async function restart(projectName: string): Promise<void> {
+  // TODO: add support for restarting a single service
   try {
     await stop(projectName, { all: true }) // Stop all services
     await start(projectName) // Restart services

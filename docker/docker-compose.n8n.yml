@@ -3,6 +3,7 @@
 # n8n is an AI agent and workflow automation tool.
 #
 # https://n8n.io/
+# https://docs.n8n.io/hosting/configuration/task-runners/
 
 # n8n requires a postgres database.
 include:
@@ -21,6 +22,8 @@ x-n8n: &service-n8n
       condition: service_healthy
 
   environment:
+    # See https://docs.n8n.io/hosting/configuration/task-runners/
+
     # Database used by n8n
     - DB_TYPE=postgresdb
     - DB_TABLE_PREFIX=n8n_
@@ -43,6 +46,10 @@ x-n8n: &service-n8n
     # Deployment settings
     # See https://docs.n8n.io/hosting/configuration/environment-variables/deployment/
     - N8N_TEMPLATES_ENABLED=true
+
+    # Task runner settings
+    # See https://docs.n8n.io/hosting/configuration/task-runners/
+    - N8N_RUNNERS_ENABLED=true
 
     # Disable sending diagnostics, notifications, and templates to n8n servers
     # See https://docs.n8n.io/hosting/configuration/configuration-examples/isolation/
