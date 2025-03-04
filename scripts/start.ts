@@ -49,6 +49,8 @@ export const REPO_DIR_BASE = '.repos'
 // Added as a volume in docker-compose.yml
 export const SHARED_DIR_BASE = 'shared'
 
+export const IMPORT_DIR_BASE = 'import'
+
 export const LLEMONSTACK_CONFIG_DIR = path.join(Deno.cwd(), '.llemonstack')
 export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config.json')
 
