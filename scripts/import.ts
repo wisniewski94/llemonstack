@@ -22,6 +22,7 @@ import {
   confirm,
   DEFAULT_PROJECT_NAME,
   IMPORT_DIR_BASE,
+  loadEnv,
   prepareEnv,
   showError,
   showInfo,
@@ -76,6 +77,36 @@ async function archiveN8nImportFolder(): Promise<void> {
   resetN8nImportFolder(n8nImportDir)
 }
 
+/**
+ * Replace all ${var} template in credentials import folder with env vars
+ *
+ * This ensures the credentials are correct for the current stack configuration.
+ */
+async function prepareCredentialsImport(): Promise<void> {
+  const credentialsDir = path.join(IMPORT_DIR_BASE, 'n8n', 'credentials')
+  const credentials = Deno.readDir(credentialsDir)
+
+  const envVars = await loadEnv({ silent: true })
+  for await (const credential of credentials) {
+    const credentialPath = path.join(credentialsDir, credential.name)
+    const credentialContent = await Deno.readTextFile(credentialPath)
+    let updated = false
+    const updatedContent = credentialContent.replace(/\$\{([^}]+)\}/g, (match, p1) => {
+      const envVar = envVars[p1]
+      if (envVar) {
+        updated = true
+        showInfo(`Updating ${credentialPath} with env var: $\{${p1}\}`)
+      } else {
+        showWarning(`No env var found for $\{${p1}\} in ${credentialPath}`)
+      }
+      return envVar || match
+    })
+    if (updated) {
+      await Deno.writeTextFile(credentialPath, updatedContent)
+    }
+  }
+}
+
 async function importToN8n(
   projectName: string,
   { skipPrompt = false, skipStart = false, archiveAfterImport = true }: {
@@ -106,6 +137,9 @@ async function importToN8n(
     } else {
       showInfo('Skipping start up of services')
     }
+
+    // Replace all ${var} template in credentials import folder with env vars
+    await prepareCredentialsImport()
 
     // TODO: change import to run a command in existing n8n container.
     // See versions.ts for an example of running a command in a container.
