@@ -1,6 +1,10 @@
 # Flowise
 #
-# This config is for running Flowise with a supabase postgres database.
+# Flowise can run with a postgres database or a sqlite database.
+# To switch to using sqlite as the default:
+# - uncomment the flowise-standalone
+# - comment out the flowise postgres service
+# - comment out the include section
 #
 # https://docs.flowiseai.com/configuration/
 
@@ -11,16 +15,39 @@ include:
 volumes:
   flowise:
 
+
+# Flowise with postgres database
+x-flowise: &service-flowise
+  image: flowiseai/flowise
+  container_name: flowise
+  restart: unless-stopped
+  environment:
+    # See https://docs.flowiseai.com/configuration/environment-variables
+    - PORT=3001
+    # Credentials, if blank auth is disabled
+    # - FLOWISE_USERNAME=admin
+    # - FLOWISE_PASSWORD=admin
+    # Logging
+    # - DEBUG=true
+    # - LOG_LEVEL=debug # error, info, verbose, debug
+    # - LOG_PATH=/Flowise/packages/server/logs
+  ports:
+    - 3001:3001
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - flowise:/root/.flowise
+  entrypoint: /bin/sh -c "sleep 3; flowise start"
+
+
 services:
+  # Flowise with postgres database: default
   flowise:
-    profiles:
-      - flowise
-    image: flowiseai/flowise
-    container_name: flowise
-    restart: unless-stopped
+    <<: *service-flowise
+    depends_on:
+      db: # From supabase/docker/docker-compose.yml
+        condition: service_healthy
     environment:
-      # See https://docs.flowiseai.com/configuration/environment-variables
-      - PORT=3001
       # Database
       - DATABASE_TYPE=postgres # sqlite, postgres, mysql
       - DATABASE_HOST=db
@@ -29,17 +56,12 @@ services:
       - DATABASE_PASSWORD=${POSTGRES_PASSWORD}
       - DATABASE_NAME=postgres
       - DATABASE_SSL=false
-      # Credentials, if blank auth is disabled
-      # - FLOWISE_USERNAME=admin
-      # - FLOWISE_PASSWORD=admin
-      # Logging
-      # - DEBUG=true
-      # - LOG_LEVEL=debug # error, info, verbose, debug
-      # - LOG_PATH=/Flowise/packages/server/logs
-    ports:
-      - 3001:3001
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - flowise:/root/.flowise
-    entrypoint: /bin/sh -c "sleep 3; flowise start"
+
+  # # Flowise with sqlite database: flowise-sqlite
+  # flowise-standalone:
+  #   <<: *service-flowise
+  #   profiles:
+  #     - flowise-sqlite
+  #   environment:
+  #     # Database
+  #     - DATABASE_TYPE=sqlite

@@ -2,18 +2,12 @@
 #
 # Services in this file do not have any external dependencies like supabase.
 #
-# Add additional services to the stack by adding them to this file.
-# In general, if a service is published on Docker Hub and is self contained,
-# it should be added to this file.
-#
-# For services that require custom builds, repos, or depend on other services
-# in the stack, create a custom docker-compose.yml file and add it to the
-# COMPOSE_FILES array in start.ts.
+# DO NOT ADD SERVICES to this file. It will be removed in the near future
+# in favor of individual compose files for each service.
 
 volumes:
   open-webui:
   qdrant_storage:
-  flowise:
 
 services:
   open-webui:
@@ -43,20 +37,3 @@ services:
       - 6333:6333
     volumes:
       - qdrant_storage:/qdrant/storage
-
-  flowise:
-    profiles:
-      - flowise
-    image: flowiseai/flowise
-    container_name: flowise
-    restart: unless-stopped
-    environment:
-      # See https://docs.flowiseai.com/configuration/environment-variables
-      - PORT=3001
-    ports:
-      - 3001:3001
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - flowise:/root/.flowise
-    entrypoint: /bin/sh -c "sleep 3; flowise start"

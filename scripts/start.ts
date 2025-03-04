@@ -72,9 +72,10 @@ export const COMPOSE_BUILD_FILES = [
 export const ALL_COMPOSE_FILES = [
   path.join('docker', 'docker-compose.standalone.yml'),
   path.join('docker', 'docker-compose.n8n.yml'),
-  path.join('docker', 'docker-compose.ollama.yml'),
+  path.join('docker', 'docker-compose.flowise.yml'),
   path.join('docker', 'docker-compose.zep.yml'),
   path.join('docker', 'docker-compose.browser-use.yml'),
+  path.join('docker', 'docker-compose.ollama.yml'),
 ]
 
 // Docker compose files for enabled services, includes build files
@@ -87,13 +88,12 @@ export const COMPOSE_FILES = [
   .concat(COMPOSE_BUILD_FILES.map((arr) => arr[0] as string))
   .filter(Boolean) as string[]
 
-// All available profiles for docker-compose.yml
-export const COMPOSE_PROFILES = [
-  isEnabled('n8n') && 'n8n',
-  isEnabled('flowise') && 'flowise',
+// All available profiles for docker/docker-compose.standalone.yml
+// This will likely be refactored in the near future to use separate
+// compose yaml files for each service.
+export const STANDALONE_COMPOSE_PROFILES = [
   isEnabled('openwebui') && 'openwebui',
   isEnabled('qdrant') && 'qdrant',
-  isEnabled('ollama') && getOllamaProfile(),
 ].filter(Boolean) as string[]
 
 const REPO_SERVICES: Record<string, RepoService> = {
@@ -979,7 +979,7 @@ export function getProfilesArgs({
   all?: boolean
   profiles?: string[]
 } = {}): string[] {
-  const profilesList = all ? [`"*"`] : profiles || COMPOSE_PROFILES
+  const profilesList = all ? [`"*"`] : profiles || STANDALONE_COMPOSE_PROFILES
   return profilesList.map((profile) => ['--profile', profile]).flat()
 }
 
