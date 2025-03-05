@@ -141,10 +141,8 @@ deno run init
 # Automatically installs dependencies & docker images
 deno run start
 
-# Stop the services enabled in .env
+# Stop all services
 deno run stop
-# Or Stop all services regardless of ENABLED status
-deno run stop --all
 
 # Update the stack services to the latest versions
 deno run update
@@ -152,12 +150,12 @@ deno run update
 # Restart the services - runs stop & start
 deno run restart
 
+# Import & Export
 # Batch import n8n workflows & credentials from import/n8n
 deno run import:n8n
 # Export n8n templates to shared/backups/n8n
 deno run export:n8n
 
-# Export n8n
 # Reset the stack to the original default state
 # Deletes all data & images and resets docker cache
 deno run reset

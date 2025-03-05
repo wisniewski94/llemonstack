@@ -4,7 +4,7 @@
     "llemonstack": "deno run --allow-read --allow-env --allow-run --allow-write main.ts",
     "init": "deno run --allow-read --allow-env --allow-run --allow-write scripts/init.ts",
     "start": "deno run --allow-read --allow-env --allow-run --allow-write scripts/start.ts",
-    "stop": "deno run --allow-read --allow-env --allow-run --allow-write scripts/stop.ts",
+    "stop": "deno run --allow-read --allow-env --allow-run --allow-write scripts/stop.ts --all",
     "restart": "deno run --allow-read --allow-env --allow-run --allow-write scripts/restart.ts",
     "reset": "deno run --allow-read --allow-env --allow-run --allow-write scripts/reset.ts",
     "update": "deno run --allow-read --allow-env --allow-run --allow-write scripts/update.ts",
