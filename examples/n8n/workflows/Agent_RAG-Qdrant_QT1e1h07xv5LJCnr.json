@@ -1,5 +1,9 @@
 {
-  "name": "Local RAG AI Agent",
+  "createdAt": "2025-03-04T05:07:49.591Z",
+  "updatedAt": "2025-03-04T21:05:21.736Z",
+  "id": "QT1e1h07xv5LJCnr",
+  "name": "Agent: Local AI RAG: Qdrant",
+  "active": false,
   "nodes": [
     {
       "parameters": {},
@@ -7,10 +11,13 @@
       "name": "Postgres Chat Memory",
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.1,
-      "position": [
-        480,
-        340
-      ]
+      "position": [480, 340],
+      "credentials": {
+        "postgres": {
+          "id": "2HkVuJ9xHLgkDxNl",
+          "name": "Postgres account"
+        }
+      }
     },
     {
       "parameters": {
@@ -21,24 +28,30 @@
       "name": "Ollama Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
-      "position": [
-        360,
-        340
-      ]
+      "position": [360, 340],
+      "credentials": {
+        "ollamaApi": {
+          "id": "EQIu0PNDCVgQuoGe",
+          "name": "Ollama account"
+        }
+      }
     },
     {
       "parameters": {
-        "model": "llama3.1:latest",
+        "model": "qwen2.5:7b-instruct-q4_K_M",
         "options": {}
       },
       "id": "d7267e4e-2230-4b1c-b6ee-2e62f1980042",
       "name": "Ollama Model",
       "type": "@n8n/n8n-nodes-langchain.lmOllama",
       "typeVersion": 1,
-      "position": [
-        1400,
-        280
-      ]
+      "position": [1400, 280],
+      "credentials": {
+        "ollamaApi": {
+          "id": "EQIu0PNDCVgQuoGe",
+          "name": "Ollama account"
+        }
+      }
     },
     {
       "parameters": {
@@ -49,10 +62,7 @@
       "name": "Vector Store Tool",
       "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
       "typeVersion": 1,
-      "position": [
-        1180,
-        120
-      ]
+      "position": [1180, 120]
     },
     {
       "parameters": {
@@ -62,10 +72,13 @@
       "name": "Embeddings Ollama",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
       "typeVersion": 1,
-      "position": [
-        1280,
-        380
-      ]
+      "position": [1280, 380],
+      "credentials": {
+        "ollamaApi": {
+          "id": "EQIu0PNDCVgQuoGe",
+          "name": "Ollama account"
+        }
+      }
     },
     {
       "parameters": {
@@ -91,10 +104,7 @@
       "name": "File Created",
       "type": "n8n-nodes-base.googleDriveTrigger",
       "typeVersion": 1,
-      "position": [
-        40,
-        660
-      ]
+      "position": [40, 660]
     },
     {
       "parameters": {
@@ -120,10 +130,7 @@
       "name": "File Updated",
       "type": "n8n-nodes-base.googleDriveTrigger",
       "typeVersion": 1,
-      "position": [
-        40,
-        880
-      ]
+      "position": [40, 880]
     },
     {
       "parameters": {
@@ -149,10 +156,7 @@
       "name": "Set File ID",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        300,
-        660
-      ]
+      "position": [300, 660]
     },
     {
       "parameters": {
@@ -174,10 +178,7 @@
       "name": "Download File",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [
-        740,
-        660
-      ],
+      "position": [740, 660],
       "executeOnce": true
     },
     {
@@ -189,10 +190,7 @@
       "name": "Extract Document Text",
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
-      "position": [
-        980,
-        660
-      ],
+      "position": [980, 660],
       "alwaysOutputData": true
     },
     {
@@ -216,10 +214,7 @@
       "name": "Default Data Loader",
       "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
       "typeVersion": 1,
-      "position": [
-        1300,
-        880
-      ]
+      "position": [1300, 880]
     },
     {
       "parameters": {
@@ -230,10 +225,7 @@
       "name": "Recursive Character Text Splitter",
       "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
       "typeVersion": 1,
-      "position": [
-        1300,
-        1100
-      ]
+      "position": [1300, 1100]
     },
     {
       "parameters": {
@@ -243,10 +235,13 @@
       "name": "Embeddings Ollama1",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
       "typeVersion": 1,
-      "position": [
-        1140,
-        880
-      ]
+      "position": [1140, 880],
+      "credentials": {
+        "ollamaApi": {
+          "id": "EQIu0PNDCVgQuoGe",
+          "name": "Ollama account"
+        }
+      }
     },
     {
       "parameters": {
@@ -258,10 +253,7 @@
       "name": "Sticky Note2",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [
-        0,
-        0
-      ]
+      "position": [0, 0]
     },
     {
       "parameters": {
@@ -274,10 +266,7 @@
       "name": "Sticky Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [
-        980,
-        0
-      ]
+      "position": [980, 0]
     },
     {
       "parameters": {
@@ -290,10 +279,7 @@
       "name": "Sticky Note1",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [
-        0,
-        540
-      ]
+      "position": [0, 540]
     },
     {
       "parameters": {
@@ -303,10 +289,7 @@
       "name": "When chat message received",
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "typeVersion": 1.1,
-      "position": [
-        60,
-        120
-      ],
+      "position": [60, 120],
       "webhookId": "4b3b1838-d6b3-447e-9d79-d0931eddb9f8"
     },
     {
@@ -323,10 +306,13 @@
       "name": "Qdrant Vector Store",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
       "typeVersion": 1,
-      "position": [
-        1000,
-        260
-      ]
+      "position": [1000, 260],
+      "credentials": {
+        "qdrantApi": {
+          "id": "vVhPBjjIJukzpu3I",
+          "name": "QdrantApi account"
+        }
+      }
     },
     {
       "parameters": {
@@ -355,10 +341,7 @@
       "name": "Clear Old Vectors",
       "type": "@n8n/n8n-nodes-langchain.code",
       "typeVersion": 1,
-      "position": [
-        520,
-        660
-      ],
+      "position": [520, 660],
       "alwaysOutputData": false
     },
     {
@@ -376,10 +359,13 @@
       "name": "Qdrant Vector Store Insert",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
       "typeVersion": 1,
-      "position": [
-        1200,
-        660
-      ]
+      "position": [1200, 660],
+      "credentials": {
+        "qdrantApi": {
+          "id": "vVhPBjjIJukzpu3I",
+          "name": "QdrantApi account"
+        }
+      }
     },
     {
       "parameters": {
@@ -389,10 +375,7 @@
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [
-        780,
-        120
-      ]
+      "position": [780, 120]
     },
     {
       "parameters": {
@@ -405,10 +388,7 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [
-        60,
-        300
-      ],
+      "position": [60, 300],
       "webhookId": "4a839da9-b8a2-45f8-bcaf-c484f9a5912d"
     },
     {
@@ -419,10 +399,7 @@
       "name": "AI Agent",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.6,
-      "position": [
-        440,
-        120
-      ]
+      "position": [440, 120]
     },
     {
       "parameters": {
@@ -448,13 +425,9 @@
       "name": "Edit Fields",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [
-        260,
-        120
-      ]
+      "position": [260, 120]
     }
   ],
-  "pinData": {},
   "connections": {
     "Postgres Chat Memory": {
       "ai_memory": [
@@ -666,14 +639,22 @@
       ]
     }
   },
-  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "8c0a5795-c020-496c-9deb-1e78ef19e90e",
+  "staticData": null,
   "meta": {
     "instanceId": "72be5c53d4a6830dda4c8e43ed48a7f6f2a1eb58af0b19ab8e4e31a83eeef9ff"
   },
-  "id": "QT1e1h07xv5LJCnr",
-  "tags": []
+  "pinData": {},
+  "versionId": "4a82a05b-6d70-42d6-85c2-248f1593662d",
+  "triggerCount": 0,
+  "tags": [
+    {
+      "createdAt": "2025-03-04T21:04:04.627Z",
+      "updatedAt": "2025-03-04T21:04:04.627Z",
+      "id": "DLlZ8ewOauMHjTtK",
+      "name": "agent"
+    }
+  ]
 }

@@ -1,5 +1,9 @@
 {
-  "name": "Create Google Doc",
+  "createdAt": "2025-03-04T05:07:50.684Z",
+  "updatedAt": "2025-03-04T21:04:58.925Z",
+  "id": "LYrReDbpmqK3eX2P",
+  "name": "Tool: Create Google Doc",
+  "active": false,
   "nodes": [
     {
       "parameters": {
@@ -26,10 +30,7 @@
       "name": "Google Drive",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [
-        1040,
-        360
-      ],
+      "position": [1040, 360],
       "credentials": {
         "googleDriveOAuth2Api": {
           "id": "cfNochbuJikPwwl2",
@@ -45,10 +46,7 @@
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [
-        1260,
-        360
-      ]
+      "position": [1260, 360]
     },
     {
       "parameters": {
@@ -62,10 +60,7 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [
-        820,
-        360
-      ],
+      "position": [820, 360],
       "webhookId": "d8db9fa3-04fe-43c8-9acf-e1912463477f",
       "credentials": {
         "httpHeaderAuth": {
@@ -75,7 +70,6 @@
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "Google Drive": {
       "main": [
@@ -100,15 +94,23 @@
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "c1f66b1c-c7dc-48ba-9197-6a0e3ac3e8f4",
+  "staticData": null,
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "620f0d7e3114cb344761d7d45a21ef2a32096f91d8696e7057756042e1999e2c"
   },
-  "id": "LYrReDbpmqK3eX2P",
-  "tags": []
+  "pinData": {},
+  "versionId": "f927af79-619d-41ed-8eed-74282b6594ea",
+  "triggerCount": 0,
+  "tags": [
+    {
+      "createdAt": "2025-03-04T21:03:30.839Z",
+      "updatedAt": "2025-03-04T21:03:30.839Z",
+      "id": "axMWVfQXy5mbxCQA",
+      "name": "tool"
+    }
+  ]
 }

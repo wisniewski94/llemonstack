@@ -1,5 +1,9 @@
 {
-  "name": "Summarize Slack Conversation",
+  "createdAt": "2025-03-04T05:07:50.684Z",
+  "updatedAt": "2025-03-04T21:03:52.713Z",
+  "id": "vchuPxsgQU32o0v1",
+  "name": "Tool: Summarize Slack Conversation",
+  "active": false,
   "nodes": [
     {
       "parameters": {
@@ -19,10 +23,8 @@
       "name": "Slack",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.2,
-      "position": [
-        1040,
-        360
-      ],
+      "position": [1040, 360],
+      "webhookId": "b0d7d787-5195-46bb-8bf0-57bb64fe2640",
       "credentials": {
         "slackOAuth2Api": {
           "id": "XtpcBxLD5axuhMm8",
@@ -38,10 +40,7 @@
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [
-        1840,
-        360
-      ]
+      "position": [1840, 360]
     },
     {
       "parameters": {
@@ -58,24 +57,17 @@
       "name": "Aggregate",
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
-      "position": [
-        1260,
-        360
-      ]
+      "position": [1260, 360]
     },
     {
       "parameters": {
-        "model": "gpt-4o-mini",
         "options": {}
       },
       "id": "bf2c887e-bb34-44fc-89ea-fad409db0317",
       "name": "OpenAI Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1,
-      "position": [
-        1480,
-        580
-      ],
+      "position": [1480, 580],
       "credentials": {
         "openAiApi": {
           "id": "JJjD91oisPv9cs01",
@@ -92,10 +84,7 @@
       "name": "Basic LLM Chain",
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.4,
-      "position": [
-        1480,
-        360
-      ]
+      "position": [1480, 360]
     },
     {
       "parameters": {
@@ -108,10 +97,7 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [
-        820,
-        360
-      ],
+      "position": [820, 360],
       "webhookId": "66a5755c-5030-4a6b-9b5e-2e09a21456d6",
       "credentials": {
         "httpHeaderAuth": {
@@ -121,7 +107,6 @@
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "Slack": {
       "main": [
@@ -179,15 +164,23 @@
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "039f8fd7-6a15-4070-81ae-1f2851183c86",
+  "staticData": null,
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "620f0d7e3114cb344761d7d45a21ef2a32096f91d8696e7057756042e1999e2c"
   },
-  "id": "vchuPxsgQU32o0v1",
-  "tags": []
+  "pinData": {},
+  "versionId": "912ccb44-ab30-473a-b43b-457303c328cf",
+  "triggerCount": 0,
+  "tags": [
+    {
+      "createdAt": "2025-03-04T21:03:30.839Z",
+      "updatedAt": "2025-03-04T21:03:30.839Z",
+      "id": "axMWVfQXy5mbxCQA",
+      "name": "tool"
+    }
+  ]
 }

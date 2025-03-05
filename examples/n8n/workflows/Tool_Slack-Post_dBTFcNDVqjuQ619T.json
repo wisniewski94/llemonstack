@@ -1,5 +1,9 @@
 {
-  "name": "Post Message to Slack",
+  "createdAt": "2025-03-04T05:07:50.684Z",
+  "updatedAt": "2025-03-04T21:04:11.518Z",
+  "id": "dBTFcNDVqjuQ619T",
+  "name": "Tool: Post Message to Slack",
+  "active": false,
   "nodes": [
     {
       "parameters": {
@@ -20,10 +24,8 @@
       "name": "Slack",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.2,
-      "position": [
-        1040,
-        360
-      ],
+      "position": [1040, 360],
+      "webhookId": "c1b7bfac-c335-4100-ac86-72384d7863c0",
       "credentials": {
         "slackOAuth2Api": {
           "id": "XtpcBxLD5axuhMm8",
@@ -39,10 +41,7 @@
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [
-        1260,
-        360
-      ]
+      "position": [1260, 360]
     },
     {
       "parameters": {
@@ -56,10 +55,7 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [
-        820,
-        360
-      ],
+      "position": [820, 360],
       "webhookId": "f17f77e5-51dc-4589-8b51-4c8adc23c3c0",
       "credentials": {
         "httpHeaderAuth": {
@@ -69,7 +65,6 @@
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "Slack": {
       "main": [
@@ -94,15 +89,23 @@
       ]
     }
   },
-  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "74bd88b9-5eb7-4a1a-8bc3-be2636a3639c",
+  "staticData": null,
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "620f0d7e3114cb344761d7d45a21ef2a32096f91d8696e7057756042e1999e2c"
   },
-  "id": "dBTFcNDVqjuQ619T",
-  "tags": []
+  "pinData": {},
+  "versionId": "c38ac0d0-443e-4f20-94e2-7b3529fa5999",
+  "triggerCount": 0,
+  "tags": [
+    {
+      "createdAt": "2025-03-04T21:03:30.839Z",
+      "updatedAt": "2025-03-04T21:03:30.839Z",
+      "id": "axMWVfQXy5mbxCQA",
+      "name": "tool"
+    }
+  ]
 }
