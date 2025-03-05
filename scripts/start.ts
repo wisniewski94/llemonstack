@@ -383,7 +383,7 @@ export async function loadEnv(
     silent?: boolean
   } = {},
 ): Promise<Record<string, string>> {
-  let envValues = {}
+  let envValues = {} as Record<string, string>
   silent = silent || DEBUG // Show info messages if DEBUG is true
   if (!reload) {
     !silent && showInfo('Loading .env file')
@@ -399,6 +399,14 @@ export async function loadEnv(
       Deno.env.set(key, value as string)
     }
   }
+
+  //
+  // Add dynamic env vars
+  //
+  // Set OLLAMA_HOST
+  envValues.OLLAMA_HOST = getOllamaHost()
+  reload && Deno.env.set('OLLAMA_HOST', envValues.OLLAMA_HOST)
+
   return envValues
 }
 
@@ -961,20 +969,10 @@ export async function prepareSupabaseEnv(): Promise<void> {
 }
 
 /**
- * Set OLLAMA_HOST env based on ollama profile
- */
-function prepareOllamaEnv(): void {
-  const ollamaProfile = getOllamaProfile()
-  const host = (ollamaProfile === 'ollama-host') ? 'host.docker.internal' : 'ollama'
-  Deno.env.set('OLLAMA_HOST', `${host}:11434`)
-}
-
-/**
  * Call this function before running any other scripts
  */
 export async function prepareEnv({ silent = false }: { silent?: boolean } = {}): Promise<void> {
   !silent && showInfo('Preparing environment...')
-  prepareOllamaEnv()
   await prepareSupabaseEnv()
   !silent && showInfo('✔️ Supabase environment successfully setup')
 }
@@ -997,6 +995,11 @@ export function getProfilesArgs({
 
 export function getOllamaProfile(): OllamaProfile {
   return `ollama-${Deno.env.get('ENABLE_OLLAMA')?.trim() || 'false'}` as OllamaProfile
+}
+
+export function getOllamaHost(): string {
+  const host = (getOllamaProfile() === 'ollama-host') ? 'host.docker.internal' : 'ollama'
+  return `${host}:11434`
 }
 
 async function startBrowserUse(projectName: string): Promise<void> {
