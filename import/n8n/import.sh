@@ -27,6 +27,10 @@ for dir in "${CREDENTIALS_DIR}"/*; do
   fi
 done
 
+# Add a delay of 3 seconds to ensure credentials are imported?
+echo "⏱️  Waiting for 3 seconds..."
+sleep 3
+
 # Import workflows
 echo "⭐ Importing workflows from ${WORKFLOWS_DIR}..."
 n8n import:workflow --separate --input="${WORKFLOWS_DIR}"
