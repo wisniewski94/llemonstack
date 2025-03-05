@@ -17,7 +17,7 @@
   "deno.config": "./deno.jsonc",
   "deno.codeLens.implementations": true,
   "deno.codeLens.referencesAllFunctions": true,
-  "deno.codeLens.references": true,
+  "deno.codeLens.references": false,
   "deno.codeLens.test": true,
   "cSpell.words": [
     "agentic",
