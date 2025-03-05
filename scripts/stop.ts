@@ -14,7 +14,9 @@
 
 import {
   ALL_COMPOSE_FILES,
+  ALL_COMPOSE_SERVICES,
   COMPOSE_FILES,
+  type ComposeService,
   DEFAULT_PROJECT_NAME,
   filterExistingFiles,
   getProfilesArgs,
@@ -97,43 +99,86 @@ async function down(
   }
 }
 
+async function downService(
+  projectName: string,
+  composeFile: string,
+  service: string,
+): Promise<void> {
+  try {
+    await runCommand('docker', {
+      args: [
+        'compose',
+        '-p',
+        projectName,
+        '-f',
+        composeFile,
+        'down',
+        service,
+      ],
+    })
+  } catch (error) {
+    showError(`Error stopping ${service}`, error)
+  }
+}
+
 export async function stop(
   projectName: string,
-  { all = false }: { all?: boolean } = {},
+  { all = false, serviceArg = null }: { all?: boolean; serviceArg?: string | null } = {},
 ): Promise<void> {
-  const stopAll = all || Deno.args.includes('--all')
+  let stopAll = all || Deno.args.includes('--all')
+  const service = serviceArg ?? Deno.args.find((arg) => !arg.startsWith('--'))
+  let composeService: ComposeService | undefined
 
-  await prepareEnv({ silent: false })
+  if (service) {
+    stopAll = false
+    composeService = ALL_COMPOSE_SERVICES.find(([s]) => s === service)
+    if (!composeService) {
+      showError(`Unknown service: ${service}`)
+      showAction('\nAvailable services:')
+      ALL_COMPOSE_SERVICES.forEach(([service]) => {
+        console.log(`- ${service}`)
+      })
+      Deno.exit(1)
+    }
+  }
 
-  if (stopAll) {
+  if (service) {
+    showAction(`Stopping service: ${service}...`)
+  } else if (stopAll) {
     showAction('Stopping all services...')
   } else {
     showAction('Stopping enabled services...')
   }
-  // If stopAll, make sure repos are all available
-  if (stopAll) {
-    try {
-      await setupRepos({ all: true })
-    } catch (error) {
-      showError('Unable to setup repos, docker compose down may fail', error)
-    }
+
+  await prepareEnv({ silent: false })
+
+  // Make sure repos are all available in case any services need them
+  try {
+    await setupRepos({ all: true, pull: false })
+  } catch (error) {
+    showError('Unable to setup repos, docker compose down may fail', error)
   }
 
-  try {
-    const files = stopAll ? ALL_COMPOSE_FILES : COMPOSE_FILES
-    const composeFiles = filterExistingFiles(files)
-    await down(projectName, composeFiles, { all: stopAll })
+  if (service) {
+    await downService(projectName, composeService?.[1] ?? '', service)
+  } else if (stopAll) {
+    await down(projectName, filterExistingFiles(ALL_COMPOSE_FILES), { all: true })
+  } else {
+    await down(projectName, filterExistingFiles(COMPOSE_FILES), { all: false })
+  }
 
-    showAction('Cleaning up networks...')
-    if (stopAll) {
-      await removeAllNetworks(projectName)
-    }
-    await runCommand(`docker network prune -f`)
+  showAction('Cleaning up networks...')
+  if (stopAll) {
+    await removeAllNetworks(projectName)
+  }
+  await runCommand(`docker network prune -f`)
 
+  if (service) {
+    showAction(`Service ${service} stopped`)
+  } else if (stopAll) {
     showAction('All services stopped')
-  } catch (error) {
-    showError(error)
-    Deno.exit(1)
+  } else {
+    showAction('Enabled services stopped')
   }
 }
 

@@ -143,6 +143,9 @@ deno run start
 
 # Stop all services
 deno run stop
+# Stop a specific service
+deno run stop [service]
+# ex: deno run stop n8n
 
 # Update the stack services to the latest versions
 deno run update

@@ -50,7 +50,8 @@ export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config
 // [service name, compose file, auto run]
 // When auto run is true, the service is started automatically if enabled.
 // When auto run is false, the service needs to be started manually.
-export const ALL_COMPOSE_SERVICES = [
+export type ComposeService = [string, string, boolean]
+export const ALL_COMPOSE_SERVICES: ComposeService[] = [
   ['n8n', path.join('docker', 'docker-compose.n8n.yml'), true],
   ['flowise', path.join('docker', 'docker-compose.flowise.yml'), true],
   ['zep', path.join('docker', 'docker-compose.zep.yml'), true],
@@ -58,7 +59,7 @@ export const ALL_COMPOSE_SERVICES = [
   ['qdrant', path.join('docker', 'docker-compose.qdrant.yml'), true],
   ['openwebui', path.join('docker', 'docker-compose.openwebui.yml'), true],
   ['ollama', path.join('docker', 'docker-compose.ollama.yml'), false],
-] as [string, string, boolean][]
+]
 
 // Docker compose files for services with a custom Dockerfile
 export const COMPOSE_BUILD_FILES = [
