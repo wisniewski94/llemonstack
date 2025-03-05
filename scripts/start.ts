@@ -59,7 +59,7 @@ export const ALL_COMPOSE_SERVICES = [
   ['zep', path.join('docker', 'docker-compose.zep.yml'), true],
   ['browser-use', path.join('docker', 'docker-compose.browser-use.yml'), false],
   ['qdrant', path.join('docker', 'docker-compose.qdrant.yml'), true],
-  ['openweb-ui', path.join('docker', 'docker-compose.openweb-ui.yml'), true],
+  ['openwebui', path.join('docker', 'docker-compose.openwebui.yml'), true],
   ['ollama', path.join('docker', 'docker-compose.ollama.yml'), false],
 ] as [string, string, boolean][]
 
