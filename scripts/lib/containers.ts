@@ -1,35 +1,41 @@
 /**
- * Container management functions
+ * Container management library
  *
- * Placeholder for future refactor
+ * WIP: move common lib functions here
  */
+import { getComposeFile, runCommand, RunCommandOutput } from '../start.ts'
 
-// async function isContainerRunning(
-//   projectName: string,
-//   service: string,
-//   { composeFile, silent = true }: { composeFile?: string; silent?: boolean } = {},
-// ): Promise<boolean> {
-//   if (!composeFile) {
-//     composeFile = (await getComposeFile(service)) || undefined
-//   }
-//   if (!composeFile) {
-//     throw new Error(`Compose file not found for ${service}`)
-//   }
-//   const name = (await runCommand('docker', {
-//     args: [
-//       'compose',
-//       '-p',
-//       projectName,
-//       '-f',
-//       composeFile,
-//       'ps',
-//       service,
-//       '--format',
-//       '{{.Names}}', // Only return the name of the container
-//     ],
-//     captureOutput: true,
-//     silent,
-//   })).toString().trim()
-
-//   return !!name
-// }
+export async function runContainerCommand(
+  projectName: string,
+  service: string,
+  cmd: string,
+  { composeFile, args, silent = true, captureOutput = false }: {
+    composeFile?: string
+    args?: Array<string | false>
+    silent?: boolean
+    captureOutput?: boolean
+  } = {},
+): Promise<RunCommandOutput> {
+  if (!composeFile) {
+    composeFile = (await getComposeFile(service)) || undefined
+  }
+  if (!composeFile) {
+    throw new Error(`Compose file not found for ${service}`)
+  }
+  // docker compose exec [OPTIONS] SERVICE COMMAND
+  return await runCommand('docker', {
+    args: [
+      'compose',
+      '-p',
+      projectName,
+      '-f',
+      composeFile,
+      'exec',
+      service,
+      cmd,
+      ...(args || []),
+    ],
+    captureOutput,
+    silent,
+  })
+}

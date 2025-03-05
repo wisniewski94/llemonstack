@@ -152,9 +152,12 @@ deno run update
 # Restart the services - runs stop & start
 deno run restart
 
-# Batch import n8n workflows in the import directory
-deno run import-n8n
+# Batch import n8n workflows & credentials from import/n8n
+deno run import:n8n
+# Export n8n templates to shared/backups/n8n
+deno run export:n8n
 
+# Export n8n
 # Reset the stack to the original default state
 # Deletes all data & images and resets docker cache
 deno run reset
@@ -308,26 +311,62 @@ deno run start
 
 <br />
 
-# Importing n8n Templates
+## Importing & Exporting n8n Templates
 
-To make it easy to experiment with the example n8n workflows, an import
-script is included.
+LLemonStack provides script for easy importing and exporting of
+n8n credentials and workflow templates.
 
-Copy any n8n credentials or workflows into the [import/n8n](import/n8n)
+Any template placed in the [import/n8n](import/n8n) directory will be
+imported.
+
+The import script supports environment variables inside of the n8n
+credentials and workflows templates. The variables are replaced with
+the values from `.env` at the time of import. This makes it easy
+to auto configure templates with the correct settings for your stack.
+
+See [examples/n8n/credentials](examples/n8n/credentials).
+
+To import a template, simply copy it into the [import/n8n](import/n8n)
 directory. Then run the import script.
 
-```bash
-# Start the services and import the templates
-deno run import
+Successfully imported files are then moved to the `import/.imported`
+directory for safe keeping. The archived files include the expanded (replaced)
+environment variables. It's best practice to treat the `import/` directory
+as `/tmp`. Keep backups of anything you added to the import directory to
+preserve the original templates.
 
-# Or skip starting the services and just import
-deno run import --skip-start
-deno run import -S
+### Importing
+
+```bash
+# Import will throw an error if n8n is not already running
+# Start services (if needed)
+deno run start
+
+# Copy files into the import/n8n directory
+# For example...
+cp examples/n8n/credentials/*.json import/n8n/credentials
+
+# Run the import script
+deno run import:n8n
+
+# Credential in import/n8n/credentials will be imported
+# Workflows in import/n8n/workflows will be imported
+
+# After successful import, files are moved to import/.imported
+# for archiving
 ```
 
-Importing overwrites existing credentials or workflows with the same IDs.
-Backup (export) any workflows you've previously imported and modified
-**before** running the import script.
+**IMPORTANT:** Importing overwrites existing credentials or workflows
+with the same IDs. Export the workflows and credentials before importing.
+
+### Exporting & Backing Up n8n Templates
+
+````bash
+deno run export:n8n
+# Exports n8n credentials and workflows to share/backups/n8n
+```
+
+See [n8n documentation](https://docs.n8n.io/hosting/cli-commands/#export-workflows-and-credentials) for more details on importing and exporting.
 
 <br />
 
@@ -356,7 +395,7 @@ rm -rf .repos/supabase
 # Optionally delete the db_config volume
 docker volume rm llemonstack_db-config
 deno run start
-```
+````
 
 ### Network Issues
 

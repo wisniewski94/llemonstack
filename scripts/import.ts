@@ -5,19 +5,19 @@
  * Usage:
  *
  * ```bash
- * deno run import
+ * deno run import:n8n
  *
  * # Skip the prompt to confirm the import
- * deno run import -f
+ * deno run import:n8n -f
  *
- * # Skip starting the services before importing
- * deno run import --skip-start
- * deno run import -s
+ * # Skip archiving after importing
+ * deno run import:n8n --skip-archive
  * ```
  */
 
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
+import { runContainerCommand } from './lib/containers.ts'
 import {
   confirm,
   DEFAULT_PROJECT_NAME,
@@ -27,8 +27,6 @@ import {
   showError,
   showInfo,
   showWarning,
-  start,
-  startService,
 } from './start.ts'
 
 async function resetN8nImportFolder(importDir: string): Promise<void> {
@@ -111,9 +109,8 @@ async function prepareCredentialsImport(): Promise<void> {
 
 async function importToN8n(
   projectName: string,
-  { skipPrompt = false, skipStart = false, archiveAfterImport = true }: {
+  { skipPrompt = false, archiveAfterImport = true }: {
     skipPrompt?: boolean
-    skipStart?: boolean
     archiveAfterImport?: boolean
   } = {},
 ): Promise<void> {
@@ -133,25 +130,29 @@ async function importToN8n(
   }
 
   try {
-    // Only start services if --skip-start is not present
-    if (!skipStart) {
-      await start(projectName)
-    } else {
-      showInfo('Skipping start up of services')
-    }
-
     // Replace all ${var} template in credentials import folder with env vars
     await prepareCredentialsImport()
 
-    // TODO: change import to run a command in existing n8n container.
-    // See versions.ts for an example of running a command in a container.
-    // After switching to cmd, remove the n8n-import service from the docker-compose.yml file.
-
-    // Start the n8n import service
-    // This starts a new n8n container and runs the import/import.sh script in the container
-    await startService(projectName, 'n8n', {
-      profiles: ['n8n-import'],
+    // Import credentials from import/n8n/credentials
+    await runContainerCommand(projectName, 'n8n', 'n8n', {
+      args: [
+        'import:credentials',
+        '--separate',
+        '--input=/import/credentials',
+      ],
     })
+
+    // Import workflows from import/n8n/workflows
+    await runContainerCommand(projectName, 'n8n', 'n8n', {
+      args: [
+        'import:workflow',
+        '--separate',
+        '--input=/import/workflows',
+      ],
+    })
+
+    // TODO: archive BEFORE the import to capture the state before
+    // env vars are replaced. Then delete the converted files after import.
 
     if (archiveAfterImport) {
       // Archive the import folder
@@ -168,21 +169,18 @@ async function importToN8n(
 
 export async function runImport(
   projectName: string,
-  { skipPrompt = false, skipStart = false, archiveAfterImport = true }: {
+  { skipPrompt = false, archiveAfterImport = true }: {
     skipPrompt?: boolean
-    skipStart?: boolean
     archiveAfterImport?: boolean
   } = {},
 ): Promise<void> {
   // Check if -f force flag is present
   skipPrompt = skipPrompt || Deno.args.includes('-f')
-  // Check if --skip-start flag is present
-  skipStart = skipStart || Deno.args.includes('--skip-start') || Deno.args.includes('-s')
   // Check if --skip-archive flag is present
   archiveAfterImport = archiveAfterImport || Deno.args.includes('--skip-archive')
 
   await prepareEnv({ silent: false })
-  await importToN8n(projectName, { skipPrompt, skipStart, archiveAfterImport })
+  await importToN8n(projectName, { skipPrompt, archiveAfterImport })
 }
 
 // Run script if this file is executed directly
