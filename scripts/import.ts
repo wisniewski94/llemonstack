@@ -86,7 +86,9 @@ async function prepareCredentialsImport(): Promise<void> {
   const credentialsDir = path.join(IMPORT_DIR_BASE, 'n8n', 'credentials')
   const credentials = Deno.readDir(credentialsDir)
 
+  // Load env vars from .env file
   const envVars = await loadEnv({ silent: true })
+
   for await (const credential of credentials) {
     const credentialPath = path.join(credentialsDir, credential.name)
     const credentialContent = await Deno.readTextFile(credentialPath)
