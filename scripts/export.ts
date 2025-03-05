@@ -55,6 +55,7 @@ interface ServiceExportCommand {
   hostDir: string // Directory to export to on host
 }
 
+// TODO: replace with runContainerCommand in lib/containers.ts
 /**
  * Execs a command in a running container
  * @param {string} projectName - The name of the project

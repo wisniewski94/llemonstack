@@ -9,6 +9,7 @@
     "reset": "deno run --allow-read --allow-env --allow-run --allow-write scripts/reset.ts",
     "update": "deno run --allow-read --allow-env --allow-run --allow-write scripts/update.ts",
     "import:n8n": "deno run --allow-read --allow-env --allow-run --allow-write scripts/import.ts --skip-start",
+    "export:n8n": "deno run --allow-read --allow-env --allow-run --allow-write scripts/export.ts",
     "versions": "deno run --allow-read --allow-env --allow-run --allow-write scripts/versions.ts"
   },
   "imports": {
