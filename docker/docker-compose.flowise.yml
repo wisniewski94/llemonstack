@@ -2,54 +2,45 @@
 #
 # Flowise can run with a postgres database or a sqlite database.
 # To switch to using sqlite as the default:
-# - uncomment the flowise-standalone
-# - comment out the flowise postgres service
+# - uncomment the sqlite database environment variable
+# - comment out the postgres service
 # - comment out the include section
+# - comment out the depends_on section
 #
 # https://docs.flowiseai.com/configuration/
 
-# n8n requires a postgres database.
-include:
-  - ../.repos/supabase/docker/docker-compose.yml
 
 volumes:
   flowise:
 
-
-# Flowise with postgres database
-x-flowise: &service-flowise
-  image: flowiseai/flowise
-  container_name: flowise
-  restart: unless-stopped
-  environment:
-    # See https://docs.flowiseai.com/configuration/environment-variables
-    - PORT=3001
-    # Credentials, if blank auth is disabled
-    # - FLOWISE_USERNAME=admin
-    # - FLOWISE_PASSWORD=admin
-    # Logging
-    # - DEBUG=true
-    # - LOG_LEVEL=debug # error, info, verbose, debug
-    # - LOG_PATH=/Flowise/packages/server/logs
-  ports:
-    - 3001:3001
-  extra_hosts:
-    - "host.docker.internal:host-gateway"
-  volumes:
-    - flowise:/root/.flowise
-  entrypoint: /bin/sh -c "sleep 3; flowise start"
-
+# n8n requires a postgres database.
+# Comment this ection out if using sqlite database.
+include:
+  - ../.repos/supabase/docker/docker-compose.yml
 
 services:
-  # Flowise with postgres database: default
   flowise:
-    <<: *service-flowise
-    depends_on:
-      db: # From supabase/docker/docker-compose.yml
-        condition: service_healthy
+    image: flowiseai/flowise
+    container_name: flowise
+    restart: unless-stopped
+    ports:
+      - 3001:3001
     environment:
-      # Database
-      - DATABASE_TYPE=postgres # sqlite, postgres, mysql
+      # See https://docs.flowiseai.com/configuration/environment-variables
+      - PORT=3001
+      # Credentials, if blank auth is disabled
+      # - FLOWISE_USERNAME=admin
+      # - FLOWISE_PASSWORD=admin
+      # Logging
+      # - DEBUG=true
+      # - LOG_LEVEL=debug # error, info, verbose, debug
+      # - LOG_PATH=/Flowise/packages/server/logs
+
+      # Database - sqlite
+      # - DATABASE_TYPE=sqlite
+
+      # Database - supabase postgres
+      - DATABASE_TYPE=postgres
       - DATABASE_HOST=db
       - DATABASE_PORT=5432
       - DATABASE_USER=postgres
@@ -57,9 +48,15 @@ services:
       - DATABASE_NAME=postgres
       - DATABASE_SSL=false
 
-  # # Flowise with sqlite database: flowise-sqlite
-  # flowise-standalone:
-  #   <<: *service-flowise
-  #   environment:
-  #     # Database
-  #     - DATABASE_TYPE=sqlite
+    # Supabase postgres database healthcheck
+    # Comment this section out if using sqlite database.
+    depends_on:
+      db: # From supabase/docker/docker/docker-compose.yml
+        condition: service_healthy
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    volumes:
+      - flowise:/root/.flowise
+    entrypoint: /bin/sh -c "sleep 3; flowise start"
