@@ -1105,20 +1105,13 @@ export async function start(projectName: string): Promise<void> {
     showAction('Setting up environment...')
     await prepareEnv({ silent: false })
 
-    // Customize environment variables for the docker compose files
-    const envVars: EnvVars = {}
-    const ollamaProfile = getOllamaProfile()
-    if (ollamaProfile === 'ollama-host') {
-      envVars.OLLAMA_HOST = 'host.docker.internal:11434'
-    }
-
     // Start enabled services
     const enabledServices = ALL_COMPOSE_SERVICES.filter(([service, _, autoRun]) => {
       return isEnabled(service) && autoRun
     }).map(([service]) => service)
     for (const service of enabledServices) {
       showAction(`\nStarting ${service}...`)
-      await startService(projectName, service, { envVars })
+      await startService(projectName, service)
     }
 
     // Special handling for browser-use
@@ -1128,12 +1121,13 @@ export async function start(projectName: string): Promise<void> {
     }
 
     // Special handling for Ollama
+    const ollamaProfile = getOllamaProfile()
     if (ollamaProfile !== 'ollama-false') {
       showAction(`\nStarting Ollama...`)
       if (ollamaProfile === 'ollama-host') {
         showInfo('Using host Ollama, no need to start ollama service')
       } else {
-        await startService(projectName, 'ollama', { profiles: [ollamaProfile], envVars })
+        await startService(projectName, 'ollama', { profiles: [ollamaProfile] })
       }
     }
 
