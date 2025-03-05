@@ -961,10 +961,20 @@ export async function prepareSupabaseEnv(): Promise<void> {
 }
 
 /**
+ * Set OLLAMA_HOST env based on ollama profile
+ */
+function prepareOllamaEnv(): void {
+  const ollamaProfile = getOllamaProfile()
+  const host = (ollamaProfile === 'ollama-host') ? 'host.docker.internal' : 'ollama'
+  Deno.env.set('OLLAMA_HOST', `${host}:11434`)
+}
+
+/**
  * Call this function before running any other scripts
  */
 export async function prepareEnv({ silent = false }: { silent?: boolean } = {}): Promise<void> {
   !silent && showInfo('Preparing environment...')
+  prepareOllamaEnv()
   await prepareSupabaseEnv()
   !silent && showInfo('✔️ Supabase environment successfully setup')
 }
