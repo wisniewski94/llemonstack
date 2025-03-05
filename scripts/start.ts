@@ -33,9 +33,6 @@ export const ENVFILE = path.join(Deno.cwd(), '.env')
 // Project name for docker compose
 export const DEFAULT_PROJECT_NAME = 'llemonstack'
 
-// Enable extra debug logging
-export const DEBUG = Deno.env.get('DEBUG_LLEMONSTACK')?.toLowerCase() === 'true'
-
 // Directory used to git clone repositories: supabase, zep, etc.
 export const REPO_DIR_BASE = '.repos'
 
@@ -116,6 +113,9 @@ const REPO_SERVICES: Record<string, RepoService> = {
  *******************************************************************************/
 
 await loadEnv({ silent: false }) // Load .env file
+
+// Enable extra debug logging
+export const DEBUG = Deno.env.get('DEBUG_LLEMONSTACK')?.toLowerCase() === 'true'
 
 /*******************************************************************************
  * GLOBAL VARIABLES
@@ -384,7 +384,6 @@ export async function loadEnv(
   } = {},
 ): Promise<Record<string, string>> {
   let envValues = {} as Record<string, string>
-  silent = silent || DEBUG // Show info messages if DEBUG is true
   if (!reload) {
     !silent && showInfo('Loading .env file')
     envValues = await loadDotEnv({ envPath, export: true })
