@@ -2,7 +2,7 @@
   "createdAt": "2025-03-04T05:07:49.591Z",
   "updatedAt": "2025-03-04T21:05:21.736Z",
   "id": "QT1e1h07xv5LJCnr",
-  "name": "Agent: Local AI RAG: Qdrant",
+  "name": "Agent: Local AI RAG: Ollama & Qdrant",
   "active": false,
   "nodes": [
     {
