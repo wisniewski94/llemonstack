@@ -48,6 +48,19 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 <br />
 
+## Postgres Notes
+
+```bash
+# POSTGRES_PASSWORD is likely NOT in the current env, get it from .env files
+source .env
+# Or manually replace it in the below connection string
+
+# Connect directly from host to llemonstack postgres running in docker
+psql 'postgres://postgres.llemonstack:${POSTGRES_PASSWORD}@localhost:5432/postgres'
+```
+
+<br />
+
 ## Resources
 
 **Additional Services:**
