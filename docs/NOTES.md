@@ -4,12 +4,11 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 ## TODO
 
-- [ ] Switch n8n import to run command in existing container
-- [ ] Rebuild n8n examples with pre-configured credentials
+- [ ] Record video demo
+- [ ] Create new n8n workflow templates?
 
-  - after init, the first import of examples should just work and
-    have all the local host passwords properly set
-
+- [x] Switch n8n import to run command in existing container
+- [x] Rebuild n8n examples with pre-configured credentials
 - [x] Update the import script to replace all ${var} style strings with env
       vars before running import in the container
 - [x] Switch to separate compose yml files & simplify process for adding new service
@@ -49,6 +48,19 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 <br />
 
+## Postgres Notes
+
+```bash
+# POSTGRES_PASSWORD is likely NOT in the current env, get it from .env files
+source .env
+# Or manually replace it in the below connection string
+
+# Connect directly from host to llemonstack postgres running in docker
+psql 'postgres://postgres.llemonstack:${POSTGRES_PASSWORD}@localhost:5432/postgres'
+```
+
+<br />
+
 ## Resources
 
 **Additional Services:**
@@ -63,6 +75,12 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 - https://github.com/automatisch/automatisch
 - https://github.com/airbytehq/airbyte
 - https://github.com/triggerdotdev/trigger.dev
+
+- [open-health](https://github.com/OpenHealthForAll/open-health)
+
+Not AI, but potentially useful:
+
+- [Leaflet](https://github.com/hyperlink-academy/leaflet) - easily create and shae text docs
 
 **Airtable alternatives:**
 
@@ -121,6 +139,8 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 [Google Credentials Setup](https://pipedream.com/apps/gmail/#getting-started) -
 Pipedream doc
 
+- [Weaviate article, Agentic RAG](https://weaviate.io/blog/what-is-agentic-rag)
+
 <br />
 
 ## WIP Solutions
@@ -134,6 +154,13 @@ consolidate all the docker logs?
 
 - https://github.com/rsyslog/rsyslog
 - https://betterstack.com/community/guides/logging/docker-compose-logs/
+
+<br />
+
+## Related Misc
+
+- [NVidia Container Toolkit](https://github.com/NVIDIA/nvidia-container-toolkit)
+  for running docker containers with gpu access
 
 <br />
 
