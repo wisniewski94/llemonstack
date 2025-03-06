@@ -59,6 +59,20 @@ source .env
 psql 'postgres://postgres.llemonstack:${POSTGRES_PASSWORD}@localhost:5432/postgres'
 ```
 
+For postgres admin tools like TablePlus running on the host...
+
+```bash
+host: localhost
+port: 5432
+user: postgres.llemonstack
+pass: ${POSTGRES_PASSWORD}
+database: postgres
+ssl: PREFERRED, or DISABLED
+```
+
+Note the `llemonstack` tenant ID in the user name. This needs to match the POOLER_TENANT_ID
+in `docker/supabase.env` file.
+
 <br />
 
 ## Resources
