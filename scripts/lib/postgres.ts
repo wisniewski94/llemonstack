@@ -37,10 +37,10 @@
 ```
 */
 
-import { Client } from 'https://deno.land/x/postgres/mod.ts'
+import { Client } from 'https://deno.land/x/postgres@v0.19.3/mod.ts'
 import { generateSecretKey } from './jwt.ts'
 
-interface SchemaCredentials {
+export interface SchemaCredentials {
   username: string
   password: string
   schema: string
@@ -51,7 +51,7 @@ interface SchemaCredentials {
   port: number
 }
 
-interface ConnectionConfig {
+export interface ConnectionConfig {
   hostname?: string
   port?: number
   database?: string
