@@ -256,7 +256,8 @@
       "jsr:@cliffy/command@^1.0.0-rc.7",
       "jsr:@cliffy/prompt@1.0.0-rc.7",
       "jsr:@cliffy/table@^1.0.0-rc.7",
-      "jsr:@cross/jwt@~0.5.1"
+      "jsr:@cross/jwt@~0.5.1",
+      "jsr:@cross/postgres@~0.19.3"
     ]
   }
 }

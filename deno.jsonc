@@ -10,7 +10,9 @@
     "update": "deno run --allow-read --allow-env --allow-run --allow-write scripts/update.ts",
     "import:n8n": "deno run --allow-read --allow-env --allow-run --allow-write scripts/import.ts --skip-start",
     "export:n8n": "deno run --allow-read --allow-env --allow-run --allow-write scripts/export.ts",
-    "versions": "deno run --allow-read --allow-env --allow-run --allow-write scripts/versions.ts"
+    "versions": "deno run --allow-read --allow-env --allow-run --allow-write scripts/versions.ts",
+    "schema:create": "deno run --allow-read --allow-env --allow-run --allow-net scripts/schema.ts create",
+    "schema:remove": "deno run --allow-read --allow-env --allow-run --allow-net scripts/schema.ts remove"
   },
   "imports": {
     "@cliffy/ansi": "jsr:@cliffy/ansi@^1.0.0-rc.7",
