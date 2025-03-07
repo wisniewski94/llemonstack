@@ -37,10 +37,11 @@ async function run() {
     showInfo(`Database: ${credentials.database}`)
   } else if (action === 'remove') {
     showAction(`Removing schema for ${service}...`)
-    await removeServiceSchema(service, {
+    const { schema, username } = await removeServiceSchema(service, {
       password,
     })
-    showInfo(`Schema removed for ${service}`)
+    showInfo(`Schema ${schema} removed for ${service}`)
+    showInfo(`Username: ${username}`)
   }
 }
 

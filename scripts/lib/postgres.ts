@@ -42,7 +42,7 @@ import { generateSecretKey } from './jwt.ts'
 
 export interface SchemaCredentials {
   username: string
-  password: string
+  password?: string
   schema: string
   tenant?: string
   database: string
@@ -201,7 +201,7 @@ export async function createServiceSchema(
 export async function removeServiceSchema(
   serviceName: string,
   pgConfig: ConnectionConfig,
-): Promise<boolean> {
+): Promise<SchemaCredentials> {
   const { schema, username } = getUserSchema(serviceName)
 
   const clientConfig = getConnectionConfig(pgConfig)
@@ -235,6 +235,14 @@ export async function removeServiceSchema(
       await client.queryArray(`REVOKE ALL PRIVILEGES ON SCHEMA public FROM ${username}`)
       await client.queryArray(`REVOKE ALL PRIVILEGES ON SCHEMA extensions FROM ${username}`)
 
+      await client.queryArray(
+        `REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA extensions FROM ${username}`,
+      )
+      await client.queryArray(`REVOKE USAGE ON SCHEMA extensions FROM ${username}`)
+
+      await client.queryArray(`REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM ${username}`)
+      await client.queryArray(`REVOKE USAGE ON SCHEMA public FROM ${username}`)
+
       // Then drop the role
       await client.queryArray(`DROP ROLE ${username}`)
     }
@@ -242,7 +250,14 @@ export async function removeServiceSchema(
     // Commit transaction
     await client.queryArray('COMMIT')
 
-    return true
+    return {
+      username,
+      schema,
+      tenant: clientConfig.tenant,
+      database: clientConfig.database,
+      hostname: clientConfig.hostname,
+      port: clientConfig.port,
+    }
   } catch (error) {
     // Rollback transaction on error
     await client.queryArray('ROLLBACK')
