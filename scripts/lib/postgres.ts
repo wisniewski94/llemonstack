@@ -44,7 +44,6 @@ export interface SchemaCredentials {
   username: string
   password: string
   schema: string
-  user: string
   tenant?: string
   database: string
   hostname: string
@@ -73,6 +72,14 @@ function normalizeServiceName(serviceName: string) {
   return serviceName
     .toLowerCase()
     .replace(/[^a-z0-9_]/g, '_')
+}
+
+function getUserSchema(serviceName: string) {
+  const normalizedServiceName = normalizeServiceName(serviceName)
+  return {
+    schema: `service_${normalizedServiceName}`,
+    username: normalizedServiceName,
+  }
 }
 
 function getConnectionConfig({
@@ -104,15 +111,12 @@ export async function createServiceSchema(
   serviceName: string,
   pgConfig: ConnectionConfig,
 ): Promise<SchemaCredentials> {
-  const normalizedServiceName = normalizeServiceName(serviceName)
-
-  // Create new schema and user names from service name
-  const schemaName = `${normalizedServiceName}_schema`
-  const newUserName = `${normalizedServiceName}_user`
-  const newPassword = generateSecretKey(16)
+  const { schema, username } = getUserSchema(serviceName)
+  const password = generateSecretKey(22)
 
   const clientConfig = getConnectionConfig(pgConfig)
   const client = new Client(clientConfig)
+
   try {
     // Connect to the database
     await client.connect()
@@ -121,45 +125,58 @@ export async function createServiceSchema(
     await client.queryArray('BEGIN')
 
     // Create schema
-    await client.queryArray(`CREATE SCHEMA IF NOT EXISTS ${schemaName}`)
+    await client.queryArray(`CREATE SCHEMA IF NOT EXISTS ${schema}`)
 
     // Check if user already exists - if so, we'll reset password
     const userExists = await client.queryArray(
-      `SELECT 1 FROM pg_roles WHERE rolname = '${newUserName}'`,
+      `SELECT 1 FROM pg_roles WHERE rolname = '${username}'`,
     )
 
     if (userExists.rows.length > 0) {
       // Reset password for existing user
-      await client.queryArray(`ALTER ROLE ${newUserName} WITH LOGIN PASSWORD '${newPassword}'`)
+      await client.queryArray(`ALTER ROLE ${username} WITH LOGIN PASSWORD '${password}'`)
     } else {
       // Create new user
-      await client.queryArray(`CREATE ROLE ${newUserName} WITH LOGIN PASSWORD '${newPassword}'`)
+      await client.queryArray(`CREATE ROLE ${username} WITH LOGIN PASSWORD '${password}'`)
     }
 
-    // Grant permissions
-    await client.queryArray(`GRANT USAGE ON SCHEMA ${schemaName} TO ${newUserName}`)
-    await client.queryArray(`GRANT CREATE ON SCHEMA ${schemaName} TO ${newUserName}`)
+    // Grant permissions on new schema
+    await client.queryArray(`GRANT USAGE ON SCHEMA ${schema} TO ${username}`)
+    await client.queryArray(`GRANT CREATE ON SCHEMA ${schema} TO ${username}`)
+
+    // Grant permissions on extensions schema
+    // Run `\dx` in psql to see available extensions
+    await client.queryArray(`GRANT USAGE ON SCHEMA extensions TO ${username}`)
+    await client.queryArray(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA extensions TO ${username}`)
+
+    // Grant permissions on public schema where vector is installed
+    await client.queryArray(`GRANT USAGE ON SCHEMA public TO ${username}`)
+    await client.queryArray(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO ${username}`)
+
     await client.queryArray(
-      `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaName} GRANT ALL ON TABLES TO ${newUserName}`,
+      `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema} GRANT ALL ON TABLES TO ${username}`,
     )
     await client.queryArray(
-      `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaName} GRANT ALL ON SEQUENCES TO ${newUserName}`,
+      `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema} GRANT ALL ON SEQUENCES TO ${username}`,
     )
     await client.queryArray(
-      `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schemaName} GRANT ALL ON FUNCTIONS TO ${newUserName}`,
+      `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema} GRANT ALL ON FUNCTIONS TO ${username}`,
     )
 
     // Set search path for user
-    await client.queryArray(`ALTER ROLE ${newUserName} SET search_path TO ${schemaName}`)
+    // extensions is needed to access uuid-ossp
+    // public is needed to access vector
+    await client.queryArray(
+      `ALTER ROLE ${username} SET search_path TO ${schema},extensions,public`,
+    )
 
     // Commit transaction
     await client.queryArray('COMMIT')
 
     return {
-      user: newUserName,
-      username: `${newUserName}.${clientConfig.tenant}`,
-      password: newPassword,
-      schema: schemaName,
+      username,
+      password,
+      schema,
       tenant: clientConfig.tenant,
       database: clientConfig.database,
       hostname: clientConfig.hostname,
@@ -184,10 +201,8 @@ export async function createServiceSchema(
 export async function removeServiceSchema(
   serviceName: string,
   pgConfig: ConnectionConfig,
-): Promise<{ success: boolean; message: string }> {
-  const normalizedServiceName = normalizeServiceName(serviceName)
-  const schemaName = `${normalizedServiceName}_schema`
-  const userName = `${normalizedServiceName}_user`
+): Promise<boolean> {
+  const { schema, username } = getUserSchema(serviceName)
 
   const clientConfig = getConnectionConfig(pgConfig)
   const client = new Client(clientConfig)
@@ -201,54 +216,37 @@ export async function removeServiceSchema(
 
     // Check if schema exists
     const schemaExists = await client.queryArray(
-      `SELECT 1 FROM information_schema.schemata WHERE schema_name = '${schemaName}'`,
-    )
-
-    // Check if user exists
-    const userExists = await client.queryArray(
-      `SELECT 1 FROM pg_roles WHERE rolname = '${userName}'`,
+      `SELECT 1 FROM information_schema.schemata WHERE schema_name = '${schema}'`,
     )
 
     // Drop schema if it exists (will cascade to all objects in the schema)
     if (schemaExists.rows.length > 0) {
-      await client.queryArray(`DROP SCHEMA ${schemaName} CASCADE`)
+      await client.queryArray(`DROP SCHEMA ${schema} CASCADE`)
     }
+
+    // Check if user exists
+    const userExists = await client.queryArray(
+      `SELECT 1 FROM pg_roles WHERE rolname = '${username}'`,
+    )
 
     // Drop user if it exists
     if (userExists.rows.length > 0) {
-      // First revoke all privileges
-      await client.queryArray(
-        `REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM ${userName}`,
-      )
-      await client.queryArray(
-        `REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM ${userName}`,
-      )
-      await client.queryArray(
-        `REVOKE ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public FROM ${userName}`,
-      )
-      await client.queryArray(`REVOKE ALL PRIVILEGES ON SCHEMA public FROM ${userName}`)
+      // Revoke permissions from schemas (cleanup, although CASCADE on schema drop handles most of this)
+      await client.queryArray(`REVOKE ALL PRIVILEGES ON SCHEMA public FROM ${username}`)
+      await client.queryArray(`REVOKE ALL PRIVILEGES ON SCHEMA extensions FROM ${username}`)
 
       // Then drop the role
-      await client.queryArray(`DROP ROLE ${userName}`)
+      await client.queryArray(`DROP ROLE ${username}`)
     }
 
     // Commit transaction
     await client.queryArray('COMMIT')
 
-    return {
-      success: true,
-      message: `Successfully removed schema "${schemaName}" and user "${userName}"`,
-    }
+    return true
   } catch (error) {
     // Rollback transaction on error
     await client.queryArray('ROLLBACK')
-
-    return {
-      success: false,
-      message: `Failed to remove schema and user: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    }
+    throw error
   } finally {
     // Close client connection
     await client.end()
