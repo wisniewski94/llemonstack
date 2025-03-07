@@ -1150,6 +1150,7 @@ export async function start(projectName: string): Promise<void> {
     isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
     isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:3000')
     isEnabled('flowise') && showService('Flowise', 'http://localhost:3001')
+    isEnabled('zep') && showService('Neo4j', 'http://localhost:7474/browser/')
     isEnabled('qdrant') &&
       showService('Qdrant', 'http://localhost:6333/dashboard')
     if (isEnabled('browser-use')) {
@@ -1176,7 +1177,11 @@ export async function start(projectName: string): Promise<void> {
         'http://kong:8000/functions/v1/hello',
       )
     }
-    isEnabled('zep') && showService('Zep', 'http://zep:8010')
+    if (isEnabled('zep')) {
+      showService('Zep', 'http://zep:8010')
+      showService('Zep Graphiti', 'http://zep:8003')
+      showService('Neo4j', 'bolt://neo4j:7687')
+    }
     isEnabled('qdrant') && showService('Qdrant', 'http://qdrant:6333')
 
     // Show any user actions
