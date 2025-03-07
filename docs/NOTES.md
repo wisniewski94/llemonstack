@@ -5,7 +5,6 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 ## TODO
 
 - [ ] Record video demo
-- [ ] Create new n8n workflow templates?
 
 - [x] Switch n8n import to run command in existing container
 - [x] Rebuild n8n examples with pre-configured credentials
@@ -49,6 +48,31 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 <br />
 
 ## Postgres Notes
+
+LLemonStack includes scripts for creating custom postgres schemas.
+These are effectively separate databases inside of postgres and can be used
+to keep services isolated. At the very least, it prevents services from
+clobbering other services tables. For services like n8n that support table
+prefixes, custom schemas are not needed. For flowise, zep, etc. creating a custom
+schema is advised.
+
+```bash
+# Create a new schema for flowise
+deno run schema:create flowise
+# Outputs a postgres username and password
+# Use the username and password in docker/docker-compose.flowise.yml
+# BEFORE starting up flowise for the first time.
+
+# Flowise will then create it's tables inside of the service_flowise schema.
+```
+
+The custom schema flows really need to be added to the init script.
+Until then, the schema stuff is more for experimentation with new services in the
+the stack.
+
+It's probably best to completely refactor the scripts to separate services into
+modules that manage their own init, start, stop, etc. Basically modules that can
+auto configure themselves when their init functions are called.
 
 ```bash
 # POSTGRES_PASSWORD is likely NOT in the current env, get it from .env files
