@@ -17,12 +17,12 @@ http:
   max_request_size: 5242880
 
 postgres:
-  user: postgres
+  user: {{ Env "POSTGRES_USER" }}
   password: {{ Env "POSTGRES_PASSWORD" }}
   host: db
   port: 5432
   database: postgres
-  schema_name: public
+  schema_name: {{ Env "POSTGRES_SCHEMA" }}
   read_timeout: 30
   write_timeout: 30
   max_open_connections: 10
