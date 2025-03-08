@@ -3,6 +3,19 @@
 # Zep is a memory layer for AI agents. It can be used as a memory store for
 # n8n workflows.
 #
+# As of March 2025, zepai/zep:latest (1.0.2) is not compatible with n8n.
+# This is due to the zep-js package which is a dependency of langchain inside of n8n.
+# Once the zep-js package is updated, n8n will work again. In the meantime,
+# either downgrade zep to 0.27.2 below or use the Cloud version of Zep in n8n.
+#
+# To check the version of zep-js, run the following in the n8n container:
+#
+# ```
+# # Run in n8n container
+# jq -r '.version' /usr/local/lib/node_modules/n8n/node_modules/@getzep/zep-js/package.json
+# ```
+#
+#
 # https://www.getzep.com/
 #
 # Zep service health check:
@@ -17,7 +30,10 @@ volumes:
 
 services:
   zep:
-    image: zepai/zep:latest
+    image: zepai/zep:latest # 1.0.2 as of March 2025
+    # TODO: downgrade to 0.27.2 until langchain and n8n update their zep-js package version
+    # https://github.com/getzep/zep/pkgs/container/zep
+    # image: ghcr.io/getzep/zep:latest # 0.27.2 as of March 2025
     container_name: zep
     ports:
       - "8010:8000"

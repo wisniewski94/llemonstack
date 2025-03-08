@@ -51,6 +51,17 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 <br />
 
+## Running Commands on Service Containers
+
+```bash
+# Exec a shell in a container, eg. in n8n
+# Uses the default user for the container, in this case node
+docker exec -it n8n sh
+
+# Start a shell as root
+docker exec -it --user root n8n sh
+```
+
 ## Zep Notes
 
 n8n uses LangChain under the hood. There's also two variations of the zep SDK, one for the
@@ -62,14 +73,31 @@ The latest version of the zep Docker image only provides the api/v2 endpoint.
 
 There are a few possibilities to solve this:
 
-1. Rolled back the zep docker image version to <1.0.0
+1. Rolled back the zep docker image version to <=0.27.2
+
+- See https://github.com/n8n-io/n8n/blob/master/packages/%40n8n/nodes-langchain/nodes/memory/MemoryZep/MemoryZep.node.ts
+
 2. Wait for LangChain and n8n to update to the latest zep-js SDK
-3. Toggle on the "cloud" option in n8n zep node and use a reverse proxy
+3. [DOES NOT WORK] Toggle on the "cloud" option in n8n zep node and use a reverse proxy
+
+See https://community.n8n.io/t/new-zep-ce-support-in-n8n/61542/2
 
 For the reverse proxy, `api.getzep.com` needs to be mapped to the `zep` docker container.
 Also, the ports need to be mapped 443 -> 8010.
 
 Traefik is a possible solution for the reverse proxy.
+
+Reverse proxy was successfully configured using nginx to forward traffic to zep:8000.
+Authentication worked but the zep server returned a 404 for `/api/v2/collections` endpoint.
+It appears the CE version has a different API schema.
+
+```
+# Zep server log
+2025-03-08T08:21:07.426Z INFO HTTP Request Served {"proto": "HTTP/1.0", "method": "GET", "path": "/api/v2/collections", "request_id": "", "duration": "122.166µs", "status": 404, "response_size": 19}
+```
+
+The ONLY solution at this time is to roll back the zep container image to 0.27 until
+langchain and n8n update their zep-js package version.
 
 <br />
 
