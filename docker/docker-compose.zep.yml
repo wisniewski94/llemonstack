@@ -15,20 +15,10 @@ include:
 volumes:
   neo4j_data:
 
-# Connect zep to the main network defined in docker-compose.yml.
-# Change the name of the network if the project name is different.
-# Network needs to be the same as the one used in docker-compose.yml.
-networks:
-  localnet:
-    name: llemonstack_default
-    external: true
-
 services:
   zep:
     image: zepai/zep:latest
     container_name: zep
-    networks:
-      - localnet
     ports:
       - "8010:8000"
     volumes:
@@ -54,8 +44,6 @@ services:
   graphiti:
     image: zepai/graphiti:0.3
     container_name: graphiti
-    networks:
-      - localnet
     ports:
       - "8003:8003"
     healthcheck:
@@ -83,8 +71,6 @@ services:
   neo4j:
     image: neo4j:5.22.0
     container_name: neo4j
-    networks:
-      - localnet
     healthcheck:
       test: wget http://localhost:7687 || exit 1
       interval: 1s
