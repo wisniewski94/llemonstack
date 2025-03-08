@@ -1,0 +1,4 @@
+# Supabase
+
+include:
+  - ../.repos/supabase/docker/docker-compose.yml

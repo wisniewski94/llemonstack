@@ -52,6 +52,7 @@ export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config
 // When auto run is false, the service needs to be started manually.
 export type ComposeService = [string, string, boolean]
 export const ALL_COMPOSE_SERVICES: ComposeService[] = [
+  ['supabase', path.join('docker', 'docker-compose.supabase.yml'), true],
   ['n8n', path.join('docker', 'docker-compose.n8n.yml'), true],
   ['flowise', path.join('docker', 'docker-compose.flowise.yml'), true],
   ['zep', path.join('docker', 'docker-compose.zep.yml'), true],

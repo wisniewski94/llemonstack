@@ -10,7 +10,7 @@
 
 # Zep requires a postgres database.
 include:
-  - ../.repos/supabase/docker/docker-compose.yml
+  - docker-compose.supabase.yml
 
 volumes:
   neo4j_data:

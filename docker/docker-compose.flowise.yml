@@ -13,10 +13,10 @@
 volumes:
   flowise:
 
-# n8n requires a postgres database.
+# Flowise requires a postgres database.
 # Comment this ection out if using sqlite database.
 include:
-  - ../.repos/supabase/docker/docker-compose.yml
+  - docker-compose.supabase.yml
 
 services:
   flowise:
