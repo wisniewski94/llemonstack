@@ -51,6 +51,28 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 <br />
 
+## Zep Notes
+
+n8n uses LangChain under the hood. There's also two variations of the zep SDK, one for the
+OSS CE version and one for Cloud. LangChain has an older version of the OSS zep version that
+uses `api/v1` endpoing instead of `api/v2`. This means when the "cloud" toggle is off in
+the zep n8n node, n8n's zep SDK will be trying to connect to zep via the v1 api.
+
+The latest version of the zep Docker image only provides the api/v2 endpoint.
+
+There are a few possibilities to solve this:
+
+1. Rolled back the zep docker image version to <1.0.0
+2. Wait for LangChain and n8n to update to the latest zep-js SDK
+3. Toggle on the "cloud" option in n8n zep node and use a reverse proxy
+
+For the reverse proxy, `api.getzep.com` needs to be mapped to the `zep` docker container.
+Also, the ports need to be mapped 443 -> 8010.
+
+Traefik is a possible solution for the reverse proxy.
+
+<br />
+
 ## Postgres Notes
 
 LLemonStack includes scripts for creating custom postgres schemas.
