@@ -113,7 +113,6 @@ async function downService(
         '-f',
         composeFile,
         'down',
-        service,
       ],
     })
   } catch (error) {
