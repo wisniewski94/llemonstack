@@ -1179,7 +1179,7 @@ export async function start(projectName: string): Promise<void> {
       )
     }
     if (isEnabled('zep')) {
-      showService('Zep', 'http://zep:8010')
+      showService('Zep', 'http://zep:8000')
       showService('Zep Graphiti', 'http://graphiti:8003')
       showService('Neo4j', 'bolt://neo4j:7687')
     }
