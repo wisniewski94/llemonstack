@@ -6,6 +6,10 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 - [ ] Record video demo
 
+- [ ] Add [LiteLLM](https://github.com/BerriAI/litellm) as a service to proxy OpenAI compatible requests
+
+  - configure zep to use LiteLLM proxy
+
 - [x] Switch n8n import to run command in existing container
 - [x] Rebuild n8n examples with pre-configured credentials
 - [x] Update the import script to replace all ${var} style strings with env
@@ -143,6 +147,11 @@ Not AI, but potentially useful:
 - https://www.futuretools.io/
 - https://www.futurepedia.io/ai-tools
 - https://www.aimaster.me/blog/tags/automation
+
+**MCP:**
+
+- https://github.com/modelcontextprotocol/inspector
+- https://github.com/wild-card-ai/agents-json
 
 **Prompts:**
 
