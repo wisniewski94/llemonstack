@@ -78,6 +78,7 @@ There are a few possibilities to solve this:
 - See https://github.com/n8n-io/n8n/blob/master/packages/%40n8n/nodes-langchain/nodes/memory/MemoryZep/MemoryZep.node.ts
 
 2. Wait for LangChain and n8n to update to the latest zep-js SDK
+
 3. [DOES NOT WORK] Toggle on the "cloud" option in n8n zep node and use a reverse proxy
 
 See https://community.n8n.io/t/new-zep-ce-support-in-n8n/61542/2

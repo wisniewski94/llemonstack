@@ -8,6 +8,8 @@
 # Once the zep-js package is updated, n8n will work again. In the meantime,
 # either downgrade zep to 0.27.2 below or use the Cloud version of Zep in n8n.
 #
+# See https://github.com/n8n-io/n8n/issues/11120
+#
 # To check the version of zep-js, run the following in the n8n container:
 #
 # ```
@@ -15,6 +17,12 @@
 # jq -r '.version' /usr/local/lib/node_modules/n8n/node_modules/@getzep/zep-js/package.json
 # ```
 #
+# The eirlier 0.27.2 version of zep does not use a temporal graph database. Graphiti was added
+# in September 2024 with Neo4j under the hood to provide better accuracy for chats.
+# See https://blog.getzep.com/announcing-zep-community-edition/
+#
+# Until n8n updates their zep-js package version, the best solution is to use the Cloud version
+# of zep with n8n and the local CE version of zep for custom code.
 #
 # https://www.getzep.com/
 #
@@ -33,6 +41,7 @@ services:
     image: zepai/zep:latest # 1.0.2 as of March 2025
     # TODO: downgrade to 0.27.2 until langchain and n8n update their zep-js package version
     # https://github.com/getzep/zep/pkgs/container/zep
+    # https://github.com/getzep/zep/blob/v0.27.2/docker-compose.yaml
     # image: ghcr.io/getzep/zep:latest # 0.27.2 as of March 2025
     container_name: zep
     ports:
