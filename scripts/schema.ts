@@ -20,8 +20,9 @@ async function run() {
 
   // Make sure it's a valid service
   if (!ALL_COMPOSE_SERVICES.find(([s]) => s === service)) {
-    showError(`Unknown service: ${service}`)
-    Deno.exit(1)
+    if (!confirm(`Unknown service: ${service}. Continue?`)) {
+      Deno.exit(1)
+    }
   }
 
   const password = Deno.env.get('POSTGRES_PASSWORD') ?? ''
