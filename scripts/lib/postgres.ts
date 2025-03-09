@@ -141,18 +141,16 @@ export async function createServiceSchema(
     }
 
     // Grant permissions on new schema
-    await client.queryArray(`GRANT USAGE ON SCHEMA ${schema} TO ${username}`)
-    await client.queryArray(`GRANT CREATE ON SCHEMA ${schema} TO ${username}`)
+    await client.queryArray(`GRANT ALL PRIVILEGES ON SCHEMA ${schema} TO ${username}`)
+    await client.queryArray(`GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA ${schema} TO ${username}`)
+    await client.queryArray(
+      `GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA ${schema} TO ${username}`,
+    )
+    await client.queryArray(
+      `GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA ${schema} TO ${username}`,
+    )
 
-    // Grant permissions on extensions schema
-    // Run `\dx` in psql to see available extensions
-    await client.queryArray(`GRANT USAGE ON SCHEMA extensions TO ${username}`)
-    await client.queryArray(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA extensions TO ${username}`)
-
-    // Grant permissions on public schema where vector is installed
-    await client.queryArray(`GRANT USAGE ON SCHEMA public TO ${username}`)
-    await client.queryArray(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO ${username}`)
-
+    // Set default privileges for future objects in the schema
     await client.queryArray(
       `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema} GRANT ALL ON TABLES TO ${username}`,
     )
@@ -162,6 +160,15 @@ export async function createServiceSchema(
     await client.queryArray(
       `ALTER DEFAULT PRIVILEGES IN SCHEMA ${schema} GRANT ALL ON FUNCTIONS TO ${username}`,
     )
+
+    // Grant permissions on extensions schema
+    // Run `\dx` in psql to see available extensions
+    await client.queryArray(`GRANT USAGE ON SCHEMA extensions TO ${username}`)
+    await client.queryArray(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA extensions TO ${username}`)
+
+    // Grant permissions on public schema where vector is installed
+    await client.queryArray(`GRANT USAGE ON SCHEMA public TO ${username}`)
+    await client.queryArray(`GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO ${username}`)
 
     // Set search path for user
     // extensions is needed to access uuid functions
