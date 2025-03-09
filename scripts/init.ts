@@ -135,6 +135,9 @@ async function setSecurityKeys(envVars: typeof ENVVARS): Promise<Record<string, 
   // Neo4j
   envVars.NEO4J_PASSWORD = await generateSecretKey(32)
 
+  // LiteLLM
+  envVars.LITELLM_MASTER_KEY = `sk-${await generateSecretKey(32)}`
+
   return envVars
 }
 
@@ -199,6 +202,8 @@ const ENVVARS = {
   OPENAI_API_KEY: '',
   // Ollama
   ENABLE_OLLAMA: 'cpu',
+  // LiteLLM
+  LITELLM_MASTER_KEY: '',
 }
 
 export async function init(
