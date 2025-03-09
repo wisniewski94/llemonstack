@@ -1166,7 +1166,7 @@ export async function start(projectName: string): Promise<void> {
     showHeader('API Endpoints')
     showInfo('Use these endpoints to configure services in the stack, e.g. n8n credentials.')
     showInfo(
-      'You can also test the endpoints on your host maching by replacing the domain with `localhost`',
+      'You can also test the endpoints on your host matching by replacing the domain with `localhost`',
     )
     isEnabled('n8n') && showService('n8n', 'http://n8n:5678')
     isEnabled('flowise') && showService('Flowise', 'http://flowise:3001')

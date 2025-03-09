@@ -39,7 +39,9 @@
     "openwebui",
     "pgvector",
     "pooler",
+    "psql",
     "qdrant",
+    "rolname",
     "skyvern",
     "supabase",
     "TARGETPLATFORM"
@@ -56,6 +58,8 @@
     "test/**",
     "docker/**",
     "import/**",
-    "shared/**"
+    "shared/**",
+    "tmp/**",
+    "docs/NOTES.md"
   ]
 }

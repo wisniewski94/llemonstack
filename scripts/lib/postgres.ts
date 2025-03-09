@@ -164,7 +164,7 @@ export async function createServiceSchema(
     )
 
     // Set search path for user
-    // extensions is needed to access uuid-ossp
+    // extensions is needed to access uuid functions
     // public is needed to access vector
     await client.queryArray(
       `ALTER ROLE ${username} SET search_path TO ${schema},extensions,public`,
