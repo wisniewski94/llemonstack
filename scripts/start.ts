@@ -60,6 +60,7 @@ export const ALL_COMPOSE_SERVICES: ComposeService[] = [
   ['qdrant', path.join('docker', 'docker-compose.qdrant.yml'), true],
   ['openwebui', path.join('docker', 'docker-compose.openwebui.yml'), true],
   ['ollama', path.join('docker', 'docker-compose.ollama.yml'), false],
+  ['prometheus', path.join('docker', 'docker-compose.prometheus.yml'), true],
 ]
 
 // Docker compose files for services with a custom Dockerfile
