@@ -15,8 +15,8 @@ volumes:
 
 # Flowise requires a postgres database.
 # Comment this ection out if using sqlite database.
-include:
-  - docker-compose.supabase.yml
+# include:
+#   - docker-compose.supabase.yml
 
 services:
   flowise:

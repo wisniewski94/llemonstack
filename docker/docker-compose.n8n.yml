@@ -6,8 +6,8 @@
 # https://docs.n8n.io/hosting/configuration/task-runners/
 
 # n8n requires a postgres database.
-include:
-  - docker-compose.supabase.yml
+# include:
+#   - docker-compose.supabase.yml
 
 volumes:
   n8n_storage:

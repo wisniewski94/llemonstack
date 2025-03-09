@@ -30,8 +30,8 @@
 # http://localhost:8010/healthz
 
 # Zep requires a postgres database.
-include:
-  - docker-compose.supabase.yml
+# include:
+#   - docker-compose.supabase.yml
 
 volumes:
   neo4j_data:
