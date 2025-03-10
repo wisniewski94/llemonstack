@@ -28,6 +28,19 @@ litellm_settings:
   num_retries: 5
   request_timeout: 600
   telemetry: False
+
+  # CACHE SETTINGS
+  # See https://docs.litellm.ai/docs/proxy/caching
+  cache: ${ENABLE_REDIS} # Enable cache if redis is enabled
+  cache_params:
+    type: redis
+    namespace: "litellm.caching.caching"
+    ttl: 3600 # cached on redis for 3600 seconds (1 hour)
+    host: "redis"  # The host address for the redis cache
+    port: 6379  # The port number for the redis cache
+    password: ${REDIS_PASSWORD}  # The password for the redis cache
+
+
   # context_window_fallbacks: [{"gpt-3.5-turbo": ["gpt-3.5-turbo-large"]}]
   # default_team_settings:
   #   - team_id: team-1
@@ -237,9 +250,3 @@ model_list:
 #         accept: application/json
 #       forward_headers: True
 
-
-# environment_variables:
-  # settings for using redis caching
-  # REDIS_HOST: redis-16337.c322.us-east-1-2.ec2.cloud.redislabs.com
-  # REDIS_PORT: "16337"
-  # REDIS_PASSWORD:

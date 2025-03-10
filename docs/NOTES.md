@@ -17,7 +17,7 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 - [ ] Configure LiteLLM to log to Langfuse
 - [ ] Configure LiteLLM to cache qdrant embeddings
       https://docs.litellm.ai/docs/proxy/config_settings
-- [ ] Configure LiteLLM to use redis as cache layer
+- [x] Configure LiteLLM to use redis as cache layer
 - [ ] Configure n8n templates to use LiteLLM
 - [ ] Configure zep to use LiteLLM proxy
 - [ ] Configure OpenWeb UI to use LiteLLM proxy
