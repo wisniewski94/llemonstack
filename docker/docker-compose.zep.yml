@@ -32,18 +32,16 @@
 # Zep requires a postgres database.
 # include:
 #   - docker-compose.supabase.yml
-
-volumes:
-  neo4j_data:
+#   - docker-compose.neo4j.yml
 
 services:
   zep:
+    container_name: zep
     image: zepai/zep:latest # 1.0.2 as of March 2025
     # TODO: downgrade to 0.27.2 until langchain and n8n update their zep-js package version
     # https://github.com/getzep/zep/pkgs/container/zep
     # https://github.com/getzep/zep/blob/v0.27.2/docker-compose.yaml
     # image: ghcr.io/getzep/zep:latest # 0.27.2 as of March 2025
-    container_name: zep
     ports:
       - "8010:8000"
     volumes:
@@ -64,12 +62,14 @@ services:
       graphiti:
         condition: service_healthy
       # Only uncomment db depencency health check if include is uncommented above
-      # db: # From supabase/docker/docker-compose.yml
+      # db: # From docker-compose.supabase.yml
+      #   condition: service_healthy
+      # neo4j: # From docker-compose.neo4j.yml
       #   condition: service_healthy
 
   graphiti:
+    container_name: zep-graphiti
     image: zepai/graphiti:0.3
-    container_name: graphiti
     ports:
       - "8003:8003"
     healthcheck:
@@ -93,21 +93,3 @@ services:
       - NEO4J_USER=${NEO4J_USER}
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - PORT=8003
-
-  neo4j:
-    image: neo4j:5.22.0
-    container_name: neo4j
-    healthcheck:
-      test: wget http://localhost:7687 || exit 1
-      interval: 1s
-      timeout: 10s
-      retries: 20
-      start_period: 3s
-    ports:
-      - "7474:7474" # HTTP
-      - "7687:7687" # Bolt
-    volumes:
-      - neo4j_data:/data
-    environment:
-      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
-

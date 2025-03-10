@@ -55,6 +55,7 @@ export const ALL_COMPOSE_SERVICES: ComposeService[] = [
   ['supabase', path.join('docker', 'docker-compose.supabase.yml'), true],
   ['n8n', path.join('docker', 'docker-compose.n8n.yml'), true],
   ['flowise', path.join('docker', 'docker-compose.flowise.yml'), true],
+  ['neo4j', path.join('docker', 'docker-compose.neo4j.yml'), true],
   ['zep', path.join('docker', 'docker-compose.zep.yml'), true],
   ['browser-use', path.join('docker', 'docker-compose.browser-use.yml'), false], // Uses a custom start function
   ['qdrant', path.join('docker', 'docker-compose.qdrant.yml'), true],
