@@ -1181,6 +1181,13 @@ export async function start(projectName: string): Promise<void> {
         Deno.env.get('LITELLM_UI_PASSWORD') || '',
       )
     }
+    if (isEnabled('langfuse')) {
+      showService('Langfuse', 'http://localhost:3005/')
+      showCredentials(
+        Deno.env.get('LANGFUSE_INIT_USER_EMAIL') || '',
+        Deno.env.get('LANGFUSE_INIT_USER_PASSWORD') || '',
+      )
+    }
 
     //
     // API ENDPOINTS
