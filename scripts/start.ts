@@ -1199,7 +1199,7 @@ export async function start(projectName: string): Promise<void> {
       showCredentials(null, Deno.env.get('BROWSER_USE_VNC_PASSWORD') || null)
     }
     if (isEnabled('litellm')) {
-      showService('LiteLLM', 'http://localhost:4444/ui/')
+      showService('LiteLLM', 'http://localhost:3004/ui/')
       showCredentials(
         Deno.env.get('LITELLM_UI_USERNAME') || '',
         Deno.env.get('LITELLM_UI_PASSWORD') || '',

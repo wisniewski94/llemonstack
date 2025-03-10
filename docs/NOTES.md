@@ -6,11 +6,13 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 - [ ] Record video demo
 
-- [ ] Add langfuse UI url to start output
-- [ ] Add LiteLLM UI url to start output
+- [x] Add langfuse UI url to start output
+- [x] Add LiteLLM UI url to start output
 - [ ] Add LiteLLM API url to start output
+- [ ] Modify init to auto gen LiteLLM virtual key
+      https://docs.litellm.ai/docs/proxy/virtual_keys
 
-- [ ] Configure LiteLLM to set UI_USERNAME and pass from .env
+- [x] Configure LiteLLM to set UI_USERNAME and pass from .env
 - [ ] Configure LiteLLM to use supabase for request logs:
       https://docs.litellm.ai/docs/observability/supabase_integration
 

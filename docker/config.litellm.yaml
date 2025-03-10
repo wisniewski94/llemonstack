@@ -11,11 +11,12 @@
 
 litellm_settings:
   # LOGGING SETTINGS
-  # Verbose logs; set to False in production
-  set_verbose: True
   # Log raw request and response to logging provider
-  # See https://docs.litellm.ai/docs/observability/raw_request_response
+  # See:
+  # - https://docs.litellm.ai/docs/observability/raw_request_response
+  # - https://docs.litellm.ai/docs/proxy/debugging
   log_raw_request_response: True
+  # json_logs: True
 
   # Drop unsupported params from request; set to False in production
   # Global setting, can be overridden in model_list per model
@@ -40,14 +41,16 @@ litellm_settings:
     port: 6379  # The port number for the redis cache
     password: ${REDIS_PASSWORD}  # The password for the redis cache
 
+  # Default observability settings
+  # success_callback: ["langfuse"]
+  # failure_callback: ["langfuse"]
+  # langfuse_public_key: os.environ/LANGFUSE_PUBLIC_KEY
+  # langfuse_secret: os.environ/LANGFUSE_SECRET_KEY
+  # langfuse_host: http://langfuse:3030
 
-  # context_window_fallbacks: [{"gpt-3.5-turbo": ["gpt-3.5-turbo-large"]}]
+  # Team settings
   # default_team_settings:
-  #   - team_id: team-1
-  #     success_callback: ["langfuse"]
-  #     failure_callback: ["langfuse"]
-  #     langfuse_public_key: os.environ/LANGFUSE_PROJECT1_PUBLIC # Project 1
-  #     langfuse_secret: os.environ/LANGFUSE_PROJECT1_SECRET # Project 1
+  #   - team_id: local-team
   #   - team_id: team-2
   #     success_callback: ["langfuse"]
   #     failure_callback: ["langfuse"]
@@ -55,16 +58,23 @@ litellm_settings:
   #     langfuse_secret: os.environ/LANGFUSE_PROJECT2_SECRET # Project 2
   #     langfuse_host: https://us.cloud.langfuse.com
 
+  # context_window_fallbacks: [{"gpt-3.5-turbo": ["gpt-3.5-turbo-large"]}]
+
 general_settings:
-  # [OPTIONAL] Use to enforce auth on proxy. See - https://docs.litellm.ai/docs/proxy/virtual_keys
+  # Enforce auth on proxy
+  # See https://docs.litellm.ai/docs/proxy/virtual_keys
   master_key: os.environ/LITELLM_MASTER_KEY
+
   store_model_in_db: True
   proxy_budget_rescheduler_min_time: 60
   proxy_budget_rescheduler_max_time: 64
   proxy_batch_write_at: 1
   database_connection_pool_limit: 10
-  # [OPTIONAL] use for token-based auth to proxy
   database_url: os.environ/DATABASE_URL
+
+  # Disable default team, when true user cannot create personal keys
+  # Set to trun until this bug is fixed: https://github.com/BerriAI/litellm/issues/8240
+  default_team_disabled: true
 
 model_list:
   # Provider specific wildcard routing
