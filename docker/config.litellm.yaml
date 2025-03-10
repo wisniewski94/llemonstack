@@ -17,6 +17,7 @@ litellm_settings:
   # - https://docs.litellm.ai/docs/proxy/debugging
   log_raw_request_response: True
   # json_logs: True
+  # set_verbose: True
 
   # Drop unsupported params from request; set to False in production
   # Global setting, can be overridden in model_list per model
@@ -32,14 +33,14 @@ litellm_settings:
 
   # CACHE SETTINGS
   # See https://docs.litellm.ai/docs/proxy/caching
-  cache: ${ENABLE_REDIS} # Enable cache if redis is enabled
-  cache_params:
-    type: redis
-    namespace: "litellm.caching.caching"
-    ttl: 3600 # cached on redis for 3600 seconds (1 hour)
-    host: "redis"  # The host address for the redis cache
-    port: 6379  # The port number for the redis cache
-    password: ${REDIS_PASSWORD}  # The password for the redis cache
+  # cache: ${ENABLE_REDIS} # Enable cache if redis is enabled
+  # cache_params:
+  #   type: redis
+  #   namespace: "litellm.caching.caching"
+  #   ttl: 3600 # cached on redis for 3600 seconds (1 hour)
+  #   host: "redis"  # The host address for the redis cache
+  #   port: 6379  # The port number for the redis cache
+  #   password: ${REDIS_PASSWORD}  # The password for the redis cache
 
   # Default observability settings
   # success_callback: ["langfuse"]
@@ -73,23 +74,22 @@ general_settings:
   database_url: os.environ/DATABASE_URL
 
   # Disable default team, when true user cannot create personal keys
-  # Set to trun until this bug is fixed: https://github.com/BerriAI/litellm/issues/8240
-  default_team_disabled: true
+  # default_team_disabled: true
 
 model_list:
   # Provider specific wildcard routing
-  - model_name: "openai/*"
-    litellm_params:
-      model: "openai/*"
-      api_key: os.environ/OPENAI_API_KEY
-  - model_name: "anthropic/*"
-    litellm_params:
-      model: "anthropic/*"
-      api_key: os.environ/ANTHROPIC_API_KEY
-  - model_name: "groq/*"
-    litellm_params:
-      model: "groq/*"
-      api_key: os.environ/GROQ_API_KEY
+  # - model_name: "openai/*"
+  #   litellm_params:
+  #     model: "openai/*"
+  #     api_key: os.environ/OPENAI_API_KEY
+  # - model_name: "anthropic/*"
+  #   litellm_params:
+  #     model: "anthropic/*"
+  #     api_key: os.environ/ANTHROPIC_API_KEY
+  # - model_name: "groq/*"
+  #   litellm_params:
+  #     model: "groq/*"
+  #     api_key: os.environ/GROQ_API_KEY
   # - model_name: "bedrock/*"
   #   litellm_params:
   #     model: "bedrock/*"
