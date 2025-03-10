@@ -9,7 +9,7 @@ Open WebUI. This allows you to chat with your N8N workflows via the
 Open WebUI interface.
 
 To install this function in Open WebUI...
-1. Open browser to http://localhost:3000/
+1. Open browser to http://localhost:8080/
 2. Go to Workspace -> Functions -> Add Function
 3. Give the script a name + description
 4. Paste in the below code
@@ -17,11 +17,13 @@ To install this function in Open WebUI...
 This function is also [published here on Open WebUI's site](https://openwebui.com/f/coleam/n8n_pipe/).
 """
 
-from typing import Optional, Callable, Awaitable
-from pydantic import BaseModel, Field
 # import os
 import time
+from typing import Awaitable, Callable, Optional
+
 import requests
+from pydantic import BaseModel, Field
+
 
 def extract_event_info(event_emitter) -> tuple[Optional[str], Optional[str]]:
     if not event_emitter or not event_emitter.__closure__:
@@ -32,6 +34,7 @@ def extract_event_info(event_emitter) -> tuple[Optional[str], Optional[str]]:
             message_id = request_info.get("message_id")
             return chat_id, message_id
     return None, None
+
 
 class Pipe:
     class Valves(BaseModel):
