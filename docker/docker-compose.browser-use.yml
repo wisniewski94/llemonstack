@@ -1,10 +1,10 @@
 services:
   browser-use-webui:
+    container_name: browser-use-webui
     platform: ${TARGETPLATFORM:-linux/amd64}
     extends:
       file: ../.repos/browser-use-web-ui/docker-compose.yml
       service: browser-use-webui
-    container_name: browser-use-webui
     environment:
       # BROWSER_USE_* specific environment variables
       - CHROME_PERSISTENT_SESSION=${BROWSER_USE_CHROME_PERSISTENT_SESSION:-true}
@@ -24,4 +24,3 @@ services:
       - ANONYMIZED_TELEMETRY=false
       # See additional configuration in the extended docker compose file
       # ../.repos/browser-use-web-ui/docker-compose.yml
-

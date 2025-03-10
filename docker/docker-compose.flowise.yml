@@ -19,8 +19,8 @@ volumes:
 
 services:
   flowise:
-    image: flowiseai/flowise
     container_name: flowise
+    image: flowiseai/flowise
     restart: unless-stopped
     ports:
       - 3001:3001
@@ -51,7 +51,7 @@ services:
     # Comment this section out if using sqlite database.
     # Only uncomment depencency health check if include is uncommented above
     # depends_on:
-    #   db: # From supabase/docker/docker/docker-compose.yml
+    #   db: # From docker-compose.supabase.yml
     #     condition: service_healthy
 
     extra_hosts:
@@ -59,4 +59,5 @@ services:
 
     volumes:
       - flowise:/root/.flowise
+
     entrypoint: /bin/sh -c "sleep 3; flowise start"

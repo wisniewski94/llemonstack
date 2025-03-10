@@ -9,9 +9,13 @@
 #   - docker-compose.clickhouse.yml
 #   - docker-compose.redis.yml
 
+volumes:
+  langfuse_minio_data:
+    driver: local
+
 services:
   langfuse-worker:
-    container_name: langfuse-worker
+    container_name: langfuse
     image: langfuse/langfuse-worker:3
     restart: always
     # depends_on: &langfuse-depends-on
@@ -108,7 +112,3 @@ services:
       timeout: 5s
       retries: 5
       start_period: 1s
-
-volumes:
-  langfuse_minio_data:
-    driver: local

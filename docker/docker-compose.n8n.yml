@@ -19,7 +19,7 @@ x-n8n: &service-n8n
 
   # Only uncomment depencency health check if include is uncommented above
   # depends_on:
-  #   db: # From supabase/docker/docker-compose.yml
+  #   db: # From docker-compose.supabase.yml
   #     condition: service_healthy
 
   environment:

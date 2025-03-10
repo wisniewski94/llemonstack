@@ -4,6 +4,7 @@
 
 volumes:
   open-webui:
+    driver: local
 
 services:
   open-webui:

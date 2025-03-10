@@ -14,9 +14,6 @@
 
 services:
   litellm:
-    # extends:
-    #   file: ../.repos/litellm/docker-compose.yml
-    #   service: litellm
     container_name: litellm
     image: ghcr.io/berriai/litellm:main-stable
     volumes:
@@ -36,6 +33,9 @@ services:
       ANTHROPIC_API_KEY: ${LITELLM_ANTHROPIC_API_KEY:-}
       GROQ_API_KEY: ${LITELLM_GROQ_API_KEY:-}
 
-    # Load local .env file
-    # env_file:
-    #   - .env
+    # Only uncomment depends_on if include is uncommented above
+    # depends_on:
+    #   prometheus: # From docker-compose.prometheus.yml
+    #     condition: service_healthy
+    #   db: # From docker-compose.supabase.yml
+    #     condition: service_healthy
