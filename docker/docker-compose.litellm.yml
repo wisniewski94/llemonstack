@@ -30,7 +30,9 @@ services:
     environment:
         DATABASE_URL: "postgresql://${LITELLM_POSTGRES_USER}:${LITELLM_POSTGRES_PASSWORD}@db:5432/${LITELLM_POSTGRES_DB}?schema=${LITELLM_POSTGRES_SCHEMA}"
         STORE_MODEL_IN_DB: "True" # allows adding models to proxy via UI
-        MASTER_KEY: ${LITELLM_MASTER_KEY} # Key used by services to access litellm proxy
+        LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY} # Key used by services to access litellm proxy
+        UI_USERNAME: ${LITELLM_UI_USERNAME:-admin}
+        UI_PASSWORD: ${LITELLM_UI_PASSWORD:-admin}
         OPENAI_API_KEY: ${LITELLM_OPENAI_API_KEY}
         ANTHROPIC_API_KEY: ${LITELLM_ANTHROPIC_API_KEY}
         GROQ_API_KEY: ${LITELLM_GROQ_API_KEY}

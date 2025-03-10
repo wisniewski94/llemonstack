@@ -137,6 +137,7 @@ async function setSecurityKeys(envVars: typeof ENVVARS): Promise<Record<string, 
 
   // LiteLLM
   envVars.LITELLM_MASTER_KEY = `sk-${await generateSecretKey(32)}`
+  envVars.LITELLM_UI_PASSWORD = await generateSecretKey(16)
 
   return envVars
 }
@@ -204,6 +205,7 @@ const ENVVARS = {
   ENABLE_OLLAMA: 'cpu',
   // LiteLLM
   LITELLM_MASTER_KEY: '',
+  LITELLM_UI_PASSWORD: '',
 }
 
 export async function init(

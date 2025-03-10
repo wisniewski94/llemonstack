@@ -6,10 +6,23 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 - [ ] Record video demo
 
-- [ ] Add [LiteLLM](https://github.com/BerriAI/litellm) as a service to proxy OpenAI compatible requests
+- [ ] Configure LiteLLM to set UI_USERNAME and pass from .env
+- [ ] Configure LiteLLM to use supabase for request logs:
+      https://docs.litellm.ai/docs/observability/supabase_integration
+- [ ] Add Langfuse to the stack, default enabled if litellm is enabled
+- [ ] Add lunary to the stack, alternative to langfuse, requires custom docker build
+      https://github.com/lunary-ai/lunary
+- [ ] Configure LiteLLM to log to Langfuse
+- [ ] Configure LiteLLM to cache qdrant embeddings
+      https://docs.litellm.ai/docs/proxy/config_settings
+- [ ] Add Redis to the stack
+- [ ] Configure LiteLLM to use redis as cache layer
+- [ ] Configure n8n templates to use LiteLLM
+- [ ] Configure zep to use LiteLLM proxy
+- [ ] Configure OpenWeb UI to use LiteLLM proxy
+      https://docs.litellm.ai/docs/tutorials/openweb_ui
 
-  - configure zep to use LiteLLM proxy
-
+- [x] Add LiteLLM to use as LLM proxy for all services
 - [x] Switch n8n import to run command in existing container
 - [x] Rebuild n8n examples with pre-configured credentials
 - [x] Update the import script to replace all ${var} style strings with env
@@ -170,6 +183,9 @@ in `docker/supabase.env` file.
 - https://github.com/triggerdotdev/trigger.dev
 
 - [open-health](https://github.com/OpenHealthForAll/open-health)
+
+- [verifai](https://github.com/nikolamilosevic86/verifAI) - for detecting
+  hallucinations in document based RAG, specifically biomed
 
 Not AI, but potentially useful:
 
