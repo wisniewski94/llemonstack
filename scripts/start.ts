@@ -61,10 +61,10 @@ export const ALL_COMPOSE_SERVICES: ComposeService[] = [
   ['openwebui', path.join('docker', 'docker-compose.openwebui.yml'), true],
   ['ollama', path.join('docker', 'docker-compose.ollama.yml'), false], // Uses a custom start function
   ['prometheus', path.join('docker', 'docker-compose.prometheus.yml'), true],
-  ['litellm', path.join('docker', 'docker-compose.litellm.yml'), true],
   ['redis', path.join('docker', 'docker-compose.redis.yml'), true],
   ['clickhouse', path.join('docker', 'docker-compose.clickhouse.yml'), true],
   ['langfuse', path.join('docker', 'docker-compose.langfuse.yml'), true],
+  ['litellm', path.join('docker', 'docker-compose.litellm.yml'), true],
 ]
 
 // Docker compose files for services with a custom Dockerfile
@@ -1173,6 +1173,13 @@ export async function start(projectName: string): Promise<void> {
         'http://0.0.0.0:6080/vnc.html?host=0.0.0.0&port=6080',
       )
       showCredentials(null, Deno.env.get('BROWSER_USE_VNC_PASSWORD') || null)
+    }
+    if (isEnabled('litellm')) {
+      showService('LiteLLM', 'http://localhost:4444/ui/')
+      showCredentials(
+        Deno.env.get('LITELLM_UI_USERNAME') || '',
+        Deno.env.get('LITELLM_UI_PASSWORD') || '',
+      )
     }
 
     //
