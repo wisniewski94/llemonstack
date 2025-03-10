@@ -1145,17 +1145,24 @@ export async function start(projectName: string): Promise<void> {
 
     showAction('\nAll services started successfully!')
 
+    //
+    // SERVICE DASHBOARDS
+    //
     showHeader('Service Dashboards')
     if (supabaseStarted) {
-      showService('Supabase', 'http://localhost:8000')
-      showCredentials(
-        Deno.env.get('SUPABASE_DASHBOARD_USERNAME') || '',
-        Deno.env.get('SUPABASE_DASHBOARD_PASSWORD') || '',
-      )
+      const supabaseUsername = Deno.env.get('SUPABASE_DASHBOARD_USERNAME') || ''
+      const supabasePassword = Deno.env.get('SUPABASE_DASHBOARD_PASSWORD') || ''
+      showService('Supabase', `http://${supabaseUsername}:${supabasePassword}@localhost:8000`)
     }
     isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
-    isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:3000')
-    isEnabled('flowise') && showService('Flowise', 'http://localhost:3001')
+    isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:8080')
+    if (isEnabled('flowise')) {
+      showService('Flowise', 'http://localhost:3001')
+      showCredentials(
+        Deno.env.get('FLOWISE_USERNAME') || '',
+        Deno.env.get('FLOWISE_PASSWORD') || '',
+      )
+    }
     isEnabled('zep') && showService('Neo4j', 'http://localhost:7474/browser/')
     isEnabled('qdrant') &&
       showService('Qdrant', 'http://localhost:6333/dashboard')
@@ -1168,6 +1175,9 @@ export async function start(projectName: string): Promise<void> {
       showCredentials(null, Deno.env.get('BROWSER_USE_VNC_PASSWORD') || null)
     }
 
+    //
+    // API ENDPOINTS
+    //
     showHeader('API Endpoints')
     showInfo('Use these endpoints to configure services in the stack, e.g. n8n credentials.')
     showInfo(

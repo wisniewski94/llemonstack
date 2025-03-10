@@ -9,7 +9,6 @@
 #
 # https://docs.flowiseai.com/configuration/
 
-
 volumes:
   flowise:
 
@@ -29,8 +28,8 @@ services:
       # See https://docs.flowiseai.com/configuration/environment-variables
       - PORT=3001
       # Credentials, if blank auth is disabled
-      # - FLOWISE_USERNAME=admin
-      # - FLOWISE_PASSWORD=admin
+      - FLOWISE_USERNAME=${FLOWISE_USERNAME:-}
+      - FLOWISE_PASSWORD=${FLOWISE_PASSWORD:-}
       # Logging
       # - DEBUG=true
       # - LOG_LEVEL=debug # error, info, verbose, debug

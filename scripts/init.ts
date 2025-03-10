@@ -132,6 +132,9 @@ async function setSecurityKeys(envVars: typeof ENVVARS): Promise<Record<string, 
   // Zep
   envVars.ZEP_API_SECRET = await generateSecretKey(20)
 
+  // Flowise
+  envVars.FLOWISE_PASSWORD = await generateSecretKey(22)
+
   // Neo4j
   envVars.NEO4J_PASSWORD = await generateSecretKey(32)
 
@@ -206,6 +209,8 @@ const ENVVARS = {
   // N8N
   N8N_ENCRYPTION_KEY: '',
   N8N_USER_MANAGEMENT_JWT_SECRET: '',
+  // Flowise
+  FLOWISE_PASSWORD: '',
   // Zep
   ZEP_API_SECRET: '',
   // Neo4j
