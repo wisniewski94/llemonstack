@@ -22,6 +22,9 @@ import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
 import * as yaml from 'jsr:@std/yaml'
 
+// Immediately load .env file
+await loadEnv({ silent: false })
+
 const isArm64 = getArch().includes('arm64')
 export const VERSION = '0.1.0'
 
@@ -119,8 +122,6 @@ const REPO_SERVICES: Record<string, RepoService> = {
 /*******************************************************************************
  * GLOBAL SETUP
  *******************************************************************************/
-
-await loadEnv({ silent: false }) // Load .env file
 
 // Enable extra debug logging
 export const DEBUG = Deno.env.get('DEBUG_LLEMONSTACK')?.toLowerCase() === 'true'
