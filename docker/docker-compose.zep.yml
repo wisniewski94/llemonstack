@@ -84,12 +84,18 @@ services:
       timeout: 5s
       retries: 3
     environment:
+      # See https://help.getzep.com/ce/quickstart
+      # Set OPENAI_BASE_URL to use LiteLLM or other LLM providers
+      - OPENAI_BASE_URL=${ZEP_OPENAI_BASE_URL:-https://api.openai.com/v1}
       - OPENAI_API_KEY=${ZEP_OPENAI_API_KEY}
       - MODEL_NAME=${ZEP_MODEL_NAME}
+
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=${NEO4J_USER}
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+
       - PORT=8003
+
     # Uncomment depends_on if include is uncommented above
     # depends_on:
     #   neo4j:
