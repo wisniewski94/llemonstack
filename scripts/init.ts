@@ -139,6 +139,20 @@ async function setSecurityKeys(envVars: typeof ENVVARS): Promise<Record<string, 
   envVars.LITELLM_MASTER_KEY = `sk-${await generateSecretKey(32)}`
   envVars.LITELLM_UI_PASSWORD = await generateSecretKey(16)
 
+  // Langfuse
+  envVars.LANGFUSE_SALT = await generateSecretKey(32)
+  envVars.LANGFUSE_ENCRYPTION_KEY = await generateSecretKey(64)
+  envVars.LANGFUSE_NEXTAUTH_SECRET = await generateSecretKey(32)
+  envVars.LANGFUSE_INIT_PROJECT_PUBLIC_KEY = await generateSecretKey(32)
+  envVars.LANGFUSE_INIT_PROJECT_SECRET_KEY = await generateSecretKey(32)
+  envVars.LANGFUSE_INIT_USER_PASSWORD = await generateSecretKey(22)
+  // Minio
+  envVars.MINIO_ROOT_PASSWORD = await generateSecretKey(22)
+  // Clickhouse
+  envVars.CLICKHOUSE_PASSWORD = await generateSecretKey(22)
+  // Redis
+  envVars.REDIS_PASSWORD = await generateSecretKey(22)
+
   return envVars
 }
 
@@ -206,6 +220,19 @@ const ENVVARS = {
   // LiteLLM
   LITELLM_MASTER_KEY: '',
   LITELLM_UI_PASSWORD: '',
+  // Langfuse
+  LANGFUSE_SALT: '', // 32
+  LANGFUSE_ENCRYPTION_KEY: '', // 64
+  LANGFUSE_NEXTAUTH_SECRET: '', // 32
+  LANGFUSE_INIT_PROJECT_PUBLIC_KEY: '',
+  LANGFUSE_INIT_PROJECT_SECRET_KEY: '',
+  LANGFUSE_INIT_USER_PASSWORD: '',
+  // Minio
+  MINIO_ROOT_PASSWORD: '',
+  // Clickhouse
+  CLICKHOUSE_PASSWORD: '',
+  // Redis
+  REDIS_PASSWORD: '',
 }
 
 export async function init(

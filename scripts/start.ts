@@ -56,12 +56,15 @@ export const ALL_COMPOSE_SERVICES: ComposeService[] = [
   ['n8n', path.join('docker', 'docker-compose.n8n.yml'), true],
   ['flowise', path.join('docker', 'docker-compose.flowise.yml'), true],
   ['zep', path.join('docker', 'docker-compose.zep.yml'), true],
-  ['browser-use', path.join('docker', 'docker-compose.browser-use.yml'), false],
+  ['browser-use', path.join('docker', 'docker-compose.browser-use.yml'), false], // Uses a custom start function
   ['qdrant', path.join('docker', 'docker-compose.qdrant.yml'), true],
   ['openwebui', path.join('docker', 'docker-compose.openwebui.yml'), true],
-  ['ollama', path.join('docker', 'docker-compose.ollama.yml'), false],
+  ['ollama', path.join('docker', 'docker-compose.ollama.yml'), false], // Uses a custom start function
   ['prometheus', path.join('docker', 'docker-compose.prometheus.yml'), true],
   ['litellm', path.join('docker', 'docker-compose.litellm.yml'), true],
+  ['redis', path.join('docker', 'docker-compose.redis.yml'), true],
+  ['clickhouse', path.join('docker', 'docker-compose.clickhouse.yml'), true],
+  ['langfuse', path.join('docker', 'docker-compose.langfuse.yml'), true],
 ]
 
 // Docker compose files for services with a custom Dockerfile

@@ -6,22 +6,25 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 - [ ] Record video demo
 
+- [ ] Add langfuse UI url to start output
+- [ ] Add LiteLLM UI url to start output
+- [ ] Add LiteLLM API url to start output
+
 - [ ] Configure LiteLLM to set UI_USERNAME and pass from .env
 - [ ] Configure LiteLLM to use supabase for request logs:
       https://docs.litellm.ai/docs/observability/supabase_integration
-- [ ] Add Langfuse to the stack, default enabled if litellm is enabled
-- [ ] Add lunary to the stack, alternative to langfuse, requires custom docker build
-      https://github.com/lunary-ai/lunary
+
 - [ ] Configure LiteLLM to log to Langfuse
 - [ ] Configure LiteLLM to cache qdrant embeddings
       https://docs.litellm.ai/docs/proxy/config_settings
-- [ ] Add Redis to the stack
 - [ ] Configure LiteLLM to use redis as cache layer
 - [ ] Configure n8n templates to use LiteLLM
 - [ ] Configure zep to use LiteLLM proxy
 - [ ] Configure OpenWeb UI to use LiteLLM proxy
       https://docs.litellm.ai/docs/tutorials/openweb_ui
 
+- [x] Add Redis to the stack
+- [x] Add Langfuse to the stack
 - [x] Add LiteLLM to use as LLM proxy for all services
 - [x] Switch n8n import to run command in existing container
 - [x] Rebuild n8n examples with pre-configured credentials
@@ -171,6 +174,8 @@ in `docker/supabase.env` file.
 
 **Additional Services:**
 
+- https://github.com/langflow-ai/langflow
+  - visual agent builder generates LangChain code to run in production
 - https://github.com/Skyvern-AI/skyvern/
   - https://www.youtube.com/watch?v=FhDYo2VKu5E
 - https://github.com/windmill-labs/windmill
@@ -181,11 +186,16 @@ in `docker/supabase.env` file.
 - https://github.com/automatisch/automatisch
 - https://github.com/airbytehq/airbyte
 - https://github.com/triggerdotdev/trigger.dev
+- https://github.com/mem0ai/mem0
+- https://github.com/lunary-ai/lunary
 
 - [open-health](https://github.com/OpenHealthForAll/open-health)
 
 - [verifai](https://github.com/nikolamilosevic86/verifAI) - for detecting
   hallucinations in document based RAG, specifically biomed
+
+- [Open Meter](https://docs.litellm.ai/docs/observability/openmeter) -
+  Integrates with LiteLLM to auto charge LLM useage to clients
 
 Not AI, but potentially useful:
 
