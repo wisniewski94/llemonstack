@@ -15,7 +15,7 @@
 services:
   litellm:
     container_name: litellm
-    image: ghcr.io/berriai/litellm:main-stable
+    image: ghcr.io/berriai/litellm:main-latest
     volumes:
       - ./config.litellm.yaml:/app/config.yaml
     command:
@@ -35,6 +35,7 @@ services:
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY} # Key used by services to access litellm proxy
       UI_USERNAME: ${LITELLM_UI_USERNAME:-admin}
       UI_PASSWORD: ${LITELLM_UI_PASSWORD:-admin}
+
       OPENAI_API_KEY: ${LITELLM_OPENAI_API_KEY:-}
       ANTHROPIC_API_KEY: ${LITELLM_ANTHROPIC_API_KEY:-}
       GROQ_API_KEY: ${LITELLM_GROQ_API_KEY:-}
