@@ -1073,7 +1073,7 @@ async function startBrowserUse(projectName: string): Promise<void> {
  * Check if supabase was started by any of the services that depend on it
  * @param projectName
  */
-async function isSupabaseStarted(projectName: string): Promise<boolean> {
+export async function isSupabaseStarted(projectName: string): Promise<boolean> {
   const result = (await runCommand('docker', {
     args: [
       'ps',
@@ -1238,6 +1238,7 @@ export async function start(projectName: string): Promise<void> {
       showService('Neo4j', 'bolt://neo4j:7687')
     }
     isEnabled('qdrant') && showService('Qdrant', 'http://qdrant:6333')
+    isEnabled('litellm') && showService('LiteLLM', 'http://litellm:4000')
 
     // Show any user actions
     // Show user action if using host Ollama

@@ -1,7 +1,18 @@
 import { createServiceSchema, removeServiceSchema } from './lib/postgres.ts'
-import { ALL_COMPOSE_SERVICES, loadEnv, showAction, showError, showInfo } from './start.ts'
+import {
+  ALL_COMPOSE_SERVICES,
+  confirm,
+  DEFAULT_PROJECT_NAME,
+  isSupabaseStarted,
+  loadEnv,
+  showAction,
+  showError,
+  showInfo,
+  startService,
+} from './start.ts'
+import { stopService } from './stop.ts'
 
-async function run() {
+export async function schema(projectName: string) {
   // Check if the first argument is start or stop
   const action = Deno.args[0]
   // Get the service name from the second argument
@@ -27,6 +38,23 @@ async function run() {
 
   const password = Deno.env.get('POSTGRES_PASSWORD') ?? ''
 
+  // Track whether we started supabase and need to stop it at the end
+  let supabaseStarted = false
+
+  if (!await isSupabaseStarted(projectName)) {
+    if (confirm(`Supabase is not running. Shall we start it?`, true)) {
+      await startService(projectName, 'supabase')
+      supabaseStarted = true
+    }
+    // Wait a few seconds for supabase to fully initialize
+    showAction('Waiting for Supabase to initialize...')
+    await new Promise((resolve) => setTimeout(resolve, 3000))
+    if (!await isSupabaseStarted(projectName)) {
+      showError('Supabase failed to start, unable to create schema')
+      Deno.exit(1)
+    }
+  }
+
   if (action === 'create') {
     showAction(`Creating schema for ${service}...`)
     const credentials = await createServiceSchema(service, {
@@ -44,9 +72,15 @@ async function run() {
     showInfo(`Schema ${schema} removed for ${service}`)
     showInfo(`Username: ${username}`)
   }
+
+  if (supabaseStarted) {
+    if (confirm(`Supabase was started for this operation. Shall we stop it?`)) {
+      await stopService(projectName, 'supabase')
+    }
+  }
 }
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  run()
+  schema(Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

@@ -19,6 +19,7 @@ import {
   type ComposeService,
   DEFAULT_PROJECT_NAME,
   filterExistingFiles,
+  getComposeFile,
   getProfilesArgs,
   prepareEnv,
   runCommand,
@@ -56,7 +57,7 @@ async function removeAllNetworks(projectName: string): Promise<void> {
   }
 }
 
-async function down(
+async function stopServices(
   projectName: string,
   composeFiles: string[],
   { all = false }: { all?: boolean } = {},
@@ -99,12 +100,25 @@ async function down(
   }
 }
 
-async function downService(
+/**
+ * Stop a single service
+ * Does not remove orphans.
+ * @param projectName - The name of the project
+ * @param composeFile - The path to the compose file
+ * @param service - The name of the service to stop
+ */
+export async function stopService(
   projectName: string,
-  composeFile: string,
   service: string,
+  { composeFile }: { composeFile?: string | null } = {},
 ): Promise<void> {
   try {
+    if (!composeFile) {
+      composeFile = await getComposeFile(service)
+    }
+    if (!composeFile) {
+      throw new Error(`No compose file found for service: ${service}`)
+    }
     await runCommand('docker', {
       args: [
         'compose',
@@ -159,11 +173,11 @@ export async function stop(
   }
 
   if (service) {
-    await downService(projectName, composeService?.[1] ?? '', service)
+    await stopService(projectName, service, { composeFile: composeService?.[1] })
   } else if (stopAll) {
-    await down(projectName, filterExistingFiles(ALL_COMPOSE_FILES), { all: true })
+    await stopServices(projectName, filterExistingFiles(ALL_COMPOSE_FILES), { all: true })
   } else {
-    await down(projectName, filterExistingFiles(COMPOSE_FILES), { all: false })
+    await stopServices(projectName, filterExistingFiles(COMPOSE_FILES), { all: false })
   }
 
   showAction('Cleaning up networks...')
