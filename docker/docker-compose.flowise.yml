@@ -50,9 +50,10 @@ services:
 
     # Supabase postgres database healthcheck
     # Comment this section out if using sqlite database.
-    depends_on:
-      db: # From supabase/docker/docker/docker-compose.yml
-        condition: service_healthy
+    # Only uncomment depencency health check if include is uncommented above
+    # depends_on:
+    #   db: # From supabase/docker/docker/docker-compose.yml
+    #     condition: service_healthy
 
     extra_hosts:
       - "host.docker.internal:host-gateway"

@@ -63,8 +63,9 @@ services:
     depends_on:
       graphiti:
         condition: service_healthy
-      db: # From supabase/docker/docker-compose.yml
-        condition: service_healthy
+      # Only uncomment db depencency health check if include is uncommented above
+      # db: # From supabase/docker/docker-compose.yml
+      #   condition: service_healthy
 
   graphiti:
     image: zepai/graphiti:0.3

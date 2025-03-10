@@ -17,9 +17,10 @@ x-n8n: &service-n8n
   # Alternatively use n8n-custom-ffmpeg, see n8n/Dockerfile.ffmpeg.yml
   # image: n8n-custom-ffmpeg
 
-  depends_on:
-    db: # From supabase/docker/docker-compose.yml
-      condition: service_healthy
+  # Only uncomment depencency health check if include is uncommented above
+  # depends_on:
+  #   db: # From supabase/docker/docker-compose.yml
+  #     condition: service_healthy
 
   environment:
     # See https://docs.n8n.io/hosting/configuration/task-runners/
