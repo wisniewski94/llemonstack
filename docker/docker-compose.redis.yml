@@ -1,9 +1,13 @@
 # Redis
 #
 # Redis is used by various services as a caching layer.
-# Save to disk is disabled by default. Data in redis is ephemeral.
+# By default, data is ephemeral and not saved to disk.
 #
 # https://github.com/redis/redis
+
+volumes:
+  redis_data:
+    driver: local
 
 services:
   redis:
@@ -19,3 +23,5 @@ services:
       interval: 3s
       timeout: 10s
       retries: 10
+    volumes:
+      - redis_data:/data
