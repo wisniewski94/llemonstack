@@ -43,6 +43,11 @@ const SERVICES_WITH_APP_VERSION = {
     'flowise',
     '--version',
   ],
+  litellm: [
+    'sh',
+    '-c',
+    'litellm -v | grep -o "[0-9\.]\\+"',
+  ],
   // EXAMPLE: get version from package.json file
   // serviceName: [
   //   'node',
