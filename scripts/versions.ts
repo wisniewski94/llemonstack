@@ -29,9 +29,7 @@ import {
 import { colors } from '@cliffy/ansi/colors'
 import { Column, RowType, Table } from '@cliffy/table'
 
-const COMPOSE_FILES = ALL_COMPOSE_FILES.concat([
-  '.repos/supabase/docker/docker-compose.yml',
-])
+const COMPOSE_FILES = ALL_COMPOSE_FILES
 
 /**
  * Services that support showing the software version

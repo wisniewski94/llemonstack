@@ -231,6 +231,7 @@ export interface ServiceImage {
 
 // Define the type for the Docker Compose configuration
 export interface ComposeConfig {
+  include?: string | string[] | { path: string }[]
   services?: {
     [key: string]: {
       image?: string
@@ -659,9 +660,31 @@ export async function getImagesFromComposeYml(
     // const fileContents = await Deno.readTextFile(composeFile)
     const fileContents = await Deno.readTextFile(composeFile)
     const composeConfig = yaml.parse(fileContents) as ComposeConfig
+    const serviceImages: ServiceImage[] = []
+
+    // Check for include directive in the compose file
+    if (composeConfig.include) {
+      // Handle both array and single include formats
+      const includes = Array.isArray(composeConfig.include)
+        ? composeConfig.include
+        : [composeConfig.include]
+
+      for (const include of includes) {
+        if (typeof include === 'string') {
+          // If include is a string, use it directly as the path
+          const includePath = path.resolve(path.dirname(composeFile), include)
+          const includedImages = await getImagesFromComposeYml(includePath, new Set(processedFiles))
+          serviceImages.push(...includedImages)
+        } else if (include && typeof include === 'object' && include.path) {
+          // If include is an object with a path property
+          const includePath = path.resolve(path.dirname(composeFile), include.path)
+          const includedImages = await getImagesFromComposeYml(includePath, new Set(processedFiles))
+          serviceImages.push(...includedImages)
+        }
+      }
+    }
 
     // Extract service names and their image values
-    const serviceImages: ServiceImage[] = []
     if (composeConfig.services) {
       for (const serviceName in composeConfig.services) {
         const service = composeConfig.services[serviceName]
