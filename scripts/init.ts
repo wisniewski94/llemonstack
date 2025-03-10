@@ -11,7 +11,9 @@
 import { Input, Secret, Select } from '@cliffy/prompt'
 import {
   generateJWT,
+  generateRandomBase64,
   generateSecretKey,
+  generateUUID,
   supabaseAnonJWTPayload,
   supabaseServiceJWTPayload,
 } from './lib/jwt.ts'
@@ -143,11 +145,11 @@ async function setSecurityKeys(envVars: typeof ENVVARS): Promise<Record<string, 
   envVars.LITELLM_UI_PASSWORD = await generateSecretKey(16)
 
   // Langfuse
-  envVars.LANGFUSE_SALT = await generateSecretKey(32)
+  envVars.LANGFUSE_SALT = await generateRandomBase64(32)
   envVars.LANGFUSE_ENCRYPTION_KEY = await generateSecretKey(64)
-  envVars.LANGFUSE_NEXTAUTH_SECRET = await generateSecretKey(32)
-  envVars.LANGFUSE_INIT_PROJECT_PUBLIC_KEY = await generateSecretKey(32)
-  envVars.LANGFUSE_INIT_PROJECT_SECRET_KEY = await generateSecretKey(32)
+  envVars.LANGFUSE_NEXTAUTH_SECRET = await generateRandomBase64(32)
+  envVars.LANGFUSE_INIT_PROJECT_PUBLIC_KEY = `pk-lf-${generateUUID()}`
+  envVars.LANGFUSE_INIT_PROJECT_SECRET_KEY = `sk-lf-${generateUUID()}`
   envVars.LANGFUSE_INIT_USER_PASSWORD = await generateSecretKey(22)
   // Minio
   envVars.MINIO_ROOT_PASSWORD = await generateSecretKey(22)

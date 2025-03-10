@@ -32,6 +32,14 @@ export const supabaseServiceJWTPayload = {
 }
 
 /**
+ * Generates a cryptographically secure random UUID
+ * @returns A string containing the random UUID
+ */
+export function generateUUID(): string {
+  return crypto.randomUUID()
+}
+
+/**
  * Generates a cryptographically secure random string that can be used as a secret key
  * @param length The desired length of the secret key (defaults to 32 characters)
  * @returns A string containing the random secret key
@@ -51,6 +59,20 @@ export function generateSecretKey(length: number = 32): string {
     .join('')
 
   return hexString
+}
+
+/**
+ * Generates a cryptographically secure random base64 string
+ * @param bytes The desired length of the base64 string
+ * @returns A string containing the random base64 string
+ */
+export function generateRandomBase64(bytes: number): string {
+  // Create a buffer with random bytes
+  const buffer = new Uint8Array(bytes)
+  // Fill the buffer with cryptographically strong random values
+  crypto.getRandomValues(buffer)
+  // Convert to base64
+  return btoa(String.fromCharCode(...buffer))
 }
 
 /**
