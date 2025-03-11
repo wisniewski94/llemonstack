@@ -34,7 +34,7 @@ RUN npm install \
     flat
 
 # Copy instrumentation files to n8n directory
-COPY tracing.js n8n-otel-instrumentation.js ./ # <- If you use different file names, change these
+COPY ./tracing.js ./n8n-otel-instrumentation.js ./
 RUN chown node:node ./*.js
 
 # Copy entrypoint script
