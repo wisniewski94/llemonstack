@@ -43,11 +43,11 @@ litellm_settings:
   #   password: ${REDIS_PASSWORD}  # The password for the redis cache
 
   # Default observability settings
-  # success_callback: ["langfuse"]
-  # failure_callback: ["langfuse"]
-  # langfuse_public_key: os.environ/LANGFUSE_PUBLIC_KEY
-  # langfuse_secret: os.environ/LANGFUSE_SECRET_KEY
-  # langfuse_host: http://langfuse:3030
+  success_callback: ["langfuse"]
+  failure_callback: ["langfuse"]
+  langfuse_public_key: os.environ/LANGFUSE_PUBLIC_KEY
+  langfuse_secret: os.environ/LANGFUSE_SECRET_KEY
+  langfuse_host: http://langfuse:3000
 
   # Team settings
   # default_team_settings:
@@ -67,9 +67,13 @@ general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
 
   store_model_in_db: True
+  # Adds prompts to the spend logs
+  store_prompts_in_spend_logs: True
+
   proxy_budget_rescheduler_min_time: 60
   proxy_budget_rescheduler_max_time: 64
   proxy_batch_write_at: 1
+
   database_connection_pool_limit: 10
   database_url: os.environ/DATABASE_URL
 
@@ -78,10 +82,10 @@ general_settings:
 
 model_list:
   # Provider specific wildcard routing
-  # - model_name: "openai/*"
-  #   litellm_params:
-  #     model: "openai/*"
-  #     api_key: os.environ/OPENAI_API_KEY
+  - model_name: "openai/*"
+    litellm_params:
+      model: "openai/*"
+      api_key: os.environ/OPENAI_API_KEY
   # - model_name: "anthropic/*"
   #   litellm_params:
   #     model: "anthropic/*"
