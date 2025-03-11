@@ -48,6 +48,11 @@ const SERVICES_WITH_APP_VERSION = {
     '-c',
     'litellm -v | grep -o "[0-9\.]\\+"',
   ],
+  langfuse: [
+    'node',
+    '-e',
+    `console.log(require('/app/package.json').version)`,
+  ],
   // EXAMPLE: get version from package.json file
   // serviceName: [
   //   'node',

@@ -14,7 +14,7 @@ volumes:
     driver: local
 
 services:
-  langfuse-worker:
+  langfuse:
     container_name: langfuse
     image: langfuse/langfuse-worker:3
     restart: always
