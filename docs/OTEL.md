@@ -20,7 +20,9 @@ send traces to Langfuse.
 - https://github.com/grafana/tempo - probably the lightest weight, but we already
   have clickhouse for langfuse
 
-  ## Code
+<br />
+
+## Observability Custom n8n
 
 ```bash
 # Dockerfile
@@ -358,4 +360,85 @@ process.on("unhandledRejection", (reason, promise) => {
 })
 
 sdk.start()
+```
+
+<br />
+
+## Langfuse Custom n8n
+
+From [this n8n community forum post](https://community.n8n.io/t/swap-smith-langchain-for-langfuse/47748/7).
+
+This example shows how to use Langfuse in the LangChain Code node.
+Langfuse is used in the example code to send traces and fetch the prompt
+from Langfuse's prompt registry.
+
+```bash
+FROM n8nio/n8n:1.53.2
+USER root
+RUN npm install -g \
+    langfuse@3.18.0 \
+    langfuse-langchain@3.18.0
+USER node
+```
+
+Then set these env vars in the `docker-compose.n8n.yml` file.
+
+```yaml
+environment:
+  - NODE_FUNCTION_ALLOW_EXTERNAL=* # or list out the langfuse packages
+  # - NODE_FUNCTION_ALLOW_EXTERNAL=langfuse,langfuse-langchain
+  - LANGFUSE_PUBLIC_KEY=pk-lf-... # langfuse public key
+  - LANGFUSE_SECRET_KEY=sk-lf-... # langfuse secret key
+  - LANGFUSE_BASE_URL=http://langfuse:3000
+```
+
+```javascript
+// Example LangChain Code Node
+const { PromptTemplate } = require("@langchain/core/prompts")
+const { CallbackHandler } = require("langfuse-langchain")
+const { Langfuse } = require("langfuse")
+
+// ID of the prompt in Langfuse prompt registry
+const prompt_id = "test-1"
+
+// Langfuse configuration
+const langfuseParams = {
+  publicKey: process.env.LANGFUSE_PUBLIC_KEY,
+  secretKey: process.env.LANGFUSE_SECRET_KEY,
+  baseUrl: process.env.LANGFUSE_BASE_URL,
+}
+
+// Initialize Langfuse
+const langfuse = new Langfuse(langfuseParams)
+const langfuseHandler = new CallbackHandler(langfuseParams)
+
+// Main async function
+async function executeWithLangfuse() {
+  // Get the input from n8n
+  const topic = $input.item.json.topic
+
+  // Fetch the prompt from Langfuse prompt registry
+  const prompt = await langfuse.getPrompt(prompt_id)
+
+  const promptTemplate = PromptTemplate.fromTemplate(
+    prompt.getLangchainPrompt()
+  )
+
+  // Get the language model from n8n input
+  const llm = await this.getInputConnectionData("ai_languageModel", 0)
+
+  // Create the chain using pipe
+  const chain = promptTemplate.pipe(llm)
+
+  // Invoke the chain with Langfuse handler
+  const output = await chain.invoke(
+    { topic: topic },
+    { callbacks: [langfuseHandler] } // Enable Langfuse traces
+  )
+
+  return [{ json: { output } }]
+}
+
+// Execute the function and return the result
+return executeWithLangfuse.call(this)
 ```

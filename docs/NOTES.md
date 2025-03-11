@@ -4,13 +4,16 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 ## TODO
 
-- [ ] Record video demo
+**Record Videos:**
 
-- [ ] Modify init to auto gen LiteLLM virtual key
-      https://docs.litellm.ai/docs/proxy/virtual_keys
+- [ ] Demo of llemonstack setup
+- [ ] Import tutorials
+- [ ] LiteLLM tutorial: n8n, flowise, viewing cost, viewing langfuse logs
 
-- [ ] Configure n8n templates to use LiteLLM
-- [ ] Configure Flowise to use LiteLLM
+**Code:**
+
+- [ ] Rebuild example n8n templates to use LiteLLM, use env.LITELLM_API_KEY
+
 - [ ] Configure zep to use LiteLLM proxy
 
 - [ ] Add models to config.litellm.yaml
@@ -20,17 +23,10 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
   - [ ] Common models for Anthropic: claude 3.7, etc.
 
 - [ ] Update versions script to get app versions from running containers, when available
-      `docker compose -p llemonstack ps`
+      `docker compose -p llemonstack ps --format '"{{.Name}}"'`
       Then check the list of services_with_app_verions to see if any match.
       Then docker exec in the container.
-
-- [ ] Patch n8n LangChain to auto config Langfuse
-
-  See [OTEL](OTEL.md) and https://community.n8n.io/t/swap-smith-langchain-for-langfuse/47748/7
-
-- [ ] Ceate custom n8n node to use Langfuse to get prompts
-
-- [ ] Setup [OTEL observability](OTEL.md)
+      `docker compose -p llemonstack exec n8n sh -c "echo hi"`
 
 - [x] Add langfuse UI url to start output
 - [x] Add LiteLLM UI url to start output
@@ -66,6 +62,14 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 - [ ] Create main.ts script to handle the CLI args and help text
 
 **Someday / low priority:**
+
+- [ ] Patch n8n LangChain to auto config Langfuse
+
+  See [OTEL](OTEL.md)
+
+- [ ] Ceate custom n8n node to use Langfuse to get prompts
+
+- [ ] Setup [OTEL observability](OTEL.md)
 
 - [ ] Create an install script that installs deno, docker, etc.
       See https://github.com/SigNoz/signoz/blob/main/deploy/install.sh as good example
