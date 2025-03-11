@@ -5,47 +5,6 @@
  * - Attributes prefixed with "n8n." to follow semantic conventions.
  */
 
-// const opentelemetry = require('@opentelemetry/api');
-
-// function checkOpenTelemetryConfiguration() {
-//   console.log('Checking OpenTelemetry configuration in n8n-otel-instrumentation.js...');
-//   // Check if a tracer provider is registered
-//   const tracerProvider = opentelemetry.trace.getTracerProvider();
-
-//   // If it's not the NoopTracerProvider, then OpenTelemetry is configured
-//   const isConfigured = tracerProvider.constructor.name !== 'NoopTracerProvider';
-
-//   if (isConfigured) {
-//     // Try to identify who configured it
-//     // This is trickier since OpenTelemetry doesn't explicitly store this info
-
-//     // One approach: check the module name in the tracer
-//     const tracer = tracerProvider.getTracer('detection');
-
-//     console.log('OpenTelemetry is configured');
-//     console.log('Tracer provider type:', tracerProvider.constructor.name);
-
-//     // Examine loaded modules for OpenTelemetry SDKs
-//     const loadedModules = Object.keys(require.cache).filter(path =>
-//       path.includes('@opentelemetry') &&
-//       !path.includes('@opentelemetry/api')
-//     );
-
-//     if (loadedModules.length) {
-//       console.log('Potential configuring modules:');
-//       loadedModules.forEach(module => console.log(`- ${module}`));
-//     } else {
-//       console.log('Could not determine which module configured OpenTelemetry');
-//     }
-//   } else {
-//     console.log('OpenTelemetry is not configured');
-//   }
-
-//   return isConfigured;
-// }
-
-// checkOpenTelemetryConfiguration();
-
 const {
   trace,
   context,
