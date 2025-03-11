@@ -2,6 +2,12 @@
 
 Adds automatic tracing of n8n workflows to the otel provider configured in env variables.
 
+This example was originally shared by Stuart Johnson in this
+[n8n community forum post](https://community.n8n.io/t/n8n-successfully-instrumented-with-opentelemetry/78468).
+
+The code has been modified a bit to fix a duplicate registration error and
+simplify the env var handling with docker compose.
+
 ```bash
 # Set Honeycomb API key in local env
 export HONEYCOMB_API_KEY=your-api-key

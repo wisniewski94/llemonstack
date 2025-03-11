@@ -1,16 +1,12 @@
 # How to modify n8n to support OTEL and log streaming
 
-From Stuart Johnson's [post in n8n community forum](https://community.n8n.io/t/n8n-successfully-instrumented-with-opentelemetry/78468).
+See [docker/build/n8n/otel](../docker/build/n8n/otel/) for a working example.
 
-1. Custom built the n8n image with the below Dockerfile
-2. Add the three scripts to the contiainer
+The example builds a custom n8n docker image and patches in OpenTelemetry
+support to auto trace n8n workflow executions.
 
-The custom container runs a custom entrypoint script configures OTEL node tracing
-to auto send logs events to Honeycomb. It also monkey patches n8n workflow execute
-function to wrap workflows in an OTEL span.
-
-This technique could most likely also be applied to the LangChain code to auto
-send traces to Langfuse.
+It currently supports Honeycomb but can be easily modified to connect
+to any OTEL backend.
 
 **Observability Services:**
 
