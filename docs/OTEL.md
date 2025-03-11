@@ -61,7 +61,7 @@ RUN npm install \
     flat
 
 # Copy instrumentation files to n8n directory
-COPY tracing.js n8n-otel-instrumentation.js ./ # <- If you use different file names, change these
+COPY tracing.js n8n-otel-instrumentation.js ./
 RUN chown node:node ./*.js
 
 # Copy entrypoint script
@@ -77,9 +77,12 @@ USER node
 ENTRYPOINT ["tini", "--", "/docker-entrypoint.sh"]
 ```
 
+<!-- markdownlint-disable -->
+
 ```bash
-# docker-entrypoint.sh
 #!/bin/sh
+# docker-entrypoint.sh
+# Original: https://github.com/n8n-io/n8n/blob/master/docker/images/n8n/docker-entrypoint.sh
 
 # Set up OpenTelemetry environment variables for Honeycomb
 export OTEL_SERVICE_NAME="${OTEL_SERVICE_NAME:-n8n}"
@@ -93,6 +96,8 @@ export OTEL_LOG_LEVEL="info"
 echo "Starting n8n with OpenTelemetry instrumentation and Honeycomb export..."
 exec node --require /usr/local/lib/node_modules/n8n/tracing.js /usr/local/bin/n8n "$@"
 ```
+
+<!-- markdownlint-enable -->
 
 ```javascript
 // n8n-otel-instrumentation.js
@@ -361,8 +366,6 @@ process.on("unhandledRejection", (reason, promise) => {
 
 sdk.start()
 ```
-
-<br />
 
 ## Langfuse Custom n8n
 

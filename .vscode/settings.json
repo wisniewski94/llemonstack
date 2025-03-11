@@ -61,7 +61,7 @@
     "import/**",
     "shared/**",
     "tmp/**",
-    "docs/NOTES.md"
+    "docs/*.md"
   ],
   "[dockercompose]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

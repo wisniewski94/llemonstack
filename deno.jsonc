@@ -21,7 +21,11 @@
     "@cliffy/table": "jsr:@cliffy/table@^1.0.0-rc.7",
     "@cross/jwt": "jsr:@cross/jwt@^0.5.1",
     "@cross/postgres": "jsr:@cross/postgres@^0.19.3",
-    "@std/crypto": "jsr:@std/crypto@^1.0.4"
+    "@std/crypto": "jsr:@std/crypto@^1.0.4",
+    "@std/assert": "jsr:@std/assert@^1.0.0",
+    "@std/fs": "jsr:@std/fs@^1.0.0",
+    "@std/path": "jsr:@std/path@^1.0.0",
+    "@std/testing": "jsr:@std/testing@^1.0.0"
   },
   "fmt": {
     "useTabs": false,
