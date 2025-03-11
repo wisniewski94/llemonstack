@@ -28,9 +28,7 @@ services:
       # See https://docs.litellm.ai/docs/proxy/debugging
       LITELLM_LOG: ${LITELLM_LOG_LEVEL:-INFO}
       # JSON_LOGS: "True"
-
-      DATABASE_URL: "postgresql://${LITELLM_POSTGRES_USER}:${LITELLM_POSTGRES_PASSWORD}@db:5432/${LITELLM_POSTGRES_DB}?schema=${LITELLM_POSTGRES_SCHEMA}"
-      STORE_MODEL_IN_DB: "True" # allows adding models to proxy via UI
+      DATABASE_URL: "postgresql://${LITELLM_POSTGRES_USER:-postgres}:${LITELLM_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}@${LITELLM_POSTGRES_HOST:-db}:${LITELLM_POSTGRES_PORT:-5432}/${LITELLM_POSTGRES_DB:-postgres}?schema=${LITELLM_POSTGRES_SCHEMA:-public}"
 
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY} # Key used by services to access litellm proxy
       LITELLM_SALT_KEY: ${LITELLM_SALT_KEY} # Salt key used to encrypt data in db
