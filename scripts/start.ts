@@ -125,6 +125,12 @@ const REPO_SERVICES: Record<string, RepoService> = {
     sparse: false,
     checkFile: 'docker-compose.yml',
   },
+  // 'signoz': {
+  //   url: 'https://github.com/SigNoz/signoz.git',
+  //   dir: 'signoz',
+  //   sparseDir: 'deploy',
+  //   checkFile: 'docker-compose.yml',
+  // },
 }
 
 /*******************************************************************************
@@ -229,7 +235,7 @@ export type OllamaProfile =
 export interface RepoService {
   url: string // URL of the repo
   dir: string // Name of repo dir to use in the repos folder
-  sparseDir?: string // Directory to sparse clone into
+  sparseDir?: string | string[] // Directory to sparse clone into
   sparse?: boolean // Whether to sparse clone
   checkFile?: string // File to check for existence to determine if repo is ready
 }
@@ -864,7 +870,7 @@ async function setupRepo(
     pull = false, // Pull latest changes from remote
     checkFile,
   }: {
-    sparseDir?: string
+    sparseDir?: string | string[]
     sparse?: boolean
     pull?: boolean
     checkFile?: string
@@ -901,13 +907,14 @@ async function setupRepo(
         ],
       })
       if (sparseDir) {
+        const sparseDirs = Array.isArray(sparseDir) ? sparseDir : [sparseDir]
         await runCommand('git', {
           args: [
             '-C',
             dir,
             'sparse-checkout',
             'set',
-            sparseDir,
+            ...sparseDirs,
           ],
         })
       }

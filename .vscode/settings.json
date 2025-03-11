@@ -43,6 +43,7 @@
     "psql",
     "qdrant",
     "rolname",
+    "signoz",
     "skyvern",
     "supabase",
     "TARGETPLATFORM"
