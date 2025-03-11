@@ -90,6 +90,7 @@ async function getAppVersion(
   }
   if (image) {
     try {
+      // Check if image for service is installed
       const imageId = (await runCommand('docker', {
         args: [
           'image',
@@ -136,13 +137,13 @@ async function showAppVersions(): Promise<void> {
       continue
     }
     const [entrypoint, ...args] = SERVICES_WITH_APP_VERSION[service]
-    const [version, image] = await getAppVersion(
-      service,
-      composeFile,
-      entrypoint,
-      args,
-    )
     if (isEnabled(service)) {
+      const [version, image] = await getAppVersion(
+        service,
+        composeFile,
+        entrypoint,
+        args,
+      )
       const ver = `${version || 'not available'}`
       rows.push([
         colors.yellow(service),
