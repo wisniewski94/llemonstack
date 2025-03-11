@@ -38,6 +38,93 @@ import {
   VERSION,
 } from './start.ts' // Adjust the path as necessary
 
+interface PostgresServiceEnvKeys {
+  user: string
+  pass: string
+  schema?: string
+}
+
+// Type for environment variables
+type EnvVarKeys = keyof typeof ENVVARS
+type PostgresEnvVarKeys =
+  | typeof POSTGRES_SERVICES[number][1]['user']
+  | typeof POSTGRES_SERVICES[number][1]['pass']
+  | (typeof POSTGRES_SERVICES[number][1]['schema'] & string)
+
+// Combined type for all environment variables
+type AllEnvVarKeys = EnvVarKeys | PostgresEnvVarKeys
+
+// Services that support custom postgres user and password
+// TODO: iterate through this list, create schemas, and populate env vars
+const POSTGRES_SERVICES: Array<[string, PostgresServiceEnvKeys]> = [
+  ['litellm', {
+    user: 'LITELLM_POSTGRES_USER',
+    pass: 'LITELLM_POSTGRES_PASSWORD',
+    schema: 'LITELLM_POSTGRES_SCHEMA',
+  }],
+  ['n8n', {
+    user: 'N8N_POSTGRES_USER',
+    pass: 'N8N_POSTGRES_PASSWORD',
+    schema: 'N8N_POSTGRES_SCHEMA',
+  }],
+  ['flowise', { user: 'FLOWISE_POSTGRES_USER', pass: 'FLOWISE_POSTGRES_PASSWORD' }],
+  ['langfuse', {
+    user: 'LANGFUSE_POSTGRES_USER',
+    pass: 'LANGFUSE_POSTGRES_PASSWORD',
+    schema: 'LANGFUSE_POSTGRES_SCHEMA',
+  }],
+  ['zep', {
+    user: 'ZEP_POSTGRES_USER',
+    pass: 'ZEP_POSTGRES_PASSWORD',
+    schema: 'ZEP_POSTGRES_SCHEMA',
+  }],
+]
+
+const ENVVARS = {
+  DOCKER_PROJECT_NAME: '',
+  // Supabase
+  SUPABASE_DASHBOARD_USERNAME: 'supabase',
+  SUPABASE_DASHBOARD_PASSWORD: 'supabase',
+  POSTGRES_PASSWORD: '',
+  SUPABASE_JWT_SECRET: '',
+  SUPABASE_ANON_KEY: '',
+  SUPABASE_SERVICE_ROLE_KEY: '',
+  SUPABASE_VAULT_ENC_KEY: '',
+  // N8N
+  N8N_ENCRYPTION_KEY: '',
+  N8N_USER_MANAGEMENT_JWT_SECRET: '',
+  // Flowise
+  FLOWISE_PASSWORD: '',
+  // Zep
+  ZEP_API_SECRET: '',
+  // Neo4j
+  NEO4J_USER: 'neo4j',
+  NEO4J_PASSWORD: '',
+  // Browser
+  BROWSER_USE_VNC_PASSWORD: '',
+  // OpenAI
+  OPENAI_API_KEY: '',
+  // Ollama
+  ENABLE_OLLAMA: 'cpu',
+  // LiteLLM
+  LITELLM_MASTER_KEY: '',
+  LITELLM_UI_PASSWORD: '',
+  LITELLM_SALT_KEY: '',
+  // Langfuse
+  LANGFUSE_SALT: '', // 32
+  LANGFUSE_ENCRYPTION_KEY: '', // 64
+  LANGFUSE_NEXTAUTH_SECRET: '', // 32
+  LANGFUSE_INIT_PROJECT_PUBLIC_KEY: '',
+  LANGFUSE_INIT_PROJECT_SECRET_KEY: '',
+  LANGFUSE_INIT_USER_PASSWORD: '',
+  // Minio
+  MINIO_ROOT_PASSWORD: '',
+  // Clickhouse
+  CLICKHOUSE_PASSWORD: '',
+  // Redis
+  REDIS_PASSWORD: '',
+}
+
 async function envFileExists(): Promise<boolean> {
   try {
     await Deno.stat(ENVFILE)
@@ -199,62 +286,17 @@ async function configOllama(): Promise<string> {
   return ollamaProfile
 }
 
-const ENVVARS = {
-  DOCKER_PROJECT_NAME: '',
-  // Supabase
-  SUPABASE_DASHBOARD_USERNAME: 'supabase',
-  SUPABASE_DASHBOARD_PASSWORD: 'supabase',
-  POSTGRES_PASSWORD: '',
-  SUPABASE_JWT_SECRET: '',
-  SUPABASE_ANON_KEY: '',
-  SUPABASE_SERVICE_ROLE_KEY: '',
-  SUPABASE_VAULT_ENC_KEY: '',
-  // N8N
-  N8N_ENCRYPTION_KEY: '',
-  N8N_USER_MANAGEMENT_JWT_SECRET: '',
-  // Flowise
-  FLOWISE_PASSWORD: '',
-  // Zep
-  ZEP_API_SECRET: '',
-  // Neo4j
-  NEO4J_USER: 'neo4j',
-  NEO4J_PASSWORD: '',
-  // Browser
-  BROWSER_USE_VNC_PASSWORD: '',
-  // OpenAI
-  OPENAI_API_KEY: '',
-  // Ollama
-  ENABLE_OLLAMA: 'cpu',
-  // LiteLLM
-  LITELLM_MASTER_KEY: '',
-  LITELLM_UI_PASSWORD: '',
-  LITELLM_SALT_KEY: '',
-  // Langfuse
-  LANGFUSE_SALT: '', // 32
-  LANGFUSE_ENCRYPTION_KEY: '', // 64
-  LANGFUSE_NEXTAUTH_SECRET: '', // 32
-  LANGFUSE_INIT_PROJECT_PUBLIC_KEY: '',
-  LANGFUSE_INIT_PROJECT_SECRET_KEY: '',
-  LANGFUSE_INIT_USER_PASSWORD: '',
-  // Minio
-  MINIO_ROOT_PASSWORD: '',
-  // Clickhouse
-  CLICKHOUSE_PASSWORD: '',
-  // Redis
-  REDIS_PASSWORD: '',
-}
-
 export async function init(
   projectName: string,
 ): Promise<void> {
   try {
     if (await isInitialized()) {
-      showError(`Project already initialized: ${projectName}`)
+      showWarning(`Project already initialized: ${projectName}`)
       const resetOption: string = await Select.prompt({
         message: 'How do you want to proceed?',
         options: [
           {
-            name: '💣 [Hard Reset] delete all data, containers and start over',
+            name: '💣 [Hard Reset] delete all containers & volumes (data) and start over',
             value: 'hard-reset',
           },
           {
