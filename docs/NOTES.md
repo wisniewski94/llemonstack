@@ -24,6 +24,14 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
       Then check the list of services_with_app_verions to see if any match.
       Then docker exec in the container.
 
+- [ ] Patch n8n LangChain to auto config Langfuse
+
+  See [OTEL](OTEL.md) and https://community.n8n.io/t/swap-smith-langchain-for-langfuse/47748/7
+
+- [ ] Ceate custom n8n node to use Langfuse to get prompts
+
+- [ ] Setup [OTEL observability](OTEL.md)
+
 - [x] Add langfuse UI url to start output
 - [x] Add LiteLLM UI url to start output
 - [x] Add LiteLLM API url to start output
@@ -59,6 +67,8 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 **Someday / low priority:**
 
+- [ ] Create an install script that installs deno, docker, etc.
+      See https://github.com/SigNoz/signoz/blob/main/deploy/install.sh as good example
 - [ ] Configure LiteLLM to cache qdrant embeddings
       https://docs.litellm.ai/docs/proxy/config_settings
 - [ ] Configure LiteLLM to use supabase for request logs:
@@ -90,6 +100,131 @@ docker exec -it n8n sh
 # Start a shell as root
 docker exec -it --user root n8n sh
 ```
+
+<br />
+
+## Resources
+
+**Additional Services:**
+
+- Observability services, see [OTEL.md](OTEL.md)
+- https://github.com/mudler/LocalAI
+- https://github.com/langflow-ai/langflow
+  - visual agent builder generates LangChain code to run in production
+- https://github.com/Skyvern-AI/skyvern/
+  - https://www.youtube.com/watch?v=FhDYo2VKu5E
+- https://github.com/windmill-labs/windmill
+- https://github.com/activepieces/activepieces
+- https://github.com/weaviate/weaviate
+- https://github.com/Mintplex-Labs/vector-admin
+
+- https://github.com/automatisch/automatisch
+- https://github.com/airbytehq/airbyte
+- https://github.com/triggerdotdev/trigger.dev
+- https://github.com/mem0ai/mem0
+- https://github.com/lunary-ai/lunary
+
+- [open-health](https://github.com/OpenHealthForAll/open-health)
+
+- [verifai](https://github.com/nikolamilosevic86/verifAI) - for detecting
+  hallucinations in document based RAG, specifically biomed
+
+- [Open Meter](https://docs.litellm.ai/docs/observability/openmeter) -
+  Integrates with LiteLLM to auto charge LLM useage to clients
+
+Not AI, but potentially useful:
+
+- [Leaflet](https://github.com/hyperlink-academy/leaflet) - easily create and shae text docs
+
+**Airtable alternatives:**
+
+- https://github.com/nocodb/nocodb
+- https://github.com/Budibase/budibase
+- https://github.com/teableio/teable
+- https://github.com/apitable/apitable
+
+- [Agentic Memory](https://github.com/WujiangXu/AgenticMemory)
+
+**Cloud Infrastructure & APIs:**
+
+- https://trigger.dev/
+- https://brave.com/search/api/
+- https://scrapecreators.com/ - see Notion doc for full list of scraper APIs
+- https://rapidapi.com/zt4096/api/phindsearch-api - Phind Search API
+- https://www.krea.ai/
+- https://github.com/dstackai/dstack
+
+**AI Tools Directories:**
+
+- https://www.futuretools.io/
+- https://www.futurepedia.io/ai-tools
+- https://www.aimaster.me/blog/tags/automation
+
+**MCP:**
+
+- https://github.com/modelcontextprotocol/inspector
+- https://github.com/wild-card-ai/agents-json
+
+**Prompts:**
+
+- https://gamma.app/docs/10-INSANE-AI-Prompts-In-20-Minutes-f0epq82zvh5lz5e?mode=doc
+
+## n8n
+
+**n8n Templates:**
+
+- https://benvansprundel.gumroad.com/l/content-repurposing-agent-team
+- https://studio.ottomator.ai/
+- https://github.com/coleam00/ai-agents-masterclass
+- https://n8n.io/workflows/2339-breakdown-documents-into-study-notes-using-templating-mistralai-and-qdrant/
+- https://n8n.io/workflows/2872-ai-agent-chatbot-long-term-memory-note-storage-telegram/
+
+**n8n Communities:**
+
+- https://thinktank.ottomator.ai/c/n8n/27
+
+## Misc Videos & Articles
+
+**YouTube Tutorials:**
+
+See [Cole's YouTube video](https://www.youtube.com/watch?v=pOsO40HSbOo) for an
+in-depth walkthrough of the original project that inspired LLemonStack.
+
+[Cole Medin](https://www.youtube.com/@ColeMedin/videos)
+
+- [n8n + supabase RAG](https://www.youtube.com/watch?v=PEI_ePNNfJQ) - Cole Medin
+- **Misc:**
+  [Browser-Use WebUI example video](https://www.youtube.com/watch?v=PRbCFgSvaco)
+
+[Vector Store Evaluations](https://sanjmo.medium.com/vector-data-store-evaluation-criteria-6d7677ef3b60)
+
+[Google Credentials Setup](https://pipedream.com/apps/gmail/#getting-started) -
+Pipedream doc
+
+- [Weaviate article, Agentic RAG](https://weaviate.io/blog/what-is-agentic-rag)
+
+<br />
+
+## WIP Solutions
+
+### Possible Log Streaming Solutions
+
+Configure n8n logging https://docs.n8n.io/hosting/logging-monitoring/logging/
+
+Maybe use something like rsyslog to watch the log file? Or use something to
+consolidate all the docker logs?
+
+- https://github.com/rsyslog/rsyslog
+- https://betterstack.com/community/guides/logging/docker-compose-logs/
+
+<br />
+
+## Related Misc
+
+- [NVidia Container Toolkit](https://github.com/NVIDIA/nvidia-container-toolkit)
+  for running docker containers with gpu access
+
+<br />
 
 ## Zep Notes
 
@@ -180,136 +315,3 @@ ssl: PREFERRED, or DISABLED
 
 Note the `llemonstack` tenant ID in the user name. This needs to match the POOLER_TENANT_ID
 in `docker/supabase.env` file.
-
-<br />
-
-## Resources
-
-**Additional Services:**
-
-- https://github.com/mudler/LocalAI
-- https://github.com/langflow-ai/langflow
-  - visual agent builder generates LangChain code to run in production
-- https://github.com/Skyvern-AI/skyvern/
-  - https://www.youtube.com/watch?v=FhDYo2VKu5E
-- https://github.com/windmill-labs/windmill
-- https://github.com/activepieces/activepieces
-- https://github.com/weaviate/weaviate
-- https://github.com/Mintplex-Labs/vector-admin
-
-- https://github.com/automatisch/automatisch
-- https://github.com/airbytehq/airbyte
-- https://github.com/triggerdotdev/trigger.dev
-- https://github.com/mem0ai/mem0
-- https://github.com/lunary-ai/lunary
-
-- [open-health](https://github.com/OpenHealthForAll/open-health)
-
-- [verifai](https://github.com/nikolamilosevic86/verifAI) - for detecting
-  hallucinations in document based RAG, specifically biomed
-
-- [Open Meter](https://docs.litellm.ai/docs/observability/openmeter) -
-  Integrates with LiteLLM to auto charge LLM useage to clients
-
-Not AI, but potentially useful:
-
-- [Leaflet](https://github.com/hyperlink-academy/leaflet) - easily create and shae text docs
-
-**Airtable alternatives:**
-
-- https://github.com/nocodb/nocodb
-- https://github.com/Budibase/budibase
-- https://github.com/teableio/teable
-- https://github.com/apitable/apitable
-
-- [Agentic Memory](https://github.com/WujiangXu/AgenticMemory)
-
-**Cloud Infrastructure & APIs:**
-
-- https://trigger.dev/
-- https://brave.com/search/api/
-- https://scrapecreators.com/ - see Notion doc for full list of scraper APIs
-- https://rapidapi.com/zt4096/api/phindsearch-api - Phind Search API
-- https://www.krea.ai/
-- https://github.com/dstackai/dstack
-
-**AI Tools Directories:**
-
-- https://www.futuretools.io/
-- https://www.futurepedia.io/ai-tools
-- https://www.aimaster.me/blog/tags/automation
-
-**MCP:**
-
-- https://github.com/modelcontextprotocol/inspector
-- https://github.com/wild-card-ai/agents-json
-
-**Prompts:**
-
-- https://gamma.app/docs/10-INSANE-AI-Prompts-In-20-Minutes-f0epq82zvh5lz5e?mode=doc
-
-## n8n
-
-**n8n Templates:**
-
-- https://benvansprundel.gumroad.com/l/content-repurposing-agent-team
-- https://studio.ottomator.ai/
-- https://github.com/coleam00/ai-agents-masterclass
-- https://n8n.io/workflows/2339-breakdown-documents-into-study-notes-using-templating-mistralai-and-qdrant/
-- https://n8n.io/workflows/2872-ai-agent-chatbot-long-term-memory-note-storage-telegram/
-
-**n8n Communities:**
-
-- https://thinktank.ottomator.ai/c/n8n/27
-
-## Misc Videos & Articles
-
-**YouTube Tutorials:**
-
-[Cole Medin](https://www.youtube.com/@ColeMedin/videos)
-
-- [n8n + supabase RAG](https://www.youtube.com/watch?v=PEI_ePNNfJQ) - Cole Medin
-- **Misc:**
-  [Browser-Use WebUI example video](https://www.youtube.com/watch?v=PRbCFgSvaco)
-
-[Vector Store Evaluations](https://sanjmo.medium.com/vector-data-store-evaluation-criteria-6d7677ef3b60)
-
-[Google Credentials Setup](https://pipedream.com/apps/gmail/#getting-started) -
-Pipedream doc
-
-- [Weaviate article, Agentic RAG](https://weaviate.io/blog/what-is-agentic-rag)
-
-<br />
-
-## WIP Solutions
-
-### Possible Log Streaming Solutions
-
-Configure n8n logging https://docs.n8n.io/hosting/logging-monitoring/logging/
-
-Maybe use something like rsyslog to watch the log file? Or use something to
-consolidate all the docker logs?
-
-- https://github.com/rsyslog/rsyslog
-- https://betterstack.com/community/guides/logging/docker-compose-logs/
-
-<br />
-
-## Related Misc
-
-- [NVidia Container Toolkit](https://github.com/NVIDIA/nvidia-container-toolkit)
-  for running docker containers with gpu access
-
-<br />
-
-## Acknowledgements & History
-
-This project started as a fork of Cole [Local AI Starter Kit](https://github.com/coleam00/local-ai-packaged)
-which was a fork of the n8n team's [Self-hosted AI Starter Kit](https://github.com/n8n-io/self-hosted-ai-starter-kit).
-
-See [Cole's YouTube video](https://www.youtube.com/watch?v=pOsO40HSbOo) for an
-in-depth walkthrough of the original project.
-
-The scripts in this project were rewritten in typescript and significantly
-enhanced to with support for enabling/disabling services and avoiding
-common Docker pitfalls.
