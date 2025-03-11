@@ -40,8 +40,9 @@ const SERVICES_WITH_APP_VERSION = {
   n8n: ['n8n', '--version'],
   // Get flowise version from the package.json file
   flowise: [
-    'flowise',
-    '--version',
+    'sh',
+    '-c',
+    'flowise --version | grep -o "flowise/[0-9]\\+\.[0-9]\\+\.[0-9]\\+" | cut -d\'/\' -f2',
   ],
   litellm: [
     'sh',
