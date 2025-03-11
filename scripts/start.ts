@@ -72,6 +72,13 @@ export const ALL_COMPOSE_SERVICES: ComposeService[] = [
   ['litellm', path.join('docker', 'docker-compose.litellm.yml'), true],
 ]
 
+// Groups of services, dependencies first
+export const SERVICE_GROUPS: [string, string[]][] = [
+  ['databases', ['supabase', 'redis', 'clickhouse', 'neo4j', 'qdrant', 'prometheus', 'minio']],
+  ['middleware', ['litellm', 'langfuse', 'zep']],
+  ['workflow & LLM', ['n8n', 'flowise', 'browser-use', 'openwebui', 'ollama']],
+]
+
 // Docker compose files for services with a custom Dockerfile
 export const COMPOSE_BUILD_FILES = [
   isEnabled('browser-use') && [
@@ -1107,7 +1114,44 @@ export async function startService(
       composeFile,
       'up',
       '-d',
-    ],
+    ].filter(Boolean),
+    env: {
+      'COMPOSE_IGNORE_ORPHANS': true,
+      ...envVars,
+    },
+    silent: true,
+  })
+}
+
+/**
+ * Start multiple services at the same time
+ *
+ * @param projectName - The project name
+ * @param services - The services to start
+ * @param envVars - The environment variables
+ * @param composeFiles - The compose files to use
+ */
+export async function startServices(
+  projectName: string,
+  services: string[],
+  { envVars = {} }: { envVars?: EnvVars } = {},
+) {
+  const composeFiles = await Promise.all(services.map(async (service) => {
+    const composeFile = await getComposeFile(service)
+    if (!composeFile) {
+      throw new Error(`Docker compose file not found for ${service}: ${composeFile}`)
+    }
+    return composeFile
+  }))
+  await runCommand('docker', {
+    args: [
+      'compose',
+      '-p',
+      projectName,
+      ...composeFiles.map((file) => ['-f', file]).flat(),
+      'up',
+      '-d',
+    ].filter(Boolean),
     env: {
       'COMPOSE_IGNORE_ORPHANS': true,
       ...envVars,
@@ -1140,13 +1184,16 @@ export async function start(projectName: string): Promise<void> {
     showAction('Setting up environment...')
     await prepareEnv({ silent: false })
 
-    // Start enabled services
-    const enabledServices = ALL_COMPOSE_SERVICES.filter(([service, _, autoRun]) => {
-      return isEnabled(service) && autoRun
-    }).map(([service]) => service)
-    for (const service of enabledServices) {
-      showAction(`\nStarting ${service}...`)
-      await startService(projectName, service)
+    // Start services by group
+    for (const [groupName, groupServices] of SERVICE_GROUPS) {
+      const enabledGroupServices = groupServices.filter((service) =>
+        isEnabled(service) &&
+        ALL_COMPOSE_SERVICES.find(([s, _, autoRun]) => s === service && autoRun)
+      )
+      if (enabledGroupServices.length > 0) {
+        showAction(`\nStarting ${groupName} services...`)
+        await startServices(projectName, enabledGroupServices)
+      }
     }
 
     // Special handling for browser-use
