@@ -37,7 +37,7 @@
 ```
 */
 
-import { Client } from 'https://deno.land/x/postgres@v0.19.3/mod.ts'
+import { Client } from 'https://deno.land/x/postgres/mod.ts'
 import { generateSecretKey } from './jwt.ts'
 
 export interface SchemaCredentials {
