@@ -6,25 +6,32 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 - [ ] Record video demo
 
-- [x] Add langfuse UI url to start output
-- [x] Add LiteLLM UI url to start output
-- [ ] Add LiteLLM API url to start output
 - [ ] Modify init to auto gen LiteLLM virtual key
       https://docs.litellm.ai/docs/proxy/virtual_keys
 
-- [x] Configure LiteLLM to set UI_USERNAME and pass from .env
-- [ ] Configure LiteLLM to use supabase for request logs:
-      https://docs.litellm.ai/docs/observability/supabase_integration
-
-- [ ] Configure LiteLLM to log to Langfuse
-- [ ] Configure LiteLLM to cache qdrant embeddings
-      https://docs.litellm.ai/docs/proxy/config_settings
-- [x] Configure LiteLLM to use redis as cache layer
 - [ ] Configure n8n templates to use LiteLLM
+- [ ] Configure Flowise to use LiteLLM
 - [ ] Configure zep to use LiteLLM proxy
-- [ ] Configure OpenWeb UI to use LiteLLM proxy
-      https://docs.litellm.ai/docs/tutorials/openweb_ui
 
+- [ ] Add models to config.litellm.yaml
+
+  - [ ] Embedding model for Zep
+  - [ ] Common models for OpenAI: gpt-4o, o3-mini, whisper, embedding, etc.
+  - [ ] Common models for Anthropic: claude 3.7, etc.
+
+- [ ] Update versions script to get app versions from running containers, when available
+      `docker compose -p llemonstack ps`
+      Then check the list of services_with_app_verions to see if any match.
+      Then docker exec in the container.
+
+- [x] Add langfuse UI url to start output
+- [x] Add LiteLLM UI url to start output
+- [x] Add LiteLLM API url to start output
+- [x] Configure LiteLLM to set UI_USERNAME and pass from .env
+- [x] Configure LiteLLM to log to Langfuse
+- [x] Configure LiteLLM to use redis as cache layer
+- [x] Start services in parallel in start script
+- [x] Add minio UI & API to start script: http://localhost:9091
 - [x] Add Redis to the stack
 - [x] Add Langfuse to the stack
 - [x] Add LiteLLM to use as LLM proxy for all services
@@ -52,6 +59,10 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 **Someday / low priority:**
 
+- [ ] Configure LiteLLM to cache qdrant embeddings
+      https://docs.litellm.ai/docs/proxy/config_settings
+- [ ] Configure LiteLLM to use supabase for request logs:
+      https://docs.litellm.ai/docs/observability/supabase_integration
 - [ ] Switch to Open Router for LLM calls
 - [ ] Add skyvern to automate browsers
 - [ ] Update README with instructions on using the n8n-custom-ffmpeg image
@@ -176,6 +187,7 @@ in `docker/supabase.env` file.
 
 **Additional Services:**
 
+- https://github.com/mudler/LocalAI
 - https://github.com/langflow-ai/langflow
   - visual agent builder generates LangChain code to run in production
 - https://github.com/Skyvern-AI/skyvern/
