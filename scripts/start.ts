@@ -67,6 +67,7 @@ export const ALL_COMPOSE_SERVICES: ComposeService[] = [
   ['prometheus', path.join('docker', 'docker-compose.prometheus.yml'), true],
   ['redis', path.join('docker', 'docker-compose.redis.yml'), true],
   ['clickhouse', path.join('docker', 'docker-compose.clickhouse.yml'), true],
+  ['minio', path.join('docker', 'docker-compose.minio.yml'), true],
   ['langfuse', path.join('docker', 'docker-compose.langfuse.yml'), true],
   ['litellm', path.join('docker', 'docker-compose.litellm.yml'), true],
 ]
