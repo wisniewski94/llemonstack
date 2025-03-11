@@ -1175,13 +1175,7 @@ export async function start(projectName: string): Promise<void> {
     // SERVICE DASHBOARDS
     //
     showHeader('Service Dashboards')
-    if (supabaseStarted) {
-      const supabaseUsername = Deno.env.get('SUPABASE_DASHBOARD_USERNAME') || ''
-      const supabasePassword = Deno.env.get('SUPABASE_DASHBOARD_PASSWORD') || ''
-      showService('Supabase', `http://${supabaseUsername}:${supabasePassword}@localhost:8000`)
-    }
     isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
-    isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:8080')
     if (isEnabled('flowise')) {
       showService('Flowise', 'http://localhost:3001')
       showCredentials(
@@ -1189,9 +1183,12 @@ export async function start(projectName: string): Promise<void> {
         Deno.env.get('FLOWISE_PASSWORD') || '',
       )
     }
-    isEnabled('zep') && showService('Neo4j', 'http://localhost:7474/browser/')
-    isEnabled('qdrant') &&
-      showService('Qdrant', 'http://localhost:6333/dashboard')
+    if (supabaseStarted) {
+      const supabaseUsername = Deno.env.get('SUPABASE_DASHBOARD_USERNAME') || ''
+      const supabasePassword = Deno.env.get('SUPABASE_DASHBOARD_PASSWORD') || ''
+      showService('Supabase', `http://${supabaseUsername}:${supabasePassword}@localhost:8000`)
+    }
+    isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:8080')
     if (isEnabled('browser-use')) {
       showService('Browser-Use', 'http://localhost:7788/')
       showService(
@@ -1214,6 +1211,21 @@ export async function start(projectName: string): Promise<void> {
         Deno.env.get('LANGFUSE_INIT_USER_PASSWORD') || '',
       )
     }
+    if (isEnabled('neo4j')) {
+      showService('Neo4j', 'http://localhost:7474/browser/')
+      showCredentials(
+        Deno.env.get('NEO4J_USER') || '',
+        Deno.env.get('NEO4J_PASSWORD') || '',
+      )
+    }
+    isEnabled('qdrant') && showService('Qdrant', 'http://localhost:6333/dashboard')
+    if (isEnabled('minio')) {
+      showService('Minio', 'http://localhost:9091/')
+      showCredentials(
+        'minio',
+        Deno.env.get('MINIO_ROOT_PASSWORD') || '',
+      )
+    }
 
     //
     // API ENDPOINTS
@@ -1233,13 +1245,19 @@ export async function start(projectName: string): Promise<void> {
         'http://kong:8000/functions/v1/hello',
       )
     }
+    // TODO: show LiteLLM API key: sk-***
+    // TODO: create a new LiteLLM API key in init script or on first run?
+    isEnabled('litellm') && showService('LiteLLM', 'http://litellm:4000')
     if (isEnabled('zep')) {
       showService('Zep', 'http://zep:8000')
       showService('Zep Graphiti', 'http://graphiti:8003')
-      showService('Neo4j', 'bolt://neo4j:7687')
     }
+    isEnabled('neo4j') && showService('Neo4j', 'bolt://neo4j:7687')
     isEnabled('qdrant') && showService('Qdrant', 'http://qdrant:6333')
-    isEnabled('litellm') && showService('LiteLLM', 'http://litellm:4000')
+    isEnabled('redis') && showService('Redis', 'http://redis:6379')
+    isEnabled('clickhouse') && showService('Clickhouse', 'http://clickhouse:8123')
+    isEnabled('langfuse') && showService('Langfuse', 'http://langfuse:3000')
+    isEnabled('minio') && showService('Minio', 'http://minio:9000/')
 
     // Show any user actions
     // Show user action if using host Ollama
