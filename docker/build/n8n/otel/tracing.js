@@ -1,12 +1,8 @@
 "use strict"
-
-// Enable proper async context propagation globally.
-const {
-  AsyncHooksContextManager,
-} = require("@opentelemetry/context-async-hooks")
-const { context } = require("@opentelemetry/api")
-const contextManager = new AsyncHooksContextManager()
-context.setGlobalContextManager(contextManager.enable())
+/**
+ * This file is used to instrument the n8n application with OpenTelemetry.
+ * It's run by the docker entrypoint.sh script before starting n8n.
+ */
 
 const opentelemetry = require("@opentelemetry/sdk-node")
 const { OTLPTraceExporter } = require("@opentelemetry/exporter-trace-otlp-http")
