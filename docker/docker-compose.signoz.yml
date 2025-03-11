@@ -1,3 +1,13 @@
+# Signoz
+#
+# Signoz is an open source observability platform that provides a comprehensive
+# set of tools for monitoring, tracing, and debugging applications.
+#
+# See https://signoz.io/docs/install/docker/
+#
+# TODO: modify this file to reuse clickhouse and postgres (supabase) already
+# provided in the stack.
+
 version: "3"
 
 volumes:
