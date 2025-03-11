@@ -33,6 +33,7 @@ services:
       STORE_MODEL_IN_DB: "True" # allows adding models to proxy via UI
 
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY} # Key used by services to access litellm proxy
+      LITELLM_SALT_KEY: ${LITELLM_SALT_KEY} # Salt key used to encrypt data in db
       UI_USERNAME: ${LITELLM_UI_USERNAME:-admin}
       UI_PASSWORD: ${LITELLM_UI_PASSWORD:-admin}
 

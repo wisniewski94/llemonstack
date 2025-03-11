@@ -143,6 +143,7 @@ async function setSecurityKeys(envVars: typeof ENVVARS): Promise<Record<string, 
   // LiteLLM
   envVars.LITELLM_MASTER_KEY = `sk-${await generateSecretKey(32)}`
   envVars.LITELLM_UI_PASSWORD = await generateSecretKey(16)
+  envVars.LITELLM_SALT_KEY = await generateRandomBase64(32)
 
   // Langfuse
   envVars.LANGFUSE_SALT = await generateRandomBase64(32)
@@ -227,6 +228,7 @@ const ENVVARS = {
   // LiteLLM
   LITELLM_MASTER_KEY: '',
   LITELLM_UI_PASSWORD: '',
+  LITELLM_SALT_KEY: '',
   // Langfuse
   LANGFUSE_SALT: '', // 32
   LANGFUSE_ENCRYPTION_KEY: '', // 64
