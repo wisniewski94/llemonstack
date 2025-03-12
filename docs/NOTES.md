@@ -16,6 +16,11 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 - [ ] Configure zep to use LiteLLM proxy
 
+- [ ] Add docker/supabase.env passwords to init script, see logflare section
+
+- [ ] Disable Logflare in supabase docker; it hammers the disk
+      See https://www.reddit.com/r/Supabase/comments/1fw2g62/disable_or_adjust_logging_self_hosted/
+
 - [x] SKIPPED: Update versions script to get app versions from running containers
       `docker compose -p llemonstack ps --format '"{{.Name}}"'`
       ps is too slow, not implementing this
@@ -84,6 +89,15 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 - https://thinktank.ottomator.ai/c/local-ai/18
 
 <br />
+
+## MacOS Silicon Setup
+
+Docker Destop -> Settings -> General
+
+- Select Docker VMM
+- Select VirtioFS
+
+See [Supabase Self-Hosting Guide](https://supabase.com/docs/guides/self-hosting/docker#file-storage-backend-on-macos)
 
 ## Running Commands on Service Containers
 
