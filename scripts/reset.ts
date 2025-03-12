@@ -21,6 +21,7 @@
  * ```
  */
 import * as fs from 'jsr:@std/fs'
+import { clearConfigFile, clearEnvFile } from './init.ts'
 import {
   ALL_COMPOSE_FILES,
   confirm,
@@ -36,8 +37,8 @@ import {
   showAction,
   showError,
   showInfo,
+  showUserAction,
   showWarning,
-  start,
 } from './start.ts'
 import { update } from './update.ts'
 
@@ -197,18 +198,13 @@ export async function reset(
       showInfo('Skipping stack update')
     }
 
-    // Don't start the stack by default
-    if (!skipPrompt && confirm('Do you want to rebuild and start the stack?', false)) {
-      showAction('\nRebuilding and starting the stack...')
-      showInfo(
-        'Starting the stack will only rebuild and start services enabled in your .env file.',
-      )
-      await start(projectName)
-    } else {
-      showInfo('Skipping stack rebuild and start')
-    }
+    await clearEnvFile()
+    await clearConfigFile()
+    showInfo('Environment and config files reset')
 
     showAction('\nReset successfully completed!')
+
+    showUserAction('Run `deno run init` to reinitialize the stack')
   } catch (error) {
     showError(error)
     Deno.exit(1)

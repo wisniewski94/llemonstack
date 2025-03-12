@@ -1238,9 +1238,11 @@ export async function start(projectName: string): Promise<void> {
       )
     }
     if (supabaseStarted) {
-      const supabaseUsername = Deno.env.get('SUPABASE_DASHBOARD_USERNAME') || ''
-      const supabasePassword = Deno.env.get('SUPABASE_DASHBOARD_PASSWORD') || ''
-      showService('Supabase', `http://${supabaseUsername}:${supabasePassword}@localhost:8000`)
+      showService('Supabase', `http://localhost:8000`)
+      showCredentials(
+        Deno.env.get('SUPABASE_DASHBOARD_USERNAME') || '',
+        Deno.env.get('SUPABASE_DASHBOARD_PASSWORD') || '',
+      )
     }
     isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:8080')
     if (isEnabled('browser-use')) {

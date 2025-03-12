@@ -64,6 +64,7 @@ export async function schema(projectName: string) {
     showInfo(`Username: ${credentials.username}`)
     showInfo(`Password: ${credentials.password}`)
     showInfo(`Database: ${credentials.database}`)
+    showInfo(`Schema: ${credentials.schema}`)
   } else if (action === 'remove') {
     showAction(`Removing schema for ${service}...`)
     const { schema, username } = await removeServiceSchema(service, {

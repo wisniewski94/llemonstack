@@ -64,11 +64,12 @@ const POSTGRES_SERVICES: Array<[string, PostgresServiceEnvKeys]> = [
     pass: 'LITELLM_POSTGRES_PASSWORD',
     schema: 'LITELLM_POSTGRES_SCHEMA',
   }],
-  ['n8n', {
-    user: 'N8N_POSTGRES_USER',
-    pass: 'N8N_POSTGRES_PASSWORD',
-    schema: 'N8N_POSTGRES_SCHEMA',
-  }],
+  // n8n doesn't need a separate postgres user and password
+  // ['n8n', {
+  //   user: 'N8N_POSTGRES_USER',
+  //   pass: 'N8N_POSTGRES_PASSWORD',
+  //   schema: 'N8N_POSTGRES_SCHEMA',
+  // }],
   ['flowise', { user: 'FLOWISE_POSTGRES_USER', pass: 'FLOWISE_POSTGRES_PASSWORD' }],
   ['langfuse', {
     user: 'LANGFUSE_POSTGRES_USER',
@@ -160,7 +161,7 @@ async function createConfigFile(): Promise<void> {
   }
 }
 
-async function clearConfigFile(): Promise<void> {
+export async function clearConfigFile(): Promise<void> {
   try {
     await Deno.stat(LLEMONSTACK_CONFIG_FILE)
     await Deno.remove(LLEMONSTACK_CONFIG_FILE)
@@ -180,7 +181,7 @@ async function createEnvFile(): Promise<void> {
   }
 }
 
-async function clearEnvFile(): Promise<void> {
+export async function clearEnvFile(): Promise<void> {
   if (await envFileExists()) {
     await Deno.remove(ENVFILE)
   }
@@ -266,25 +267,25 @@ async function configOllama(): Promise<string> {
     showWarning('GPU options are not currently available on macOS due to Docker limitations.\n')
   }
 
-  const gpuIcon = gpuDisabled ? '🚫' : '🐳'
+  const gpuMessage = gpuDisabled ? ' (not available on macOS)' : ''
   const ollamaProfile: string = await Select.prompt({
     message: 'How do you want to run Ollama?',
     options: [
-      { name: '❌ [Disable] turn off ollama service', value: 'false' },
-      Select.separator('----- Run on Host -----'),
+      Select.separator('----- Run on Host 🖥️ -----'),
       {
-        name: '🖥️ [Host] creates a network bridge',
+        name: '[HOST] Creates a network bridge',
         value: 'host',
       },
-      Select.separator('----- Run in Docker Container -----'),
-      { name: '🐳 [CPU] slow but compatible, no GPU requirements', value: 'cpu' },
+      { name: '[NONE] Disable Ollama service', value: 'false' },
+      Select.separator('----- Run in Docker Container 🐳 -----'),
+      { name: '[CPU] Run on CPU, slow but compatible', value: 'cpu' },
       {
-        name: `${gpuIcon} [AMD GPU] requires AMD GPU on the host`,
+        name: `[AMD] Run on AMD GPU ${gpuMessage} `,
         value: 'gpu-amd',
         disabled: gpuDisabled,
       },
       {
-        name: `${gpuIcon} [NVIDIA GPU] requires NVIDIA GPU on the host`,
+        name: `[NVIDIA] Run on Nividia GPU ${gpuMessage}`,
         value: 'gpu-nvidia',
         disabled: gpuDisabled,
       },
@@ -380,18 +381,23 @@ export async function init(
     // Supabase
     ENVVARS.SUPABASE_DASHBOARD_PASSWORD = await Secret.prompt({
       message: 'Enter a password for the Supabase dashboard',
-      hint: 'This should be a strong password, it grants access to Supabase admin features',
+      hint: 'Grants admin access. Press enter to generate a random password',
       minLength: 8,
+      hideDefault: true,
+      default: await generateSecretKey(16),
     })
+
+    // Browser VNC
     ENVVARS.BROWSER_USE_VNC_PASSWORD = await Secret.prompt({
       message: 'Enter a password for browser-use VNC',
-      hint: 'Used to access the VNC server to watch browser-use automation',
+      hint: 'Used to watch browser-use automation. Press enter to generate a random password',
       minLength: 6,
+      hideDefault: true,
+      default: await generateSecretKey(12),
     })
 
-    showAction('\nConfigure LLM API keys...')
-
     // Prompt for OpenAI API key
+    showAction('\nConfigure optional LLM API keys...')
     ENVVARS.OPENAI_API_KEY = await Secret.prompt({
       message: 'Enter the OpenAI API key',
       hint: 'Leave blank to configure later',
@@ -406,15 +412,13 @@ export async function init(
     const ollamaProfile = await configOllama()
     ENVVARS.ENABLE_OLLAMA = ollamaProfile
 
-    if (ollamaProfile === 'host') {
-      showInfo('\nHost option requires Ollama running on your host machine.')
-      showService('Download Ollama', 'https://ollama.com/docs/installation')
-      showUserAction('Run `ollama run` on your host machine to start the service\n')
-    }
-
     // Checkpoint, save env vars to .env file
     await updateEnvFile(ENVVARS)
     loadEnv({ reload: true, silent: true })
+
+    showAction('\nSetting up postgres schemas...')
+    showInfo('This will create a postgres user and schema for each service that uses postgres.')
+    showInfo('Starting supabase...')
 
     // Loop through POSTGRES_SERVICES and setup custom postgres schemas
     // Make sure supabase is running
@@ -445,6 +449,11 @@ export async function init(
     // Create config file to indicate project is initialized
     await createConfigFile()
 
+    if (ollamaProfile === 'host') {
+      showInfo('\nOllama host option requires Ollama running on your host machine.')
+      showService('Download Ollama', 'https://ollama.com/docs/installation')
+      showUserAction('Run `ollama run` on your host machine to start the service\n')
+    }
     showUserAction('Start the stack with `deno run start`')
   } catch (error) {
     showError(error)

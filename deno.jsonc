@@ -2,7 +2,7 @@
   "version": "0.1.0",
   "tasks": {
     "llemonstack": "deno run --allow-read --allow-env --allow-run --allow-write main.ts",
-    "init": "deno run --allow-read --allow-env --allow-run --allow-write scripts/init.ts",
+    "init": "deno run --allow-read --allow-env --allow-run --allow-write --allow-net scripts/init.ts",
     "start": "deno run --allow-read --allow-env --allow-run --allow-write scripts/start.ts",
     "stop": "deno run --allow-read --allow-env --allow-run --allow-write scripts/stop.ts --all",
     "restart": "deno run --allow-read --allow-env --allow-run --allow-write scripts/restart.ts",
