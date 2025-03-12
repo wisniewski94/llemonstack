@@ -17,6 +17,7 @@ import {
   supabaseAnonJWTPayload,
   supabaseServiceJWTPayload,
 } from './lib/jwt.ts'
+import { createServiceSchema } from './lib/postgres.ts'
 import { reset } from './reset.ts'
 import {
   confirm,
@@ -24,6 +25,7 @@ import {
   ENVFILE,
   getOS,
   isInitialized,
+  isSupabaseStarted,
   LLEMONSTACK_CONFIG_DIR,
   LLEMONSTACK_CONFIG_FILE,
   loadEnv,
@@ -34,7 +36,7 @@ import {
   showService,
   showUserAction,
   showWarning,
-  start,
+  startService,
   VERSION,
 } from './start.ts' // Adjust the path as necessary
 
@@ -200,7 +202,12 @@ async function updateEnvFile(envVars: Record<string, string>): Promise<void> {
   const envFileContent = await Deno.readTextFile(ENVFILE)
   const updatedEnvFileContent = Object.entries(envVars).reduce((acc, [key, value]) => {
     if (!value) return acc // Keep existing value in .env if key value not set
-    return acc.replace(new RegExp(`${key}=.*`, 'g'), `${key}=${value}`)
+    const tmp = acc.replace(new RegExp(`${key}=.*`, 'g'), `${key}=${value}`)
+    if (tmp === acc && !acc.includes(`${key}=${value}`)) {
+      showWarning(`${key} not found in .env file, adding to end of file`)
+      return `${acc}\n${key}=${value}\n`
+    }
+    return tmp
   }, envFileContent)
   await Deno.writeTextFile(ENVFILE, updatedEnvFileContent)
 }
@@ -346,7 +353,7 @@ export async function init(
       await createEnvFile()
     }
 
-    // Reload .env into Deno.env and show
+    // Reload .env into Deno.env
     await loadEnv({ reload: true, silent: true })
 
     showInfo('.env file is ready to configure\n')
@@ -382,23 +389,13 @@ export async function init(
       minLength: 6,
     })
 
-    showAction('\nSetting up required API keys...')
-    showInfo(
-      'Zep needs a valid OpenAI API key to work properly.\nYou can configure it later if you prefer.\n',
-    )
+    showAction('\nConfigure LLM API keys...')
 
     // Prompt for OpenAI API key
     ENVVARS.OPENAI_API_KEY = await Secret.prompt({
       message: 'Enter the OpenAI API key',
       hint: 'Leave blank to configure later',
     })
-
-    if (!ENVVARS.OPENAI_API_KEY) {
-      showInfo(
-        '\n❗ Zep will not work properly without an OpenAI key. ' +
-          'You can set it in .env or disable Zep later on.',
-      )
-    }
 
     showHeader('Ollama Configuration Options')
     showInfo('Ollama can run on your host machine or inside a Docker container.')
@@ -415,20 +412,40 @@ export async function init(
       showUserAction('Run `ollama run` on your host machine to start the service\n')
     }
 
-    // Update .env file with new keys
+    // Checkpoint, save env vars to .env file
     await updateEnvFile(ENVVARS)
+    loadEnv({ reload: true, silent: true })
+
+    // Loop through POSTGRES_SERVICES and setup custom postgres schemas
+    // Make sure supabase is running
+    if (!await isSupabaseStarted(projectName)) {
+      await startService(projectName, 'supabase')
+    }
+    const dbPassword = Deno.env.get('POSTGRES_PASSWORD') ?? ''
+    if (!dbPassword) {
+      showError('POSTGRES_PASSWORD is not set in .env file, unable to create postgres schemas')
+      Deno.exit(1)
+    }
+    const dbVars: Record<string, string> = {}
+    for (const service of POSTGRES_SERVICES) {
+      const credentials = await createServiceSchema(service[0], {
+        password: dbPassword,
+      })
+      dbVars[service[1].user] = credentials.username
+      dbVars[service[1].pass] = credentials.password
+      service[1].schema && (dbVars[service[1].schema] = credentials.schema)
+    }
+
+    // Save db vars to .env file
+    await updateEnvFile(dbVars)
 
     showAction('\nProject successfully initialized!\n')
+    showInfo('Config values saved to .env file')
 
     // Create config file to indicate project is initialized
     await createConfigFile()
 
-    if (confirm('Do you want to start the stack?', true)) {
-      await start(projectName)
-    } else {
-      showInfo('You can start the stack later with `deno run start`')
-    }
-    showUserAction('\nSee .env file to enable/disable services in the stack')
+    showUserAction('Start the stack with `deno run start`')
   } catch (error) {
     showError(error)
     Deno.exit(1)

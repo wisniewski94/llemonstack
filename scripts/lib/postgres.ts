@@ -42,7 +42,7 @@ import { generateSecretKey } from './jwt.ts'
 
 export interface SchemaCredentials {
   username: string
-  password?: string
+  password: string
   schema: string
   tenant?: string
   database: string
@@ -259,6 +259,7 @@ export async function removeServiceSchema(
 
     return {
       username,
+      password: '',
       schema,
       tenant: clientConfig.tenant,
       database: clientConfig.database,
