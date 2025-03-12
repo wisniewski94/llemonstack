@@ -1,10 +1,19 @@
 "use strict";
+// tracking.js
+
 
 // Enable proper async context propagation globally.
 const { AsyncHooksContextManager } = require("@opentelemetry/context-async-hooks");
-const { context } = require("@opentelemetry/api");
-const contextManager = new AsyncHooksContextManager();
-context.setGlobalContextManager(contextManager.enable());
+// const { context } = require("@opentelemetry/api");
+const {
+  trace,
+  SpanStatusCode,
+  SpanKind,
+  context
+} = require("@opentelemetry/api")
+
+// const contextManager = new AsyncHooksContextManager();
+// context.setGlobalContextManager(contextManager.enable());
 
 const opentelemetry = require("@opentelemetry/sdk-node");
 const { OTLPTraceExporter } = require("@opentelemetry/exporter-trace-otlp-http");
@@ -36,16 +45,16 @@ registerInstrumentations({
   instrumentations: [autoInstrumentations],
 });
 
+
 ////////////////////////////////////////////////////////////
 // n8n workflow execution tracing
 ////////////////////////////////////////////////////////////
 
-const {
-  trace,
-  context,
-  SpanStatusCode,
-  SpanKind,
-} = require("@opentelemetry/api")
+// const {
+//   trace,
+//   SpanStatusCode,
+//   SpanKind,
+// } = require("@opentelemetry/api")
 const flat = require("flat") // flattens objects into a single level
 const tracer = trace.getTracer("n8n-instrumentation", "1.0.0")
 
@@ -227,7 +236,6 @@ function setupN8nOpenTelemetry() {
 setupN8nOpenTelemetry();
 ////////////////////////////////////////////////////////////
 
-
 const sdk = new opentelemetry.NodeSDK({
   logRecordProcessors: [
     new opentelemetry.logs.SimpleLogRecordProcessor(new OTLPLogExporter()),
@@ -235,11 +243,13 @@ const sdk = new opentelemetry.NodeSDK({
   resource: new Resource({
     [SemanticResourceAttributes.SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || "n8n",
   }),
-  traceExporter: new OTLPTraceExporter({
-    headers: {
-      "x-honeycomb-team": process.env.HONEYCOMB_API_KEY,
-    },
-  }),
+  traceExporter: new OTLPTraceExporter(),
+  // traceExporter: new OTLPTraceExporter({
+  //   headers: {
+  //     "x-honeycomb-team": process.env.HONEYCOMB_API_KEY,
+  //   },
+  // }),
+  contextManager: new AsyncHooksContextManager(), // Added this line
 });
 
 process.on("uncaughtException", async (err) => {
