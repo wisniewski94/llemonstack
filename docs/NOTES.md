@@ -2,6 +2,10 @@
 
 This is just a scratchpad for WIP project notes to keep the main README clean.
 
+CURRENT STATE: LiteLLM works with Langfuse as configured but LiteLLM was getting
+unauthorized errors. If this happens, try stopping and restarting the stack.
+Then look at langfuse and litellm container logs in Docker Desktop.
+
 ## TODO
 
 **Record Videos:**
