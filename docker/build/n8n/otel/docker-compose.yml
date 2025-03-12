@@ -18,7 +18,7 @@ services:
 
     restart: unless-stopped
     ports:
-      - 5679:5678 # Changed from 5678 to 5679 to avoid conflict with n8n
+      - 5678:5678
     volumes:
       - n8n_otel_storage:/home/node/.n8n
       - ./n8n-otel-instrumentation.js:/usr/local/lib/node_modules/n8n/n8n-otel-instrumentation.js
@@ -27,7 +27,7 @@ services:
     environment:
       # See https://docs.n8n.io/hosting/configuration/task-runners/
 
-      - HOMEYCOMB_API_KEY=${HOMEYCOMB_API_KEY:-}
+      - HONEYCOMB_API_KEY=${HONEYCOMB_API_KEY:-}
 
       # Database used by n8n
       # - DB_TYPE=postgresdb
@@ -67,9 +67,11 @@ services:
       - N8N_DIAGNOSTICS_CONFIG_FRONTEND=
       - N8N_DIAGNOSTICS_CONFIG_BACKEND=
 
+      # OpenTelemetry
+      # See https://docs.honeycomb.io/get-started/start-building/application/traces/
       - OTEL_SERVICE_NAME=n8n
       - OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
       - OTEL_EXPORTER_OTLP_ENDPOINT="https://api.honeycomb.io"
-      - OTEL_EXPORTER_OTLP_HEADERS="x-honeycomb-team=${HOMEYCOMB_API_KEY}"
-      - OTEL_EXPORTER_OTLP_TRACES_HEADERS="x-honeycomb-team=${HOMEYCOMB_API_KEY}"
+      - OTEL_EXPORTER_OTLP_HEADERS="x-honeycomb-team=${HONEYCOMB_API_KEY}"
+      - OTEL_EXPORTER_OTLP_TRACES_HEADERS="x-honeycomb-team=${HONEYCOMB_API_KEY}"
       - OTEL_LOG_LEVEL=info
