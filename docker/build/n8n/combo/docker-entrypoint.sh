@@ -3,6 +3,7 @@
 
 echo "Custom n8n image with ffmpeg, Langfuse, and OpenTelemetry"
 
+# Trust custom certificates if they exist
 if [ -d /opt/custom-certificates ]; then
   echo "Trusting custom certificates from /opt/custom-certificates."
   export NODE_OPTIONS="--use-openssl-ca $NODE_OPTIONS"

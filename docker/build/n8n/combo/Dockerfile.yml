@@ -10,6 +10,12 @@ RUN echo "Installing required packages..." && \
     rm -rf /var/cache/apk/* && \
     echo "FFmpeg installed: $(ffmpeg -version | head -n 1)"
 
+# Create machine-id
+# This fixes OTEL log error messages
+RUN echo "Creating machine-id..." && \
+    apk add dbus --no-cache && \
+    dbus-uuidgen > /var/lib/dbus/machine-id
+
 # Switch to n8n's installation directory
 WORKDIR /usr/local/lib/node_modules/n8n
 

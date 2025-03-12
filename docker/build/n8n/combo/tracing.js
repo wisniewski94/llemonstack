@@ -1,36 +1,37 @@
-"use strict";
-// tracking.js
+"use strict"
+/**
+ * This file is used to instrument the n8n application with OpenTelemetry.
+ * It's run by the docker entrypoint.sh script before starting n8n.
+ */
 
-
-// Enable proper async context propagation globally.
-const { AsyncHooksContextManager } = require("@opentelemetry/context-async-hooks");
-// const { context } = require("@opentelemetry/api");
+const opentelemetry = require("@opentelemetry/sdk-node")
+const { OTLPTraceExporter } = require("@opentelemetry/exporter-trace-otlp-http")
+const { OTLPLogExporter } = require("@opentelemetry/exporter-logs-otlp-http")
+const {
+  getNodeAutoInstrumentations,
+} = require("@opentelemetry/auto-instrumentations-node")
+const { registerInstrumentations } = require("@opentelemetry/instrumentation")
+const { Resource } = require("@opentelemetry/resources")
+const {
+  SemanticResourceAttributes,
+} = require("@opentelemetry/semantic-conventions")
+const winston = require("winston")
 const {
   trace,
+  context,
   SpanStatusCode,
   SpanKind,
-  context
 } = require("@opentelemetry/api")
+const flatten = require("flat") // flattens objects into a single level
+const LOGPREFIX = '[tracing]'
+const LOG_LEVEL = process.env.LOG_LEVEL || 'info'
+const DEBUG = LOG_LEVEL === 'debug'
 
-// const contextManager = new AsyncHooksContextManager();
-// context.setGlobalContextManager(contextManager.enable());
+console.log(`${LOGPREFIX}: Starting n8n OpenTelemetry instrumentation`)
 
-const opentelemetry = require("@opentelemetry/sdk-node");
-const { OTLPTraceExporter } = require("@opentelemetry/exporter-trace-otlp-http");
-const { OTLPLogExporter } = require("@opentelemetry/exporter-logs-otlp-http");
-const { getNodeAutoInstrumentations } = require("@opentelemetry/auto-instrumentations-node");
-const { registerInstrumentations } = require("@opentelemetry/instrumentation");
-const { Resource } = require("@opentelemetry/resources");
-const { SemanticResourceAttributes } = require("@opentelemetry/semantic-conventions");
-// const setupN8nOpenTelemetry = require("./n8n-otel-instrumentation");
-const winston = require("winston");
-
-const logger = winston.createLogger({
-  level: "info",
-  format: winston.format.json(),
-  transports: [new winston.transports.Console()],
-});
-
+// Configure OpenTelemetry
+// Turn off auto-instrumentation for dns, net, tls, fs
+// Enable enhancedDatabaseReporting for pg
 const autoInstrumentations = getNodeAutoInstrumentations({
   "@opentelemetry/instrumentation-dns": { enabled: false },
   "@opentelemetry/instrumentation-net": { enabled: false },
@@ -38,38 +39,114 @@ const autoInstrumentations = getNodeAutoInstrumentations({
   "@opentelemetry/instrumentation-fs": { enabled: false },
   "@opentelemetry/instrumentation-pg": {
     enhancedDatabaseReporting: true,
-  }
-});
+  },
+})
 
 registerInstrumentations({
   instrumentations: [autoInstrumentations],
-});
+})
+
+// Setup n8n telemetry
+console.log(`${LOGPREFIX}: Setting up n8n telemetry`)
+setupN8nOpenTelemetry()
+
+// Configure Winston logger to log to console
+console.log(`${LOGPREFIX}: Configuring Winston logger with level: ${LOG_LEVEL}`)
+setupWinstonLogger(LOG_LEVEL)
+
+// Configure and start the OpenTelemetry SDK
+console.log(`${LOGPREFIX}: Configuring OpenTelemetry SDK with log level: ${process.env.OTEL_LOG_LEVEL}`)
+const sdk = setupOpenTelemetryNodeSDK()
+sdk.start()
 
 
 ////////////////////////////////////////////////////////////
-// n8n workflow execution tracing
+// HELPER FUNCTIONS
 ////////////////////////////////////////////////////////////
-
-// const {
-//   trace,
-//   SpanStatusCode,
-//   SpanKind,
-// } = require("@opentelemetry/api")
-const flat = require("flat") // flattens objects into a single level
-const tracer = trace.getTracer("n8n-instrumentation", "1.0.0")
 
 /**
- * Patches n8n workflow execution to wrap the entire run in a workflow-level span.
+ * Configure and start the OpenTelemetry SDK
+ */
+function setupOpenTelemetryNodeSDK() {
+  const sdk = new opentelemetry.NodeSDK({
+    logRecordProcessors: [
+      new opentelemetry.logs.SimpleLogRecordProcessor(
+        new OTLPLogExporter({
+          // Explicitly set the endpoint to the Honeycomb API endpoint
+          url: 'https://api.honeycomb.io:443/v1/logs',
+          headers: {
+            'x-honeycomb-team': process.env.HONEYCOMB_API_KEY
+          },
+        }),
+      ),
+    ],
+    resource: new Resource({
+      [SemanticResourceAttributes.SERVICE_NAME]:
+        process.env.OTEL_SERVICE_NAME || "n8n",
+    }),
+    traceExporter: new OTLPTraceExporter({
+      // Explicitly set the endpoint to the Honeycomb API endpoint
+      url: 'https://api.honeycomb.io:443/v1/traces',
+      headers: {
+        'x-honeycomb-team': process.env.HONEYCOMB_API_KEY
+      },
+    }),
+  })
+  return sdk
+}
+
+/**
+ * Configure the Winston logger
+ *
+ * - Logs uncaught exceptions to the console
+ * - Logs unhandled promise rejections to the console
+ * - Logs errors to the console
+ */
+function setupWinstonLogger(logLevel = "info") {
+  const logger = winston.createLogger({
+    level: logLevel,
+    format: winston.format.json(),
+    transports: [new winston.transports.Console()],
+  })
+
+  process.on("uncaughtException", async (err) => {
+    logger.error("Uncaught Exception", { error: err })
+    const span = opentelemetry.trace.getActiveSpan()
+    if (span) {
+      span.recordException(err)
+      span.setStatus({ code: 2, message: err.message })
+    }
+    try {
+      await sdk.forceFlush()
+    } catch (flushErr) {
+      logger.error("Error flushing telemetry data", { error: flushErr })
+    }
+    process.exit(1)
+  })
+
+  process.on("unhandledRejection", (reason, promise) => {
+    logger.error("Unhandled Promise Rejection", { error: reason })
+  })
+}
+
+/**
+ * Patches n8n workflow and node execution to wrap the entire run in a workflow-level span.
  *
  * - Span name: "n8n.workflow.execute"
  * - Attributes prefixed with "n8n." to follow semantic conventions.
  */
 function setupN8nOpenTelemetry() {
+  // Setup n8n workflow execution tracing
+  const tracer = trace.getTracer("n8n-instrumentation", "1.0.0")
+
   try {
+    // Import n8n core modules
     const { WorkflowExecute } = require("n8n-core")
 
     /**
-     * Patch the workflow execution to wrap the entire run in a workflow-level span.
+     * Patch the workflow execution
+     *
+     * Wrap the entire run in a workflow-level span and capture workflow details as attributes.
      *
      * - Span name: "n8n.workflow.execute"
      * - Attributes prefixed with "n8n." to follow semantic conventions.
@@ -84,22 +161,24 @@ function setupN8nOpenTelemetry() {
       const workflowAttributes = {
         "n8n.workflow.id": workflowId,
         "n8n.workflow.name": workflowName,
-        ...flat(wfData?.settings ?? {}, {
+        ...flatten(wfData?.settings ?? {}, {
           delimiter: ".",
           transformKey: (key) => `n8n.workflow.settings.${key}`,
         }),
       }
-
       const span = tracer.startSpan("n8n.workflow.execute", {
         attributes: workflowAttributes,
         kind: SpanKind.INTERNAL,
       })
 
+      if (DEBUG) {
+        console.debug(`${LOGPREFIX}: starting n8n workflow:`, workflow)
+      }
+
       // Set the span as active
       const activeContext = trace.setSpan(context.active(), span)
       return context.with(activeContext, () => {
         const cancelable = originalProcessRun.apply(this, arguments)
-
         cancelable
           .then(
             (result) => {
@@ -123,16 +202,15 @@ function setupN8nOpenTelemetry() {
           .finally(() => {
             span.end()
           })
-
         return cancelable
       })
     }
 
     /**
-     * Patch the node execution to wrap each node's run in a child span.
+     * Patch the n8n node execution
      *
+     * Wrap each node's run in a child span and capture node details as attributes.
      * - Span name: "n8n.node.execute"
-     * - Captures node-specific details as attributes.
      */
     const originalRunNode = WorkflowExecute.prototype.runNode
     /**
@@ -160,11 +238,8 @@ function setupN8nOpenTelemetry() {
         return originalRunNode.apply(this, arguments)
       }
 
-      const executionId = additionalData?.executionId ?? "unknown"
-      const userId = additionalData?.userId ?? "unknown"
-
       const node = executionData?.node ?? "unknown"
-      let credInfo = "none"
+      let credInfo = ""
       if (node?.credentials && typeof node.credentials === "object") {
         const credTypes = Object.keys(node.credentials)
         if (credTypes.length) {
@@ -178,15 +253,23 @@ function setupN8nOpenTelemetry() {
             .join(", ")
         }
       }
+      const executionId = additionalData?.executionId ?? "unknown"
+      const userId = additionalData?.userId ?? "unknown"
 
       const nodeAttributes = {
         "n8n.workflow.id": workflow?.id ?? "unknown",
         "n8n.execution.id": executionId,
+        "n8n.user.id": userId,
+        "n8n.credentials": credInfo || "none",
       }
-
-      const flattenedNode = flat(node ?? {}, { delimiter: "." })
+      // Flatten the n8n node object into a single level of attributes
+      const flattenedNode = flatten(node ?? {}, { delimiter: "." })
       for (const [key, value] of Object.entries(flattenedNode)) {
         nodeAttributes[`n8n.node.${key}`] = value
+      }
+
+      if (DEBUG) {
+        console.debug(`${LOGPREFIX}: executing n8n node:`, node)
       }
 
       return tracer.startActiveSpan(
@@ -232,43 +315,3 @@ function setupN8nOpenTelemetry() {
     console.error("Failed to set up n8n OpenTelemetry instrumentation:", e)
   }
 }
-
-setupN8nOpenTelemetry();
-////////////////////////////////////////////////////////////
-
-const sdk = new opentelemetry.NodeSDK({
-  logRecordProcessors: [
-    new opentelemetry.logs.SimpleLogRecordProcessor(new OTLPLogExporter()),
-  ],
-  resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || "n8n",
-  }),
-  traceExporter: new OTLPTraceExporter(),
-  // traceExporter: new OTLPTraceExporter({
-  //   headers: {
-  //     "x-honeycomb-team": process.env.HONEYCOMB_API_KEY,
-  //   },
-  // }),
-  contextManager: new AsyncHooksContextManager(), // Added this line
-});
-
-process.on("uncaughtException", async (err) => {
-  logger.error("Uncaught Exception", { error: err });
-  const span = opentelemetry.trace.getActiveSpan();
-  if (span) {
-    span.recordException(err);
-    span.setStatus({ code: 2, message: err.message });
-  }
-  try {
-    await sdk.forceFlush();
-  } catch (flushErr) {
-    logger.error("Error flushing telemetry data", { error: flushErr });
-  }
-  process.exit(1);
-});
-
-process.on("unhandledRejection", (reason, promise) => {
-  logger.error("Unhandled Promise Rejection", { error: reason });
-});
-
-sdk.start();
