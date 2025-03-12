@@ -38,6 +38,7 @@ registerInstrumentations({
   instrumentations: [autoInstrumentations],
 })
 
+// Setup n8n workflow execution tracing
 setupN8nOpenTelemetry()
 
 const sdk = new opentelemetry.NodeSDK({

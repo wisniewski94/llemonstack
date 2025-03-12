@@ -3,6 +3,8 @@
  *
  * - Span name: "n8n.workflow.execute"
  * - Attributes prefixed with "n8n." to follow semantic conventions.
+ *
+ * Call setupN8nOpenTelemetry() to enable the patches.
  */
 
 const {
@@ -14,6 +16,12 @@ const {
 const flat = require("flat") // flattens objects into a single level
 const tracer = trace.getTracer("n8n-instrumentation", "1.0.0")
 
+/**
+ * Patches n8n workflow execution to wrap the entire run in a workflow-level span.
+ *
+ * - Span name: "n8n.workflow.execute"
+ * - Attributes prefixed with "n8n." to follow semantic conventions.
+ */
 function setupN8nOpenTelemetry() {
   try {
     const { WorkflowExecute } = require("n8n-core")
