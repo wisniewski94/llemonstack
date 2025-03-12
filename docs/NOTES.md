@@ -16,18 +16,9 @@ This is just a scratchpad for WIP project notes to keep the main README clean.
 
 - [ ] Configure zep to use LiteLLM proxy
 
-- [ ] Add models to config.litellm.yaml
-
-  - [ ] Embedding model for Zep
-  - [ ] Common models for OpenAI: gpt-4o, o3-mini, whisper, embedding, etc.
-  - [ ] Common models for Anthropic: claude 3.7, etc.
-
-- [ ] Update versions script to get app versions from running containers, when available
+- [x] SKIPPED: Update versions script to get app versions from running containers
       `docker compose -p llemonstack ps --format '"{{.Name}}"'`
-      Then check the list of services_with_app_verions to see if any match.
-      Then docker exec in the container.
-      `docker compose -p llemonstack exec n8n sh -c "echo hi"`
-
+      ps is too slow, not implementing this
 - [x] Add langfuse UI url to start output
 - [x] Add LiteLLM UI url to start output
 - [x] Add LiteLLM API url to start output

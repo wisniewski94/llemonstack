@@ -131,49 +131,60 @@ async function getAppVersion(
   return [version || null, image || null]
 }
 
-async function showAppVersions(): Promise<void> {
-  // Define proper type for versions object with index signature
-  const rows: string[][] = []
-
-  for (const service of Object.keys(SERVICES_WITH_APP_VERSION)) {
-    const composeFile = await getComposeFile(service)
-    if (!composeFile) {
-      isEnabled(service) &&
-        showWarning(`Compose file not found for ${service}`)
-      continue
-    }
-    const [entrypoint, ...args] = SERVICES_WITH_APP_VERSION[service]
-    if (isEnabled(service)) {
-      const [version, image] = await getAppVersion(
-        service,
-        composeFile,
-        entrypoint,
-        args,
-      )
-      const ver = `${version || 'not available'}`
-      rows.push([
-        colors.yellow(service),
-        colors.green.bold(ver),
-        colors.gray(image || ''),
-      ])
-    }
-  }
-  showTable(['Service', 'App Version', 'Docker Image'], rows)
+async function getAppVersions(): Promise<string[][]> {
+  // Get enabled services and process them in parallel
+  const results = await Promise.all(
+    Object.keys(SERVICES_WITH_APP_VERSION)
+      .filter((service) => isEnabled(service))
+      .map(async (service) => {
+        const composeFile = await getComposeFile(service)
+        if (!composeFile) {
+          showWarning(`Compose file not found for ${service}`)
+          return { service, version: null, image: null }
+        }
+        const [entrypoint, ...args] = SERVICES_WITH_APP_VERSION[service]
+        const [version, image] = await getAppVersion(
+          service,
+          composeFile,
+          entrypoint,
+          args,
+        )
+        return { service, version, image }
+      }),
+  )
+  const rows = results.map(({ service, version, image }) => [
+    colors.yellow(service),
+    colors.green.bold(version || 'not available'),
+    colors.gray(image || ''),
+  ])
+  return rows
+  // showTable(['Service', 'App Version', 'Docker Image'], rows)
 }
 
 async function showImageVersions(): Promise<void> {
   // Iterate through all compose files to get images
-  for (const composeFile of COMPOSE_FILES) {
-    let images: ServiceImage[]
-    try {
-      images = await getImagesFromComposeYml(composeFile)
-    } catch (error) {
-      if (error instanceof Deno.errors.NotFound) {
-        showWarning(`Compose file (${composeFile}) not found, skipping`)
-        continue
-      } else {
-        throw error
+  // Process all compose files in parallel
+  const composeResults = await Promise.all(
+    COMPOSE_FILES.map(async (composeFile) => {
+      let images: ServiceImage[] = []
+      try {
+        images = await getImagesFromComposeYml(composeFile)
+        return { composeFile, images, error: null }
+      } catch (error) {
+        if (error instanceof Deno.errors.NotFound) {
+          showWarning(`Compose file (${composeFile}) not found, skipping`)
+          return { composeFile, images: [], error }
+        } else {
+          throw error
+        }
       }
+    }),
+  )
+
+  // Process each valid result
+  for (const { composeFile, images, error } of composeResults) {
+    if (error instanceof Deno.errors.NotFound || images.length === 0) {
+      continue
     }
 
     // Sort images by service name alphabetically
@@ -211,7 +222,7 @@ async function showImageVersions(): Promise<void> {
           if (version) {
             rows[i][1] = version
           } else {
-            rows[i][1] = '???'
+            rows[i][1] = 'N/A'
           }
         } catch (_error) {
           // ignore error
@@ -221,9 +232,12 @@ async function showImageVersions(): Promise<void> {
 
     // Apply colors to each row
     for (let i = 0; i < rows.length; i++) {
+      const version = rows[i][1] == 'N/A'
+        ? colors.gray(rows[i][1] as string)
+        : colors.green.bold(rows[i][1] as string)
       rows[i] = [
         colors.yellow(rows[i][0] as string),
-        colors.green.bold(rows[i][1] as string),
+        version,
         colors.gray(rows[i][2] as string),
       ]
     }
@@ -244,12 +258,17 @@ export async function versions(projectName: string): Promise<void> {
   await prepareEnv({ silent: true })
 
   try {
+    const appVersionsPromise = (Object.keys(SERVICES_WITH_APP_VERSION).length > 0)
+      ? getAppVersions()
+      : Promise.resolve([])
+
     await showImageVersions()
 
-    if (Object.keys(SERVICES_WITH_APP_VERSION).length > 0) {
+    const appVersionRows = await appVersionsPromise
+    if (appVersionRows.length > 0) {
       showHeader('Service App Versions')
       showInfo('Version of the service app inside the container if available.\n')
-      await showAppVersions()
+      showTable(['Service', 'App Version', 'Docker Image'], appVersionRows)
     }
     console.log('\n')
   } catch (error) {
