@@ -85,7 +85,6 @@ async function getAppVersion(
   entrypoint: string, // Entrypoint
   cmdArgs: string[], //
 ): Promise<[string | null, string | null]> {
-  let version = null
   let image = null
   try {
     image = (await getImageFromCompose(composeFile, service))?.image
@@ -94,41 +93,27 @@ async function getAppVersion(
       showError(`Error getting image for ${service}`, error)
     }
   }
-  if (image) {
-    try {
-      // Check if image for service is installed
-      const imageId = (await runCommand('docker', {
-        args: [
-          'image',
-          'ls',
-          '-q',
-          image,
-        ],
-        captureOutput: true,
-        silent: true,
-      })).toString().trim()
-      if (imageId) {
-        // Run the image and get the version of the service
-        version = (await runCommand('docker', {
-          args: [
-            'run',
-            '--rm',
-            '--entrypoint',
-            entrypoint,
-            image,
-            ...cmdArgs,
-          ],
-          captureOutput: true,
-          silent: true,
-        })).toString().trim()
-      } else {
-        showInfo(`Image ${image} not installed, skipping`)
-      }
-    } catch (error) {
-      showError(`Error getting version for ${service}`, error)
-    }
+  try {
+    const version = (await runCommand('docker', {
+      args: [
+        'compose',
+        '-f',
+        composeFile,
+        'run',
+        '--rm',
+        '--entrypoint',
+        entrypoint,
+        service,
+        ...cmdArgs,
+      ],
+      captureOutput: true,
+      silent: true,
+    })).toString().trim()
+    return [version, image || null]
+  } catch (error) {
+    showError(`Error getting version for ${service}`, error)
   }
-  return [version || null, image || null]
+  return [null, image || null]
 }
 
 async function getAppVersions(): Promise<string[][]> {
