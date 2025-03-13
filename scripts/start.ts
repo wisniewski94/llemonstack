@@ -847,7 +847,8 @@ export function filterExistingFiles(files: string[]): string[] {
   })
 }
 
-async function checkPrerequisites(): Promise<void> {
+export async function checkPrerequisites(): Promise<void> {
+  // Commands will throw an error if the prerequisite is not installed
   await runCommand('docker --version')
   await runCommand('docker compose version')
   await runCommand('git --version')

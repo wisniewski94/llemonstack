@@ -20,6 +20,7 @@ import {
 import { createServiceSchema } from './lib/postgres.ts'
 import { reset } from './reset.ts'
 import {
+  checkPrerequisites,
   confirm,
   DEFAULT_PROJECT_NAME,
   ENVFILE,
@@ -29,6 +30,7 @@ import {
   LLEMONSTACK_CONFIG_DIR,
   LLEMONSTACK_CONFIG_FILE,
   loadEnv,
+  prepareEnv,
   setupRepos,
   showAction,
   showError,
@@ -58,7 +60,6 @@ type PostgresEnvVarKeys =
 type AllEnvVarKeys = EnvVarKeys | PostgresEnvVarKeys
 
 // Services that support custom postgres user and password
-// TODO: iterate through this list, create schemas, and populate env vars
 const POSTGRES_SERVICES: Array<[string, PostgresServiceEnvKeys]> = [
   ['litellm', {
     user: 'LITELLM_POSTGRES_USER',
@@ -299,6 +300,17 @@ export async function init(
   projectName: string,
 ): Promise<void> {
   try {
+    showAction('Checking prerequisites...')
+    await checkPrerequisites()
+    showInfo('Prerequisites met')
+  } catch (error) {
+    showError(
+      'Prerequisites not met, please install the required dependencies and try again.',
+      error,
+    )
+    Deno.exit(1)
+  }
+  try {
     if (await isInitialized()) {
       showWarning(`Project already initialized: ${projectName}`)
       const resetOption: string = await Select.prompt({
@@ -359,7 +371,9 @@ export async function init(
     await loadEnv({ reload: true, silent: true })
     showInfo('.env file is ready to configure\n')
 
+    showAction('\nSetting up service repositories...')
     await setupRepos({ all: true })
+    showInfo('Repositories ready')
 
     const name = await Input.prompt(
       {
