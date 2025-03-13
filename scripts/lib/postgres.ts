@@ -102,6 +102,40 @@ function getConnectionConfig({
 }
 
 /**
+ * Checks if a PostgreSQL connection is valid
+ * @param pgConfig PostgreSQL connection config
+ * @returns Promise that resolves to true if connection is valid, false otherwise
+ */
+export async function isPostgresConnectionValid(
+  pgConfig: ConnectionConfig,
+): Promise<boolean> {
+  const clientConfig = getConnectionConfig(pgConfig)
+  const client = new Client(clientConfig)
+
+  try {
+    // Attempt to connect to the database
+    await client.connect()
+
+    // Execute a simple query to verify the connection
+    const result = await client.queryArray('SELECT 1')
+
+    // If we get here, the connection is valid
+    return result.rows.length > 0
+  } catch (error) {
+    // Connection failed
+    console.error('PostgreSQL connection failed:', error)
+    return false
+  } finally {
+    // Always close the connection
+    try {
+      await client.end()
+    } catch (_error) {
+      // Ignore errors during disconnect
+    }
+  }
+}
+
+/**
  * Creates a new PostgreSQL schema for a service with appropriate permissions
  * @param serviceName Name of the service to create a schema for
  * @param pgConfig PostgreSQL connection config for admin access
