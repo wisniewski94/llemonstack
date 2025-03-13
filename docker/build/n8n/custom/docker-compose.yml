@@ -72,13 +72,13 @@ services:
       # See:
       # - https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/
       # - https://docs.honeycomb.io/get-started/start-building/application/traces/
-      - OTEL_SDK_DISABLED=false # Set to true to disable OpenTelemetry and start n8n normally
+      - OTEL_SDK_DISABLED=${N8N_OTEL_SDK_DISABLED:-false} # Set to true to disable OpenTelemetry and start n8n normally
       - OTEL_SERVICE_NAME=n8n
       - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 
       # Honeycomb configuration
-      - OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io # Base api endpoint
-      - OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=${HONEYCOMB_API_KEY} # Applies to all otel requests
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${N8N_OTEL_EXPORTER_OTLP_ENDPOINT:-https://api.honeycomb.io} # Base api endpoint
+      - OTEL_EXPORTER_OTLP_HEADERS=${N8N_OTEL_EXPORTER_OTLP_HEADERS:-x-honeycomb-team=${HONEYCOMB_API_KEY}} # Applies to all otel requests
 
       # NodeSDK log level
       # See https://www.npmjs.com/package/@opentelemetry/sdk-node
