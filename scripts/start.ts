@@ -388,12 +388,16 @@ export function getOS(): string {
 /**
  * Load the .env file
  *
+ * TODO: replace contents of this function with loadEnv from lib/env.ts
+ * during refactor. The lib version supports turning off variable expansion.
+ * Just be sure to preserve the OLLAMA_HOST logic.
+ *
  * If reload is false, Deno.env values will not be updated for any
  * values that were previously set. This protects against .env values
  * overwriting any values set in the command line when the script is run.
  *
- * If reload is false, all values in .env file will replace Deno.env
- * values even if they're blank in .env.
+ * If reload is true, all values in .env file will replace Deno.env
+ * values even if they're blank in .env and already set in Deno.env.
  *
  * @param {Object} options - The options for loading the .env file
  * @param {string} options.envPath - The path to the .env file
@@ -412,13 +416,15 @@ export async function loadEnv(
   if (!reload) {
     !silent && showInfo('Loading .env file')
     envValues = await loadDotEnv({ envPath, export: true })
-  } else {
+  } else { // reload is true
     !silent && showInfo('Reloading .env file')
     envValues = await loadDotEnv({
       envPath,
       export: false, // Don't automatically export to Deno.env
     })
-    // Manually set each variable in Deno.env
+    // Set each variable in Deno.env
+    // loadDonEnv({ export: true }) will only set variables if undefined in Deno.env
+    // The reload flag sets all variables even if they are already set in Deno.env
     for (const [key, value] of Object.entries(envValues)) {
       Deno.env.set(key, value as string)
     }

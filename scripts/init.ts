@@ -9,6 +9,7 @@
  * ```
  */
 import { Input, Secret, Select } from '@cliffy/prompt'
+import { loadEnv } from './lib/env.ts'
 import {
   generateJWT,
   generateRandomBase64,
@@ -29,7 +30,6 @@ import {
   isSupabaseStarted,
   LLEMONSTACK_CONFIG_DIR,
   LLEMONSTACK_CONFIG_FILE,
-  loadEnv,
   prepareEnv,
   setupRepos,
   showAction,
@@ -223,7 +223,7 @@ async function updateEnvFile(
     return tmp
   }, envFileContent)
   await Deno.writeTextFile(ENVFILE, updatedEnvFileContent)
-  return await loadEnv({ reload: true, silent: true })
+  return await loadEnv({ reload: true, expand: false })
 }
 
 /**
@@ -479,7 +479,7 @@ export async function init(
     }
 
     // Get env vars and populate Deno.env
-    let envVars = await loadEnv({ reload: true, silent: true }) as Record<AllEnvVarKeys, string>
+    let envVars = await loadEnv({ reload: true, expand: false })
 
     showInfo('.env file is ready to configure\n')
 
