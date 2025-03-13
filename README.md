@@ -15,9 +15,19 @@ with [n8n](https://n8n.io/), [Flowise](https://flowiseai.com/),
 
 LLemonStack is currently a pre-release version.
 
-It should work as expected, but the scripts and API are in rapid development.
+It should work as expected on macOS and Linux. Windows likely needs some
+additional work to get Supabase to start.
+
+The scripts and API are in rapid development.
 
 Check the git history and pull regularly for bug fixes.
+
+### Changelog
+
+- Mar 13, 2025: Fixed the init script
+- Mar 12, 2025: Added custom n8n image with OTEL tracing, and ffmpeg support
+  and Langfuse in n8n LangChain Code nodes
+- Mar 10, 2025: Added LiteLLM and Langfuse to the stack
 
 ## Overview
 
@@ -62,16 +72,18 @@ Just run the stack and start building AI agents.
 
 <!-- markdownlint-disable MD013 MD033 -->
 
-| Tool                                        | Description                                                                                                     |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| [**n8n**](https://n8n.io/)                  | Low-code platform with over 400 integrations and advanced AI components.                                        |
-| [**Supabase**](https://supabase.com/)       | Open source Firebase alternative, Postgres database, and pgvector vector store.                                 |
-| [**Ollama**](https://ollama.com/)           | Cross-platform LLM platform to install and run the latest local LLMs.                                           |
-| [**Open WebUI**](https://openwebui.com/)    | ChatGPT-like interface to privately interact with your local models and N8N agents.                             |
-| [**Flowise**](https://flowiseai.com/)       | No/low code AI agent builder, pairs very well with n8n.                                                         |
-| [**Qdrant**](https://qdrant.tech/)          | Open-source, high performance vector store. Included to experiment with different vector stores.                |
-| [**Zep**](https://www.getzep.com/)          | Open-source chat history and graph vector store. Summarizes chat history to improve LLM response & RAG quality. |
-| [**Browser-Use**](https://browser-use.com/) | Open-source browser automation tool for automating complex browser interactions from simple prompts.            |
+| Tool                                                 | Description                                                                                                     |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| [**n8n**](https://n8n.io/)                           | Low-code automation platform with over 400 integrations and advanced AI components.                             |
+| [**Flowise**](https://flowiseai.com/)                | No/low code AI agent builder, pairs very well with n8n.                                                         |
+| [**Langfuse**](https://github.com/langfuse/langfuse) | LLM observability platform. Configured to auto log LiteLLM queries.                                             |
+| [**LiteLLM**](https://github.com/BerriAI/litellm)    | LLM request proxy. Allows for cost control and observability of LLM token usage in the stack.                   |
+| [**Supabase**](https://supabase.com/)                | Open source Firebase alternative, Postgres database, and pgvector vector store.                                 |
+| [**Ollama**](https://ollama.com/)                    | Cross-platform LLM platform to install and run the latest local LLMs.                                           |
+| [**Open WebUI**](https://openwebui.com/)             | ChatGPT-like interface to privately interact with your local models and N8N agents.                             |
+| [**Qdrant**](https://qdrant.tech/)                   | Open-source, high performance vector store. Included to experiment with different vector stores.                |
+| [**Zep**](https://www.getzep.com/)                   | Open-source chat history and graph vector store. Summarizes chat history to improve LLM response & RAG quality. |
+| [**Browser-Use**](https://browser-use.com/)          | Open-source browser automation tool for automating complex browser interactions from simple prompts.            |
 
 <br />
 <br />
@@ -127,8 +139,7 @@ In a terminal, run the following commands
 
 ```bash
 # Clone this repo to your local machine
-git clone https://github.com/llemonstack/llemonstack.git
-cd llemonstack
+git clone https://github.com/llemonstack/llemonstack.git && cd llemonstack
 
 # Install dependencies
 deno install
@@ -140,12 +151,8 @@ deno run init
 ## Usage
 
 ```bash
-# Initialize the stack
-# Sets up the environment variables, only needs to be run once
-deno run init
-
 # Start the services
-# Automatically installs dependencies & docker images
+# Automatically installs dependencies & docker images as needed
 deno run start
 
 # Stop all services
