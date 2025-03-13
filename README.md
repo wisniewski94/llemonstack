@@ -6,8 +6,9 @@ Securely running in docker containers.
 Pre-configured and ready to squeeze. LLemoStack gets you up and running in minutes
 with [n8n](https://n8n.io/), [Flowise](https://flowiseai.com/),
 [Supabase](https://supabase.com/), [Qdrant](https://qdrant.tech/),
-[Zep](https://www.getzep.com/), [Ollama](https://ollama.com/), and
-[Browser-Use](https://browser-use.com/) and more.
+[Zep](https://www.getzep.com/), [LiteLLM](https://github.com/BerriAI/litellm),
+[Langfuse](https://github.com/langfuse/langfuse), [Ollama](https://ollama.com/),
+and [Browser-Use](https://browser-use.com/) and more.
 
 ![n8n.io - Screenshot](docs/assets/n8n-demo.gif)
 
