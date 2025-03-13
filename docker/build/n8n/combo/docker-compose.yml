@@ -87,7 +87,7 @@ services:
       # NodeSDK log level
       # See https://www.npmjs.com/package/@opentelemetry/sdk-node
       # NONE | ERROR | WARN | INFO | DEBUG | VERBOSE | ALL
-      - OTEL_LOG_LEVEL=DEBUG
+      - OTEL_LOG_LEVEL=INFO
 
       - NODE_FUNCTION_ALLOW_EXTERNAL=* # or list out the langfuse packages
 

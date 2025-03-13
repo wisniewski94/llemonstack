@@ -24,7 +24,7 @@ const {
 } = require("@opentelemetry/api")
 const flatten = require("flat") // flattens objects into a single level
 const LOGPREFIX = '[tracing]'
-const LOG_LEVEL = process.env.LOG_LEVEL || 'info'
+const LOG_LEVEL = process.env.LOG_LEVEL?.toLowerCase() || 'info'
 const DEBUG = LOG_LEVEL === 'debug'
 
 console.log(`${LOGPREFIX}: Starting n8n OpenTelemetry instrumentation`)
@@ -239,29 +239,40 @@ function setupN8nOpenTelemetry() {
       }
 
       const node = executionData?.node ?? "unknown"
-      let credInfo = ""
-      if (node?.credentials && typeof node.credentials === "object") {
-        const credTypes = Object.keys(node.credentials)
-        if (credTypes.length) {
-          credInfo = credTypes
-            .map((type) => {
-              const cred = node.credentials?.[type]
-              return cred && typeof cred === "object"
-                ? cred.name ?? `${type} (id:${cred?.id ?? "unknown"})`
-                : type
-            })
-            .join(", ")
-        }
-      }
+
+      // TODO: get and log credentials used.
+      // See https://github.com/n8n-io/n8n/blob/master/packages/workflow/src/Interfaces.ts#L186
+      // const credentials = workflow.nodes[node.name]?.credentials ?? "none"
+      // console.debug(`${LOGPREFIX}: ???? credentials:`, credentials)
+      // Credentials for AI Agent nodes are in the subnode, e.g. "Open AI Agent"
+      // Currently runNode does not get called for the subnodes so we don't see
+      // the credentials. One solution is to check the data sent in the runNode args
+      // to see if the current node has subnodes with credentials?
+
+      // let credInfo = "none"
+      // if (node?.credentials && typeof node.credentials === "object") {
+      //   const credTypes = Object.keys(node.credentials)
+      //   if (credTypes.length) {
+      //     credInfo = credTypes
+      //       .map((type) => {
+      //         const cred = node.credentials?.[type]
+      //         return cred && typeof cred === "object"
+      //           ? cred.name ?? `${type} (id:${cred?.id ?? "unknown"})`
+      //           : type
+      //       })
+      //       .join(", ")
+      //   }
+      // }
+
       const executionId = additionalData?.executionId ?? "unknown"
       const userId = additionalData?.userId ?? "unknown"
-
       const nodeAttributes = {
         "n8n.workflow.id": workflow?.id ?? "unknown",
         "n8n.execution.id": executionId,
         "n8n.user.id": userId,
-        "n8n.credentials": credInfo || "none",
+        // "n8n.credentials": credInfo || "none",
       }
+
       // Flatten the n8n node object into a single level of attributes
       const flattenedNode = flatten(node ?? {}, { delimiter: "." })
       for (const [key, value] of Object.entries(flattenedNode)) {
@@ -272,8 +283,19 @@ function setupN8nOpenTelemetry() {
         }
       }
 
+      // Debug logging, uncomment as needed
       if (DEBUG) {
-        console.debug(`${LOGPREFIX}: executing n8n node:`, node)
+        console.debug(`${LOGPREFIX}: executing node:`, node.name)
+        // console.debug(`${LOGPREFIX}: executing n8n node with attributes:`, nodeAttributes)
+        // console.debug(`${LOGPREFIX}: executing n8n node:`, node)
+        // console.debug(`${LOGPREFIX}: additionalData:`, additionalData)
+        // console.debug(`${LOGPREFIX}: runExecutionData:`, runExecutionData)
+        // console.debug(`${LOGPREFIX}: workflow:`, workflow)
+        // console.debug(`${LOGPREFIX}: executionData:`, executionData)
+        // console.debug(`${LOGPREFIX}: runIndex:`, runIndex)
+        // console.debug(`${LOGPREFIX}: mode:`, mode)
+        // console.debug(`${LOGPREFIX}: executionData data:`, JSON.stringify(executionData.data))
+        // console.debug(`${LOGPREFIX}: executionData source:`, JSON.stringify(executionData.source))
       }
 
       return tracer.startActiveSpan(
