@@ -432,6 +432,9 @@ export async function init(
     await updateEnvFile(ENVVARS)
     loadEnv({ reload: true, silent: true })
 
+    // Setup supabase env
+    await prepareEnv()
+
     showAction('\nSetting up postgres schemas...')
     showInfo('This will create a postgres user and schema for each service that uses postgres.')
     showInfo('Starting supabase...')
