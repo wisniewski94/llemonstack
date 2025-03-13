@@ -29,6 +29,7 @@ import {
   LLEMONSTACK_CONFIG_DIR,
   LLEMONSTACK_CONFIG_FILE,
   loadEnv,
+  setupRepos,
   showAction,
   showError,
   showHeader,
@@ -356,8 +357,9 @@ export async function init(
 
     // Reload .env into Deno.env
     await loadEnv({ reload: true, silent: true })
-
     showInfo('.env file is ready to configure\n')
+
+    await setupRepos({ all: true })
 
     const name = await Input.prompt(
       {
