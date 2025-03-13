@@ -265,7 +265,11 @@ function setupN8nOpenTelemetry() {
       // Flatten the n8n node object into a single level of attributes
       const flattenedNode = flatten(node ?? {}, { delimiter: "." })
       for (const [key, value] of Object.entries(flattenedNode)) {
-        nodeAttributes[`n8n.node.${key}`] = value
+        if (typeof value === 'string' || typeof value === 'number') {
+          nodeAttributes[`n8n.node.${key}`] = value;
+        } else {
+          nodeAttributes[`n8n.node.${key}`] = JSON.stringify(value);
+        }
       }
 
       if (DEBUG) {
