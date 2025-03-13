@@ -1,3 +1,5 @@
+// See ../combo/tracing.js for a more complete implementation that patches
+
 /**
  * Patches n8n workflow execution to wrap the entire run in a workflow-level span.
  *

@@ -1,4 +1,6 @@
 "use strict"
+// See ../combo/tracing.js for a more complete implementation that patches
+
 /**
  * This file is used to instrument the n8n application with OpenTelemetry.
  * It's run by the docker entrypoint.sh script before starting n8n.
