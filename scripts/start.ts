@@ -964,6 +964,13 @@ export async function setupRepos({
   pull?: boolean
   all?: boolean
 } = {}): Promise<void> {
+  // Ensure .repos directory exists
+  try {
+    await fs.ensureDir(REPO_DIR)
+  } catch (error) {
+    showError(`Unable to create repos dir: ${REPO_DIR}`, error)
+    Deno.exit(1)
+  }
   // Setup all repos in parallel
   await Promise.all(
     Object.entries(REPO_SERVICES)
