@@ -1,12 +1,16 @@
-# Custom n8n Docker Image with Open Telemetry
+# Custom n8n Docker Image with FFmpeg, Langfuse & Open Telemetry
 
 Adds automatic tracing of n8n workflows to the otel provider configured in env variables.
 
-This example was originally shared by Stuart Johnson in this
+The OTEL example was originally shared by Stuart Johnson in this
 [n8n community forum post](https://community.n8n.io/t/n8n-successfully-instrumented-with-opentelemetry/78468).
 
-The code has been modified a bit to fix a duplicate registration error and
-simplify the env var handling with docker compose.
+The code has been modified to fix some minor bugs and consolidate the tracing
+code into one file.
+
+FFmpeg is installed and useable from run command nodes in n8n.
+
+Langfuse is installed and usesable from LangChain Code nodes in n8n.
 
 ```bash
 # Set Honeycomb API key in local env

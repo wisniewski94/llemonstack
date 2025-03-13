@@ -66,31 +66,30 @@ services:
       - N8N_DIAGNOSTICS_CONFIG_FRONTEND=
       - N8N_DIAGNOSTICS_CONFIG_BACKEND=
 
-      # Log level used by tracing.js
-      # Set to `debug` to enable verbose logging
-      # Winston log levels: error, warn, info, debug, verbose, silly
-      - LOG_LEVEL=debug
-
       # OpenTelemetry
       # See:
       # - https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/
       # - https://docs.honeycomb.io/get-started/start-building/application/traces/
-      - HONEYCOMB_API_KEY=${HONEYCOMB_API_KEY:-}
-      - OTEL_SDK_DISABLED=false # Set to false to disable OpenTelemetry and start n8n normally
+      - OTEL_SDK_DISABLED=false # Set to true to disable OpenTelemetry and start n8n normally
       - OTEL_SERVICE_NAME=n8n
-      - OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
-      - OTEL_EXPORTER_OTLP_ENDPOINT="https://api.honeycomb.io"
-      # - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="https://api.honeycomb.io/v1/traces"
+      - OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+
+      # Honeycomb configuration
+      - OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io # Base api endpoint
       - OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=${HONEYCOMB_API_KEY} # Applies to all otel requests
-      # - OTEL_EXPORTER_OTLP_TRACES_HEADERS="x-honeycomb-team=${HONEYCOMB_API_KEY}"
 
       # NodeSDK log level
       # See https://www.npmjs.com/package/@opentelemetry/sdk-node
       # NONE | ERROR | WARN | INFO | DEBUG | VERBOSE | ALL
       - OTEL_LOG_LEVEL=INFO
 
-      - NODE_FUNCTION_ALLOW_EXTERNAL=* # or list out the langfuse packages
+      # Log level used by tracing.js
+      # Set to `debug` to enable verbose logging
+      # Winston log levels: error, warn, info, debug, verbose, silly
+      - TRACING_LOG_LEVEL=info
 
-      - LANGFUSE_PUBLIC_KEY=pk-lf-... # langfuse public key
-      - LANGFUSE_SECRET_KEY=sk-lf-... # langfuse secret key
-      - LANGFUSE_BASE_URL=http://langfuse:3000
+      # Langfuse configuration
+      - NODE_FUNCTION_ALLOW_EXTERNAL=* # Allows langfuse to be imported in n8n code nodes
+      # - LANGFUSE_PUBLIC_KEY=pk-lf-... # langfuse public key
+      # - LANGFUSE_SECRET_KEY=sk-lf-... # langfuse secret key
+      # - LANGFUSE_BASE_URL=http://langfuse:3000

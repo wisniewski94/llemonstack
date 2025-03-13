@@ -1,6 +1,6 @@
 # How to modify n8n to support OTEL and log streaming
 
-See [docker/build/n8n/otel](../docker/build/n8n/otel/) for a working example.
+See [docker/build/n8n/custom](../docker/build/n8n/custom/) for a working example.
 
 The example builds a custom n8n docker image and patches in OpenTelemetry
 support to auto trace n8n workflow executions.

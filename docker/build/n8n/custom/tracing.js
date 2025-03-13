@@ -23,9 +23,14 @@ const {
   SpanKind,
 } = require("@opentelemetry/api")
 const flatten = require("flat") // flattens objects into a single level
-const LOGPREFIX = '[tracing]'
-const LOG_LEVEL = process.env.LOG_LEVEL?.toLowerCase() || 'info'
+
+const LOGPREFIX = '[Tracing]'
+const LOG_LEVEL = getEnv('TRACING_LOG_LEVEL', 'info')
 const DEBUG = LOG_LEVEL === 'debug'
+
+// Process all OTEL_* environment variables to strip quotes.
+// Fixes issues with quotes in Docker env vars breaking the OTLP exporter.
+processOtelEnvironmentVariables()
 
 console.log(`${LOGPREFIX}: Starting n8n OpenTelemetry instrumentation`)
 
@@ -65,32 +70,67 @@ sdk.start()
 ////////////////////////////////////////////////////////////
 
 /**
+ * Get environment variable without surrounding quotes
+ */
+function getEnv(key, defaultValue = '', required = true) {
+  const value = process.env[key] ?? defaultValue
+  if (!value && required) {
+    throw new Error(`Required environment variable ${key} is not set`)
+  }
+  return value ? value.replace(/^['"]|['"]$/g, '') : defaultValue
+}
+
+/**
+ * Process all OTEL_* environment variables to strip quotes
+ *
+ * This ensures that all OpenTelemetry environment variables are properly
+ * formatted without surrounding quotes that might cause configuration issues.
+ */
+function processOtelEnvironmentVariables() {
+  console.log(`${LOGPREFIX}: Processing OTEL environment variables`)
+  const envVars = process.env
+  for (const key in envVars) {
+    if (key.startsWith('OTEL_')) {
+      try {
+        // Get the value without quotes
+        const cleanValue = getEnv(key, undefined, false)
+        process.env[key] = cleanValue
+        if (DEBUG) {
+          console.log(`${LOGPREFIX}: Processed ${key}=${cleanValue}`)
+        }
+      } catch (error) {
+        console.warn(`${LOGPREFIX}: Error processing ${key}: ${error.message}`)
+      }
+    }
+  }
+}
+
+
+/**
  * Configure and start the OpenTelemetry SDK
  */
 function setupOpenTelemetryNodeSDK() {
   const sdk = new opentelemetry.NodeSDK({
     logRecordProcessors: [
       new opentelemetry.logs.SimpleLogRecordProcessor(
+        // Auto configure exporter with OTEL_* env vars
+        new OTLPLogExporter(),
+        /*
+        // Example for explicitly configuring if auto setting doesn't reliably work
         new OTLPLogExporter({
-          // Explicitly set the endpoint to the Honeycomb API endpoint
-          url: 'https://api.honeycomb.io:443/v1/logs',
+          url: getEnv('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT'),
           headers: {
-            'x-honeycomb-team': process.env.HONEYCOMB_API_KEY
+            'x-honeycomb-team': getEnv(ß'HONEYCOMB_API_KEY')
           },
         }),
+        */
       ),
     ],
     resource: new Resource({
       [SemanticResourceAttributes.SERVICE_NAME]:
-        process.env.OTEL_SERVICE_NAME || "n8n",
+        getEnv('OTEL_SERVICE_NAME', "n8n"),
     }),
-    traceExporter: new OTLPTraceExporter({
-      // Explicitly set the endpoint to the Honeycomb API endpoint
-      url: 'https://api.honeycomb.io:443/v1/traces',
-      headers: {
-        'x-honeycomb-team': process.env.HONEYCOMB_API_KEY
-      },
-    }),
+    traceExporter: new OTLPTraceExporter(),
   })
   return sdk
 }
@@ -110,6 +150,7 @@ function setupWinstonLogger(logLevel = "info") {
   })
 
   process.on("uncaughtException", async (err) => {
+    console.error("Uncaught Exception", err) // Log error object to console
     logger.error("Uncaught Exception", { error: err })
     const span = opentelemetry.trace.getActiveSpan()
     if (span) {
@@ -287,7 +328,7 @@ function setupN8nOpenTelemetry() {
 
       // Debug logging, uncomment as needed
       if (DEBUG) {
-        console.debug(`${LOGPREFIX}: executing node:`, node.name)
+        console.debug(`${LOGPREFIX} Executing node:`, node.name)
         // console.debug(`${LOGPREFIX}: executing n8n node with attributes:`, nodeAttributes)
         // console.debug(`${LOGPREFIX}: executing n8n node:`, node)
         // console.debug(`${LOGPREFIX}: additionalData:`, additionalData)
