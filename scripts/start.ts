@@ -56,7 +56,8 @@ export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config
 export type ComposeService = [string, string, boolean]
 export const ALL_COMPOSE_SERVICES: ComposeService[] = [
   ['supabase', path.join('docker', 'docker-compose.supabase.yml'), true],
-  ['n8n', path.join('docker', 'docker-compose.n8n.yml'), true],
+  // ['n8n', path.join('docker', 'docker-compose.n8n.yml'), true],
+  ['n8n', path.join('docker', 'build', 'n8n', 'custom', 'docker-compose.yml'), true],
   ['flowise', path.join('docker', 'docker-compose.flowise.yml'), true],
   ['neo4j', path.join('docker', 'docker-compose.neo4j.yml'), true],
   ['zep', path.join('docker', 'docker-compose.zep.yml'), true],

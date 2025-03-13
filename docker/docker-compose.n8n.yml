@@ -14,8 +14,6 @@ volumes:
 
 x-n8n: &service-n8n
   image: docker.n8n.io/n8nio/n8n:latest
-  # Alternatively use n8n-custom-ffmpeg, see n8n/Dockerfile.ffmpeg.yml
-  # image: n8n-custom-ffmpeg
 
   # Only uncomment depencency health check if include is uncommented above
   # depends_on:

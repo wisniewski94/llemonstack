@@ -11,31 +11,33 @@ volumes:
 
 services:
   n8n:
-    container_name: n8n-custom
+    container_name: n8n
     build:
       context: .
       dockerfile: Dockerfile.yml
 
     restart: unless-stopped
     ports:
-      - 5679:5678 # Changed from 5678 to 5679 to avoid conflict with n8n
+      - 5678:5678 # Changed from 5678 to 5679 to avoid conflict with n8n
     volumes:
       - n8n_custom_storage:/home/node/.n8n
+      - ../../../../import/n8n:/import
+      - ../../../../shared:/data/shared
       # Add tracing.js to the container when debugging
-      - ./tracing.js:/usr/local/lib/node_modules/n8n/tracing.js
-      - ./docker-entrypoint.sh:/docker-entrypoint.sh
+      # - ./tracing.js:/usr/local/lib/node_modules/n8n/tracing.js # Uncomment when debugging
+      # - ./docker-entrypoint.sh:/docker-entrypoint.sh # Uncomment when debugging
 
     environment:
       # See https://docs.n8n.io/hosting/configuration/task-runners/
 
       # Database used by n8n
-      # - DB_TYPE=postgresdb
-      # - DB_TABLE_PREFIX=n8n_
-      # - DB_POSTGRESDB_HOST=db
-      # - DB_POSTGRESDB_USER=${N8N_POSTGRES_USER:-postgres}
-      # - DB_POSTGRESDB_PASSWORD=${N8N_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}
-      # - DB_POSTGRESDB_SCHEMA=${N8N_POSTGRES_SCHEMA:-public}
-      # - DB_POSTGRESDB_DATABASE=postgres
+      - DB_TYPE=postgresdb
+      - DB_TABLE_PREFIX=n8n_
+      - DB_POSTGRESDB_HOST=db
+      - DB_POSTGRESDB_USER=${N8N_POSTGRES_USER:-postgres}
+      - DB_POSTGRESDB_PASSWORD=${N8N_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}
+      - DB_POSTGRESDB_SCHEMA=${N8N_POSTGRES_SCHEMA:-public}
+      - DB_POSTGRESDB_DATABASE=postgres
 
       - N8N_DIAGNOSTICS_CONFIG_BACKEND=false
       - N8N_PERSONALIZATION_ENABLED=false
@@ -60,11 +62,11 @@ services:
       # Disable sending diagnostics, notifications, and templates to n8n servers
       # See https://docs.n8n.io/hosting/configuration/configuration-examples/isolation/
       - N8N_DIAGNOSTICS_ENABLED=false
-      - N8N_VERSION_NOTIFICATIONS_ENABLED=false
-      - N8N_TEMPLATES_ENABLED=false
-      - EXTERNAL_FRONTEND_HOOKS_URLS=
-      - N8N_DIAGNOSTICS_CONFIG_FRONTEND=
-      - N8N_DIAGNOSTICS_CONFIG_BACKEND=
+      - N8N_VERSION_NOTIFICATIONS_ENABLED=true
+      - N8N_TEMPLATES_ENABLED=true
+      # - EXTERNAL_FRONTEND_HOOKS_URLS=
+      # - N8N_DIAGNOSTICS_CONFIG_FRONTEND=
+      # - N8N_DIAGNOSTICS_CONFIG_BACKEND=
 
       # OpenTelemetry
       # See:
@@ -88,8 +90,13 @@ services:
       # Winston log levels: error, warn, info, debug, verbose, silly
       - TRACING_LOG_LEVEL=info
 
+      # NPM module import configuration
+      # See https://docs.n8n.io/hosting/configuration/environment-variables/nodes/
+      - NODE_FUNCTION_ALLOW_EXTERNAL=* # Allows any external node to be imported in n8n code nodes
+      - NODE_FUNCTION_ALLOW_BUILTIN=* # Allow built-in nodes to be imported in n8n code nodes
+      # - N8N_CUSTOM_EXTENSIONS # Path to a custom n8n extension
+
       # Langfuse configuration
-      - NODE_FUNCTION_ALLOW_EXTERNAL=* # Allows langfuse to be imported in n8n code nodes
       # - LANGFUSE_PUBLIC_KEY=pk-lf-... # langfuse public key
       # - LANGFUSE_SECRET_KEY=sk-lf-... # langfuse secret key
       # - LANGFUSE_BASE_URL=http://langfuse:3000

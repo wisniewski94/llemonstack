@@ -2,6 +2,14 @@
 /**
  * This file is used to instrument the n8n application with OpenTelemetry.
  * It's run by the docker entrypoint.sh script before starting n8n.
+ *
+ * n8n Workflow and Node execution are instrumented. Subnodes are not yet instrumented.
+ *
+ * Workflow executions are traced as a span in the OTEL backend.
+ * Subnode executions like Open AI Agent, Memory, etc. are not yet traced.
+ * Only the parent AI Agent node is traced.
+ *
+ * TODO: add subnode instrumentation.
  */
 
 const opentelemetry = require("@opentelemetry/sdk-node")
@@ -283,6 +291,8 @@ function setupN8nOpenTelemetry() {
 
       // TODO: get and log credentials used.
       // See
+      // - https://github.com/n8n-io/n8n/blob/master/packages/%40n8n/nodes-langchain/nodes/tools/ToolWorkflow/v2/utils/WorkflowToolService.ts#L214
+      // - https://github.com/n8n-io/n8n/blob/master/packages/workflow/src/TelemetryHelpers.ts#L487
       // - https://github.com/n8n-io/n8n/blob/master/packages/workflow/src/Interfaces.ts#L186
       // - https://github.com/n8n-io/n8n/blob/master/packages/core/src/execution-engine/workflow-execute.ts#L1065
       // const credentials = workflow.nodes[node.name]?.credentials ?? "none"
