@@ -241,7 +241,9 @@ function setupN8nOpenTelemetry() {
       const node = executionData?.node ?? "unknown"
 
       // TODO: get and log credentials used.
-      // See https://github.com/n8n-io/n8n/blob/master/packages/workflow/src/Interfaces.ts#L186
+      // See
+      // - https://github.com/n8n-io/n8n/blob/master/packages/workflow/src/Interfaces.ts#L186
+      // - https://github.com/n8n-io/n8n/blob/master/packages/core/src/execution-engine/workflow-execute.ts#L1065
       // const credentials = workflow.nodes[node.name]?.credentials ?? "none"
       // console.debug(`${LOGPREFIX}: ???? credentials:`, credentials)
       // Credentials for AI Agent nodes are in the subnode, e.g. "Open AI Agent"
