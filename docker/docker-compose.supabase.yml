@@ -1,4 +1,86 @@
 # Supabase
 
+# Include the whole supabase docker-compose.yml file
+# Or optionallyextend each service in services section
 include:
   - ../.repos/supabase/docker/docker-compose.yml
+#
+# volumes:
+#   db-config:
+
+# services:
+#   studio:
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: studio
+
+#   kong:
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: kong
+#     ports:
+#       - ${KONG_HTTP_PORT2:-8000}:8000/tcp
+#       # - "${KONG_HTTPS_PORT}:8443/tcp"
+
+#   auth:
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: auth
+
+#   rest:
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: rest
+
+#   realtime:
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: realtime
+
+#   storage:
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: storage
+
+#   imgproxy:
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: imgproxy
+
+#   meta:
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: meta
+
+#   functions:
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: functions
+
+#   analytics: # Logflare
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: analytics
+#     # ports: [] # Disable host ports
+#     ports:
+#       - ${SUPABASE_LOGFLARE_PORT:-4000}:4000
+
+#   db: # Supabase Postgres
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: db
+#     # ports: # Ports are mapped in supavisor service
+#     #   - ${POSTGRES_PORT:-5432}:5432
+
+#   vector:
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: vector
+
+#   supavisor: # Supabase Supervisor & Pooler Proxy
+#     extends:
+#       file: ../.repos/supabase/docker/docker-compose.yml
+#       service: supavisor
+#     ports:
+#       - ${POSTGRES_PORT:-5432}:5432
+#       - ${POOLER_PROXY_PORT_TRANSACTION:-6543}:6543
