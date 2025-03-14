@@ -37,6 +37,13 @@
     "exclude": ["tmp/", ".repos/", "examples/", "import/", "shared/", "docker/"]
   },
   "lint": {
-    "exclude": ["tmp/", ".repos/", "examples/", "import/", "shared/"]
+    "exclude": [
+      "tmp/",
+      ".repos/",
+      "examples/",
+      "import/",
+      "shared/",
+      "docker/build/"
+    ]
   }
 }

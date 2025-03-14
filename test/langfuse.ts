@@ -21,19 +21,19 @@ const langfuse = new Langfuse({
   baseUrl: 'http://localhost:3005',
 })
 
-const trace1 = await langfuse.trace({
+await langfuse.trace({
   name: 'test',
   input: {
     test: 'test',
   },
 })
 
-const trace2 = await langfuse.trace({
-  name: 'test',
-  input: {
-    test: 'test2',
-  },
-})
+// const trace2 = await langfuse.trace({
+//   name: 'test',
+//   input: {
+//     test: 'test2',
+//   },
+// })
 
 await langfuse.flushAsync()
 

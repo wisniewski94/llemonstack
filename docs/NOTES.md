@@ -2,9 +2,9 @@
 
 This is just a scratchpad for WIP project notes to keep the main README clean.
 
-CURRENT STATE: LiteLLM works with Langfuse as configured but LiteLLM was getting
-unauthorized errors. If this happens, try stopping and restarting the stack.
-Then look at langfuse and litellm container logs in Docker Desktop.
+CURRENT STATE: LiteLLM works with Langfuse as configured but LiteLLM was getting unauthorized
+errors. If this happens, try stopping and restarting the stack. Then look at langfuse and litellm
+container logs in Docker Desktop.
 
 ## TODO
 
@@ -22,12 +22,12 @@ Then look at langfuse and litellm container logs in Docker Desktop.
 
 - [ ] Add docker/supabase.env passwords to init script, see logflare section
 
-- [ ] Disable Logflare in supabase docker; it hammers the disk
-      See https://www.reddit.com/r/Supabase/comments/1fw2g62/disable_or_adjust_logging_self_hosted/
+- [ ] Disable Logflare in supabase docker; it hammers the disk See
+      https://www.reddit.com/r/Supabase/comments/1fw2g62/disable_or_adjust_logging_self_hosted/
 
 - [x] SKIPPED: Update versions script to get app versions from running containers
-      `docker compose -p llemonstack ps --format '"{{.Name}}"'`
-      ps is too slow, not implementing this
+      `docker compose -p llemonstack ps --format '"{{.Name}}"'` ps is too slow, not implementing
+      this
 - [x] Add langfuse UI url to start output
 - [x] Add LiteLLM UI url to start output
 - [x] Add LiteLLM API url to start output
@@ -41,8 +41,8 @@ Then look at langfuse and litellm container logs in Docker Desktop.
 - [x] Add LiteLLM to use as LLM proxy for all services
 - [x] Switch n8n import to run command in existing container
 - [x] Rebuild n8n examples with pre-configured credentials
-- [x] Update the import script to replace all ${var} style strings with env
-      vars before running import in the container
+- [x] Update the import script to replace all ${var} style strings with env vars before running
+      import in the container
 - [x] Switch to separate compose yml files & simplify process for adding new service
 - [x] Show api endpoints for internal config on start
 - [x] Create export script for n8n workflows to shared folder, use --decrypted flag
@@ -71,8 +71,8 @@ Then look at langfuse and litellm container logs in Docker Desktop.
 
 - [ ] Setup [OTEL observability](OTEL.md)
 
-- [ ] Create an install script that installs deno, docker, etc.
-      See https://github.com/SigNoz/signoz/blob/main/deploy/install.sh as good example
+- [ ] Create an install script that installs deno, docker, etc. See
+      https://github.com/SigNoz/signoz/blob/main/deploy/install.sh as good example
 - [ ] Configure LiteLLM to cache qdrant embeddings
       https://docs.litellm.ai/docs/proxy/config_settings
 - [ ] Configure LiteLLM to use supabase for request logs:
@@ -80,8 +80,8 @@ Then look at langfuse and litellm container logs in Docker Desktop.
 - [ ] Switch to Open Router for LLM calls
 - [ ] Add skyvern to automate browsers
 - [ ] Update README with instructions on using the n8n-custom-ffmpeg image
-- [ ] Switch to [execa](https://github.com/sindresorhus/execa) for running
-      shell commands if needed on Windows
+- [ ] Switch to [execa](https://github.com/sindresorhus/execa) for running shell commands if needed
+      on Windows
 - [ ] Add log streaming
 - [ ] Create script to populate the supabase and random key.env vars on first install
   - [ ] Use `openssl rand -base64 64` to generate a random key?
@@ -101,7 +101,8 @@ Docker Destop -> Settings -> General
 - Select Docker VMM
 - Select VirtioFS
 
-See [Supabase Self-Hosting Guide](https://supabase.com/docs/guides/self-hosting/docker#file-storage-backend-on-macos)
+See
+[Supabase Self-Hosting Guide](https://supabase.com/docs/guides/self-hosting/docker#file-storage-backend-on-macos)
 
 ## Running Commands on Service Containers
 
@@ -139,11 +140,11 @@ docker exec -it --user root n8n sh
 
 - [open-health](https://github.com/OpenHealthForAll/open-health)
 
-- [verifai](https://github.com/nikolamilosevic86/verifAI) - for detecting
-  hallucinations in document based RAG, specifically biomed
+- [verifai](https://github.com/nikolamilosevic86/verifAI) - for detecting hallucinations in document
+  based RAG, specifically biomed
 
-- [Open Meter](https://docs.litellm.ai/docs/observability/openmeter) -
-  Integrates with LiteLLM to auto charge LLM useage to clients
+- [Open Meter](https://docs.litellm.ai/docs/observability/openmeter) - Integrates with LiteLLM to
+  auto charge LLM useage to clients
 
 Not AI, but potentially useful:
 
@@ -200,19 +201,17 @@ Not AI, but potentially useful:
 
 **YouTube Tutorials:**
 
-See [Cole's YouTube video](https://www.youtube.com/watch?v=pOsO40HSbOo) for an
-in-depth walkthrough of the original project that inspired LLemonStack.
+See [Cole's YouTube video](https://www.youtube.com/watch?v=pOsO40HSbOo) for an in-depth walkthrough
+of the original project that inspired LLemonStack.
 
 [Cole Medin](https://www.youtube.com/@ColeMedin/videos)
 
 - [n8n + supabase RAG](https://www.youtube.com/watch?v=PEI_ePNNfJQ) - Cole Medin
-- **Misc:**
-  [Browser-Use WebUI example video](https://www.youtube.com/watch?v=PRbCFgSvaco)
+- **Misc:** [Browser-Use WebUI example video](https://www.youtube.com/watch?v=PRbCFgSvaco)
 
 [Vector Store Evaluations](https://sanjmo.medium.com/vector-data-store-evaluation-criteria-6d7677ef3b60)
 
-[Google Credentials Setup](https://pipedream.com/apps/gmail/#getting-started) -
-Pipedream doc
+[Google Credentials Setup](https://pipedream.com/apps/gmail/#getting-started) - Pipedream doc
 
 - [Weaviate article, Agentic RAG](https://weaviate.io/blog/what-is-agentic-rag)
 
@@ -224,8 +223,8 @@ Pipedream doc
 
 Configure n8n logging https://docs.n8n.io/hosting/logging-monitoring/logging/
 
-Maybe use something like rsyslog to watch the log file? Or use something to
-consolidate all the docker logs?
+Maybe use something like rsyslog to watch the log file? Or use something to consolidate all the
+docker logs?
 
 - https://github.com/rsyslog/rsyslog
 - https://betterstack.com/community/guides/logging/docker-compose-logs/
@@ -234,17 +233,17 @@ consolidate all the docker logs?
 
 ## Related Misc
 
-- [NVidia Container Toolkit](https://github.com/NVIDIA/nvidia-container-toolkit)
-  for running docker containers with gpu access
+- [NVidia Container Toolkit](https://github.com/NVIDIA/nvidia-container-toolkit) for running docker
+  containers with gpu access
 
 <br />
 
 ## Zep Notes
 
-n8n uses LangChain under the hood. There's also two variations of the zep SDK, one for the
-OSS CE version and one for Cloud. LangChain has an older version of the OSS zep version that
-uses `api/v1` endpoing instead of `api/v2`. This means when the "cloud" toggle is off in
-the zep n8n node, n8n's zep SDK will be trying to connect to zep via the v1 api.
+n8n uses LangChain under the hood. There's also two variations of the zep SDK, one for the OSS CE
+version and one for Cloud. LangChain has an older version of the OSS zep version that uses `api/v1`
+endpoing instead of `api/v2`. This means when the "cloud" toggle is off in the zep n8n node, n8n's
+zep SDK will be trying to connect to zep via the v1 api.
 
 The latest version of the zep Docker image only provides the api/v2 endpoint.
 
@@ -252,7 +251,8 @@ There are a few possibilities to solve this:
 
 1. Rolled back the zep docker image version to <=0.27.2
 
-- See https://github.com/n8n-io/n8n/blob/master/packages/%40n8n/nodes-langchain/nodes/memory/MemoryZep/MemoryZep.node.ts
+- See
+  https://github.com/n8n-io/n8n/blob/master/packages/%40n8n/nodes-langchain/nodes/memory/MemoryZep/MemoryZep.node.ts
 
 2. Wait for LangChain and n8n to update to the latest zep-js SDK
 
@@ -260,33 +260,31 @@ There are a few possibilities to solve this:
 
 See https://community.n8n.io/t/new-zep-ce-support-in-n8n/61542/2
 
-For the reverse proxy, `api.getzep.com` needs to be mapped to the `zep` docker container.
-Also, the ports need to be mapped 443 -> 8010.
+For the reverse proxy, `api.getzep.com` needs to be mapped to the `zep` docker container. Also, the
+ports need to be mapped 443 -> 8010.
 
 Traefik is a possible solution for the reverse proxy.
 
-Reverse proxy was successfully configured using nginx to forward traffic to zep:8000.
-Authentication worked but the zep server returned a 404 for `/api/v2/collections` endpoint.
-It appears the CE version has a different API schema.
+Reverse proxy was successfully configured using nginx to forward traffic to zep:8000. Authentication
+worked but the zep server returned a 404 for `/api/v2/collections` endpoint. It appears the CE
+version has a different API schema.
 
 ```
 # Zep server log
 2025-03-08T08:21:07.426Z INFO HTTP Request Served {"proto": "HTTP/1.0", "method": "GET", "path": "/api/v2/collections", "request_id": "", "duration": "122.166µs", "status": 404, "response_size": 19}
 ```
 
-The ONLY solution at this time is to roll back the zep container image to 0.27 until
-langchain and n8n update their zep-js package version.
+The ONLY solution at this time is to roll back the zep container image to 0.27 until langchain and
+n8n update their zep-js package version.
 
 <br />
 
 ## Postgres Notes
 
-LLemonStack includes scripts for creating custom postgres schemas.
-These are effectively separate databases inside of postgres and can be used
-to keep services isolated. At the very least, it prevents services from
-clobbering other services tables. For services like n8n that support table
-prefixes, custom schemas are not needed. For flowise, zep, etc. creating a custom
-schema is advised.
+LLemonStack includes scripts for creating custom postgres schemas. These are effectively separate
+databases inside of postgres and can be used to keep services isolated. At the very least, it
+prevents services from clobbering other services tables. For services like n8n that support table
+prefixes, custom schemas are not needed. For flowise, zep, etc. creating a custom schema is advised.
 
 ```bash
 # Create a new schema for flowise
@@ -298,13 +296,12 @@ deno run schema:create flowise
 # Flowise will then create it's tables inside of the service_flowise schema.
 ```
 
-The custom schema flows really need to be added to the init script.
-Until then, the schema stuff is more for experimentation with new services in the
-the stack.
+The custom schema flows really need to be added to the init script. Until then, the schema stuff is
+more for experimentation with new services in the the stack.
 
-It's probably best to completely refactor the scripts to separate services into
-modules that manage their own init, start, stop, etc. Basically modules that can
-auto configure themselves when their init functions are called.
+It's probably best to completely refactor the scripts to separate services into modules that manage
+their own init, start, stop, etc. Basically modules that can auto configure themselves when their
+init functions are called.
 
 ```bash
 # POSTGRES_PASSWORD is likely NOT in the current env, get it from .env files
@@ -326,5 +323,5 @@ database: postgres
 ssl: PREFERRED, or DISABLED
 ```
 
-Note the `llemonstack` tenant ID in the user name. This needs to match the POOLER_TENANT_ID
-in `docker/supabase.env` file.
+Note the `llemonstack` tenant ID in the user name. This needs to match the POOLER_TENANT_ID in
+`docker/supabase.env` file.

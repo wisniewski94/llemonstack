@@ -1,14 +1,13 @@
 # 🍋 LLemonStack - Local AI Agent Stack
 
-A fully featured, open source, low-code AI agent automation platform.
-Securely running in docker containers.
+A fully featured, open source, low-code AI agent automation platform. Securely running in docker
+containers.
 
-Pre-configured and ready to squeeze. LLemoStack gets you up and running in minutes
-with [n8n](https://n8n.io/), [Flowise](https://flowiseai.com/),
-[Supabase](https://supabase.com/), [Qdrant](https://qdrant.tech/),
-[Zep](https://www.getzep.com/), [LiteLLM](https://github.com/BerriAI/litellm),
-[Langfuse](https://github.com/langfuse/langfuse), [Ollama](https://ollama.com/),
-and [Browser-Use](https://browser-use.com/) and more.
+Pre-configured and ready to squeeze. LLemoStack gets you up and running in minutes with
+[n8n](https://n8n.io/), [Flowise](https://flowiseai.com/), [Supabase](https://supabase.com/),
+[Qdrant](https://qdrant.tech/), [Zep](https://www.getzep.com/),
+[LiteLLM](https://github.com/BerriAI/litellm), [Langfuse](https://github.com/langfuse/langfuse),
+[Ollama](https://ollama.com/), and [Browser-Use](https://browser-use.com/) and more.
 
 ![n8n.io - Screenshot](docs/assets/n8n-demo.gif)
 
@@ -16,8 +15,8 @@ and [Browser-Use](https://browser-use.com/) and more.
 
 LLemonStack is currently a pre-release version.
 
-It should work as expected on macOS and Linux. Windows likely needs some
-additional work to get Supabase to start.
+It should work as expected on macOS and Linux. Windows likely needs some additional work to get
+Supabase to start.
 
 The scripts and API are in rapid development.
 
@@ -26,39 +25,32 @@ Check the git history and pull regularly for bug fixes.
 ### Changelog
 
 - Mar 13, 2025: Fixed the init script
-- Mar 12, 2025: Added custom n8n image with OTEL tracing, and ffmpeg support
-  and Langfuse in n8n LangChain Code nodes
+- Mar 12, 2025: Added custom n8n image with OTEL tracing, and ffmpeg support and Langfuse in n8n
+  LangChain Code nodes
 - Mar 10, 2025: Added LiteLLM and Langfuse to the stack
 
 ## Overview
 
 <br />
 
-**LLemonStack** installs and runs a fully featured low code AI
-agent development playground, including local LLMs and chat interfaces, from
-a single command: `deno run start`
+**LLemonStack** installs and runs a fully featured low code AI agent development playground,
+including local LLMs and chat interfaces, from a single command: `deno run start`
 
-Supports running on Linux, Mac, or Windows.
-Built on a Macbook M2, tested on an AMD Linux server, and on the roadmap to
-test on Windows but likely works everywhere.
+Supports running on Linux, Mac, or Windows. Built on a Macbook M2, tested on an AMD Linux server,
+and on the roadmap to test on Windows but likely works everywhere.
 
 ### Main objectives of 🍋 LLemonStack are
 
 > - 🚫 💰 **No cost**, low code AI agent playground
->
 > - ✅ ⌛ **Up and running in minutes**
->
 > - 🔧 🎁 Pre-configured stack of the latest open source AI tools
->
 > - ⚡ 🤑 Rapid local dev & learning for fun & profit
->
 > - 🚀 ☁️ Easy deploy to a production cloud
 >
 > 🍋🍋🍋🍋🍋 _5 lemon rating FTW_
 
-Ultimately, LLemonStack aims to provide a comprehensive AI configuration
-framework & education ecosystem... where sh!t just works so you can focus
-on the fun part of building AI agents.
+Ultimately, LLemonStack aims to provide a comprehensive AI configuration framework & education
+ecosystem... where sh!t just works so you can focus on the fun part of building AI agents.
 
 With this first release, we're just scratching the surface of what's possible.
 
@@ -66,10 +58,9 @@ With this first release, we're just scratching the surface of what's possible.
 
 ## What's included in the stack
 
-The core stack (this repo) includes the most powerful & easy to to use
-open source AI agent services. The services are pre-configured and ready to use.
-Networking, storage, and other docker related headaches are handled for you.
-Just run the stack and start building AI agents.
+The core stack (this repo) includes the most powerful & easy to to use open source AI agent
+services. The services are pre-configured and ready to use. Networking, storage, and other docker
+related headaches are handled for you. Just run the stack and start building AI agents.
 
 <!-- markdownlint-disable MD013 MD033 -->
 
@@ -93,23 +84,23 @@ Just run the stack and start building AI agents.
 
 ### Prerequisites
 
-Before running the start/stop scripts, make sure you have the following (free) software
-installed on your host machine.
+Before running the start/stop scripts, make sure you have the following (free) software installed on
+your host machine.
 
-- [**Deno**](https://docs.deno.com/runtime/getting_started/installation/) -
-  required to run the start/stop scripts
-- [**Git**](https://github.com/git-guides/install-git) -
-  needed to clone stack services that require custom build steps
-- [**Docker/Docker Desktop**](https://www.docker.com/) - required to run
-  all services, no need for a paid plan, just download the free Docker Desktop
+- [**Deno**](https://docs.deno.com/runtime/getting_started/installation/) - required to run the
+  start/stop scripts
+- [**Git**](https://github.com/git-guides/install-git) - needed to clone stack services that require
+  custom build steps
+- [**Docker/Docker Desktop**](https://www.docker.com/) - required to run all services, no need for a
+  paid plan, just download the free Docker Desktop
 
-After you've installed the prerequisites, you won't need to directly use them.
-LLemonStack does all the heavy lifting for you.
+After you've installed the prerequisites, you won't need to directly use them. LLemonStack does all
+the heavy lifting for you.
 
 ### Install Prerequisites
 
-Use the links above to install the three prerequisites, or use the below
-commands to install them manually.
+Use the links above to install the three prerequisites, or use the below commands to install them
+manually.
 
 On a Mac, open the Terminal app and run the following commands.
 
@@ -185,64 +176,61 @@ deno run reset
 
 TODO: rewrite this section
 
-The main component of the self-hosted AI starter kit is a docker compose file
-pre-configured with network and disk so there isn't much else you need to
-install. After completing the installation steps above, follow the steps below
-to get started.
+The main component of the self-hosted AI starter kit is a docker compose file pre-configured with
+network and disk so there isn't much else you need to install. After completing the installation
+steps above, follow the steps below to get started.
 
-1. Open <http://localhost:5678/> in your browser to set up n8n. You'll only
-   have to do this once. You are NOT creating an account with n8n in the setup here,
-   it is only a local account for your instance!
-2. Open the included workflow:
-   <http://localhost:5678/workflow/vTN9y2dLXqTiDfPT>
+1. Open <http://localhost:5678/> in your browser to set up n8n. You'll only have to do this once.
+   You are NOT creating an account with n8n in the setup here, it is only a local account for your
+   instance!
+2. Open the included workflow: <http://localhost:5678/workflow/vTN9y2dLXqTiDfPT>
 3. Create credentials for every service:
 
    Ollama URL: http://ollama:11434
 
-   Postgres (through Supabase): use DB, username, and password from .env.
-   IMPORTANT: Host is 'db' since that is the name of the service running Supabase
+   Postgres (through Supabase): use DB, username, and password from .env. IMPORTANT: Host is 'db'
+   since that is the name of the service running Supabase
 
    Qdrant URL: http://qdrant:6333
 
-   Google Drive: Follow [this guide from n8n](https://docs.n8n.io/integrations/builtin/credentials/google/).
-   Don't use localhost for the redirect URI, just use another domain you have,
-   it will still work!
+   Google Drive: Follow
+   [this guide from n8n](https://docs.n8n.io/integrations/builtin/credentials/google/). Don't use
+   localhost for the redirect URI, just use another domain you have, it will still work!
 
-   Alternatively, you can set up [local file triggers](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.localfiletrigger/).
+   Alternatively, you can set up
+   [local file triggers](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.localfiletrigger/).
 
 4. Select **Test workflow** to start running the workflow.
-5. If this is the first time you're running the workflow, you may need to wait
-   until Ollama finishes downloading Llama3.1. You can inspect the docker
-   console logs to check on the progress.
+5. If this is the first time you're running the workflow, you may need to wait until Ollama finishes
+   downloading Llama3.1. You can inspect the docker console logs to check on the progress.
 6. Make sure to toggle the workflow as active and copy the "Production" webhook URL!
-7. Open <http://localhost:3000/> in your browser to set up Open WebUI.
-   You'll only have to do this once. You are NOT creating an account with Open WebUI in the
-   setup here, it is only a local account for your instance!
-8. Go to Settings -> Admin Panel -> Functions -> Add Function -> Give name +
-   description then paste in the code from `openwebui/n8n_pipe.py`
-9. Click on the gear icon and set the n8n_url to the production URL for the webhook
-   you copied in a previous step.
-10. Toggle the function on and now it will be available in your model dropdown
-    in the top left!
+7. Open <http://localhost:3000/> in your browser to set up Open WebUI. You'll only have to do this
+   once. You are NOT creating an account with Open WebUI in the setup here, it is only a local
+   account for your instance!
+8. Go to Settings -> Admin Panel -> Functions -> Add Function -> Give name + description then paste
+   in the code from `openwebui/n8n_pipe.py`
+9. Click on the gear icon and set the n8n_url to the production URL for the webhook you copied in a
+   previous step.
+10. Toggle the function on and now it will be available in your model dropdown in the top left!
 
 See https://openwebui.com/functions?query=n8n for more n8n functions.
 
-To open n8n at any time, visit <http://localhost:5678/> in your browser.
-To open Open WebUI at any time, visit <http://localhost:3000/>.
+To open n8n at any time, visit <http://localhost:5678/> in your browser. To open Open WebUI at any
+time, visit <http://localhost:3000/>.
 
-With your n8n instance, you'll have access to over 400 integrations and a
-suite of basic and advanced AI nodes such as
+With your n8n instance, you'll have access to over 400 integrations and a suite of basic and
+advanced AI nodes such as
 [AI Agent](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/),
 [Text classifier](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.text-classifier/),
-and [Information Extractor](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.information-extractor/)
-nodes. To keep everything local, just remember to use the Ollama node for your
-language model and Qdrant as your vector store.
+and
+[Information Extractor](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.information-extractor/)
+nodes. To keep everything local, just remember to use the Ollama node for your language model and
+Qdrant as your vector store.
 
 > [!NOTE]
-> This starter kit is designed to help you get started with self-hosted AI
-> workflows. While it's not fully optimized for production environments, it
-> combines robust components that work well together for proof-of-concept
-> projects. You can customize it to meet your specific needs
+> This starter kit is designed to help you get started with self-hosted AI workflows. While it's not
+> fully optimized for production environments, it combines robust components that work well together
+> for proof-of-concept projects. You can customize it to meet your specific needs
 
 <br />
 
@@ -275,8 +263,8 @@ ENABLE_OLLAMA=gpu-amd
 
 ### For Mac / Apple Silicon users
 
-If you're using a Mac with an M1 or newer processor, you can't expose your GPU
-to the Docker instance, unfortunately. There are two options in this case:
+If you're using a Mac with an M1 or newer processor, you can't expose your GPU to the Docker
+instance, unfortunately. There are two options in this case:
 
 1. Run the starter kit fully on CPU:
 
@@ -285,16 +273,15 @@ to the Docker instance, unfortunately. There are two options in this case:
    ENABLE_OLLAMA=cpu
    ```
 
-2. Run Ollama on your Mac for faster inference, and connect to that from the
-   n8n instance:
+2. Run Ollama on your Mac for faster inference, and connect to that from the n8n instance:
 
    ```bash
    # .env
    ENABLE_OLLAMA=host
    ```
 
-   Ollama needs to be installed on your mac. See the
-   [Ollama homepage](https://ollama.com/) or run `brew install ollama`.
+   Ollama needs to be installed on your mac. See the [Ollama homepage](https://ollama.com/) or run
+   `brew install ollama`.
 
    Then start the ollama service and pull models:
 
@@ -303,14 +290,13 @@ to the Docker instance, unfortunately. There are two options in this case:
    ollama pull deepseek-r1:1.5b
    ```
 
-   See [docker-compose-ollama.yml](docker-compose-ollama.yml) for the
-   specific models used by the Docker container.
+   See [docker-compose-ollama.yml](docker-compose-ollama.yml) for the specific models used by the
+   Docker container.
 
-   Once ollama is running locally and `ENABLE_OLLAMA=host` is set in .env,
-   start the services with `deno run start`
+   Once ollama is running locally and `ENABLE_OLLAMA=host` is set in .env, start the services with
+   `deno run start`
 
-   Open WebUI should show the installed models in the dropdown if everything
-   is working correctly.
+   Open WebUI should show the installed models in the dropdown if everything is working correctly.
 
 Additionally, after you run the start script:
 
@@ -322,8 +308,7 @@ Additionally, after you run the start script:
 
 ## Upgrading
 
-To update all containers to their latest versions (n8n, Open WebUI, etc.),
-run the pull script:
+To update all containers to their latest versions (n8n, Open WebUI, etc.), run the pull script:
 
 ```bash
 # Update docker images to use the latest versions
@@ -337,26 +322,23 @@ deno run start
 
 ## Importing & Exporting n8n Templates
 
-LLemonStack provides script for easy importing and exporting of
-n8n credentials and workflow templates.
+LLemonStack provides script for easy importing and exporting of n8n credentials and workflow
+templates.
 
-Any template placed in the [import/n8n](import/n8n) directory will be
-imported.
+Any template placed in the [import/n8n](import/n8n) directory will be imported.
 
-The import script supports environment variables inside of the n8n
-credentials and workflows templates. The variables are replaced with
-the values from `.env` at the time of import. This makes it easy
-to auto configure templates with the correct settings for your stack.
+The import script supports environment variables inside of the n8n credentials and workflows
+templates. The variables are replaced with the values from `.env` at the time of import. This makes
+it easy to auto configure templates with the correct settings for your stack.
 
 See [examples/n8n/credentials](examples/n8n/credentials).
 
-To import a template, simply copy it into the [import/n8n](import/n8n)
-directory. Then run the import script.
+To import a template, simply copy it into the [import/n8n](import/n8n) directory. Then run the
+import script.
 
-Successfully imported files are then moved to the `import/.imported`
-directory for safe keeping. The archived files include the expanded (replaced)
-environment variables. It's best practice to treat the `import/` directory
-as `/tmp`. Keep backups of anything you added to the import directory to
+Successfully imported files are then moved to the `import/.imported` directory for safe keeping. The
+archived files include the expanded (replaced) environment variables. It's best practice to treat
+the `import/` directory as `/tmp`. Keep backups of anything you added to the import directory to
 preserve the original templates.
 
 ### Importing
@@ -380,8 +362,8 @@ deno run import:n8n
 # for archiving
 ```
 
-**IMPORTANT:** Importing overwrites existing credentials or workflows
-with the same IDs. Export the workflows and credentials before importing.
+**IMPORTANT:** Importing overwrites existing credentials or workflows with the same IDs. Export the
+workflows and credentials before importing.
 
 ### Exporting & Backing Up n8n Templates
 
@@ -390,7 +372,8 @@ deno run export:n8n
 # Exports n8n credentials and workflows to share/backups/n8n
 ```
 
-See [n8n documentation](https://docs.n8n.io/hosting/cli-commands/#export-workflows-and-credentials) for more details on importing and exporting.
+See [n8n documentation](https://docs.n8n.io/hosting/cli-commands/#export-workflows-and-credentials)
+for more details on importing and exporting.
 
 <br />
 
@@ -400,15 +383,15 @@ Here are solutions to common issues you might encounter:
 
 ### Supabase Issues
 
-- **Supabase Pooler Restarting**: If the supabase-pooler container keeps
-  restarting itself, follow the instructions in
+- **Supabase Pooler Restarting**: If the supabase-pooler container keeps restarting itself, follow
+  the instructions in
   [this GitHub issue](https://github.com/supabase/supabase/issues/30210#issuecomment-2456955578).
 
-- **Supabase Analytics Startup Failure**: If the supabase-analytics container
-  fails to start after changing your Postgres password, delete the folder `supabase/docker/volumes/db/data`.
+- **Supabase Analytics Startup Failure**: If the supabase-analytics container fails to start after
+  changing your Postgres password, delete the folder `supabase/docker/volumes/db/data`.
 
-- **If using Docker Desktop**: Go into the Docker settings and make sure
-  "Expose daemon on tcp://localhost:2375 without TLS" is turned on
+- **If using Docker Desktop**: Go into the Docker settings and make sure "Expose daemon on
+  tcp://localhost:2375 without TLS" is turned on
 
 To reset supabase, delete the volumes directory, the restart the services.
 
@@ -442,27 +425,25 @@ apk update && apk add curl
 
 # Test the connection to the internet
 curl -I https://www.google.com
-
 ```
 
 ### Ollama GPU Issues
 
-- **Windows GPU Support**: If you're having trouble running Ollama with GPU
-  support on Windows with Docker Desktop:
+- **Windows GPU Support**: If you're having trouble running Ollama with GPU support on Windows with
+  Docker Desktop:
 
   1. Open Docker Desktop settings
   2. Enable WSL 2 backend
-  3. See the [Docker GPU documentation](https://docs.docker.com/desktop/features/gpu/)
-     for more details
+  3. See the [Docker GPU documentation](https://docs.docker.com/desktop/features/gpu/) for more
+     details
 
-- **Linux GPU Support**: If you're having trouble running Ollama with GPU
-  support on Linux, follow the
-  [Ollama Docker instructions](https://github.com/ollama/ollama/blob/main/docs/docker.md).
+- **Linux GPU Support**: If you're having trouble running Ollama with GPU support on Linux, follow
+  the [Ollama Docker instructions](https://github.com/ollama/ollama/blob/main/docs/docker.md).
 
 ### Ollama Memory Issues
 
-If the ollama container logs is showing memory errors, you likely need to increase
-the memory allocated to Docker Desktop.
+If the ollama container logs is showing memory errors, you likely need to increase the memory
+allocated to Docker Desktop.
 
 1. Open Docker Desktop settings
 2. Go to Resources
@@ -475,8 +456,7 @@ the memory allocated to Docker Desktop.
 
 ## 📔 Recommended reading
 
-n8n is full of useful content for getting started quickly with its AI concepts
-and nodes.
+n8n is full of useful content for getting started quickly with its AI concepts and nodes.
 
 - [AI agents for developers: from theory to practice with n8n](https://blog.n8n.io/ai-agents/)
 - [Tutorial: Build an AI workflow in n8n](https://docs.n8n.io/advanced-ai/intro-tutorial/)
@@ -486,10 +466,10 @@ and nodes.
 
 ### 🛍️ More AI templates
 
-For more AI workflow ideas, visit the [**official n8n AI template
-gallery**](https://n8n.io/workflows/?categories=AI). From each workflow,
-select the **Use workflow** button to automatically import the workflow into
-your local n8n instance.
+For more AI workflow ideas, visit the
+[**official n8n AI template gallery**](https://n8n.io/workflows/?categories=AI). From each workflow,
+select the **Use workflow** button to automatically import the workflow into your local n8n
+instance.
 
 ### Learn AI key concepts
 
@@ -513,11 +493,10 @@ your local n8n instance.
 
 ### Accessing local files
 
-The self-hosted AI starter kit will create a shared folder (by default,
-located in the same directory) which is mounted to the n8n container and
-allows n8n to access files on disk. This folder within the n8n container is
-located at `/data/shared` -- this is the path you'll need to use in nodes that
-interact with the local filesystem.
+The self-hosted AI starter kit will create a shared folder (by default, located in the same
+directory) which is mounted to the n8n container and allows n8n to access files on disk. This folder
+within the n8n container is located at `/data/shared` -- this is the path you'll need to use in
+nodes that interact with the local filesystem.
 
 ### Nodes that interact with the local filesystem
 
