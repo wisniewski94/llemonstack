@@ -1,5 +1,7 @@
 // supabase-backup.ts - A script to backup Supabase databases
 // Usage: bun run supabase-backup.ts
+// @ts-nocheck
+// deno-lint-ignore-file
 
 import { exec } from 'child_process';
 import fs from 'fs';

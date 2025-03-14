@@ -147,7 +147,7 @@ docker exec -it --user root n8n sh
 
 Not AI, but potentially useful:
 
-- [Leaflet](https://github.com/hyperlink-academy/leaflet) - easily create and shae text docs
+- [Leaflet](https://github.com/hyperlink-academy/leaflet) - easily create and share text docs
 
 **Airtable alternatives:**
 

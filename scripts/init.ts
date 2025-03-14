@@ -329,7 +329,7 @@ async function configOllama(): Promise<string> {
         disabled: gpuDisabled,
       },
       {
-        name: `[NVIDIA] Run on Nividia GPU ${gpuMessage}`,
+        name: `[NVIDIA] Run on Nvidia GPU ${gpuMessage}`,
         value: 'gpu-nvidia',
         disabled: gpuDisabled,
       },
