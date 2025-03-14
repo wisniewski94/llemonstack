@@ -23,6 +23,10 @@ services:
     ports:
       # Supabase Logflare uses port 4000
       - "3004:4000"
+    deploy:
+      resources:
+        limits:
+          memory: 1G # Sets maximum memory to 512 MB, LiteLLM has memory leaks
     environment:
       # Set log level: DEBUG | INFO | ERROR
       # See https://docs.litellm.ai/docs/proxy/debugging
