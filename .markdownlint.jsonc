@@ -1,4 +1,0 @@
-{
-  "MD033": false, // Allow html in markdown
-  "MD034": false // Allow bare urls in markdown
-}
