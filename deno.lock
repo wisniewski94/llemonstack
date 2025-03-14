@@ -38,6 +38,7 @@
     "jsr:@std/text@~1.0.7": "1.0.11",
     "jsr:@std/yaml@*": "1.0.5",
     "npm:@getzep/zep-js@*": "2.0.2",
+    "npm:@getzep/zep-js@^2.0.2": "2.0.2",
     "npm:uuid@*": "11.1.0"
   },
   "jsr": {
@@ -488,7 +489,8 @@
       "jsr:@std/crypto@^1.0.4",
       "jsr:@std/fs@1",
       "jsr:@std/path@1",
-      "jsr:@std/testing@1"
+      "jsr:@std/testing@1",
+      "npm:@getzep/zep-js@^2.0.2"
     ]
   }
 }

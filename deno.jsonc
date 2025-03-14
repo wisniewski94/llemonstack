@@ -21,6 +21,7 @@
     "@cliffy/table": "jsr:@cliffy/table@^1.0.0-rc.7",
     "@cross/jwt": "jsr:@cross/jwt@^0.5.1",
     "@cross/postgres": "jsr:@cross/postgres@^0.19.3",
+    "@getzep/zep-js": "npm:@getzep/zep-js@^2.0.2",
     "@std/crypto": "jsr:@std/crypto@^1.0.4",
     "@std/assert": "jsr:@std/assert@^1.0.0",
     "@std/fs": "jsr:@std/fs@^1.0.0",
