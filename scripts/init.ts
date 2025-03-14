@@ -117,11 +117,6 @@ const POSTGRES_SERVICES: Array<[string, PostgresServiceEnvKeys]> = [
     user: 'LANGFUSE_POSTGRES_USER',
     pass: 'LANGFUSE_POSTGRES_PASSWORD',
     schema: 'LANGFUSE_POSTGRES_SCHEMA',
-    custom: {
-      // Env loader mangles the postgres url, so we need to recreate it durning init
-      LANGFUSE_POSTGRES_URL:
-        'postgresql://${LANGFUSE_POSTGRES_USER}:${LANGFUSE_POSTGRES_PASSWORD}@db:5432/${LANGFUSE_POSTGRES_DB}?schema=${LANGFUSE_POSTGRES_SCHEMA}',
-    },
   }],
   ['zep', {
     user: 'ZEP_POSTGRES_USER',
