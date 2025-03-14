@@ -1,4 +1,6 @@
-// Test script for checking if Langfuse is working.
+// Langfuse test script for checking if Langfuse is working.
+// @ts-nocheck
+// deno-lint-ignore-file
 
 import { load } from 'jsr:@std/dotenv'
 import { Langfuse } from 'npm:langfuse'
