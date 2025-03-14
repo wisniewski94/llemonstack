@@ -1,0 +1,15 @@
+{
+  "name": "supabase-backup",
+  "version": "1.0.0",
+  "description": "Backup script for Supabase databases",
+  "main": "supabase-backup.ts",
+  "scripts": {
+    "backup": "bun run supabase-backup.ts"
+  },
+  "dependencies": {
+    "@types/node": "^20.11.0"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}
