@@ -14,7 +14,7 @@ services:
     container_name: n8n
     build:
       context: .
-      dockerfile: Dockerfile.yml
+      dockerfile: Dockerfile
 
     restart: unless-stopped
     ports:
