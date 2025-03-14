@@ -27,7 +27,7 @@ USER backupuser
 VOLUME /backups
 
 # Default environment variables (should be overridden at runtime)
-ENV POSTGRES_HOST=db.example.com \
+ENV POSTGRES_HOST=supavisor \
     POSTGRES_PORT=5432 \
     POSTGRES_DB=postgres \
     POSTGRES_USER=postgres \

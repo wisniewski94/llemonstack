@@ -47,7 +47,7 @@ litellm_settings:
   failure_callback: ["langfuse"]
   langfuse_public_key: os.environ/LANGFUSE_PUBLIC_KEY
   langfuse_secret: os.environ/LANGFUSE_SECRET_KEY
-  langfuse_host: http://langfuse:3000
+  langfuse_host: os.environ/LANGFUSE_HOST
 
   # Team settings
   # default_team_settings:

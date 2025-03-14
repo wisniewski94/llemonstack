@@ -76,7 +76,7 @@ export const ALL_COMPOSE_SERVICES: ComposeService[] = [
 // Groups of services, dependencies first
 export const SERVICE_GROUPS: [string, string[]][] = [
   ['databases', ['supabase', 'redis', 'clickhouse', 'neo4j', 'qdrant', 'prometheus', 'minio']],
-  ['middleware', ['litellm', 'langfuse', 'zep']],
+  ['middleware', ['langfuse', 'litellm', 'zep']],
   ['workflow & LLM', ['n8n', 'flowise', 'browser-use', 'openwebui', 'ollama']],
 ]
 

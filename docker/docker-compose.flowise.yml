@@ -40,9 +40,9 @@ services:
 
       # Database - supabase postgres
       - DATABASE_TYPE=postgres
-      - DATABASE_HOST=db
+      - DATABASE_HOST=${POSTGRES_HOST_INTERNAL:-supavisor}
       - DATABASE_PORT=5432
-      - DATABASE_USER=${FLOWISE_POSTGRES_USER:-postgres}
+      - DATABASE_USER=${FLOWISE_POSTGRES_USER:-postgres}${POSTGRES_USER_TENANT_SUFFIX:-}
       - DATABASE_PASSWORD=${FLOWISE_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}
       - DATABASE_NAME=postgres
       - DATABASE_SSL=false

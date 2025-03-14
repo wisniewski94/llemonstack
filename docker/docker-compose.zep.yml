@@ -48,7 +48,8 @@ services:
       - ./zep.yaml:/app/zep.yaml
     environment:
       - ZEP_CONFIG_FILE=zep.yaml
-      - POSTGRES_USER=${ZEP_POSTGRES_USER:-postgres}
+      - POSTGRES_HOST=${POSTGRES_HOST_INTERNAL:-supavisor}
+      - POSTGRES_USER=${ZEP_POSTGRES_USER:-postgres} # Zep doesn't need the tenant suffix
       - POSTGRES_PASSWORD=${ZEP_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}
       - POSTGRES_SCHEMA=${ZEP_POSTGRES_SCHEMA:-public}
       - ZEP_API_SECRET=${ZEP_API_SECRET}

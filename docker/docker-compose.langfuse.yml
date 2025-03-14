@@ -29,7 +29,9 @@ services:
     ports:
       - "3030:3030"
     environment: &langfuse-worker-env
-      DATABASE_URL: ${LANGFUSE_POSTGRES_URL:-postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/postgres?schema=public}
+      # Postgres connection string
+      # e.g. postgresql://user:password@host:5432/postgres?schema=public
+      DATABASE_URL: ${LANGFUSE_DATABASE_URL}
 
       SALT: ${LANGFUSE_SALT}
       ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY}
