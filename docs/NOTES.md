@@ -121,6 +121,7 @@ docker exec -it --user root n8n sh
 
 **Additional Services:**
 
+- [Dozzle](https://github.com/amir20/dozzle) for Docker container logs
 - Observability services, see [OTEL.md](OTEL.md)
 - https://github.com/mudler/LocalAI
 - https://github.com/langflow-ai/langflow
