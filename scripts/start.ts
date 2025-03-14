@@ -1023,10 +1023,12 @@ export async function prepareSupabaseEnv(): Promise<void> {
     }
   }
 
-  // Copy .env to supabase repo .env, then append supabase.env contents
-  await Deno.copyFile(ENVFILE, supabaseRepoEnv)
-  const supabaseEnvContent = await Deno.readTextFile(supabaseEnv)
-  await Deno.writeTextFile(supabaseRepoEnv, supabaseEnvContent, { append: true })
+  // Copy supabase.env to supabase repo .env, then append .env contents
+  // The contents of supabase.env take precedence over .env
+  // Env file loaders use the first defined value in an .env file
+  await Deno.copyFile(supabaseEnv, supabaseRepoEnv)
+  const envContent = await Deno.readTextFile(ENVFILE)
+  await Deno.writeTextFile(supabaseRepoEnv, envContent, { append: true })
 }
 
 /**
