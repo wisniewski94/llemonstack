@@ -45,7 +45,7 @@ services:
     ports:
       - "8010:8000"
     volumes:
-      - ./zep.yaml:/app/zep.yaml
+      - ./config.zep.yaml:/app/zep.yaml
     environment:
       # Environment variables are used in zep.yaml
       - ZEP_CONFIG_FILE=zep.yaml
