@@ -27,6 +27,7 @@ Check the git history and pull regularly for bug fixes.
 - Mar 14, 2025: BREAKING CHANGE: switched to using supavisor instead of direct postgres db connection
   - See .env.example for changes to env variables
   - docker-compose.yml files were changed and now require a few new env vars to work
+  - Replaced Supabase Analytics server (Logflare) with dummy server
 - Mar 13, 2025: Fixed the init script
 - Mar 12, 2025: Added custom n8n image with OTEL tracing, and ffmpeg support and Langfuse in n8n
   LangChain Code nodes

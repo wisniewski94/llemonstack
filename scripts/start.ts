@@ -48,6 +48,14 @@ export const IMPORT_DIR_BASE = 'import'
 export const LLEMONSTACK_CONFIG_DIR = path.join(Deno.cwd(), '.llemonstack')
 export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config.json')
 
+// Enable extra debug logging
+export const DEBUG = Deno.env.get('DEBUG_LLEMONSTACK')?.toLowerCase() === 'true'
+
+export const ROOT_DIR = Deno.cwd()
+export const REPO_DIR = escapePath(path.join(ROOT_DIR, REPO_DIR_BASE))
+export const SHARED_DIR = escapePath(path.join(ROOT_DIR, SHARED_DIR_BASE))
+export const COMPOSE_IMAGES_CACHE = {} as Record<string, ServiceImage[]>
+
 // All services with a docker-compose.yml file
 // Includes services with a custom Dockerfile
 // [service name, compose file, auto run]
@@ -142,21 +150,6 @@ const REPO_SERVICES: Record<string, RepoService> = {
   //   checkFile: 'docker-compose.yml',
   // },
 }
-
-/*******************************************************************************
- * GLOBAL SETUP
- *******************************************************************************/
-
-// Enable extra debug logging
-export const DEBUG = Deno.env.get('DEBUG_LLEMONSTACK')?.toLowerCase() === 'true'
-
-/*******************************************************************************
- * GLOBAL VARIABLES
- *******************************************************************************/
-export const ROOT_DIR = Deno.cwd()
-export const REPO_DIR = escapePath(path.join(ROOT_DIR, REPO_DIR_BASE))
-export const SHARED_DIR = escapePath(path.join(ROOT_DIR, SHARED_DIR_BASE))
-export const COMPOSE_IMAGES_CACHE = {} as Record<string, ServiceImage[]>
 
 /*******************************************************************************
  * TYPES
@@ -1002,42 +995,44 @@ export async function setupRepos({
 }
 
 /**
- * Copy .env and docker/supabase.env contents to .env in the supabase repo
+ * Copy .env and docker/config.supabase.env contents to .env in the supabase repo
  */
 export async function prepareSupabaseEnv(): Promise<void> {
-  const repoDir = getRepoPath('supabase')
-  const supabaseRepoEnv = escapePath(
-    path.join(repoDir, 'docker', '.env'),
-  )
-  const supabaseEnv = path.join('docker', 'supabase.env')
-  if (!fs.existsSync(ENVFILE)) {
-    showError('Error: .env file not found')
-    showUserAction(
-      'Please create a .env file in the root directory and try again.',
-    )
-    Deno.exit(1)
-  }
   // Check if the supabase repo directory exists
-  if (!fs.existsSync(repoDir)) {
-    // Try to fix the issue by cloning the repo
-    showInfo(`Supabase repo not found: ${repoDir}`)
+  // It contains the root docker-compose.yml file to start supabase services
+  const supabaseRepoDir = getRepoPath('supabase')
+  if (!fs.existsSync(supabaseRepoDir)) {
+    // Try to fix the issue by cloning all the repos
+    showInfo(`Supabase repo not found: ${supabaseRepoDir}`)
     showInfo('Attempting to repair the repos...')
     await setupRepos({ all: true })
-    if (!fs.existsSync(repoDir)) {
+    if (!fs.existsSync(supabaseRepoDir)) {
       showError('Supabase repo still not found, unable to continue')
-      showUserAction(
-        'Please run the setup or start script to try to fix the issue',
-      )
       Deno.exit(1)
     }
   }
 
-  // Copy supabase.env to supabase repo .env, then append .env contents
-  // The contents of supabase.env take precedence over .env
+  // Location of the .env file in the directory of the override docker-compose.yml file.
+  // docker/supabase/
+  // Docker auto loads this .env file to populate environment variables in the supabase docker-compose.yml files.
+  const supabaseEnv = escapePath(
+    path.join('docker', 'supabase', '.env'),
+  )
+  // The config.supabase.env file contains most of the base environment variables
+  // for the supabase docker-compose.yml. The rest are in the root .env
+  const configEnv = path.join('docker', 'supabase', 'config.supabase.env')
+
+  // Copy config.supabase.env to docker/supabase/.env,
+  // then append the contents of the root .env file.
+  // The contents of config.supabase.env take precedence over .env.
   // Env file loaders use the first defined value in an .env file
-  await Deno.copyFile(supabaseEnv, supabaseRepoEnv)
+  await Deno.copyFile(configEnv, supabaseEnv)
   const envContent = await Deno.readTextFile(ENVFILE)
-  await Deno.writeTextFile(supabaseRepoEnv, envContent, { append: true })
+  await Deno.writeTextFile(supabaseEnv, envContent, { append: true })
+
+  // Also copy the .env to supabase repo in case the original supabase docker-compose.yml
+  // is used instead of the custom override docker-compose.yml file.
+  await Deno.copyFile(supabaseEnv, path.join(supabaseRepoDir, 'docker', '.env'))
 }
 
 /**
@@ -1045,7 +1040,18 @@ export async function prepareSupabaseEnv(): Promise<void> {
  */
 export async function prepareEnv({ silent = false }: { silent?: boolean } = {}): Promise<void> {
   !silent && showInfo('Preparing environment...')
+
+  if (!fs.existsSync(ENVFILE)) {
+    showError('Error: .env file not found')
+    showUserAction(
+      'Please create a .env file in the root directory and try again.',
+    )
+    Deno.exit(1)
+  }
+
+  // Prepare the custom supabase .env file needed for the supabase docker-compose.yml file
   await prepareSupabaseEnv()
+
   !silent && showInfo('✔️ Supabase environment successfully setup')
 }
 
