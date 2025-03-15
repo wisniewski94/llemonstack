@@ -122,18 +122,25 @@ services:
   # It discards all events sent to it to reduce resource consumption.
   analytics:
     container_name: supabase-analytics-dummy
-    build: ../build/dummy
+    build: ../build/dummy/rust
     restart: unless-stopped
     ports:
       - ${SUPABASE_LOGFLARE_PORT:-4000}:4000
     environment:
       - PORT=4000
+    mem_limit: 20M
+    cpus: 0.05
     healthcheck:
-      test: ["CMD", "nc", "-z", "0.0.0.0", "4000"]
-      interval: 5s
-      timeout: 3s
+      test: ["CMD", "wget", "-q", "--spider", "http://0.0.0.0:4000/health"]
+      interval: 30s
+      timeout: 10s
       retries: 3
-      start_period: 5s
+    # healthcheck:
+    #   test: ["CMD", "nc", "-z", "0.0.0.0", "4000"]
+    #   interval: 5s
+    #   timeout: 3s
+    #   retries: 3
+    #   start_period: 5s
 
   # Supabase Logflare
   # analytics:

@@ -1,0 +1,17 @@
+# Rust dummy server
+
+services:
+  dummy-server:
+    build: .
+    container_name: dummy-server
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    # Even more restricted resource limits - Rust is very efficient
+    mem_limit: 20M
+    cpus: 0.05
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://0.0.0.0:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
