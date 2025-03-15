@@ -34,15 +34,15 @@ Check the git history and pull regularly for bug fixes.
 
 ## Known Issues
 
-Zep is not fully working properly due to a bug in role_type_num when using
-the service_zep schema created by the init script.
+Zep requires a quick workaround fix for a hard coded `public.role_type_num` bug.
+This is only an issue when using the custom service_zep schema created by the
+init script..
 
-But since Zep CE (installed by LLemonStack) isn't currently compatible with n8n,
-it's low priority to fix this. See [examples/zep/README.md](examples/zep/README.md)
-
-## Overview
+See [examples/zep/README.md](examples/zep/README.md) for details and the quick fix.
 
 <br />
+
+## Overview
 
 **LLemonStack** installs and runs a fully featured low code AI agent development playground,
 including local LLMs and chat interfaces, from a single command: `deno run start`
