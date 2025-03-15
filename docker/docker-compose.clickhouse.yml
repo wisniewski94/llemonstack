@@ -15,7 +15,7 @@ services:
   clickhouse:
     container_name: clickhouse
     labels:
-      dev.dozzle.group: Databases
+      dev.dozzle.group: Data Stores
     image: clickhouse/clickhouse-server
     restart: always
     user: "101:101"

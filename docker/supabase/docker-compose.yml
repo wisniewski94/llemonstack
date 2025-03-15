@@ -140,9 +140,9 @@ services:
   # It discards all events sent to it to reduce resource consumption.
   # Logflare normally uses 500MB+ of memory. Dummy uses <3MB.
   analytics:
-    container_name: supabase-analytics
+    container_name: dummy-analytics
     labels:
-      dev.dozzle.group: Logging
+      dev.dozzle.group: Analytics
     build: ../build/dummy/go
     restart: unless-stopped
     ports:

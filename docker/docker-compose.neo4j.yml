@@ -16,7 +16,7 @@ services:
     image: neo4j:5
     container_name: neo4j
     labels:
-      dev.dozzle.group: Databases
+      dev.dozzle.group: Data Stores
     healthcheck:
       test: wget http://localhost:7687 || exit 1
       interval: 1s

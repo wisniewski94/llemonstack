@@ -13,7 +13,7 @@ services:
   minio:
     container_name: minio
     labels:
-      dev.dozzle.group: Storage
+      dev.dozzle.group: Data Stores
     image: minio/minio
     restart: always
     entrypoint: sh

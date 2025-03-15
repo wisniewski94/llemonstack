@@ -4,7 +4,7 @@ services:
   backup:
     container_name: pgbackup
     labels:
-      dev.dozzle.group: Databases
+      dev.dozzle.group: Backups
     build: .
     volumes:
       - ./backups:/backups
@@ -24,6 +24,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command: daemon --docker
     labels:
-      dev.dozzle.group: Databases
+      dev.dozzle.group: Backups
       ofelia.job-run.backup-job.schedule: "@daily"
       ofelia.job-run.backup-job.container: "supabase-backup_backup_1"

@@ -3,7 +3,7 @@ services:
   dozzle:
     container_name: dozzle
     labels:
-      dev.dozzle.group: Logging
+      dev.dozzle.group: Telemetry
     image: amir20/dozzle:latest
     environment:
       # See https://dozzle.dev/guide/supported-env-vars
