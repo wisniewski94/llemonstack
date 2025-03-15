@@ -71,13 +71,22 @@ export const ALL_COMPOSE_SERVICES: ComposeService[] = [
   ['minio', path.join('docker', 'docker-compose.minio.yml'), true],
   ['langfuse', path.join('docker', 'docker-compose.langfuse.yml'), true],
   ['litellm', path.join('docker', 'docker-compose.litellm.yml'), true],
+  ['dozzle', path.join('docker', 'docker-compose.dozzle.yml'), true],
 ]
 
 // Groups of services, dependencies first
 export const SERVICE_GROUPS: [string, string[]][] = [
-  ['databases', ['supabase', 'redis', 'clickhouse', 'neo4j', 'qdrant', 'prometheus', 'minio']],
-  ['middleware', ['langfuse', 'litellm', 'zep']],
-  ['workflow & LLM', ['n8n', 'flowise', 'browser-use', 'openwebui', 'ollama']],
+  ['databases', [
+    'supabase',
+    'redis',
+    'clickhouse',
+    'neo4j',
+    'qdrant',
+    'prometheus',
+    'minio',
+  ]],
+  ['middleware', ['dozzle', 'langfuse', 'litellm', 'zep']],
+  ['apps', ['n8n', 'flowise', 'browser-use', 'openwebui', 'ollama']],
 ]
 
 // Docker compose files for services with a custom Dockerfile
@@ -1299,6 +1308,7 @@ export async function start(projectName: string): Promise<void> {
         Deno.env.get('MINIO_ROOT_PASSWORD') || '',
       )
     }
+    isEnabled('dozzle') && showService('Dozzle', 'http://localhost:8081/')
 
     //
     // API ENDPOINTS

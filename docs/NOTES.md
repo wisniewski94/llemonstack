@@ -16,6 +16,14 @@ container logs in Docker Desktop.
 
 **Code:**
 
+- [ ] Disable supabase-analytics, it eats memory and CPU & is not needed
+
+- [ ] Modify n8n custom build docker-compose to extend docker/docker-compose.n8n.yml
+      Simplifies future modifications
+
+- [ ] Add dozzle labels to services to group logging
+      See https://dozzle.dev/guide/container-groups
+
 - [ ] Rebuild example n8n templates to use LiteLLM, use env.LITELLM_API_KEY
 
 - [ ] Configure zep to use LiteLLM proxy
@@ -123,6 +131,7 @@ docker exec -it --user root n8n sh
 
 - [Dozzle](https://github.com/amir20/dozzle) for Docker container logs
 - Observability services, see [OTEL.md](OTEL.md)
+- https://github.com/yoeven/ai-video-search-engine
 - https://github.com/mudler/LocalAI
 - https://github.com/langflow-ai/langflow
   - visual agent builder generates LangChain code to run in production
