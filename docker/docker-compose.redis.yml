@@ -15,7 +15,7 @@ services:
     image: redis:7
     restart: always
     command: >
-      --requirepass ${REDIS_PASSWORD} --loglevel warning
+      --requirepass ${REDIS_PASSWORD} --loglevel notice
     ports:
       - 6379:6379
     healthcheck:
