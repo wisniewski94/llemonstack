@@ -99,7 +99,7 @@ services:
       imgproxy:
         condition: service_started
     volumes:
-      - ../../.repos/supabase/docker/volumes/storage:/var/lib/storage:z
+      - ${LLEMONSTACK_VOLUMES_PATH:-../../volumes}/supabase/storage:/var/lib/storage:z
 
   imgproxy:
     extends:
@@ -108,7 +108,7 @@ services:
     labels:
       dev.dozzle.group: Supabase
     volumes:
-      - ./volumes/storage:/var/lib/storage:z
+      - ${LLEMONSTACK_VOLUMES_PATH:-../../volumes}/supabase/storage:/var/lib/storage:z
 
   meta:
     extends:
@@ -133,7 +133,7 @@ services:
       analytics:
         condition: service_healthy
     volumes:
-      - ../../.repos/supabase/docker/volumes/functions:/home/deno/functions:Z
+      - ${LLEMONSTACK_VOLUMES_PATH:-../../volumes}/supabase/functions:/home/deno/functions:Z
 
   # Logflare Dummy Server
   # This is a dummy replacement for the Logflare service.
@@ -185,23 +185,19 @@ services:
       vector:
         condition: service_healthy
     volumes:
-      - ../../.repos/supabase/docker/volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
-      # Must be superuser to create event trigger
-      - ../../.repos/supabase/docker/volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
-      # Must be superuser to alter reserved role
-      - ../../.repos/supabase/docker/volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
-      # Initialize the database settings with JWT_SECRET and JWT_EXP
-      - ../../.repos/supabase/docker/volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
-      # PGDATA directory is persisted between restarts
-      - ../../.repos/supabase/docker/volumes/db/data:/var/lib/postgresql/data:Z
-      # Changes required for internal supabase data such as _analytics
-      - ../../.repos/supabase/docker/volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
-      # Changes required for Analytics support
-      - ../../.repos/supabase/docker/volumes/db/logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
-      # Changes required for Pooler support
-      - ../../.repos/supabase/docker/volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
-      # Use named volume to persist pgsodium decryption key between restarts
+      # PRIMARY PGDATA directory
+      # This is where database data is persisted between restarts
+      - ${LLEMONSTACK_VOLUMES_PATH:-../../volumes}/supabase/db/data:/var/lib/postgresql/data:Z
+      # Custom configuration for the database
       - db-config:/etc/postgresql-custom
+      # Init and migration scripts; these are copied from the extended db service
+      - ../../.repos/supabase/docker/volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
+      - ../../.repos/supabase/docker/volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
+      - ../../.repos/supabase/docker/volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
+      - ../../.repos/supabase/docker/volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
+      - ../../.repos/supabase/docker/volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
+      - ../../.repos/supabase/docker/volumes/db/logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
+      - ../../.repos/supabase/docker/volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
 
   vector:
     extends:

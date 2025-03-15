@@ -24,6 +24,16 @@ Check the git history and pull regularly for bug fixes.
 
 ### Changelog
 
+- Mar 15, 2025: BREAKING CHANGE: moved container volumes to ./volumes
+
+  - See .env.example for LLEMONSTACK_VOLUMES_DIR
+  - To migrate: copy supabase data to new volumes location
+
+    ```bash
+    cp -a .repos/supabase/docker/volumes/db/data ./volumes/supabase/db/
+    cp -a .repos/supabase/docker/volumes/functions ./volumes/supabase/functions
+    ```
+
 - Mar 14, 2025: BREAKING CHANGE: switched to using supavisor instead of direct postgres db connection
   - See .env.example for changes to env variables
   - docker-compose.yml files were changed and now require a few new env vars to work

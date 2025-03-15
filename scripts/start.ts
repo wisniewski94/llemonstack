@@ -151,6 +151,14 @@ const REPO_SERVICES: Record<string, RepoService> = {
   // },
 }
 
+// Volumes relative to LLEMONSTACK_VOLUMES_DIR, required by docker-compose.yml files to start services.
+// These directories will be created if they don't exist.
+export const REQUIRED_VOLUMES = [
+  'supabase/db/data',
+  'supabase/storage',
+  'supabase/functions',
+]
+
 /*******************************************************************************
  * TYPES
  *******************************************************************************/
@@ -451,6 +459,20 @@ export function escapePath(file: string): string {
   return path.normalize(file.replace(/(\s|`|\$|\\|"|&)/g, '\\$1'))
 }
 
+/**
+ * Gets required environment variables to always pass to docker commands
+ *
+ * @param volumesDir - The directory config to use for volumes, defaults to LLEMONSTACK_VOLUMES_DIR env var value
+ * @returns Record<string, string>
+ */
+export function dockerEnv({ volumesDir }: { volumesDir?: string } = {}): Record<string, string> {
+  const volumes_dir = volumesDir || Deno.env.get('LLEMONSTACK_VOLUMES_DIR') || './volumes'
+  return {
+    // Convert LLEMONSTACK_VOLUMES_DIR into an absolute path to use in docker-compose.yml files
+    LLEMONSTACK_VOLUMES_PATHS: path.resolve(ROOT_DIR, volumes_dir),
+  }
+}
+
 export async function runCommand(
   cmd: string,
   {
@@ -482,6 +504,7 @@ export async function runCommand(
   let cmdCmd = cmd
   let cmdArgs = (args?.filter(Boolean) || []) as string[]
   const cmdEnv: Record<string, string> = {
+    ...(cmd.includes('docker') ? dockerEnv() : {}), // Add docker specific env vars
     ...envVars,
     ...Object.fromEntries( // Convert all env values to strings
       Object.entries(env).map(([k, v]) => [k, String(v)]),
@@ -887,12 +910,11 @@ async function setupRepo(
   } = {},
 ): Promise<void> {
   const dir = getRepoPath(repoDir)
-  showInfo(`Repo dir: ${dir}`)
-
   if (sparseDir) {
     sparse = true
   }
 
+  DEBUG && showDebug(`Cloning ${repoName} repo: ${repoUrl}${sparse ? ' [sparse]' : ''}`)
   if (!fs.existsSync(dir)) {
     await runCommand('git', {
       args: [
@@ -991,7 +1013,7 @@ export async function setupRepos({
       })
       .filter(Boolean),
   )
-  showInfo('✔️ Repositories setup')
+  showInfo(`${all ? 'All repositories' : 'Repositories'} are ready`)
 }
 
 /**
@@ -1036,6 +1058,47 @@ export async function prepareSupabaseEnv(): Promise<void> {
 }
 
 /**
+ * Create volumes dirs required by docker-compose.yml files
+ *
+ * Uses LLEMONSTACK_VOLUMES_DIR env var to determine the path to the
+ * base volumes directory.
+ *
+ * If the volumes directory does not exist, it will be created.
+ *
+ * If the volumes directory exists, but is not a directory, an error will be thrown.
+ */
+async function createRequiredVolumes({ silent = false }: { silent?: boolean } = {}): Promise<void> {
+  if (DEBUG) {
+    silent = false
+  }
+
+  const volumesPath = dockerEnv().LLEMONSTACK_VOLUMES_PATHS
+
+  !silent && showInfo('Checking for required volumes...')
+  DEBUG && showDebug(`Volumes base path: ${volumesPath}`)
+
+  for (const volume of REQUIRED_VOLUMES) {
+    const volumePath = path.join(volumesPath, volume)
+    try {
+      const fileInfo = await Deno.stat(volumePath)
+      if (fileInfo.isDirectory) {
+        DEBUG && showDebug(`✔️ ${volume}`)
+      } else {
+        throw new Error(`Volume is not a directory: ${volumePath}`)
+      }
+    } catch (error) {
+      if (error instanceof Deno.errors.NotFound) {
+        await Deno.mkdir(volumePath, { recursive: true })
+        !silent && showInfo(`Created missing volume dir: ${volumePath}`)
+      } else {
+        throw error
+      }
+    }
+  }
+  !silent && showInfo(`All required volumes exist`)
+}
+
+/**
  * Call this function before running any other scripts
  */
 export async function prepareEnv({ silent = false }: { silent?: boolean } = {}): Promise<void> {
@@ -1048,6 +1111,9 @@ export async function prepareEnv({ silent = false }: { silent?: boolean } = {}):
     )
     Deno.exit(1)
   }
+
+  // Create volumes dirs required by docker-compose.yml files
+  await createRequiredVolumes({ silent })
 
   // Prepare the custom supabase .env file needed for the supabase docker-compose.yml file
   await prepareSupabaseEnv()
