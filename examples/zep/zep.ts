@@ -3,7 +3,7 @@
  *
  * Usage:
  * ```bash
- * ZEP_API_SECRET=your-zep-api-key deno test/zep.ts
+ * ZEP_API_SECRET=your-zep-api-key deno examples/zep/zep.ts
  * ```
  *
  * See https://github.com/getzep/zep-js/blob/oss/examples/memory/memory_example.ts
@@ -124,6 +124,7 @@ async function main() {
 
   const firstSessionsMessageId = sessionMessages[0].uuid
 
+  console.log('\n\n????? trying to update message metadata')
   // Update session message metadata
   try {
     const metadata = { metadata: { foo: 'bar' } }
@@ -142,6 +143,7 @@ async function main() {
   }
 
   // Get session message
+  console.log('\n\n????? trying to get session message')
 
   try {
     if (firstSessionsMessageId) {
@@ -151,6 +153,8 @@ async function main() {
   } catch (error) {
     console.error('Got error:', error)
   }
+
+  console.log('\n\n????? trying to get search message')
 
   // Search messages in memory
   try {

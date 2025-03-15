@@ -34,13 +34,11 @@ Check the git history and pull regularly for bug fixes.
 
 ## Known Issues
 
-Zep is not currently working properly due to a bug in role_type_num when using
+Zep is not fully working properly due to a bug in role_type_num when using
 the service_zep schema created by the init script.
 
 But since Zep CE (installed by LLemonStack) isn't currently compatible with n8n,
-it's low priority to fix this. A quick fix is to remove zep from the POSTGRES_SERVICES array in the init.ts script and just use the default postgres
-user and password. Zep will then create it's tables in the public schema and
-should work as expected.
+it's low priority to fix this. See [examples/zep/README.md](examples/zep/README.md)
 
 ## Overview
 
