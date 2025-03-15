@@ -213,5 +213,5 @@ export async function reset(
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  reset(Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  reset(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

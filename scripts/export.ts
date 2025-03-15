@@ -138,5 +138,5 @@ export async function runExport(projectName: string): Promise<void> {
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  runExport(Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  runExport(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

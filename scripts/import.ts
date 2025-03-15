@@ -185,5 +185,5 @@ export async function runImport(
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  runImport(Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  runImport(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

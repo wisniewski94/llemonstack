@@ -24,5 +24,5 @@ export async function restart(projectName: string): Promise<void> {
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  restart(Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  restart(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

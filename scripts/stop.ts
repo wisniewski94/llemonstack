@@ -197,5 +197,5 @@ export async function stop(
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  stop(Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  stop(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

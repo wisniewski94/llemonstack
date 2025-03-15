@@ -45,7 +45,7 @@ import {
 
 // Env var key names we care about
 type EnvVarsKeys = keyof {
-  DOCKER_PROJECT_NAME: string
+  LLEMONSTACK_PROJECT_NAME: string
   // Supabase
   SUPABASE_DASHBOARD_USERNAME: string
   SUPABASE_DASHBOARD_PASSWORD: string
@@ -485,14 +485,14 @@ export async function init(
     const name = await Input.prompt(
       {
         message: 'What is the project name?',
-        default: Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME,
+        default: Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME,
         hint: 'Used by docker, only letters, numbers, hyphens and underscores',
         transform: (value?: string) => value?.toLowerCase(),
         validate: projectNameValidator,
       },
     )
     projectName = name
-    envVars.DOCKER_PROJECT_NAME = name
+    envVars.LLEMONSTACK_PROJECT_NAME = name
 
     // Generate random security keys
     envVars = await setSecurityKeys(envVars)
@@ -569,5 +569,5 @@ export async function init(
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  init(Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  init(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

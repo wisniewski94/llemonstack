@@ -264,5 +264,5 @@ export async function versions(projectName: string): Promise<void> {
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  versions(Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  versions(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

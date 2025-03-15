@@ -83,5 +83,5 @@ export async function schema(projectName: string) {
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  schema(Deno.env.get('DOCKER_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  schema(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

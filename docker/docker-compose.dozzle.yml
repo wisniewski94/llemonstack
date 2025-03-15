@@ -10,7 +10,7 @@ services:
       - DOZZLE_LEVEL=info # Level of logs to show
       # Filter logs by container label
       # See https://dozzle.dev/guide/filters
-      # - DOZZLE_FILTER="label=com.docker.compose.project=${DOCKER_PROJECT_NAME}"
+      # - DOZZLE_FILTER="label=com.docker.compose.project=${LLEMONSTACK_PROJECT_NAME}"
       # - DOZZLE_ENABLE_ACTIONS=true
       - DOZZLE_NO_ANALYTICS=true # Disable sending usage data to the Dozzle team
     volumes:
