@@ -11,7 +11,7 @@ def check_health():
         # Configure these variables as needed
         host = "0.0.0.0"
         port = 4000
-        path = "/health"
+        path = "/health/readiness"
         token = os.environ.get(
             "LITELLM_MASTER_KEY", ""
         )  # Get token from environment variable
