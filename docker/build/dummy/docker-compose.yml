@@ -1,0 +1,31 @@
+# Dummy server
+services:
+  dummy-server:
+    build: .
+    container_name: dummy-server
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    # Low resource limits
+    mem_limit: 50M
+    cpus: 0.1
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # # Dummy env var echo
+  # # This is used to test that the environment variables are being passed to the container.
+  # dummy-echo:
+  #   container_name: dummy-echo
+  #   image: alpine:latest
+  #   restart: "no"
+  #   environment:
+  #     # Set env vars here to test that they are being passed to the container.
+  #     SOME_ENV_VAR: ${SOME_ENV_VAR:-NOT SET}
+  #   command: >
+  #     sh -c "echo '=== ENVIRONMENT VARIABLES ===' &&
+  #           env | sort &&
+  #           echo '===========================' &&
+  #           echo 'Service completed'"
