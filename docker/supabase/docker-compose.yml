@@ -122,25 +122,25 @@ services:
   # It discards all events sent to it to reduce resource consumption.
   analytics:
     container_name: supabase-analytics-dummy
-    build: ../build/dummy/rust
+    build: ../build/dummy/go
     restart: unless-stopped
     ports:
       - ${SUPABASE_LOGFLARE_PORT:-4000}:4000
     environment:
       - PORT=4000
-    mem_limit: 20M
+    mem_limit: 10M
     cpus: 0.05
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://0.0.0.0:4000/health"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "/app/dummy", "-health-check"]
+      interval: 60s
+      timeout: 3s
       retries: 3
-    # healthcheck:
-    #   test: ["CMD", "nc", "-z", "0.0.0.0", "4000"]
-    #   interval: 5s
-    #   timeout: 3s
-    #   retries: 3
-    #   start_period: 5s
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
 
   # Supabase Logflare
   # analytics:
@@ -153,7 +153,8 @@ services:
   #     db:
   #       condition: service_healthy
 
-  db: # Supabase Postgres
+  # Supabase Postgres - primary database container
+  db:
     extends:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: db
