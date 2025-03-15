@@ -35,7 +35,15 @@
     "singleQuote": true,
     "proseWrap": "always",
     "semiColons": false,
-    "exclude": ["tmp/", ".repos/", "examples/", "import/", "shared/", "docker/"]
+    "exclude": [
+      "tmp/",
+      ".repos/",
+      "examples/",
+      "import/",
+      "shared/",
+      "docker/",
+      "volumes/"
+    ]
   },
   "lint": {
     "exclude": [
@@ -44,7 +52,8 @@
       "examples/",
       "import/",
       "shared/",
-      "docker/build/"
+      "docker/build/",
+      "volumes/"
     ]
   }
 }

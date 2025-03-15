@@ -31,12 +31,14 @@
     "dozzle",
     "ENVFILE",
     "flowise",
+    "getzep",
     "graphiti",
     "illumos",
     "langchain",
     "Langfuse",
     "litellm",
     "llemonstack",
+    "Logflare",
     "macbook",
     "nextauth",
     "ollama",
@@ -51,6 +53,7 @@
     "signoz",
     "skyvern",
     "supabase",
+    "supavisor",
     "TARGETPLATFORM"
   ],
   "cSpell.ignorePaths": [
@@ -67,7 +70,9 @@
     "import/**",
     "shared/**",
     "tmp/**",
-    "docs/*.md"
+    "docs/*.md",
+    "volumes/**",
+    "examples/**"
   ],
   "[dockercompose]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
