@@ -117,11 +117,12 @@ services:
     volumes:
       - ../../.repos/supabase/docker/volumes/functions:/home/deno/functions:Z
 
-  # Logflare Sink
+  # Logflare Dummy Server
   # This is a dummy replacement for the Logflare service.
   # It discards all events sent to it to reduce resource consumption.
+  # Logflare normally uses 500MB+ of memory. Dummy uses <3MB.
   analytics:
-    container_name: supabase-analytics-dummy
+    container_name: supabase-analytics
     build: ../build/dummy/go
     restart: unless-stopped
     ports:

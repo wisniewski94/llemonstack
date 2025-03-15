@@ -16,7 +16,7 @@ container logs in Docker Desktop.
 
 **Code:**
 
-- [ ] Disable supabase-analytics, it eats memory and CPU & is not needed
+- [x] Disable supabase-analytics, it eats memory and CPU & is not needed
 
 - [ ] Modify n8n custom build docker-compose to extend docker/docker-compose.n8n.yml
       Simplifies future modifications
