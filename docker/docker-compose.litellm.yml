@@ -18,6 +18,7 @@ services:
     image: ghcr.io/berriai/litellm:main-latest
     volumes:
       - ./config.litellm.yaml:/app/config.yaml
+      - ./healthcheck.litellm.py:/app/healthcheck.py
     command:
       - "--config=/app/config.yaml"
     ports:
@@ -26,7 +27,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G # Sets maximum memory to 512 MB, LiteLLM has memory leaks
+          memory: 512m # Sets maximum memory to 512 MB, LiteLLM has memory leaks
     environment:
       # Set log level: DEBUG | INFO | ERROR
       # See https://docs.litellm.ai/docs/proxy/debugging
@@ -47,6 +48,13 @@ services:
       LANGFUSE_HOST: http://langfuse:3000
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY:-}
+
+    healthcheck:
+      test: ["CMD", "python", "/app/healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
 
     # Only uncomment depends_on if include is uncommented above
     # depends_on:
