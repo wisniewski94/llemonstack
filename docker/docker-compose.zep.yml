@@ -37,6 +37,8 @@
 services:
   zep:
     container_name: zep
+    labels:
+      dev.dozzle.group: Vector Stores
     image: zepai/zep:latest # 1.0.2 as of March 2025
     # TODO: downgrade to 0.27.2 until langchain and n8n update their zep-js package version
     # https://github.com/getzep/zep/pkgs/container/zep
@@ -71,6 +73,8 @@ services:
 
   graphiti:
     container_name: zep-graphiti
+    labels:
+      dev.dozzle.group: Vector Stores
     image: zepai/graphiti:0.3
     ports:
       - "8003:8003"

@@ -12,6 +12,8 @@ volumes:
 services:
   n8n:
     container_name: n8n
+    labels:
+      dev.dozzle.group: Workflows
     build:
       context: .
       dockerfile: Dockerfile

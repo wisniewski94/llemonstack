@@ -13,6 +13,8 @@
 services:
   langfuse-worker:
     container_name: langfuse-worker
+    labels:
+      dev.dozzle.group: Telemetry
     image: langfuse/langfuse-worker:3
     restart: always
     # Uncomment depends_on services if include is uncommented at top of file
@@ -73,6 +75,8 @@ services:
 
   langfuse:
     container_name: langfuse
+    labels:
+      dev.dozzle.group: Telemetry
     image: langfuse/langfuse:3
     restart: always
     # Uncomment depends_on services if include is uncommented at top of file

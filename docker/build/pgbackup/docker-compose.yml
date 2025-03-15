@@ -2,6 +2,9 @@ version: "3"
 
 services:
   backup:
+    container_name: pgbackup
+    labels:
+      dev.dozzle.group: Databases
     build: .
     volumes:
       - ./backups:/backups
@@ -13,6 +16,7 @@ services:
 
   # Example of a scheduled backup using a separate cron container
   backup-scheduler:
+    container_name: pgbackup-scheduler
     image: mcuadros/ofelia:latest
     depends_on:
       - backup
@@ -20,5 +24,6 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command: daemon --docker
     labels:
+      dev.dozzle.group: Databases
       ofelia.job-run.backup-job.schedule: "@daily"
       ofelia.job-run.backup-job.container: "supabase-backup_backup_1"

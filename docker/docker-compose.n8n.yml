@@ -63,6 +63,8 @@ services:
   n8n:
     <<: *service-n8n
     container_name: n8n
+    labels:
+      dev.dozzle.group: Workflows
     restart: unless-stopped
     ports:
       - 5678:5678

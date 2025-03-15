@@ -12,6 +12,8 @@ volumes:
 services:
   redis:
     container_name: redis
+    labels:
+      dev.dozzle.group: Databases
     image: redis:7
     restart: always
     command: >

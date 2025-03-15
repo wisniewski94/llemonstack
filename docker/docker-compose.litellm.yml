@@ -15,6 +15,8 @@
 services:
   litellm:
     container_name: litellm
+    labels:
+      dev.dozzle.group: Telemetry
     image: ghcr.io/berriai/litellm:main-latest
     volumes:
       - ./config.litellm.yaml:/app/config.yaml
@@ -49,12 +51,14 @@ services:
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY:-}
 
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "/app/healthcheck.py"]
-      interval: 30s
-      timeout: 10s
-      start_period: 30s
-      retries: 3
+      interval: 30s # Perform health check every 30 seconds
+      timeout: 10s # Health check command times out after 10 seconds
+      retries: 3 # Retry up to 3 times if health check fails
+      start_period: 40s # Wait 40 seconds after container start before beginning health checks
+
 
     # Only uncomment depends_on if include is uncommented above
     # depends_on:

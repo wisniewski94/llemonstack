@@ -12,6 +12,8 @@ networks:
 x-ollama: &service-ollama
   image: ollama/ollama:latest
   container_name: ollama
+  labels:
+    dev.dozzle.group: Local LLM
   restart: unless-stopped
   networks:
     - localnet

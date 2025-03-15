@@ -12,6 +12,8 @@ volumes:
 services:
   minio:
     container_name: minio
+    labels:
+      dev.dozzle.group: Storage
     image: minio/minio
     restart: always
     entrypoint: sh

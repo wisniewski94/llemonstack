@@ -14,6 +14,8 @@ volumes:
 services:
   prometheus:
     container_name: prometheus
+    labels:
+      dev.dozzle.group: Databases
     image: prom/prometheus
     volumes:
       - prometheus_data:/prometheus

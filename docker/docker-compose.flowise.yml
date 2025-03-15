@@ -20,6 +20,8 @@ volumes:
 services:
   flowise:
     container_name: flowise
+    labels:
+      dev.dozzle.group: Workflows
     image: flowiseai/flowise
     restart: unless-stopped
     ports:

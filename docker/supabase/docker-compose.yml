@@ -24,6 +24,8 @@ services:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: studio
     container_name: supabase-studio
+    labels:
+      dev.dozzle.group: Supabase
     depends_on:
       analytics:
         condition: service_healthy
@@ -33,6 +35,8 @@ services:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: kong
     container_name: supabase-kong
+    labels:
+      dev.dozzle.group: Supabase
     ports:
       - ${KONG_HTTP_PORT2:-8000}:8000/tcp
     depends_on:
@@ -46,6 +50,8 @@ services:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: auth
     container_name: supabase-auth
+    labels:
+      dev.dozzle.group: Supabase
     depends_on:
       db:
         condition: service_healthy
@@ -57,6 +63,8 @@ services:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: rest
     container_name: supabase-rest
+    labels:
+      dev.dozzle.group: Supabase
     depends_on:
       db:
         condition: service_healthy
@@ -68,6 +76,8 @@ services:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: realtime
     container_name: supabase-realtime
+    labels:
+      dev.dozzle.group: Supabase
     depends_on:
       db:
         # Disable this if you are using an external Postgres database
@@ -79,6 +89,8 @@ services:
     extends:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: storage
+    labels:
+      dev.dozzle.group: Supabase
     depends_on:
       db:
         condition: service_healthy
@@ -93,6 +105,8 @@ services:
     extends:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: imgproxy
+    labels:
+      dev.dozzle.group: Supabase
     volumes:
       - ./volumes/storage:/var/lib/storage:z
 
@@ -100,6 +114,8 @@ services:
     extends:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: meta
+    labels:
+      dev.dozzle.group: Supabase
     depends_on:
       db:
         condition: service_healthy
@@ -111,6 +127,8 @@ services:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: functions
     container_name: supabase-functions
+    labels:
+      dev.dozzle.group: Supabase
     depends_on:
       analytics:
         condition: service_healthy
@@ -123,6 +141,8 @@ services:
   # Logflare normally uses 500MB+ of memory. Dummy uses <3MB.
   analytics:
     container_name: supabase-analytics
+    labels:
+      dev.dozzle.group: Logging
     build: ../build/dummy/go
     restart: unless-stopped
     ports:
@@ -159,6 +179,8 @@ services:
     extends:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: db
+    labels:
+      dev.dozzle.group: Supabase
     depends_on:
       vector:
         condition: service_healthy
@@ -185,6 +207,8 @@ services:
     extends:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: vector
+    labels:
+      dev.dozzle.group: Supabase
     volumes:
       - ../../.repos/supabase/docker/volumes/logs/vector.yml:/etc/vector/vector.yml:ro,z
       - ${DOCKER_SOCKET_LOCATION}:/var/run/docker.sock:ro,z
@@ -195,6 +219,8 @@ services:
     extends:
       file: ../../.repos/supabase/docker/docker-compose.yml
       service: supavisor
+    labels:
+      dev.dozzle.group: Supabase
     ports:
       - ${POSTGRES_PORT:-5432}:5432
       - ${POOLER_PROXY_PORT_TRANSACTION:-6543}:6543

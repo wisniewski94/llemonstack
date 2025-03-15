@@ -1,6 +1,8 @@
 services:
   browser-use-webui:
     container_name: browser-use-webui
+    labels:
+      dev.dozzle.group: Browser Use
     platform: ${TARGETPLATFORM:-linux/amd64}
     extends:
       file: ../.repos/browser-use-web-ui/docker-compose.yml
