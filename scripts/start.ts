@@ -49,7 +49,7 @@ export const LLEMONSTACK_CONFIG_DIR = path.join(Deno.cwd(), '.llemonstack')
 export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config.json')
 
 // Enable extra debug logging
-export const DEBUG = Deno.env.get('DEBUG_LLEMONSTACK')?.toLowerCase() === 'true'
+export const DEBUG = Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
 
 export const ROOT_DIR = Deno.cwd()
 export const REPO_DIR = escapePath(path.join(ROOT_DIR, REPO_DIR_BASE))
