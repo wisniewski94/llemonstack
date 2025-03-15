@@ -47,9 +47,10 @@ services:
     volumes:
       - ./zep.yaml:/app/zep.yaml
     environment:
+      # Environment variables are used in zep.yaml
       - ZEP_CONFIG_FILE=zep.yaml
-      - POSTGRES_HOST=${POSTGRES_HOST_INTERNAL:-supavisor}
-      - POSTGRES_USER=${ZEP_POSTGRES_USER:-postgres} # Zep doesn't need the tenant suffix
+      - POSTGRES_HOST=${ZEP_POSTGRES_HOST:-${POSTGRES_HOST_INTERNAL:-supavisor}}
+      - POSTGRES_USER=${ZEP_POSTGRES_USER:-postgres}${POSTGRES_USER_TENANT_SUFFIX}
       - POSTGRES_PASSWORD=${ZEP_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}
       - POSTGRES_SCHEMA=${ZEP_POSTGRES_SCHEMA:-public}
       - ZEP_API_SECRET=${ZEP_API_SECRET}

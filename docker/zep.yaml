@@ -19,7 +19,7 @@ http:
 postgres:
   user: {{ Env "POSTGRES_USER" }}
   password: {{ Env "POSTGRES_PASSWORD" }}
-  host: db
+  host: {{ Env "POSTGRES_HOST" }}
   port: 5432
   database: postgres
   schema_name: {{ Env "POSTGRES_SCHEMA" }}
