@@ -1269,13 +1269,6 @@ export async function start(projectName: string): Promise<void> {
         Deno.env.get('FLOWISE_PASSWORD') || '',
       )
     }
-    if (supabaseStarted) {
-      showService('Supabase', `http://localhost:8000`)
-      showCredentials(
-        Deno.env.get('SUPABASE_DASHBOARD_USERNAME') || '',
-        Deno.env.get('SUPABASE_DASHBOARD_PASSWORD') || '',
-      )
-    }
     isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:8080')
     if (isEnabled('browser-use')) {
       showService('Browser-Use', 'http://localhost:7788/')
@@ -1284,6 +1277,13 @@ export async function start(projectName: string): Promise<void> {
         'http://0.0.0.0:6080/vnc.html?host=0.0.0.0&port=6080',
       )
       showCredentials(null, Deno.env.get('BROWSER_USE_VNC_PASSWORD') || null)
+    }
+    if (supabaseStarted) {
+      showService('Supabase', `http://localhost:8000`)
+      showCredentials(
+        Deno.env.get('SUPABASE_DASHBOARD_USERNAME') || '',
+        Deno.env.get('SUPABASE_DASHBOARD_PASSWORD') || '',
+      )
     }
     if (isEnabled('litellm')) {
       showService('LiteLLM', 'http://localhost:3004/ui/')
