@@ -143,7 +143,9 @@ services:
     container_name: dummy-analytics
     labels:
       dev.dozzle.group: Analytics
-    build: ../build/dummy/go
+    build:
+      context: ../build/dummy/go
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - ${SUPABASE_LOGFLARE_PORT:-4000}:4000

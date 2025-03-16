@@ -252,7 +252,11 @@ export interface RepoService {
 
 export interface ServiceImage {
   service: string
+  containerName: string
   image: string
+  build?: string
+  version?: string
+  imageName?: string // The name of the image without the version
 }
 
 // Define the type for the Docker Compose configuration
@@ -267,7 +271,10 @@ export interface ComposeConfig {
       }
       build?: {
         dockerfile: string
+        context?: string
+        dockerfile_inline?: string
       }
+      container_name?: string
     }
   }
 }
@@ -735,17 +742,31 @@ export async function getImagesFromComposeYml(
     if (composeConfig.services) {
       for (const serviceName in composeConfig.services) {
         const service = composeConfig.services[serviceName]
+        const containerName = service?.container_name
 
         // Check if the service has an image directly
         if (service && service.image) {
           serviceImages.push({
             service: serviceName,
             image: service.image,
+            containerName: containerName || serviceName,
           })
         } else if (service && service.build) {
           serviceImages.push({
             service: serviceName,
-            image: service.build.dockerfile,
+            image: '',
+            build: service.build.dockerfile
+              ? path.relative(
+                ROOT_DIR,
+                path.resolve(
+                  path.dirname(composeFile),
+                  service.build.context || '.',
+                  service.build.dockerfile,
+                ),
+              )
+              : (service.build.dockerfile_inline && `Inline Dockerfile`) ||
+                service.build.toString(),
+            containerName: containerName || serviceName,
           })
         }
 
@@ -777,6 +798,8 @@ export async function getImagesFromComposeYml(
                 serviceImages.push({
                   service: serviceName,
                   image: extendedServiceImage.image,
+                  build: extendedServiceImage.build,
+                  containerName: containerName || extendedServiceImage.containerName,
                 })
               }
             }
