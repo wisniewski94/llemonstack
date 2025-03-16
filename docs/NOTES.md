@@ -18,10 +18,9 @@ container logs in Docker Desktop.
 
 - [x] Disable supabase-analytics, it eats memory and CPU & is not needed
 
-- [ ] Modify n8n custom build docker-compose to extend docker/docker-compose.n8n.yml
-      Simplifies future modifications
+- [x] Move supabase volumes to ./volumes to make backup easier and protect against .repos deletion
 
-- [ ] Add dozzle labels to services to group logging
+- [x] Add dozzle labels to services to group logging
       See https://dozzle.dev/guide/container-groups
 
 - [ ] Rebuild example n8n templates to use LiteLLM, use env.LITELLM_API_KEY
@@ -71,7 +70,13 @@ container logs in Docker Desktop.
 
 **Someday / low priority:**
 
-- [ ] Patch n8n LangChain to auto config Langfuse
+- [ ] Refactor scripts with [Repo Prompt](https://repoprompt.com/)?
+
+  - [ ] Implement config files for each service, make it easier to add services without modifying code
+  - [ ] Split functions into libs
+  - [ ] Create standalone exec to run all script commands
+
+- [ ] Patch n8n LangChain to auto config Langfuse for LangChain code nodes
 
   See [OTEL](OTEL.md)
 
