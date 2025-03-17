@@ -152,10 +152,23 @@ const REPO_SERVICES: Record<string, RepoService> = {
 
 // Volumes relative to LLEMONSTACK_VOLUMES_DIR, required by docker-compose.yml files to start services.
 // These directories will be created if they don't exist.
-export const REQUIRED_VOLUMES = [
-  'supabase/db/data',
-  'supabase/storage',
-  'supabase/functions',
+// If seed: Copy these dirs or files into volumes if they don't exist
+const REQUIRED_VOLUMES = [
+  { volume: 'supabase/db/data' },
+  { volume: 'supabase/storage' },
+  {
+    volume: 'supabase/functions',
+    seed: [ // Copy these dirs into functions volumes if they don't exist
+      {
+        source: path.join(getRepoPath('supabase'), 'docker', 'volumes', 'functions', 'main'),
+        destination: 'main', // Relative to the volume path
+      },
+      {
+        source: path.join(getRepoPath('supabase'), 'docker', 'volumes', 'functions', 'hello'),
+        destination: 'hello',
+      },
+    ],
+  },
 ]
 
 /*******************************************************************************
@@ -1100,11 +1113,11 @@ async function createRequiredVolumes({ silent = false }: { silent?: boolean } = 
   DEBUG && showDebug(`Volumes base path: ${volumesPath}`)
 
   for (const volume of REQUIRED_VOLUMES) {
-    const volumePath = path.join(volumesPath, volume)
+    const volumePath = path.join(volumesPath, volume.volume)
     try {
       const fileInfo = await Deno.stat(volumePath)
       if (fileInfo.isDirectory) {
-        DEBUG && showDebug(`✔️ ${volume}`)
+        DEBUG && showDebug(`✔️ ${volume.volume}`)
       } else {
         throw new Error(`Volume is not a directory: ${volumePath}`)
       }
@@ -1116,8 +1129,33 @@ async function createRequiredVolumes({ silent = false }: { silent?: boolean } = 
         throw error
       }
     }
+    if (volume.seed) {
+      for (const seed of volume.seed) {
+        const seedPath = path.join(volumePath, seed.destination)
+        try {
+          // Check if seedPath already exists before copying
+          const seedPathExists = await fs.exists(seedPath)
+          if (seedPathExists) {
+            DEBUG && showDebug(`Volume seed already exists: ${getRelativePath(seedPath)}`)
+            continue
+          }
+          await fs.copy(seed.source, seedPath, { overwrite: false })
+          !silent &&
+            showInfo(`Copied ${getRelativePath(seed.source)} to ${getRelativePath(seedPath)}`)
+        } catch (error) {
+          showError(
+            `Error copying seed: ${getRelativePath(seed.source)} to ${getRelativePath(seedPath)}`,
+            error,
+          )
+        }
+      }
+    }
   }
   !silent && showInfo(`All required volumes exist`)
+}
+
+function getRelativePath(pathStr: string): string {
+  return path.relative(Deno.cwd(), pathStr)
 }
 
 /**
@@ -1134,11 +1172,11 @@ export async function prepareEnv({ silent = false }: { silent?: boolean } = {}):
     Deno.exit(1)
   }
 
-  // Create volumes dirs required by docker-compose.yml files
-  await createRequiredVolumes({ silent })
-
   // Prepare the custom supabase .env file needed for the supabase docker-compose.yml file
   await prepareSupabaseEnv()
+
+  // Create volumes dirs required by docker-compose.yml files
+  await createRequiredVolumes({ silent })
 
   !silent && showInfo('✔️ Supabase environment successfully setup')
 }
