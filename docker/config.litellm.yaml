@@ -86,8 +86,17 @@ model_list:
     litellm_params:
       model: "openai/*"
       api_key: os.environ/OPENAI_API_KEY
-  # TODO: add ollama models
   # TODO: add local LLM models
+  # TODO: add support for loading models from a file:
+  # See https://docs.litellm.ai/docs/proxy/config_management
+  # Working example of using deepseek-r1 through LM Studio
+  # - model_name: "localllm/deepseek"
+  #   litellm_params:
+  #     model: "openai/deepseek-r1-distill-llama-8b"
+  #     api_base: http://host.docker.internal:1234/v1/
+  #     api_key: sk-1234
+  #     timeout: 1
+  # TODO: add ollama models
   # - model_name: "anthropic/*"
   #   litellm_params:
   #     model: "anthropic/*"
