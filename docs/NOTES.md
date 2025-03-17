@@ -16,6 +16,8 @@ container logs in Docker Desktop.
 
 **Code:**
 
+- [ ] Configure LiteLLM to use LOCAL_LLM provider if configured in env
+
 - [x] Disable supabase-analytics, it eats memory and CPU & is not needed
 
 - [x] Move supabase volumes to ./volumes to make backup easier and protect against .repos deletion

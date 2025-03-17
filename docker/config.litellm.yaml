@@ -86,6 +86,8 @@ model_list:
     litellm_params:
       model: "openai/*"
       api_key: os.environ/OPENAI_API_KEY
+  # TODO: add ollama models
+  # TODO: add local LLM models
   # - model_name: "anthropic/*"
   #   litellm_params:
   #     model: "anthropic/*"
