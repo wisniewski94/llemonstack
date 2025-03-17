@@ -58,8 +58,7 @@ See [examples/zep/README.md](examples/zep/README.md) for details and the quick f
 **LLemonStack** installs and runs a fully featured low code AI agent development playground,
 including local LLMs and chat interfaces, from a single command: `deno run start`
 
-Supports running on Linux, Mac, or Windows. Built on a Macbook M2, tested on an AMD Linux server,
-and on the roadmap to test on Windows but likely works everywhere.
+Supports running on Linux, Mac, or Windows. Built on a Macbook M2, tested on Linux and Windows with WSL 2.
 
 ### Main objectives of 🍋 LLemonStack are
 
