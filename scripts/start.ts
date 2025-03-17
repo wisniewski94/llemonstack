@@ -463,6 +463,7 @@ export async function loadEnv(
   // Add dynamic env vars
   //
   // Set OLLAMA_HOST
+  // Uses existing env var if set, otherwise configures based on ENABLE_OLLAMA settings
   envValues.OLLAMA_HOST = getOllamaHost()
   reload && Deno.env.set('OLLAMA_HOST', envValues.OLLAMA_HOST)
 
@@ -1202,8 +1203,11 @@ export function getOllamaProfile(): OllamaProfile {
 }
 
 export function getOllamaHost(): string {
-  const host = (getOllamaProfile() === 'ollama-host') ? 'host.docker.internal' : 'ollama'
-  return `${host}:${Deno.env.get('OLLAMA_HOST_PORT') || '11434'}`
+  // Use the OLLAMA_HOST env var if it is set, otherwise check Ollama profile settings
+  const host = Deno.env.get('OLLAMA_HOST') || (getOllamaProfile() === 'ollama-host')
+    ? 'host.docker.internal:11434'
+    : 'ollama:11434'
+  return host
 }
 
 async function startBrowserUse(projectName: string): Promise<void> {
