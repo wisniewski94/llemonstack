@@ -26,6 +26,8 @@ services:
     ports:
       # Supabase Logflare uses port 4000
       - "3004:4000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     deploy:
       resources:
         limits:
@@ -51,13 +53,18 @@ services:
       LANGFUSE_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:-}
       LANGFUSE_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY:-}
 
+      # Local LLM Config
+      LOCAL_LLM_OPENAI_API_BASE_URL: ${LOCAL_LLM_OPENAI_API_BASE_URL:-}
+      LOCAL_LLM_OPENAI_API_KEY: ${LOCAL_LLM_OPENAI_API_KEY:-}
+      OLLAMA_HOST: ${OLLAMA_HOST:-}
+
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "/app/healthcheck.py"]
       interval: 30s # Perform health check every 30 seconds
       timeout: 10s # Health check command times out after 10 seconds
       retries: 3 # Retry up to 3 times if health check fails
-      start_period: 40s # Wait 40 seconds after container start before beginning health checks
+      start_period: 60s # Wait for container to start before beginning health checks
 
 
     # Only uncomment depends_on if include is uncommented above
