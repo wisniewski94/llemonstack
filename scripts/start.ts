@@ -1203,7 +1203,7 @@ export function getOllamaProfile(): OllamaProfile {
 
 export function getOllamaHost(): string {
   const host = (getOllamaProfile() === 'ollama-host') ? 'host.docker.internal' : 'ollama'
-  return `${host}:11434`
+  return `${host}:${Deno.env.get('OLLAMA_HOST_PORT') || '11434'}`
 }
 
 async function startBrowserUse(projectName: string): Promise<void> {
