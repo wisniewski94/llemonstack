@@ -4,10 +4,10 @@ volumes:
 # Connect ollama to the main network defined in docker-compose.yml.
 # Change the name of the network if the project name is different.
 # Network needs to be the same as the one used in docker-compose.yml.
-networks:
-  localnet:
-    name: llemonstack_default
-    external: true
+# networks:
+#   localnet:
+#     name: llemonstack_default
+#     external: true
 
 x-ollama: &service-ollama
   image: ollama/ollama:latest
@@ -15,8 +15,8 @@ x-ollama: &service-ollama
   labels:
     dev.dozzle.group: Local LLM
   restart: unless-stopped
-  networks:
-    - localnet
+  # networks:
+  #   - localnet
   ports:
     - 11434:11434
   volumes:
@@ -25,8 +25,8 @@ x-ollama: &service-ollama
 x-init-ollama: &init-ollama
   image: ollama/ollama:latest
   container_name: ollama-pull-llama
-  networks:
-    - localnet
+  # networks:
+  #   - localnet
   volumes:
     - ollama_storage:/root/.ollama
   entrypoint: /bin/sh
