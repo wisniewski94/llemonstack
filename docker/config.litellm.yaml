@@ -99,6 +99,8 @@ model_list:
   #     model: "openai/deepseek-r1-distill-llama-8b"
   #     api_base: http://host.docker.internal:1234/v1/
   #     api_key: os.environ/LOCAL_LLM_OPENAI_API_KEY
+  #     input_cost_per_token: 0
+  #     output_cost_per_token: 0
   #
   # # Host Ollama model example:
   # # Working example of using deepseek-r1 through ollama
@@ -107,6 +109,8 @@ model_list:
   #     custom_llm_provider: ollama
   #     model: "deepseek-r1:1.5b"
   #     api_base: http://host.docker.internal:11434
+  #     input_cost_per_token: 0
+  #     output_cost_per_token: 0
 
   # - model_name: "anthropic/*"
   #   litellm_params:

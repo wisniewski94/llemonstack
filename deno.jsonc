@@ -12,7 +12,8 @@
     "export:n8n": "deno run --allow-read --allow-env --allow-run --allow-write scripts/export.ts",
     "versions": "deno run --allow-read --allow-env --allow-run --allow-write scripts/versions.ts",
     "schema:create": "deno run --allow-read --allow-env --allow-run --allow-net scripts/schema.ts create",
-    "schema:remove": "deno run --allow-read --allow-env --allow-run --allow-net scripts/schema.ts remove"
+    "schema:remove": "deno run --allow-read --allow-env --allow-run --allow-net scripts/schema.ts remove",
+    "litellm:models:add": "deno run --allow-read --allow-env --allow-run --allow-net scripts/litellm.ts"
   },
   "imports": {
     "@cliffy/ansi": "jsr:@cliffy/ansi@^1.0.0-rc.7",
