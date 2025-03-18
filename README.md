@@ -13,16 +13,17 @@ Pre-configured and ready to squeeze. LLemoStack gets you up and running in minut
 
 ## Version
 
-LLemonStack is currently a pre-release version.
+LLemonStack is currently a pre-release version. It works on macOS, Linux and Windows with WSL 2.
 
-It should work as expected on macOS and Linux. Windows likely needs some additional work to get
-Supabase to start.
+The scripts and API are in rapid development. Check the git history and pull regularly for bug fixes.
 
-The scripts and API are in rapid development.
+## Walkthrough Video
 
-Check the git history and pull regularly for bug fixes.
+[![LLemonStack Walkthrough Video](https://img.youtube.com/vi/xRRRSbYE9TY/0.jpg)](https://www.youtube.com/watch?v=xRRRSbYE9TY "LLemonStack Walkthrough Video")
 
-### Changelog
+<br />
+
+## Changelog
 
 - Mar 15, 2025: BREAKING CHANGE: moved container volumes to ./volumes
 
