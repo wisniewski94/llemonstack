@@ -1488,10 +1488,8 @@ export async function start(projectName: string): Promise<void> {
     //
     showHeader('API Endpoints')
     showInfo('For connecting services within the stack, use the following endpoints.')
-    showInfo('i.e. for n8n credentials, postgres connections, API requests, etc.')
-    showInfo(
-      `Replace host with 'localhost' to test endpoints in a browser on your host machine.\n`,
-    )
+    showInfo('i.e. for n8n credentials, postgres connections, API requests, etc.\n')
+
     if (supabaseStarted) {
       showService('Supabase Postgres DB Host', 'db')
       showCredentials({
@@ -1518,7 +1516,7 @@ export async function start(projectName: string): Promise<void> {
     }
     isEnabled('n8n') && showService('n8n', 'http://n8n:5678')
     if (isEnabled('flowise')) {
-      showService('Flowise', 'http://flowise:3001')
+      showService('Flowise', 'http://flowise:3000')
       const flowiseApi = await getFlowiseApiKey()
       showCredentials({
         [flowiseApi?.keyName || 'API Key']: flowiseApi?.apiKey || '',
@@ -1547,8 +1545,13 @@ export async function start(projectName: string): Promise<void> {
       const ollamaUrl = 'http://host.docker.internal:11434'
       showService('Ollama', ollamaUrl)
       showUserAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
-      showUserAction('  Start ollama on your computer: `ollama serve`')
-      isEnabled('n8n') && showUserAction(`  -> n8n: set ollama credential url to: ${ollamaUrl}`)
+      showUserAction('  Start Ollama on your computer: `ollama serve`')
+      if (isEnabled('n8n')) {
+        showUserAction(`  Set n8n Ollama credential url to: ${ollamaUrl}`)
+        showUserAction(
+          `  Or connect n8n to LiteLLM http://litellm:4000 to proxy requests to Ollama`,
+        )
+      }
     } else if (isEnabled('ollama')) {
       showService('Ollama', 'http://ollama:11434')
     }
