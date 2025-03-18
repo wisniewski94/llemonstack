@@ -1341,6 +1341,37 @@ export async function isInitialized(): Promise<boolean> {
   }
 }
 
+/**
+ * Get the Flowise API key from the config file
+ *
+ * @returns The Flowise API key or empty string if not found
+ */
+async function getFlowiseApiKey(): Promise<{ apiKey: string; keyName: string } | null> {
+  const configPath = path.join(
+    dockerEnv().LLEMONSTACK_VOLUMES_PATH,
+    'flowise',
+    'config',
+    'api.json',
+  )
+  try {
+    // Read and parse the config file
+    const fileContent = await Deno.readTextFile(configPath)
+    const config = JSON.parse(fileContent)
+    // Extract the API key
+    return {
+      apiKey: config[0]?.apiKey || '',
+      keyName: config[0]?.keyName || '',
+    }
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      DEBUG && showDebug(`Flowise config file not found: ${configPath}`)
+      return null
+    }
+    showError('Error reading Flowise API key:', error)
+    return null
+  }
+}
+
 export async function start(projectName: string): Promise<void> {
   try {
     if (!await isInitialized()) {
@@ -1394,6 +1425,7 @@ export async function start(projectName: string): Promise<void> {
     // SERVICE DASHBOARDS
     //
     showHeader('Service Dashboards')
+    showInfo('Access the dashboards in a browser on your host machine.\n')
     isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
     if (isEnabled('flowise')) {
       showService('Flowise', 'http://localhost:3001')
@@ -1455,22 +1487,43 @@ export async function start(projectName: string): Promise<void> {
     // API ENDPOINTS
     //
     showHeader('API Endpoints')
-    showInfo('Use these endpoints to configure services in the stack, e.g. n8n credentials.')
+    showInfo('For connecting services within the stack, use the following endpoints.')
+    showInfo('i.e. for n8n credentials, postgres connections, API requests, etc.')
     showInfo(
-      'You can also test the endpoints on your host matching by replacing the domain with `localhost`',
+      `Replace host with 'localhost' to test endpoints in a browser on your host machine.\n`,
     )
-    isEnabled('n8n') && showService('n8n', 'http://n8n:5678')
-    isEnabled('flowise') && showService('Flowise', 'http://flowise:3001')
     if (supabaseStarted) {
-      showService('Supabase Postgres DB (host:port)', 'db:5432')
+      showService('Supabase Postgres DB Host', 'db')
+      showCredentials({
+        'Username': 'postgres',
+        'Password': Deno.env.get('POSTGRES_PASSWORD'),
+      })
+      showService('Supabase Postgres Pooler', 'supavisor')
+      showCredentials({
+        'Username': `postgres.${projectName}`,
+        'Password': Deno.env.get('POSTGRES_PASSWORD'),
+      })
+      showInfo('Use the pooler for postgres connections whenever possible.')
+      showInfo(
+        `PSQL Connection URL: postgres://postgres.${projectName}:${
+          Deno.env.get('POSTGRES_PASSWORD')
+        }@supavisor:5432/postgres`,
+      )
+      console.log('')
       showService('Supabase API', 'http://kong:8000')
       showService(
         'Supabase Edge Functions',
-        'http://kong:8000/functions/v1/hello',
+        'http://kong:8000/functions/v1/[function]',
       )
     }
-    // TODO: show LiteLLM API key: sk-***
-    // TODO: create a new LiteLLM API key in init script or on first run?
+    isEnabled('n8n') && showService('n8n', 'http://n8n:5678')
+    if (isEnabled('flowise')) {
+      showService('Flowise', 'http://flowise:3001')
+      const flowiseApi = await getFlowiseApiKey()
+      showCredentials({
+        [flowiseApi?.keyName || 'API Key']: flowiseApi?.apiKey || '',
+      })
+    }
     if (isEnabled('litellm')) {
       showService('LiteLLM', 'http://litellm:4000')
       showCredentials({
