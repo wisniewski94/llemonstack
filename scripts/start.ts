@@ -329,8 +329,8 @@ export function showService(service: string, url: string): void {
 }
 
 // Shows username and password in gray text
-export function showCredentials(creds: Record<string, string | null | undefined>): void {
-  for (const [key, value] of Object.entries(creds)) {
+export function showCredentials(credentials: Record<string, string | null | undefined>): void {
+  for (const [key, value] of Object.entries(credentials)) {
     value && showInfo(`  ${key}: ${value}`)
   }
 }

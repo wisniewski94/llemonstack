@@ -31,6 +31,7 @@ import {
   LLEMONSTACK_CONFIG_DIR,
   LLEMONSTACK_CONFIG_FILE,
   prepareEnv,
+  runCommand,
   setupRepos,
   showAction,
   showError,
@@ -403,6 +404,32 @@ async function createServiceSchemas(): Promise<Record<AllEnvVarKeys, string>> {
   return await updateEnvFile(replacePostgresPasswords(dbVars, dbPassword))
 }
 
+/**
+ * Check if a project with the given name already exists in Docker Compose
+ * @param projectName - The name of the project to check
+ * @returns True if the project exists, false otherwise
+ */
+async function isExistingProject(projectName: string): Promise<boolean> {
+  try {
+    // Run docker compose ls command with JSON output format
+    const { stdout } = await runCommand('docker', {
+      args: ['compose', 'ls', '--format', 'json'],
+      captureOutput: true,
+    })
+    // Parse the JSON output
+    const projects = JSON.parse(stdout)
+
+    // Check if any project has the given name
+    return projects.some((project: { Name: string }) =>
+      project.Name.toLowerCase() === projectName.toLowerCase()
+    )
+  } catch (error) {
+    // If command fails, log the error but don't fail the initialization
+    showError('Failed to check if project exists', error)
+    return false
+  }
+}
+
 export async function init(
   projectName: string,
 ): Promise<void> {
@@ -428,23 +455,27 @@ export async function init(
         message: 'How do you want to proceed?',
         options: [
           {
-            name: '💣 [Hard Reset] delete all containers & volumes (data) and start over',
-            value: 'hard-reset',
-          },
-          {
-            name: '⌫ [Config Reset] start with a fresh .env file',
-            value: 'config-reset',
-          },
-          {
-            name: '↩ [Reinitialize] keep existing .env file and rerun the config setup',
+            name: '[Reinitialize] keep existing .env file and rerun the config setup',
             value: 'reinitialize',
           },
           {
-            name: '↩ [Cancel]',
+            name: '[Config Reset] start with a fresh .env file',
+            value: 'config-reset',
+          },
+          {
+            name: '[Hard Reset] delete all containers & volumes (data) and start over',
+            value: 'hard-reset',
+          },
+          {
+            name: '[Cancel]',
             value: 'none',
           },
         ],
       })
+      if (resetOption === 'none') {
+        showInfo('OK, exiting...')
+        Deno.exit(0)
+      }
       if (resetOption === 'hard-reset') {
         if (confirm('Are you sure you want to delete all data and start over?')) {
           showAction('Resetting project...')
@@ -452,12 +483,15 @@ export async function init(
           await clearEnvFile()
           await clearConfigFile()
         } else {
+          showInfo('OK, exiting...')
           Deno.exit(1)
         }
       } else if (resetOption === 'config-reset') {
+        showInfo('Replacing .env file with a fresh copy from .env.example')
         await clearEnvFile()
         await clearConfigFile()
       } else if (resetOption === 'reinitialize') {
+        showInfo('Using existing config data from .env file')
         await clearConfigFile()
       }
     }
@@ -487,17 +521,34 @@ export async function init(
     await setupRepos({ all: true })
     showInfo('Repositories ready\n\n')
 
-    const name = await Input.prompt(
-      {
+    let uniqueName = false
+    while (!uniqueName) {
+      projectName = await Input.prompt({
         message: 'What is the project name?',
         default: Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME,
         hint: 'Used by docker, only letters, numbers, hyphens and underscores',
         transform: (value?: string) => value?.toLowerCase(),
         validate: projectNameValidator,
-      },
-    )
-    projectName = name
-    envVars.LLEMONSTACK_PROJECT_NAME = name
+      })
+
+      uniqueName = !(await isExistingProject(projectName))
+
+      if (!uniqueName) {
+        showWarning(`This project name is already in use: ${projectName}`)
+        showInfo(
+          `Projects with the same name will reuse some of the same Docker containers.\n` +
+            `This can result in unexpected behavior. It's safest to choose a unique name.`,
+        )
+        if (confirm('Do you want to choose a different name?', true)) {
+          continue
+        } else {
+          showInfo(`OK, proceeding with the duplicate name: ${projectName}`)
+          break
+        }
+      }
+    }
+
+    envVars.LLEMONSTACK_PROJECT_NAME = projectName
 
     // Generate random security keys
     envVars = await setSecurityKeys(envVars)
