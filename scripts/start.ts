@@ -1497,7 +1497,17 @@ export async function start(projectName: string): Promise<void> {
   }
 }
 
+async function run(projectName: string) {
+  // Check if script was called with a service argument
+  const service = Deno.args.find((arg) => !arg.startsWith('--'))
+  if (service) {
+    await startService(projectName, service)
+  } else {
+    await start(projectName)
+  }
+}
+
 // Run script if this file is executed directly
 if (import.meta.main) {
-  start(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  run(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

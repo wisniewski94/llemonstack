@@ -168,6 +168,8 @@ deno run init
 # Start the services
 # Automatically installs dependencies & docker images as needed
 deno run start
+# Start a single service
+deno run start [service]
 
 # Stop all services
 deno run stop
