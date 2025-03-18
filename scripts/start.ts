@@ -326,9 +326,10 @@ export function showService(service: string, url: string): void {
 }
 
 // Shows username and password in gray text
-export function showCredentials(username: string | null, password: string | null): void {
-  username && showInfo(`  username: ${username}`)
-  password && showInfo(`  password: ${password}`)
+export function showCredentials(creds: Record<string, string | null | undefined>): void {
+  for (const [key, value] of Object.entries(creds)) {
+    value && showInfo(`  ${key}: ${value}`)
+  }
 }
 
 // Shows green text
@@ -1394,10 +1395,10 @@ export async function start(projectName: string): Promise<void> {
     isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
     if (isEnabled('flowise')) {
       showService('Flowise', 'http://localhost:3001')
-      showCredentials(
-        Deno.env.get('FLOWISE_USERNAME') || '',
-        Deno.env.get('FLOWISE_PASSWORD') || '',
-      )
+      showCredentials({
+        'Username': Deno.env.get('FLOWISE_USERNAME'),
+        'Password': Deno.env.get('FLOWISE_PASSWORD'),
+      })
     }
     isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:8080')
     if (isEnabled('browser-use')) {
@@ -1406,43 +1407,45 @@ export async function start(projectName: string): Promise<void> {
         'Browser-Use VNC',
         'http://0.0.0.0:6080/vnc.html?host=0.0.0.0&port=6080',
       )
-      showCredentials(null, Deno.env.get('BROWSER_USE_VNC_PASSWORD') || null)
+      showCredentials({
+        'Password': Deno.env.get('BROWSER_USE_VNC_PASSWORD'),
+      })
     }
     if (supabaseStarted) {
       showService('Supabase', `http://localhost:8000`)
-      showCredentials(
-        Deno.env.get('SUPABASE_DASHBOARD_USERNAME') || '',
-        Deno.env.get('SUPABASE_DASHBOARD_PASSWORD') || '',
-      )
+      showCredentials({
+        'Username': Deno.env.get('SUPABASE_DASHBOARD_USERNAME'),
+        'Password': Deno.env.get('SUPABASE_DASHBOARD_PASSWORD'),
+      })
     }
     if (isEnabled('litellm')) {
       showService('LiteLLM', 'http://localhost:3004/ui/')
-      showCredentials(
-        Deno.env.get('LITELLM_UI_USERNAME') || '',
-        Deno.env.get('LITELLM_UI_PASSWORD') || '',
-      )
+      showCredentials({
+        'Username': Deno.env.get('LITELLM_UI_USERNAME'),
+        'Password': Deno.env.get('LITELLM_UI_PASSWORD'),
+      })
     }
     if (isEnabled('langfuse')) {
       showService('Langfuse', 'http://localhost:3005/')
-      showCredentials(
-        Deno.env.get('LANGFUSE_INIT_USER_EMAIL') || '',
-        Deno.env.get('LANGFUSE_INIT_USER_PASSWORD') || '',
-      )
+      showCredentials({
+        'Username': Deno.env.get('LANGFUSE_INIT_USER_EMAIL'),
+        'Password': Deno.env.get('LANGFUSE_INIT_USER_PASSWORD'),
+      })
     }
     if (isEnabled('neo4j')) {
       showService('Neo4j', 'http://localhost:7474/browser/')
-      showCredentials(
-        Deno.env.get('NEO4J_USER') || '',
-        Deno.env.get('NEO4J_PASSWORD') || '',
-      )
+      showCredentials({
+        'Username': Deno.env.get('NEO4J_USER'),
+        'Password': Deno.env.get('NEO4J_PASSWORD'),
+      })
     }
     isEnabled('qdrant') && showService('Qdrant', 'http://localhost:6333/dashboard')
     if (isEnabled('minio')) {
       showService('Minio', 'http://localhost:9091/')
-      showCredentials(
-        'minio',
-        Deno.env.get('MINIO_ROOT_PASSWORD') || '',
-      )
+      showCredentials({
+        'Username': 'minio',
+        'Password': Deno.env.get('MINIO_ROOT_PASSWORD'),
+      })
     }
     isEnabled('dozzle') && showService('Dozzle', 'http://localhost:8081/')
 
@@ -1466,7 +1469,12 @@ export async function start(projectName: string): Promise<void> {
     }
     // TODO: show LiteLLM API key: sk-***
     // TODO: create a new LiteLLM API key in init script or on first run?
-    isEnabled('litellm') && showService('LiteLLM', 'http://litellm:4000')
+    if (isEnabled('litellm')) {
+      showService('LiteLLM', 'http://litellm:4000')
+      showCredentials({
+        'API Key': Deno.env.get('LITELLM_MASTER_KEY'),
+      })
+    }
     if (isEnabled('zep')) {
       showService('Zep', 'http://zep:8000')
       showService('Zep Graphiti', 'http://graphiti:8003')
