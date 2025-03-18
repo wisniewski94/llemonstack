@@ -1,16 +1,6 @@
 # Flowise
 #
-# Flowise can run with a postgres database or a sqlite database.
-# To switch to using sqlite as the default:
-# - uncomment the sqlite database environment variable
-# - comment out the postgres service
-# - comment out the include section
-# - comment out the depends_on section
-#
 # https://docs.flowiseai.com/configuration/
-
-volumes:
-  flowise:
 
 # Flowise requires a postgres database.
 # Comment this ection out if using sqlite database.
@@ -25,20 +15,22 @@ services:
     image: flowiseai/flowise
     restart: unless-stopped
     ports:
-      - 3001:3001
+      - 3001:3000
     environment:
-      # See https://docs.flowiseai.com/configuration/environment-variables
-      - PORT=3001
+      # See:
+      # - https://docs.flowiseai.com/configuration/environment-variables
+      # - https://github.com/FlowiseAI/Flowise/blob/main/docker/.env.example
+      # - https://github.com/FlowiseAI/Flowise/tree/main/docker
+      - PORT=3000
+
       # Credentials, if blank auth is disabled
       - FLOWISE_USERNAME=${FLOWISE_USERNAME:-}
       - FLOWISE_PASSWORD=${FLOWISE_PASSWORD:-}
+
       # Logging
       # - DEBUG=true
       # - LOG_LEVEL=debug # error, info, verbose, debug
       # - LOG_PATH=/Flowise/packages/server/logs
-
-      # Database - sqlite
-      # - DATABASE_TYPE=sqlite
 
       # Database - supabase postgres
       - DATABASE_TYPE=postgres
@@ -49,17 +41,34 @@ services:
       - DATABASE_NAME=postgres
       - DATABASE_SSL=false
 
+      - APIKEY_STORAGE_TYPE=json # db | json
+      - APIKEY_PATH=/root/.flowise/config
+
+      - DISABLE_FLOWISE_TELEMETRY=true
+      - STORAGE_TYPE=local # local | s3
+      - BLOB_STORAGE_PATH=/root/.flowise
+
+      - SECRETKEY_STORAGE_TYPE=local # local | aws
+      - SECRETKEY_PATH=/root/.flowise/config
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    volumes:
+      - ${LLEMONSTACK_VOLUMES_PATH:-../volumes}/flowise:/root/.flowise
+
+    entrypoint: /bin/sh -c "sleep 3; flowise start"
+
     # Supabase postgres database healthcheck
     # Comment this section out if using sqlite database.
     # Only uncomment depencency health check if include is uncommented above
     # depends_on:
     #   db: # From docker-compose.supabase.yml
     #     condition: service_healthy
-
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-
-    volumes:
-      - flowise:/root/.flowise
-
-    entrypoint: /bin/sh -c "sleep 3; flowise start"

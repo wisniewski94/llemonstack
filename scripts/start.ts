@@ -169,6 +169,8 @@ const REQUIRED_VOLUMES = [
       },
     ],
   },
+  { volume: 'flowise/config' },
+  { volume: 'flowise/uploads' },
 ]
 
 /*******************************************************************************
