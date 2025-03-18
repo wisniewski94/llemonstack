@@ -53,6 +53,19 @@ async function addOllamaModelsToLiteLLM(
 
     console.log(`Found ${ollamaModels.length} models on Ollama server`)
 
+    // TODO: switch to openai provider type since LiteLLM seems to have an issue
+    // with using ollama from n8n. But it works when telling LiteLLM to use Ollama's
+    // OpenAI compatible API.
+    // "litellm_params": {
+    //   "custom_llm_provider": "openai", // instead of "ollama"
+    //   "api_base": "http://host.docker.internal:11434/v1", // include /v1 in the url
+    //   "input_cost_per_token": 0,
+    //   "output_cost_per_token": 0,
+    //   "use_in_pass_through": false,
+    //   "merge_reasoning_content_in_choices": false,
+    //   "model": "deepseek-r1:1.5b"
+    // },
+
     // Add each model to LiteLLM
     for (const model of ollamaModels) {
       const modelName = `ollama/${model.name}`
