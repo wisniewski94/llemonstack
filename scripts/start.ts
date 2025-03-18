@@ -489,7 +489,7 @@ export function dockerEnv({ volumesDir }: { volumesDir?: string } = {}): Record<
   const volumes_dir = volumesDir || Deno.env.get('LLEMONSTACK_VOLUMES_DIR') || './volumes'
   return {
     // Convert LLEMONSTACK_VOLUMES_DIR into an absolute path to use in docker-compose.yml files
-    LLEMONSTACK_VOLUMES_PATHS: path.resolve(ROOT_DIR, volumes_dir),
+    LLEMONSTACK_VOLUMES_PATH: path.resolve(ROOT_DIR, volumes_dir),
   }
 }
 
@@ -1108,7 +1108,7 @@ async function createRequiredVolumes({ silent = false }: { silent?: boolean } = 
     silent = false
   }
 
-  const volumesPath = dockerEnv().LLEMONSTACK_VOLUMES_PATHS
+  const volumesPath = dockerEnv().LLEMONSTACK_VOLUMES_PATH
 
   !silent && showInfo('Checking for required volumes...')
   DEBUG && showDebug(`Volumes base path: ${volumesPath}`)
