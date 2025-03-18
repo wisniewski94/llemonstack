@@ -87,6 +87,10 @@ type EnvVarsKeys = keyof {
   CLICKHOUSE_PASSWORD: string
   // Redis
   REDIS_PASSWORD: string
+  // Local LLM
+  LOCAL_LLM_OPENAI_API_BASE_URL: string
+  LOCAL_LLM_OPENAI_HOST_PORT: string
+  LOCAL_LLM_OPENAI_API_KEY: string
 }
 
 interface PostgresServiceEnvKeys {
@@ -124,7 +128,8 @@ const POSTGRES_SERVICES: Array<[string, PostgresServiceEnvKeys]> = [
     schema: 'ZEP_POSTGRES_SCHEMA',
   }],
   // n8n doesn't need a separate postgres user and password and requires root access.
-  // Most likely schema:create does not grant enough permissions to n8n to use a separate user and password.
+  // Most likely schema:create does not currently grant enough permissions on the extensions schema .
+  // n8n uses the primary postgres user and password and auto creates the service_n8n schema.
   // ['n8n', {
   //   user: 'N8N_POSTGRES_USER',
   //   pass: 'N8N_POSTGRES_PASSWORD',
