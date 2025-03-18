@@ -31,6 +31,7 @@ const {
   SpanKind,
 } = require("@opentelemetry/api")
 const flatten = require("flat") // flattens objects into a single level
+const { envDetector, hostDetector, processDetector } = require('@opentelemetry/resources');
 
 const LOGPREFIX = '[Tracing]'
 const LOG_LEVEL = getEnv('TRACING_LOG_LEVEL', 'info')
@@ -70,6 +71,7 @@ setupWinstonLogger(LOG_LEVEL)
 // Configure and start the OpenTelemetry SDK
 console.log(`${LOGPREFIX}: Configuring OpenTelemetry SDK with log level: ${process.env.OTEL_LOG_LEVEL}`)
 const sdk = setupOpenTelemetryNodeSDK()
+
 sdk.start()
 
 
@@ -113,6 +115,15 @@ function processOtelEnvironmentVariables() {
   }
 }
 
+function awaitAttributes(detector) {
+  return {
+    async detect(config) {
+      const resource = detector.detect(config);
+      await resource.waitForAsyncAttributes?.();
+      return resource;
+    },
+  };
+}
 
 /**
  * Configure and start the OpenTelemetry SDK
@@ -121,22 +132,18 @@ function setupOpenTelemetryNodeSDK() {
   const sdk = new opentelemetry.NodeSDK({
     logRecordProcessors: [
       new opentelemetry.logs.SimpleLogRecordProcessor(
-        // Auto configure exporter with OTEL_* env vars
         new OTLPLogExporter(),
-        /*
-        // Example for explicitly configuring if auto setting doesn't reliably work
-        new OTLPLogExporter({
-          url: getEnv('OTEL_EXPORTER_OTLP_LOGS_ENDPOINT'),
-          headers: {
-            'x-honeycomb-team': getEnv(ß'HONEYCOMB_API_KEY')
-          },
-        }),
-        */
       ),
     ],
+    // Fix for https://github.com/open-telemetry/opentelemetry-js/issues/4638
+    // This may be deprecated in the future.
+    resourceDetectors: [
+      awaitAttributes(envDetector),
+      awaitAttributes(processDetector),
+      awaitAttributes(hostDetector),
+    ],
     resource: resourceFromAttributes({
-      [SEMRESATTRS_SERVICE_NAME]:
-        getEnv('OTEL_SERVICE_NAME', "n8n"),
+      [SEMRESATTRS_SERVICE_NAME]: getEnv('OTEL_SERVICE_NAME', "n8n"),
     }),
     traceExporter: new OTLPTraceExporter(),
   })
