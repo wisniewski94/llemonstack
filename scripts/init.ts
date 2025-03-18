@@ -415,6 +415,7 @@ async function isExistingProject(projectName: string): Promise<boolean> {
     const { stdout } = await runCommand('docker', {
       args: ['compose', 'ls', '--format', 'json'],
       captureOutput: true,
+      silent: true,
     })
     // Parse the JSON output
     const projects = JSON.parse(stdout)
