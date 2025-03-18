@@ -102,69 +102,121 @@ related headaches are handled for you. Just run the stack and start building AI 
 <br />
 <br />
 
-## Installation
-
-### Prerequisites
+## Prerequisites
 
 Before running the start/stop scripts, make sure you have the following (free) software installed on
 your host machine.
 
+- [**Docker/Docker Desktop**](https://www.docker.com/) - required to run all services, no need for a
+  paid plan, just download the free Docker Desktop
 - [**Deno**](https://docs.deno.com/runtime/getting_started/installation/) - required to run the
   start/stop scripts
 - [**Git**](https://github.com/git-guides/install-git) - needed to clone stack services that require
   custom build steps
-- [**Docker/Docker Desktop**](https://www.docker.com/) - required to run all services, no need for a
-  paid plan, just download the free Docker Desktop
 
 After you've installed the prerequisites, you won't need to directly use them. LLemonStack does all
 the heavy lifting for you.
 
-### Install Prerequisites
+### How To Install the Prerequisites
 
-Use the links above to install the three prerequisites, or use the below commands to install them
-manually.
+1. Visit [**Docker/Docker Desktop**](https://www.docker.com/) and download the free Docker Desktop app
 
-On a Mac, open the Terminal app and run the following commands.
+2. Use the below commands in a terminal to install deno and git
+
+#### macOS
 
 ```bash
-# Install deno (if needed)
-# See https://docs.deno.com/runtime/getting_started/installation/
-# Mac
+# Check if deno is already installed
+deno -v
+
+# If not, install using npm or Homebrew
+brew -v # Check if brew is installed
+brew install deno # Install deno
+
+# If brew isn't installed, check if node is installed
+npm -v
+npm install -g deno # Install using npm
+
+# If neither brew or node is installed, install brew
+# Official website here: https://brew.sh/
+# Command to install brew:
+curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
+
+# Then install deno
 brew install deno
-# Linux
-curl -fsSL https://deno.land/install.sh | sh
-# Windows
-irm https://deno.land/install.ps1 | iex
-# Or, install using npm if node is already installed
-npm install -g deno
 
-# Install git (if needed)
-# See https://github.com/git-guides/install-git
-# Check to see if you have git installed
-git --version
-
-# Install Docker Desktop (if needed)
-# Download from https://www.docker.com/
+# Check if git is installed
+git -v
+brew install git # Install git if needed
 ```
 
-### Install LLemonStack
+#### Linux
+
+```bash
+# Install deno
+curl -fsSL https://deno.land/install.sh | sh
+
+# Check if git is installed
+git -v
+# Install git if needed
+sudo apt-get update && sudo apt-get install git-all
+```
+
+#### Windows
+
+LLemonStack works on Windows with WSL 2. For non-WSL, it hasn't been fully tested.
+
+The best option on Windows is to use Windows Terminal with WSL and run the Linux
+commands above on a Ubuntu or similar terminal.
+
+If you're not comfortable using the command line to install apps...
+
+- Download Deno [here](https://docs.deno.com/runtime/getting_started/installation)
+- Download git [here](https://github.com/git-guides/install-git)
+
+<br />
+
+## Install LLemonStack
 
 In a terminal, run the following commands
 
+1. Clone this repo to your local machine
+
 ```bash
-# Clone this repo to your local machine
-git clone https://github.com/llemonstack/llemonstack.git && cd llemonstack
+git clone https://github.com/llemonstack/llemonstack.git
+```
 
-# Install dependencies
-deno install
+2. Install dependencies
 
-# Run the setup script to configure the environment variables
+```bash
+cd llemonstack && deno install
+```
+
+3. Run the setup script to configure the environment variables
+
+```bash
 deno run init
 ```
+
+LLemonStack supports multiple projects on the same machine.
+This allows you to experiment with different settings or keep
+client projects separate from personal projects.
+
+To create multiple projects, simply re-run the `git clone` step
+above in a new directory, then run the `deno run init` script.
+
+To switch projects, `cd` into a different LLemonStack project directory
+and use the commands below. The `.env` file in each project directory
+contains the project settings. The `./volumes` directory contains
+most of the project data. The rest of the data is in docker volumes
+that are isolated per project.
 
 ## Usage
 
 ```bash
+# Init a new project
+deno run init
+
 # Start the services
 # Automatically installs dependencies & docker images as needed
 deno run start
@@ -176,6 +228,9 @@ deno run stop
 # Stop a specific service
 deno run stop [service]
 # ex: deno run stop n8n
+
+# Show versions of all the stack services
+deno run versions
 
 # Update the stack services to the latest versions
 deno run update

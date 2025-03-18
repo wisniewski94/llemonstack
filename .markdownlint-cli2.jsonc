@@ -1,5 +1,6 @@
 {
   "config": {
+    "MD029": false, // Allow out of order lists
     "MD033": false, // Allow html in markdown
     "MD034": false // Allow bare urls in markdown
   },
