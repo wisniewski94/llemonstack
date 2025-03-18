@@ -10,13 +10,13 @@ container logs in Docker Desktop.
 
 **Record Videos:**
 
-- [ ] Demo of llemonstack setup
+- [x] Demo of llemonstack setup
 - [ ] Import tutorials
 - [ ] LiteLLM tutorial: n8n, flowise, viewing cost, viewing langfuse logs
 
 **Code:**
 
-- [ ] Configure LiteLLM to use LOCAL_LLM provider if configured in env
+- [ ] Show user action to delete ./volumes dir during reset script
 
 - [x] Disable supabase-analytics, it eats memory and CPU & is not needed
 
@@ -27,13 +27,9 @@ container logs in Docker Desktop.
 
 - [ ] Rebuild example n8n templates to use LiteLLM, use env.LITELLM_API_KEY
 
-- [ ] Configure zep to use LiteLLM proxy
-
-- [ ] Add docker/supabase.env passwords to init script, see logflare section
-
-- [ ] Disable Logflare in supabase docker; it hammers the disk See
+- [x] Disable Logflare in supabase docker; it hammers the disk
       https://www.reddit.com/r/Supabase/comments/1fw2g62/disable_or_adjust_logging_self_hosted/
-
+- [x] SKIPPED: [Logflare replaced] Add docker/supabase.env passwords to init scripts
 - [x] SKIPPED: Update versions script to get app versions from running containers
       `docker compose -p llemonstack ps --format '"{{.Name}}"'` ps is too slow, not implementing
       this
@@ -71,6 +67,17 @@ container logs in Docker Desktop.
 - [ ] Create main.ts script to handle the CLI args and help text
 
 **Someday / low priority:**
+
+- [ ] Remove all container_name from docker-compose.yml to allow for multiple stacks to run at the same time
+- [ ] During init, set a unique base port and then set all exposed (host) ports to an offset.
+      This allows for multiple stacks to run simultaneously
+
+- [ ] Use a global .llemonstack directory to manage all projects
+
+  - [ ] Check for project name collisions since the docker volumes will collide
+        if the project name is the same
+
+- [ ] Configure zep to use LiteLLM proxy
 
 - [ ] Refactor scripts with [Repo Prompt](https://repoprompt.com/)?
 
@@ -136,7 +143,7 @@ docker exec -it --user root n8n sh
 
 **Additional Services:**
 
-- [Dozzle](https://github.com/amir20/dozzle) for Docker container logs
+- [MLFlow](https://github.com/mlflow/mlflow)
 - Observability services, see [OTEL.md](OTEL.md)
 - https://github.com/yoeven/ai-video-search-engine
 - https://github.com/mudler/LocalAI
