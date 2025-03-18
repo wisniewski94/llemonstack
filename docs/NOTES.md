@@ -18,6 +18,11 @@ container logs in Docker Desktop.
 
 - [ ] Show user action to delete ./volumes dir during reset script
 
+- [ ] Create Flowise example templates of Web Scrape QnA configured with pgvector and LiteLLM
+      See https://docs.flowiseai.com/use-cases/web-scrape-qna
+
+- [ ] Configure OpenWeb UI to use postgres
+
 - [x] Disable supabase-analytics, it eats memory and CPU & is not needed
 
 - [x] Move supabase volumes to ./volumes to make backup easier and protect against .repos deletion
@@ -141,6 +146,13 @@ docker exec -it --user root n8n sh
 
 ## Resources
 
+**Local LLM Providers**
+
+- Ollama
+- LM Studio
+- GPT4All
+- [LocalAI](https://github.com/mudler/LocalAI)
+
 **Additional Services:**
 
 - [MLFlow](https://github.com/mlflow/mlflow)
@@ -149,6 +161,10 @@ docker exec -it --user root n8n sh
 - https://github.com/mudler/LocalAI
 - https://github.com/langflow-ai/langflow
   - visual agent builder generates LangChain code to run in production
+- https://github.com/infiniflow/ragflow
+  - requires mysql & elasticsearch (not yet in the stack)
+- https://github.com/arc53/DocsGPT
+- https://github.com/Mintplex-Labs/anything-llm
 - https://github.com/Skyvern-AI/skyvern/
   - https://www.youtube.com/watch?v=FhDYo2VKu5E
 - https://github.com/windmill-labs/windmill
