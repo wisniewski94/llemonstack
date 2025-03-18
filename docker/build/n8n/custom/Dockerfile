@@ -19,6 +19,8 @@ RUN echo "Creating machine-id..." && \
 # Switch to n8n's installation directory
 WORKDIR /usr/local/lib/node_modules/n8n
 
+# TODO: create a package.json to lock the versions of the dependencies
+
 # Install Node.js OpenTelemetry dependencies locally to n8n
 RUN npm install \
     @opentelemetry/api \

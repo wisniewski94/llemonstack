@@ -19,9 +19,9 @@ const {
   getNodeAutoInstrumentations,
 } = require("@opentelemetry/auto-instrumentations-node")
 const { registerInstrumentations } = require("@opentelemetry/instrumentation")
-const { Resource } = require("@opentelemetry/resources")
+const { resourceFromAttributes } = require("@opentelemetry/resources")
 const {
-  SemanticResourceAttributes,
+  SEMRESATTRS_SERVICE_NAME,
 } = require("@opentelemetry/semantic-conventions")
 const winston = require("winston")
 const {
@@ -134,8 +134,8 @@ function setupOpenTelemetryNodeSDK() {
         */
       ),
     ],
-    resource: new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]:
+    resource: resourceFromAttributes({
+      [SEMRESATTRS_SERVICE_NAME]:
         getEnv('OTEL_SERVICE_NAME', "n8n"),
     }),
     traceExporter: new OTLPTraceExporter(),

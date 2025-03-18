@@ -26,7 +26,7 @@ services:
       - ../../../../import/n8n:/import
       - ../../../../shared:/data/shared
       # Add tracing.js to the container when debugging
-      # - ./tracing.js:/usr/local/lib/node_modules/n8n/tracing.js # Uncomment when debugging
+      - ./tracing.js:/usr/local/lib/node_modules/n8n/tracing.js # Uncomment when debugging
       # - ./docker-entrypoint.sh:/docker-entrypoint.sh # Uncomment when debugging
 
     environment:
