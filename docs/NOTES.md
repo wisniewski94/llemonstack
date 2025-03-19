@@ -155,16 +155,17 @@ docker exec -it --user root n8n sh
 
 **Additional Services:**
 
+- https://github.com/danielmiessler/fabric
 - [MLFlow](https://github.com/mlflow/mlflow)
 - Observability services, see [OTEL.md](OTEL.md)
 - https://github.com/yoeven/ai-video-search-engine
-- https://github.com/mudler/LocalAI
 - https://github.com/langflow-ai/langflow
   - visual agent builder generates LangChain code to run in production
 - https://github.com/infiniflow/ragflow
   - requires mysql & elasticsearch (not yet in the stack)
 - https://github.com/arc53/DocsGPT
 - https://github.com/Mintplex-Labs/anything-llm
+- https://github.com/langgenius/dify
 - https://github.com/Skyvern-AI/skyvern/
   - https://www.youtube.com/watch?v=FhDYo2VKu5E
 - https://github.com/windmill-labs/windmill
@@ -177,6 +178,8 @@ docker exec -it --user root n8n sh
 - https://github.com/triggerdotdev/trigger.dev
 - https://github.com/mem0ai/mem0
 - https://github.com/lunary-ai/lunary
+
+- https://github.com/FlowiseAI/FlowiseChatEmbed
 
 - [open-health](https://github.com/OpenHealthForAll/open-health)
 
@@ -198,6 +201,13 @@ Not AI, but potentially useful:
 - https://github.com/apitable/apitable
 
 - [Agentic Memory](https://github.com/WujiangXu/AgenticMemory)
+
+**Voice Chat**
+
+- https://github.com/FunAudioLLM/CosyVoice
+- https://github.com/CerebriumAI/examples/tree/master/6-voice/6-openai-realtime-api-comparison
+- https://github.com/pipecat-ai/pipecat
+- http://github.com/abus-aikorea/voice-pro
 
 **Cloud Infrastructure & APIs:**
 
