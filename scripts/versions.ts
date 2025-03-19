@@ -120,7 +120,8 @@ async function getAppVersion(
       captureOutput: true,
       silent: true,
     })).toString().trim()
-    serviceImage.version = version
+    // Get the last line of the output in case the version output multiple lines
+    serviceImage.version = version.split('\n').pop() || ''
     return serviceImage
   } catch (error) {
     showError(`Error getting version for ${service}`, error)
