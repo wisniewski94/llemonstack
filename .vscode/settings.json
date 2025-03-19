@@ -21,6 +21,7 @@
   "deno.codeLens.test": true,
   "deno.disablePaths": ["./docker/build"],
   "cSpell.words": [
+    "agentflows",
     "agentic",
     "airtable",
     "browser-use-webui",
@@ -40,6 +41,7 @@
     "llemonstack",
     "Logflare",
     "macbook",
+    "MULTIAGENT",
     "nextauth",
     "ollama",
     "opencontainers",
