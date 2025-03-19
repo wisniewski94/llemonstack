@@ -21,6 +21,7 @@ import { load as loadDotEnv } from 'jsr:@std/dotenv'
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
 import * as yaml from 'jsr:@std/yaml'
+import { getFlowiseApiKey } from './lib/flowise.ts'
 
 // Immediately load .env file
 await loadEnv({ silent: false })
@@ -942,16 +943,21 @@ async function setupRepo(
     sparse = true,
     pull = false, // Pull latest changes from remote
     checkFile,
+    silent = false,
   }: {
     sparseDir?: string | string[]
     sparse?: boolean
     pull?: boolean
     checkFile?: string
+    silent?: boolean
   } = {},
 ): Promise<void> {
   const dir = getRepoPath(repoDir)
   if (sparseDir) {
     sparse = true
+  }
+  if (DEBUG) {
+    silent = false
   }
 
   DEBUG && showDebug(`Cloning ${repoName} repo: ${repoUrl}${sparse ? ' [sparse]' : ''}`)
@@ -1000,7 +1006,7 @@ async function setupRepo(
     }
   } else {
     if (pull) {
-      showInfo(`${repoName} repo exists, pulling latest code...`)
+      !silent && showInfo(`${repoName} repo exists, pulling latest code...`)
       await runCommand('git', {
         args: [
           '-C',
@@ -1019,7 +1025,7 @@ async function setupRepo(
         throw new Error(errMsg)
       }
     }
-    showInfo(`✔️ ${repoName} repo is ready`)
+    !silent && showInfo(`✔️ ${repoName} repo is ready`)
   }
 }
 
@@ -1031,9 +1037,11 @@ async function setupRepo(
 export async function setupRepos({
   pull = false,
   all = false,
+  silent = false,
 }: {
   pull?: boolean
   all?: boolean
+  silent?: boolean
 } = {}): Promise<void> {
   // Ensure .repos directory exists
   try {
@@ -1049,25 +1057,27 @@ export async function setupRepos({
         if (!all && !isEnabled(service)) {
           return false
         }
-        return setupRepo(service, url, dir, { sparseDir, sparse, pull, checkFile })
+        return setupRepo(service, url, dir, { sparseDir, sparse, pull, checkFile, silent })
       })
       .filter(Boolean),
   )
-  showInfo(`${all ? 'All repositories' : 'Repositories'} are ready`)
+  !silent && showInfo(`${all ? 'All repositories' : 'Repositories'} are ready`)
 }
 
 /**
  * Copy .env and docker/config.supabase.env contents to .env in the supabase repo
  */
-export async function prepareSupabaseEnv(): Promise<void> {
+export async function prepareSupabaseEnv(
+  { silent = false }: { silent?: boolean } = {},
+): Promise<void> {
   // Check if the supabase repo directory exists
   // It contains the root docker-compose.yml file to start supabase services
   const supabaseRepoDir = getRepoPath('supabase')
   if (!fs.existsSync(supabaseRepoDir)) {
     // Try to fix the issue by cloning all the repos
-    showInfo(`Supabase repo not found: ${supabaseRepoDir}`)
-    showInfo('Attempting to repair the repos...')
-    await setupRepos({ all: true })
+    !silent && showInfo(`Supabase repo not found: ${supabaseRepoDir}`)
+    !silent && showInfo('Attempting to repair the repos...')
+    await setupRepos({ all: true, silent })
     if (!fs.existsSync(supabaseRepoDir)) {
       showError('Supabase repo still not found, unable to continue')
       Deno.exit(1)
@@ -1178,7 +1188,7 @@ export async function prepareEnv({ silent = false }: { silent?: boolean } = {}):
   }
 
   // Prepare the custom supabase .env file needed for the supabase docker-compose.yml file
-  await prepareSupabaseEnv()
+  await prepareSupabaseEnv({ silent })
 
   // Create volumes dirs required by docker-compose.yml files
   await createRequiredVolumes({ silent })
@@ -1339,37 +1349,6 @@ export async function isInitialized(): Promise<boolean> {
     return true
   } catch (_error) {
     return false
-  }
-}
-
-/**
- * Get the Flowise API key from the config file
- *
- * @returns The Flowise API key or empty string if not found
- */
-async function getFlowiseApiKey(): Promise<{ apiKey: string; keyName: string } | null> {
-  const configPath = path.join(
-    dockerEnv().LLEMONSTACK_VOLUMES_PATH,
-    'flowise',
-    'config',
-    'api.json',
-  )
-  try {
-    // Read and parse the config file
-    const fileContent = await Deno.readTextFile(configPath)
-    const config = JSON.parse(fileContent)
-    // Extract the API key
-    return {
-      apiKey: config[0]?.apiKey || '',
-      keyName: config[0]?.keyName || '',
-    }
-  } catch (error) {
-    if (error instanceof Deno.errors.NotFound) {
-      DEBUG && showDebug(`Flowise config file not found: ${configPath}`)
-      return null
-    }
-    showError('Error reading Flowise API key:', error)
-    return null
   }
 }
 
