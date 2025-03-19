@@ -185,7 +185,7 @@ async function addModelToLiteLLM(
   return result
 }
 
-async function loadModels() {
+export async function loadModels() {
   // Load environment variables from .env file
   const env = await loadEnv()
 

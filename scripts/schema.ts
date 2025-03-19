@@ -12,12 +12,7 @@ import {
 } from './start.ts'
 import { stopService } from './stop.ts'
 
-export async function schema(projectName: string) {
-  // Check if the first argument is start or stop
-  const action = Deno.args[0]
-  // Get the service name from the second argument
-  const service = Deno.args[1]
-
+export async function schema(projectName: string, action: string, service: string) {
   if (action !== 'create' && action !== 'remove') {
     showError('First argument must be either "create" or "remove"')
     Deno.exit(1)
@@ -83,5 +78,7 @@ export async function schema(projectName: string) {
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  schema(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  const action = Deno.args[0]
+  const service = Deno.args[1]
+  schema(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, action, service)
 }
