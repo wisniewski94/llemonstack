@@ -7,6 +7,7 @@
  */
 
 import { Command, EnumType } from '@cliffy/command'
+import { CompletionsCommand } from '@cliffy/command/completions'
 import { DEFAULT_PROJECT_NAME, showAction, showInfo, start, VERSION } from './scripts/start.ts'
 
 const logLevelType = new EnumType(['debug', 'info', 'warn', 'error'])
@@ -182,6 +183,9 @@ main.command('litellm')
     const { loadModels } = await import('./scripts/litellm.ts')
     await loadModels()
   })
+
+main
+  .command('completions', new CompletionsCommand())
 
 // Run the command
 await main.parse(Deno.args)
