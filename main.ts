@@ -173,13 +173,17 @@ main.command('schema')
 // LiteLLM management commands
 main.command('litellm')
   .description('LiteLLM management commands')
-  .command('seed')
-  .description(
-    'Add models to LiteLLM from Ollama and any OpenAI compatible provider running on localhost:LOCAL_LLM_OPENAI_HOST_PORT',
+  .type('actions', new EnumType(['seed']))
+  .arguments('<action:actions>')
+  .example(
+    'Seed LiteLLM models:',
+    'llmn litellm seed',
   )
-  .action(async () => {
-    const { loadModels } = await import('./scripts/litellm.ts')
-    await loadModels()
+  .action(async (_options, action: string) => {
+    if (action === 'seed') {
+      const { loadModels } = await import('./scripts/litellm.ts')
+      await loadModels()
+    }
   })
 
 main
