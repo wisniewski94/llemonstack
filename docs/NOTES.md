@@ -23,8 +23,9 @@ container logs in Docker Desktop.
 
 - [ ] Publish llemonstack as a npm module to install globally
 
-  - [ ] Register llmn as alias for llmn.ts
-  - [ ] Create an install script that installs deno and git and checks for docker
+  - [ ] Refactor to use .llemonstack dir for all config, repos, etc.
+  - [x] Register llmn as bin alias for main.ts
+  - [x] Create an install script that installs deno and git and checks for docker
   - [ ] Update README.md with instructions on installing through npm
   - [ ] Update README.md with `llmn` commands instead of `deno run`
 

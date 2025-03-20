@@ -186,6 +186,9 @@ async function createEnvFile(): Promise<void> {
   }
   try {
     await Deno.copyFile('.env.example', ENVFILE)
+    // TODO: get .env.example from the LLemonStack install dir, future use
+    // const envExamplePath = path.join(LLEMONSTACK_INSTALL_DIR, '.env.example')
+    // await Deno.copyFile(envExamplePath, ENVFILE)
   } catch (error) {
     throw new Error(`Failed to create .env file: ${error}`)
   }

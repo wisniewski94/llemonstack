@@ -1068,6 +1068,7 @@ export async function setupRepos({
     showError(`Unable to create repos dir: ${REPO_DIR}`, error)
     Deno.exit(1)
   }
+
   // Setup all repos in parallel
   await Promise.all(
     Object.entries(REPO_SERVICES)
@@ -1080,6 +1081,40 @@ export async function setupRepos({
       .filter(Boolean),
   )
   !silent && showInfo(`${all ? 'All repositories' : 'Repositories'} are ready`)
+}
+
+/**
+ * Get a config file from the current directory .llemonstack/config
+ *
+ * If create is true, missing config file will be copied from LLEMONSTACK_INSTALL_DIR
+ * @param file - The file to get
+ * @param silent - Whether to show messages
+ * @param create - Whether to create the file if it doesn't exist, creates from template in LLEMONSTACK_INSTALL_DIR
+ * @returns The path to the config file
+ */
+export async function getConfigFile(
+  filePath: string,
+  { silent = false, create = true }: { silent?: boolean; create?: boolean } = {},
+): Promise<string> {
+  const configFile = path.join(LLEMONSTACK_CONFIG_DIR, filePath)
+  if (!fs.existsSync(configFile)) {
+    if (create) {
+      const templateFile = path.join(LLEMONSTACK_INSTALL_DIR, filePath)
+      !silent &&
+        showInfo(`Config file not found, attempting to create from template: ${templateFile}`)
+      if (!fs.existsSync(templateFile)) {
+        throw new Error(`Config template file not found: ${templateFile}`)
+      }
+      await fs.ensureDir(path.dirname(configFile))
+      await Deno.copyFile(templateFile, configFile)
+      !silent && showInfo(`Config file created from template: ${configFile}`)
+    } else {
+      throw new Error(`Config file not found: ${configFile}`)
+    }
+  } else {
+    !silent && showInfo(`Config file found: ${configFile}`)
+  }
+  return configFile
 }
 
 /**
@@ -1111,6 +1146,14 @@ export async function prepareSupabaseEnv(
   // The config.supabase.env file contains most of the base environment variables
   // for the supabase docker-compose.yml. The rest are in the root .env
   const configEnv = path.join('docker', 'supabase', 'config.supabase.env')
+
+  // TODO: get config.supabase.env from the LLemonStack install dir, future use
+  // try {
+  //   configEnv = await getConfigFile(configEnv, { silent: false, create: true })
+  // } catch (error) {
+  //   showError(`Error getting config file: ${configEnv}`, error)
+  //   Deno.exit(1)
+  // }
 
   // Copy config.supabase.env to docker/supabase/.env,
   // then append the contents of the root .env file.
