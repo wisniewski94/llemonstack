@@ -140,10 +140,10 @@ services:
       - "host.docker.internal:host-gateway"
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/ping"]
-      interval: 10s
+      test: wget -q -O- http://flowise:3000/api/v1/ping | grep -q 'pong'
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
       start_period: 30s
 
     volumes:
