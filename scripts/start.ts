@@ -30,7 +30,7 @@ const isArm64 = getArch().includes('arm64')
 
 // Get version from package.json
 export const LLEMONSTACK_INSTALL_DIR = path.join(
-  path.dirname(new URL(import.meta.url).pathname),
+  path.dirname(path.fromFileUrl(import.meta.url)),
   '../',
 )
 const packageJson = JSON.parse(
