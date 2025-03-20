@@ -1,0 +1,36 @@
+{
+  "name": "llemonstack",
+  "version": "0.1.0",
+  "description": "Local AI Agent Stack - A fully featured, open source, low-code AI agent automation platform",
+  "bin": {
+    "llmn": "./bin/cli.js"
+  },
+  "scripts": {
+    "postinstall": "node bin/check-requirements.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/llemonstack/llemonstack.git"
+  },
+  "keywords": [
+    "ai",
+    "llm",
+    "automation",
+    "n8n",
+    "flowise",
+    "supabase",
+    "ollama",
+    "llemonstack",
+    "local llm",
+    "local ai",
+    "litellm",
+    "langfuse",
+    "langchain"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/llemonstack/llemonstack/issues"
+  },
+  "homepage": "https://github.com/llemonstack/llemonstack#readme"
+}

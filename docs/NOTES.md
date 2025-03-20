@@ -21,6 +21,13 @@ container logs in Docker Desktop.
 - [ ] Configure OpenWeb UI to use postgres
 - [ ] Rebuild example n8n templates to use LiteLLM, use env.LITELLM_API_KEY
 
+- [ ] Publish llemonstack as a npm module to install globally
+
+  - [ ] Register llmn as alias for llmn.ts
+  - [ ] Create an install script that installs deno and git and checks for docker
+  - [ ] Update README.md with instructions on installing through npm
+  - [ ] Update README.md with `llmn` commands instead of `deno run`
+
 - [x] Disable supabase-analytics, it eats memory and CPU & is not needed
 - [x] Move supabase volumes to ./volumes to make backup easier and protect against .repos deletion
 - [x] Add dozzle labels to services to group logging

@@ -19,7 +19,7 @@
   "deno.codeLens.referencesAllFunctions": true,
   "deno.codeLens.references": false,
   "deno.codeLens.test": true,
-  "deno.disablePaths": ["./docker/build"],
+  "deno.disablePaths": ["./docker/build", "./bin"],
   "cSpell.words": [
     "agentflows",
     "agentic",

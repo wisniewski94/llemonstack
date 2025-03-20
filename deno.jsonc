@@ -1,5 +1,4 @@
 {
-  "version": "0.1.0",
   "tasks": {
     "llemonstack": "deno run --allow-read --allow-env --allow-run --allow-write main.ts",
     "init": "deno run --allow-read --allow-env --allow-run --allow-write --allow-net scripts/init.ts",
@@ -44,7 +43,8 @@
       "import/",
       "shared/",
       "docker/",
-      "volumes/"
+      "volumes/",
+      "bin/"
     ]
   },
   "lint": {
@@ -55,7 +55,8 @@
       "import/",
       "shared/",
       "docker/build/",
-      "volumes/"
+      "volumes/",
+      "bin/"
     ]
   }
 }
