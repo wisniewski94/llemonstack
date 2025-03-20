@@ -154,22 +154,20 @@ main
 
 // Schema management commands
 main.command('schema')
-  .description('Database schema management commands')
-  // Create
-  .command('create')
-  .description('Create database schemas')
-  .arguments('<service:string>')
-  .action(async (options, service: string) => {
+  .description('Postgres schema management commands')
+  .type('actions', new EnumType(['create', 'remove']))
+  .arguments('<action:actions> <service:string>')
+  .example(
+    'Create schema:',
+    'llmn schema create service_name',
+  )
+  .example(
+    'Remove schema:',
+    'llmn schema remove service_name',
+  )
+  .action(async (options, action: string, service: string) => {
     const { schema } = await import('./scripts/schema.ts')
-    await schema(options.project || DEFAULT_PROJECT_NAME, 'create', service)
-  })
-  // Remove
-  .command('remove')
-  .description('Remove database schemas')
-  .arguments('<service:string>')
-  .action(async (options, service: string) => {
-    const { schema } = await import('./scripts/schema.ts')
-    await schema(options.project || DEFAULT_PROJECT_NAME, 'remove', service)
+    await schema(options.project || DEFAULT_PROJECT_NAME, action, service)
   })
 
 // LiteLLM management commands
