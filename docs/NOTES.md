@@ -16,22 +16,16 @@ container logs in Docker Desktop.
 
 **Code:**
 
-- [ ] Show user action to delete ./volumes dir during reset script
-
 - [ ] Create Flowise example templates of Web Scrape QnA configured with pgvector and LiteLLM
       See https://docs.flowiseai.com/use-cases/web-scrape-qna
-
 - [ ] Configure OpenWeb UI to use postgres
-
-- [x] Disable supabase-analytics, it eats memory and CPU & is not needed
-
-- [x] Move supabase volumes to ./volumes to make backup easier and protect against .repos deletion
-
-- [x] Add dozzle labels to services to group logging
-      See https://dozzle.dev/guide/container-groups
-
 - [ ] Rebuild example n8n templates to use LiteLLM, use env.LITELLM_API_KEY
 
+- [x] Disable supabase-analytics, it eats memory and CPU & is not needed
+- [x] Move supabase volumes to ./volumes to make backup easier and protect against .repos deletion
+- [x] Add dozzle labels to services to group logging
+      See https://dozzle.dev/guide/container-groups
+- [x] Delete ./volumes dir during reset script
 - [x] Disable Logflare in supabase docker; it hammers the disk
       https://www.reddit.com/r/Supabase/comments/1fw2g62/disable_or_adjust_logging_self_hosted/
 - [x] SKIPPED: [Logflare replaced] Add docker/supabase.env passwords to init scripts

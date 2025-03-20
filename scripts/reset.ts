@@ -28,6 +28,7 @@ import {
   DEFAULT_PROJECT_NAME,
   filterExistingFiles,
   getProfilesArgs,
+  getVolumesPath,
   prepareEnv,
   REPO_DIR,
   REPO_DIR_BASE,
@@ -198,6 +199,22 @@ export async function reset(
     await clearEnvFile()
     await clearConfigFile()
     showInfo('Environment and config files reset')
+
+    const volumesDir = getVolumesPath()
+    showAction('\nResetting volumes...')
+    showInfo(
+      '\nThe volumes dir contains data from the docker containers.\n' +
+        'It should be deleted to completely reset the stack.\n' +
+        'Please verify the contents of the volumes dir before deleting it.\n\n' +
+        `Volumes dir: ${volumesDir}`,
+    )
+
+    if (confirm('Delete the volumes dir?')) {
+      await Deno.remove(volumesDir, { recursive: true })
+      showInfo('Volumes dir deleted')
+    } else {
+      showInfo('Skipping volumes dir deletion')
+    }
 
     showAction('\nReset successfully completed!')
 

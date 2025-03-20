@@ -491,11 +491,20 @@ export function escapePath(file: string): string {
  * @returns Record<string, string>
  */
 export function dockerEnv({ volumesDir }: { volumesDir?: string } = {}): Record<string, string> {
-  const volumes_dir = volumesDir || Deno.env.get('LLEMONSTACK_VOLUMES_DIR') || './volumes'
   return {
-    // Convert LLEMONSTACK_VOLUMES_DIR into an absolute path to use in docker-compose.yml files
-    LLEMONSTACK_VOLUMES_PATH: path.resolve(ROOT_DIR, volumes_dir),
+    LLEMONSTACK_VOLUMES_PATH: getVolumesPath(volumesDir),
   }
+}
+
+/**
+ * Get the absolute path to the volumes directory
+ * @param volumesDir - The directory config to use for volumes, defaults to LLEMONSTACK_VOLUMES_DIR env var value
+ * @returns The absolute path to the volumes directory
+ */
+export function getVolumesPath(volumesDir?: string) {
+  // Convert LLEMONSTACK_VOLUMES_DIR into an absolute path to use in docker-compose.yml files
+  const volumes_dir = volumesDir || Deno.env.get('LLEMONSTACK_VOLUMES_DIR') || './volumes'
+  return path.resolve(ROOT_DIR, volumes_dir)
 }
 
 export async function runCommand(
