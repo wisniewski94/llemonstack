@@ -174,6 +174,7 @@ docker exec -it --user root n8n sh
 - https://github.com/activepieces/activepieces
 - https://github.com/weaviate/weaviate
 - https://github.com/Mintplex-Labs/vector-admin
+- https://github.com/e2b-dev/fragments
 
 - https://github.com/automatisch/automatisch
 - https://github.com/airbytehq/airbyte
@@ -226,10 +227,15 @@ Not AI, but potentially useful:
 - https://www.futurepedia.io/ai-tools
 - https://www.aimaster.me/blog/tags/automation
 
-**MCP:**
+**MCP & Code Tools:**
 
 - https://github.com/modelcontextprotocol/inspector
 - https://github.com/wild-card-ai/agents-json
+- https://github.com/inngest/agent-kit
+  - https://github.com/inngest/agent-kit/tree/main/examples/e2b-coding-agent
+  - https://agentkit.inngest.com/llms-full.txt
+- https://llmstxt.org/
+  - https://developers.cloudflare.com/agents/llms-full.txt example from cloudflare
 
 **Prompts:**
 
