@@ -11,11 +11,12 @@ node_modules/
 .DS_Store
 tmp/
 dist/
+
 # Ignore all files in import folder except .keep and README.md
 import/*
-!import/.keep
-!import/README.md
-# Also allow subdirectories but ignore their contents
 !import/*/
 import/*/*
-!import/*/.keep
+!import/*/**/
+import/*/*/*
+!import/README.md
+!import/**/.keep
