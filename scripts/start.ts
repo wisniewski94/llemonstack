@@ -27,7 +27,10 @@ import { getFlowiseApiKey } from './lib/flowise.ts'
 await loadEnv({ silent: true })
 
 const isArm64 = getArch().includes('arm64')
-export const VERSION = '0.1.0'
+
+// Get version from package.json
+const packageJson = JSON.parse(Deno.readTextFileSync(path.join(Deno.cwd(), 'package.json')))
+export const VERSION = packageJson.version
 
 export const ENVFILE = path.join(Deno.cwd(), '.env')
 
