@@ -116,9 +116,6 @@ export async function reset(
   { skipPrompt = false, skipCache = false }: { skipPrompt?: boolean; skipCache?: boolean } = {},
 ): Promise<void> {
   try {
-    skipPrompt = skipPrompt || Deno.args.includes('-f')
-    skipCache = skipCache || Deno.args.includes('--skip-cache')
-
     if (!skipPrompt) {
       showWarning(
         `WARNING: This will delete ALL data for your '${projectName}' stack.`,
@@ -193,7 +190,7 @@ export async function reset(
       showInfo(
         'Updating the stack will only update services enabled in your .env file.',
       )
-      await update(projectName, { stopServices: false, promptUser: false })
+      await update(projectName, { skipStop: true, skipPrompt: true })
     } else {
       showInfo('Skipping stack update')
     }
@@ -213,5 +210,8 @@ export async function reset(
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  reset(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  reset(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, {
+    skipPrompt: Deno.args.includes('-f'),
+    skipCache: Deno.args.includes('--skip-cache'),
+  })
 }

@@ -3,11 +3,11 @@
 /**
  * LLemonStack command line tool
  *
- * A unified CLI interface for managing the LLemonStack local AI agent stack
+ * CLI interface for managing the LLemonStack local AI agent stack
  */
 
 import { Command, EnumType } from '@cliffy/command'
-import { DEFAULT_PROJECT_NAME, VERSION } from './scripts/start.ts'
+import { DEFAULT_PROJECT_NAME, showAction, showInfo, start, VERSION } from './scripts/start.ts'
 
 const logLevelType = new EnumType(['debug', 'info', 'warn', 'error'])
 
@@ -16,138 +16,161 @@ const main = new Command()
   .name('llmn')
   .version(VERSION)
   .description('Command line for LLemonStack local AI agent stack')
-  .type('log-level', logLevelType)
-  .env('DEBUG=<enable:boolean>', 'Enable debug output.')
-  .option('-d, --debug', 'Enable debug output.')
-  .option('-l, --log-level <level:log-level>', 'Set log level.', {
+  .globalEnv('DEBUG=<enable:boolean>', 'Enable debug output')
+  .globalEnv('LLEMONSTACK_PROJECT_NAME=<project:string>', 'Project name')
+  .globalOption('-d, --debug', 'Enable debug output.')
+  .globalType('log-level', logLevelType)
+  .globalOption('-l, --log-level <level:log-level>', 'Set log level.', {
     default: 'info',
   })
+  .globalOption(
+    '-p --project <project:string>',
+    'Project name',
+    {
+      default: Deno.env.get('LLEMONSTACK_PROJECT_NAME'),
+    },
+  )
 
 // Initialize the LLemonStack environment
-const init = new Command()
-  .name('init')
+main
+  .command('init')
   .description('Initialize the LLemonStack environment')
   .action(async (options) => {
     const { init } = await import('./scripts/init.ts')
-    await init(options.projectName || DEFAULT_PROJECT_NAME)
+    await init(options.project || DEFAULT_PROJECT_NAME)
   })
 
-const start = new Command()
+// Start the LLemonStack services
+main
+  .command('start')
   .description('Start the LLemonStack services')
-  .action(async (options) => {
+  .arguments('[service:string]')
+  .action(async (options, service?: string) => {
     const { start } = await import('./scripts/start.ts')
-    await start(options.projectName || DEFAULT_PROJECT_NAME)
+    await start(options.project, { service, skipOutput: !!service })
   })
 
-const stop = new Command()
+// Stop the LLemonStack services
+main
+  .command('stop')
   .description('Stop the LLemonStack services')
   .option('--all', 'Stop all services', { default: true })
-  .action(async (options) => {
+  .arguments('[service:string]')
+  .action(async (options, service?: string) => {
     const { stop } = await import('./scripts/stop.ts')
-    await stop(options.projectName || DEFAULT_PROJECT_NAME, { all: options.all })
+    await stop(options.project || DEFAULT_PROJECT_NAME, { all: options.all, service })
   })
 
-const restart = new Command()
+// Restart the LLemonStack services
+main
+  .command('restart')
   .description('Restart the LLemonStack services')
-  .action(async (options) => {
+  .arguments('[service:string]')
+  .action(async (options, service?: string) => {
     const { restart } = await import('./scripts/restart.ts')
-    await restart(options.projectName || DEFAULT_PROJECT_NAME)
+    await restart(options.project || DEFAULT_PROJECT_NAME, { service, skipOutput: !!service })
   })
 
-const reset = new Command()
+// Reset the LLemonStack environment
+main
+  .command('reset')
   .description('Reset the LLemonStack environment')
   .action(async (options) => {
     const { reset } = await import('./scripts/reset.ts')
-    await reset(options.projectName || DEFAULT_PROJECT_NAME)
+    await reset(options.project || DEFAULT_PROJECT_NAME)
   })
 
-const update = new Command()
+// Update the LLemonStack services
+main
+  .command('update')
   .description('Update the LLemonStack environment')
   .action(async (options) => {
     const { update } = await import('./scripts/update.ts')
-    await update(options.projectName || DEFAULT_PROJECT_NAME)
+    await update(options.project || DEFAULT_PROJECT_NAME)
   })
 
-const versions = new Command()
-  .description('Show versions of all components')
+// Show all versions of all services in the stack
+main
+  .command('versions')
+  .description('Show all versions of all services in the stack')
   .action(async (options) => {
     const { versions } = await import('./scripts/versions.ts')
-    await versions(options.projectName || DEFAULT_PROJECT_NAME)
+    await versions(options.project || DEFAULT_PROJECT_NAME)
   })
 
-// // N8N workflow management commands
-// const n8n = new Command()
-//   .command('n8n')
-//   .description('N8N workflow management commands')
+// Import data into services that support it
+const importServices = new EnumType(['n8n', 'flowise'])
+main
+  .command('import')
+  .description('Import data from ./import dir into supported services: n8n, flowise')
+  .type('service', importServices)
+  .arguments('[...service:service[]]')
+  .option('--skip-start', 'Skip starting services after import', { default: false })
+  .option('--skip-prompt', 'Skip confirmation prompts', { default: false })
+  .option('--archive', 'Archive after import', { default: true })
+  .action(async (options, ...services) => {
+    if (!services || services.length === 0) {
+      services = importServices.values().map((svc) => [svc])
+      showInfo(`Importing all supported services: ${services.join(', ')}`)
+    }
+    if (!options.skipStart) {
+      showAction('Starting the stack to import data...')
+      await start(options.project || DEFAULT_PROJECT_NAME)
+    }
+    for (const svc of services) {
+      const service = svc[0]
+      showAction(`Importing ${service} data...`)
+      const { runImport } = await import(`./scripts/${service}_import.ts`)
+      await runImport(options.project || DEFAULT_PROJECT_NAME, {
+        skipPrompt: options.skipPrompt,
+        archive: options.archive,
+      })
+    }
+  })
 
-// n8n
-//   .command('import')
-//   .description('Import N8N workflows')
-//   .option('--skip-start', 'Skip starting services after import', { default: false })
-//   .option('--skip-prompt', 'Skip confirmation prompts', { default: false })
-//   .option('--archive', 'Archive after import', { default: true })
-//   .action(async (options) => {
-//     const { runImport } = await import('./scripts/n8n_import.ts')
-//     await runImport(DEFAULT_PROJECT_NAME, {
-//       skipPrompt: options.skipPrompt,
-//       archiveAfterImport: options.archive,
-//     })
-//   })
-
-// n8n
-//   .command('export')
-//   .description('Export N8N workflows')
-//   .action(async () => {
-//     const { runExport } = await import('./scripts/n8n_export.ts')
-//     await runExport(DEFAULT_PROJECT_NAME)
-//   })
-
-// Flowise management commands
-// const flowise = new Command()
-//   .command('flowise')
-//   .description('Flowise management commands')
-
-// flowise
-//   .command('import')
-//   .description('Import Flowise flows')
-//   .option('--skip-start', 'Skip starting services after import', { default: false })
-//   .option('--skip-prompt', 'Skip confirmation prompts', { default: false })
-//   .option('--archive', 'Archive after import', { default: true })
-//   .action(async (options) => {
-//     const { runImport: importFlowise } = await import('./scripts/flowise_import.ts')
-//     await importFlowise(DEFAULT_PROJECT_NAME, {
-//       skipPrompt: options.skipPrompt,
-//       archiveAfterImport: options.archive,
-//     })
-//   })
+// Export data from services that support it
+const exportServices = new EnumType(['n8n'])
+main
+  .command('export')
+  .description('Export data to ./export dir for supported services: n8n')
+  .type('service', exportServices)
+  .arguments('[...service:service[]]')
+  .action(async (options, ...services) => {
+    if (!services || services.length === 0) {
+      services = exportServices.values().map((svc) => [svc])
+      showInfo(`Exporting all supported services: ${services.join(', ')}`)
+    }
+    for (const svc of services) {
+      const service = svc[0]
+      const { runExport } = await import(`./scripts/${service}_import.ts`)
+      await runExport(options.project || DEFAULT_PROJECT_NAME)
+    }
+  })
 
 // Schema management commands
-const schema = new Command()
-  .command('schema')
+main.command('schema')
   .description('Database schema management commands')
-
-schema
+  // Create
   .command('create')
   .description('Create database schemas')
   .arguments('<service:string>')
-  .action(async (options: unknown, service: string) => {
+  .action(async (options, service: string) => {
     const { schema } = await import('./scripts/schema.ts')
-    await schema(options.projectName || DEFAULT_PROJECT_NAME, 'create', service)
+    await schema(options.project || DEFAULT_PROJECT_NAME, 'create', service)
   })
-
-schema
+  // Remove
   .command('remove')
   .description('Remove database schemas')
   .arguments('<service:string>')
-  .action(async (options: unknown, service: string) => {
+  .action(async (options, service: string) => {
     const { schema } = await import('./scripts/schema.ts')
-    await schema(options.projectName || DEFAULT_PROJECT_NAME, 'remove', service)
+    await schema(options.project || DEFAULT_PROJECT_NAME, 'remove', service)
   })
 
 // LiteLLM management commands
-const litellm = new Command()
+main.command('litellm')
   .description('LiteLLM management commands')
-  .command('models:local')
+  .command('seed')
   .description(
     'Add models to LiteLLM from Ollama and any OpenAI compatible provider running on localhost:LOCAL_LLM_OPENAI_HOST_PORT',
   )
@@ -156,17 +179,5 @@ const litellm = new Command()
     await loadModels()
   })
 
-// Main command chain
-await main
-  .command('init', init)
-  .command('start', start)
-  .command('stop', stop)
-  .command('restart', restart)
-  .command('reset', reset)
-  .command('update', update)
-  .command('versions', versions)
-  .command('schema', schema)
-  // // .command('n8n', n8n)
-  // .command('flowise', flowise)
-  .command('litellm', litellm)
-  .parse(Deno.args)
+// Run the command
+await main.parse(Deno.args)

@@ -189,21 +189,19 @@ async function importToFlowise(
 
 export async function runImport(
   projectName: string,
-  { skipPrompt = false, archiveAfterImport = true }: {
+  { skipPrompt = false, archive = true }: {
     skipPrompt?: boolean
-    archiveAfterImport?: boolean
+    archive?: boolean
   } = {},
 ): Promise<void> {
-  // Check if -f force flag is present
-  skipPrompt = skipPrompt || Deno.args.includes('-f')
-  // Check if --skip-archive flag is present
-  archiveAfterImport = archiveAfterImport || Deno.args.includes('--skip-archive')
-
   await prepareEnv({ silent: true })
-  await importToFlowise(projectName, { skipPrompt, archiveAfterImport })
+  await importToFlowise(projectName, { skipPrompt, archiveAfterImport: archive })
 }
-//
+
 // Run script if this file is executed directly
 if (import.meta.main) {
-  runImport(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  runImport(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, {
+    skipPrompt: Deno.args.includes('-f'),
+    archive: Deno.args.includes('--skip-archive'),
+  })
 }

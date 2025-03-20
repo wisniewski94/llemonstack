@@ -136,12 +136,10 @@ export async function stopService(
 
 export async function stop(
   projectName: string,
-  { all = false, serviceArg = null }: { all?: boolean; serviceArg?: string | null } = {},
+  { all = false, service }: { all?: boolean; service?: string } = {},
 ): Promise<void> {
-  let stopAll = all || Deno.args.includes('--all')
-  const service = serviceArg ?? Deno.args.find((arg) => !arg.startsWith('--'))
+  let stopAll = all
   let composeService: ComposeService | undefined
-
   if (service) {
     stopAll = false
     composeService = ALL_COMPOSE_SERVICES.find(([s]) => s === service)
@@ -197,5 +195,8 @@ export async function stop(
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  stop(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  stop(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, {
+    all: Deno.args.includes('--all'),
+    service: Deno.args.find((arg) => !arg.startsWith('--')),
+  })
 }

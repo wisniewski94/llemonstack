@@ -24,7 +24,7 @@ import * as yaml from 'jsr:@std/yaml'
 import { getFlowiseApiKey } from './lib/flowise.ts'
 
 // Immediately load .env file
-await loadEnv({ silent: false })
+await loadEnv({ silent: true })
 
 const isArm64 = getArch().includes('arm64')
 export const VERSION = '0.1.0'
@@ -1352,7 +1352,163 @@ export async function isInitialized(): Promise<boolean> {
   }
 }
 
-export async function start(projectName: string): Promise<void> {
+export async function outputServicesInfo({
+  projectName,
+  supabaseStarted,
+  ollamaProfile,
+}: {
+  projectName: string
+  supabaseStarted: boolean
+  ollamaProfile: string
+}): Promise<void> {
+  //
+  // SERVICE DASHBOARDS
+  //
+  showHeader('Service Dashboards')
+  showInfo('Access the dashboards in a browser on your host machine.\n')
+  isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
+  if (isEnabled('flowise')) {
+    showService('Flowise', 'http://localhost:3001')
+    showCredentials({
+      'Username': Deno.env.get('FLOWISE_USERNAME'),
+      'Password': Deno.env.get('FLOWISE_PASSWORD'),
+    })
+  }
+  isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:8080')
+  if (isEnabled('browser-use')) {
+    showService('Browser-Use', 'http://localhost:7788/')
+    showService(
+      'Browser-Use VNC',
+      'http://0.0.0.0:6080/vnc.html?host=0.0.0.0&port=6080',
+    )
+    showCredentials({
+      'Password': Deno.env.get('BROWSER_USE_VNC_PASSWORD'),
+    })
+  }
+  if (supabaseStarted) {
+    showService('Supabase', `http://localhost:8000`)
+    showCredentials({
+      'Username': Deno.env.get('SUPABASE_DASHBOARD_USERNAME'),
+      'Password': Deno.env.get('SUPABASE_DASHBOARD_PASSWORD'),
+    })
+  }
+  if (isEnabled('litellm')) {
+    showService('LiteLLM', 'http://localhost:3004/ui/')
+    showCredentials({
+      'Username': Deno.env.get('LITELLM_UI_USERNAME'),
+      'Password': Deno.env.get('LITELLM_UI_PASSWORD'),
+    })
+  }
+  if (isEnabled('langfuse')) {
+    showService('Langfuse', 'http://localhost:3005/')
+    showCredentials({
+      'Username': Deno.env.get('LANGFUSE_INIT_USER_EMAIL'),
+      'Password': Deno.env.get('LANGFUSE_INIT_USER_PASSWORD'),
+    })
+  }
+  if (isEnabled('neo4j')) {
+    showService('Neo4j', 'http://localhost:7474/browser/')
+    showCredentials({
+      'Username': Deno.env.get('NEO4J_USER'),
+      'Password': Deno.env.get('NEO4J_PASSWORD'),
+    })
+  }
+  isEnabled('qdrant') && showService('Qdrant', 'http://localhost:6333/dashboard')
+  if (isEnabled('minio')) {
+    showService('Minio', 'http://localhost:9091/')
+    showCredentials({
+      'Username': 'minio',
+      'Password': Deno.env.get('MINIO_ROOT_PASSWORD'),
+    })
+  }
+  isEnabled('dozzle') && showService('Dozzle', 'http://localhost:8081/')
+
+  //
+  // API ENDPOINTS
+  //
+  showHeader('API Endpoints')
+  showInfo('For connecting services within the stack, use the following endpoints.')
+  showInfo('i.e. for n8n credentials, postgres connections, API requests, etc.\n')
+
+  if (supabaseStarted) {
+    showService('Supabase Postgres DB Host', 'db')
+    showCredentials({
+      'Username': 'postgres',
+      'Password': Deno.env.get('POSTGRES_PASSWORD'),
+    })
+    showService('Supabase Postgres Pooler', 'supavisor')
+    showCredentials({
+      'Username': `postgres.${projectName}`,
+      'Password': Deno.env.get('POSTGRES_PASSWORD'),
+    })
+    showInfo('Use the pooler for postgres connections whenever possible.')
+    showInfo(
+      `PSQL Connection URL: postgres://postgres.${projectName}:${
+        Deno.env.get('POSTGRES_PASSWORD')
+      }@supavisor:5432/postgres`,
+    )
+    console.log('')
+    showService('Supabase API', 'http://kong:8000')
+    showService(
+      'Supabase Edge Functions',
+      'http://kong:8000/functions/v1/[function]',
+    )
+  }
+  isEnabled('n8n') && showService('n8n', 'http://n8n:5678')
+  if (isEnabled('flowise')) {
+    showService('Flowise', 'http://flowise:3000')
+    const flowiseApi = await getFlowiseApiKey()
+    showCredentials({
+      [flowiseApi?.keyName || 'API Key']: flowiseApi?.apiKey || '',
+    })
+  }
+  if (isEnabled('litellm')) {
+    showService('LiteLLM', 'http://litellm:4000')
+    showCredentials({
+      'API Key': Deno.env.get('LITELLM_MASTER_KEY'),
+    })
+  }
+  if (isEnabled('zep')) {
+    showService('Zep', 'http://zep:8000')
+    showService('Zep Graphiti', 'http://graphiti:8003')
+  }
+  isEnabled('neo4j') && showService('Neo4j', 'bolt://neo4j:7687')
+  isEnabled('qdrant') && showService('Qdrant', 'http://qdrant:6333')
+  isEnabled('redis') && showService('Redis', 'http://redis:6379')
+  isEnabled('clickhouse') && showService('Clickhouse', 'http://clickhouse:8123')
+  isEnabled('langfuse') && showService('Langfuse', 'http://langfuse:3000')
+  isEnabled('minio') && showService('Minio', 'http://minio:9000/')
+
+  // Show any user actions
+  // Show user action if using host Ollama
+  if (ollamaProfile === 'ollama-host') {
+    const ollamaUrl = 'http://host.docker.internal:11434'
+    showService('Ollama', ollamaUrl)
+    showUserAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
+    showUserAction('  Start Ollama on your computer: `ollama serve`')
+    if (isEnabled('n8n')) {
+      showUserAction(`  Set n8n Ollama credential url to: ${ollamaUrl}`)
+      showUserAction(
+        `  Or connect n8n to LiteLLM http://litellm:4000 to proxy requests to Ollama`,
+      )
+    }
+  } else if (isEnabled('ollama')) {
+    showService('Ollama', 'http://ollama:11434')
+  }
+  console.log('\n')
+}
+
+export async function start(
+  projectName: string,
+  { service, skipOutput = false }: { service?: string; skipOutput?: boolean } = {},
+): Promise<void> {
+  if (service && !isEnabled(service)) {
+    showWarning(`${service} is not enabled`)
+    showInfo(
+      `Set ENABLE_${service.toUpperCase().replaceAll('-', '_')} to true in .env to enable it`,
+    )
+    return
+  }
   try {
     if (!await isInitialized()) {
       showWarning('Project not initialized', '❌')
@@ -1367,27 +1523,33 @@ export async function start(projectName: string): Promise<void> {
     showAction('Setting up environment...')
     await prepareEnv({ silent: false })
 
-    // Start services by group
-    for (const [groupName, groupServices] of SERVICE_GROUPS) {
-      const enabledGroupServices = groupServices.filter((service) =>
-        isEnabled(service) &&
-        ALL_COMPOSE_SERVICES.find(([s, _, autoRun]) => s === service && autoRun)
-      )
-      if (enabledGroupServices.length > 0) {
-        showAction(`\nStarting ${groupName} services...`)
-        await startServices(projectName, enabledGroupServices)
+    // Start services
+    if (service) {
+      // Start a single service
+      await startService(projectName, service)
+    } else {
+      // Start all services by service group
+      for (const [groupName, groupServices] of SERVICE_GROUPS) {
+        const enabledGroupServices = groupServices.filter((service) =>
+          isEnabled(service) &&
+          ALL_COMPOSE_SERVICES.find(([s, _, autoRun]) => s === service && autoRun)
+        )
+        if (enabledGroupServices.length > 0) {
+          showAction(`\nStarting ${groupName} services...`)
+          await startServices(projectName, enabledGroupServices)
+        }
       }
     }
 
     // Special handling for browser-use
-    if (isEnabled('browser-use')) {
+    if (isEnabled('browser-use') && !service || service === 'browser-use') {
       showAction(`\nStarting browser-use...`)
       await startBrowserUse(projectName)
     }
 
     // Special handling for Ollama
     const ollamaProfile = getOllamaProfile()
-    if (ollamaProfile !== 'ollama-false') {
+    if (ollamaProfile !== 'ollama-false' && !service || service === 'ollama') {
       showAction(`\nStarting Ollama...`)
       if (ollamaProfile === 'ollama-host') {
         showInfo('Using host Ollama, no need to start ollama service')
@@ -1399,161 +1561,30 @@ export async function start(projectName: string): Promise<void> {
     // Check if supabase was started by any of the services that depend on it
     const supabaseStarted = await isSupabaseStarted(projectName)
 
-    showAction('\nAll services started successfully!')
-
-    //
-    // SERVICE DASHBOARDS
-    //
-    showHeader('Service Dashboards')
-    showInfo('Access the dashboards in a browser on your host machine.\n')
-    isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
-    if (isEnabled('flowise')) {
-      showService('Flowise', 'http://localhost:3001')
-      showCredentials({
-        'Username': Deno.env.get('FLOWISE_USERNAME'),
-        'Password': Deno.env.get('FLOWISE_PASSWORD'),
-      })
-    }
-    isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:8080')
-    if (isEnabled('browser-use')) {
-      showService('Browser-Use', 'http://localhost:7788/')
-      showService(
-        'Browser-Use VNC',
-        'http://0.0.0.0:6080/vnc.html?host=0.0.0.0&port=6080',
-      )
-      showCredentials({
-        'Password': Deno.env.get('BROWSER_USE_VNC_PASSWORD'),
-      })
-    }
-    if (supabaseStarted) {
-      showService('Supabase', `http://localhost:8000`)
-      showCredentials({
-        'Username': Deno.env.get('SUPABASE_DASHBOARD_USERNAME'),
-        'Password': Deno.env.get('SUPABASE_DASHBOARD_PASSWORD'),
-      })
-    }
-    if (isEnabled('litellm')) {
-      showService('LiteLLM', 'http://localhost:3004/ui/')
-      showCredentials({
-        'Username': Deno.env.get('LITELLM_UI_USERNAME'),
-        'Password': Deno.env.get('LITELLM_UI_PASSWORD'),
-      })
-    }
-    if (isEnabled('langfuse')) {
-      showService('Langfuse', 'http://localhost:3005/')
-      showCredentials({
-        'Username': Deno.env.get('LANGFUSE_INIT_USER_EMAIL'),
-        'Password': Deno.env.get('LANGFUSE_INIT_USER_PASSWORD'),
-      })
-    }
-    if (isEnabled('neo4j')) {
-      showService('Neo4j', 'http://localhost:7474/browser/')
-      showCredentials({
-        'Username': Deno.env.get('NEO4J_USER'),
-        'Password': Deno.env.get('NEO4J_PASSWORD'),
-      })
-    }
-    isEnabled('qdrant') && showService('Qdrant', 'http://localhost:6333/dashboard')
-    if (isEnabled('minio')) {
-      showService('Minio', 'http://localhost:9091/')
-      showCredentials({
-        'Username': 'minio',
-        'Password': Deno.env.get('MINIO_ROOT_PASSWORD'),
-      })
-    }
-    isEnabled('dozzle') && showService('Dozzle', 'http://localhost:8081/')
-
-    //
-    // API ENDPOINTS
-    //
-    showHeader('API Endpoints')
-    showInfo('For connecting services within the stack, use the following endpoints.')
-    showInfo('i.e. for n8n credentials, postgres connections, API requests, etc.\n')
-
-    if (supabaseStarted) {
-      showService('Supabase Postgres DB Host', 'db')
-      showCredentials({
-        'Username': 'postgres',
-        'Password': Deno.env.get('POSTGRES_PASSWORD'),
-      })
-      showService('Supabase Postgres Pooler', 'supavisor')
-      showCredentials({
-        'Username': `postgres.${projectName}`,
-        'Password': Deno.env.get('POSTGRES_PASSWORD'),
-      })
-      showInfo('Use the pooler for postgres connections whenever possible.')
-      showInfo(
-        `PSQL Connection URL: postgres://postgres.${projectName}:${
-          Deno.env.get('POSTGRES_PASSWORD')
-        }@supavisor:5432/postgres`,
-      )
-      console.log('')
-      showService('Supabase API', 'http://kong:8000')
-      showService(
-        'Supabase Edge Functions',
-        'http://kong:8000/functions/v1/[function]',
-      )
-    }
-    isEnabled('n8n') && showService('n8n', 'http://n8n:5678')
-    if (isEnabled('flowise')) {
-      showService('Flowise', 'http://flowise:3000')
-      const flowiseApi = await getFlowiseApiKey()
-      showCredentials({
-        [flowiseApi?.keyName || 'API Key']: flowiseApi?.apiKey || '',
-      })
-    }
-    if (isEnabled('litellm')) {
-      showService('LiteLLM', 'http://litellm:4000')
-      showCredentials({
-        'API Key': Deno.env.get('LITELLM_MASTER_KEY'),
-      })
-    }
-    if (isEnabled('zep')) {
-      showService('Zep', 'http://zep:8000')
-      showService('Zep Graphiti', 'http://graphiti:8003')
-    }
-    isEnabled('neo4j') && showService('Neo4j', 'bolt://neo4j:7687')
-    isEnabled('qdrant') && showService('Qdrant', 'http://qdrant:6333')
-    isEnabled('redis') && showService('Redis', 'http://redis:6379')
-    isEnabled('clickhouse') && showService('Clickhouse', 'http://clickhouse:8123')
-    isEnabled('langfuse') && showService('Langfuse', 'http://langfuse:3000')
-    isEnabled('minio') && showService('Minio', 'http://minio:9000/')
-
-    // Show any user actions
-    // Show user action if using host Ollama
-    if (ollamaProfile === 'ollama-host') {
-      const ollamaUrl = 'http://host.docker.internal:11434'
-      showService('Ollama', ollamaUrl)
-      showUserAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
-      showUserAction('  Start Ollama on your computer: `ollama serve`')
-      if (isEnabled('n8n')) {
-        showUserAction(`  Set n8n Ollama credential url to: ${ollamaUrl}`)
-        showUserAction(
-          `  Or connect n8n to LiteLLM http://litellm:4000 to proxy requests to Ollama`,
-        )
-      }
-    } else if (isEnabled('ollama')) {
-      showService('Ollama', 'http://ollama:11434')
+    if (service) {
+      showAction(`\n${service} started successfully!`)
+    } else {
+      showAction('\nAll services started successfully!')
     }
 
-    console.log('\n')
+    if (!skipOutput) {
+      await outputServicesInfo({
+        projectName,
+        supabaseStarted,
+        ollamaProfile,
+      })
+    }
   } catch (error) {
     showError(error)
     Deno.exit(1)
   }
 }
 
-async function run(projectName: string) {
-  // Check if script was called with a service argument
-  const service = Deno.args.find((arg) => !arg.startsWith('--'))
-  if (service) {
-    await startService(projectName, service)
-  } else {
-    await start(projectName)
-  }
-}
-
 // Run script if this file is executed directly
 if (import.meta.main) {
-  run(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  // Check if script was called with a service argument
+  const service = Deno.args.find((arg) => !arg.startsWith('--'))
+  await start(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, {
+    service,
+  })
 }

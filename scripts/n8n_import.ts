@@ -116,10 +116,10 @@ async function importToN8n(
 ): Promise<void> {
   if (!skipPrompt) {
     showWarning(
-      'WARNING: Importing will overwrite existing workflows and credentials',
+      'WARNING: Importing n8n data overwrites existing workflows and credentials',
     )
     showInfo(
-      "\nIf you've previously imported any of the workflows or credentials\n" +
+      "If you've previously imported any of the workflows or credentials\n" +
         "in the import folder, any modifications you've made will be overwritten.\n" +
         'Only the credentials and workflows matching those in the import folder will be overwritten.',
     )
@@ -169,21 +169,19 @@ async function importToN8n(
 
 export async function runImport(
   projectName: string,
-  { skipPrompt = false, archiveAfterImport = true }: {
+  { skipPrompt = false, archive = true }: {
     skipPrompt?: boolean
-    archiveAfterImport?: boolean
+    archive?: boolean
   } = {},
 ): Promise<void> {
-  // Check if -f force flag is present
-  skipPrompt = skipPrompt || Deno.args.includes('-f')
-  // Check if --skip-archive flag is present
-  archiveAfterImport = archiveAfterImport || Deno.args.includes('--skip-archive')
-
   await prepareEnv({ silent: false })
-  await importToN8n(projectName, { skipPrompt, archiveAfterImport })
+  await importToN8n(projectName, { skipPrompt, archiveAfterImport: archive })
 }
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  runImport(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  runImport(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, {
+    skipPrompt: Deno.args.includes('-f'),
+    archive: Deno.args.includes('--skip-archive'),
+  })
 }

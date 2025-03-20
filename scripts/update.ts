@@ -50,16 +50,11 @@ async function pullImages(projectName: string): Promise<void> {
 export async function update(
   projectName: string,
   {
-    stopServices = true,
-    promptUser = true,
-  }: { stopServices?: boolean; promptUser?: boolean } = {},
+    skipStop = false,
+    skipPrompt = false,
+  }: { skipStop?: boolean; skipPrompt?: boolean } = {},
 ): Promise<void> {
   try {
-    const skipPrompt = !promptUser || Deno.args.includes('-f')
-    const skipStop = !stopServices ||
-      Deno.args.includes('--skip-stop') ||
-      Deno.args.includes('-s')
-
     if (!skipPrompt) {
       showInfo(
         '\nUpdate repos, pull the latest Docker images, and rebuild custom Docker images.\n' +
@@ -109,5 +104,8 @@ export async function update(
 
 // Run script if this file is executed directly
 if (import.meta.main) {
-  update(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
+  update(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, {
+    skipPrompt: Deno.args.includes('-f'),
+    skipStop: Deno.args.includes('--skip-stop') || Deno.args.includes('-s'),
+  })
 }
