@@ -29,7 +29,13 @@ await loadEnv({ silent: true })
 const isArm64 = getArch().includes('arm64')
 
 // Get version from package.json
-const packageJson = JSON.parse(Deno.readTextFileSync(path.join(Deno.cwd(), 'package.json')))
+export const LLEMONSTACK_INSTALL_DIR = path.join(
+  path.dirname(new URL(import.meta.url).pathname),
+  '../',
+)
+const packageJson = JSON.parse(
+  Deno.readTextFileSync(path.join(LLEMONSTACK_INSTALL_DIR, 'package.json')),
+)
 export const VERSION = packageJson.version
 
 export const ENVFILE = path.join(Deno.cwd(), '.env')
