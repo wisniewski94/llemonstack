@@ -30,6 +30,10 @@ const main = new Command()
       default: Deno.env.get('LLEMONSTACK_PROJECT_NAME'),
     },
   )
+  // Default action to show help
+  .action(function () {
+    this.showHelp()
+  })
 
 // Initialize the LLemonStack environment
 main
