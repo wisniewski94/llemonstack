@@ -15,7 +15,8 @@ Pre-configured and ready to squeeze. LLemoStack gets you up and running in minut
 
 LLemonStack is currently a pre-release version. It works on macOS, Linux and Windows with WSL 2.
 
-The scripts and API are in rapid development. Check the git history and pull regularly for bug fixes.
+The scripts and API are in rapid development. Check the git history and pull regularly for bug
+fixes.
 
 ## Walkthrough Video
 
@@ -35,7 +36,8 @@ The scripts and API are in rapid development. Check the git history and pull reg
     cp -a .repos/supabase/docker/volumes/functions ./volumes/supabase/functions
     ```
 
-- Mar 14, 2025: BREAKING CHANGE: switched to using supavisor instead of direct postgres db connection
+- Mar 14, 2025: BREAKING CHANGE: switched to using supavisor instead of direct postgres db
+  connection
   - See .env.example for changes to env variables
   - docker-compose.yml files were changed and now require a few new env vars to work
   - Replaced Supabase Analytics server (Logflare) with dummy server
@@ -46,9 +48,8 @@ The scripts and API are in rapid development. Check the git history and pull reg
 
 ## Known Issues
 
-Zep requires a quick workaround fix for a hard coded `public.role_type_num` bug.
-This is only an issue when using the custom service_zep schema created by the
-init script..
+Zep requires a quick workaround fix for a hard coded `public.role_type_num` bug. This is only an
+issue when using the custom service_zep schema created by the init script..
 
 See [examples/zep/README.md](examples/zep/README.md) for details and the quick fix.
 
@@ -59,7 +60,8 @@ See [examples/zep/README.md](examples/zep/README.md) for details and the quick f
 **LLemonStack** installs and runs a fully featured low code AI agent development playground,
 including local LLMs and chat interfaces, from a single command: `deno run start`
 
-Supports running on Linux, Mac, or Windows. Built on a Macbook M2, tested on Linux and Windows with WSL 2.
+Supports running on Linux, Mac, or Windows. Built on a Macbook M2, tested on Linux and Windows with
+WSL 2.
 
 ### Main objectives of 🍋 LLemonStack are
 
@@ -119,7 +121,8 @@ the heavy lifting for you.
 
 ### How To Install the Prerequisites
 
-1. Visit [**Docker/Docker Desktop**](https://www.docker.com/) and download the free Docker Desktop app
+1. Visit [**Docker/Docker Desktop**](https://www.docker.com/) and download the free Docker Desktop
+   app
 
 2. Use the below commands in a terminal to install deno and git
 
@@ -166,8 +169,8 @@ sudo apt-get update && sudo apt-get install git-all
 
 LLemonStack works on Windows with WSL 2. For non-WSL, it hasn't been fully tested.
 
-The best option on Windows is to use Windows Terminal with WSL and run the Linux
-commands above on a Ubuntu or similar terminal.
+The best option on Windows is to use Windows Terminal with WSL and run the Linux commands above on a
+Ubuntu or similar terminal.
 
 If you're not comfortable using the command line to install apps...
 
@@ -198,18 +201,16 @@ cd llemonstack && deno install
 deno run init
 ```
 
-LLemonStack supports multiple projects on the same machine.
-This allows you to experiment with different settings or keep
-client projects separate from personal projects.
+LLemonStack supports multiple projects on the same machine. This allows you to experiment with
+different settings or keep client projects separate from personal projects.
 
-To create multiple projects, simply re-run the `git clone` step
-above in a new directory, then run the `deno run init` script.
+To create multiple projects, simply re-run the `git clone` step above in a new directory, then run
+the `deno run init` script.
 
-To switch projects, `cd` into a different LLemonStack project directory
-and use the commands below. The `.env` file in each project directory
-contains the project settings. The `./volumes` directory contains
-most of the project data. The rest of the data is in docker volumes
-that are isolated per project.
+To switch projects, `cd` into a different LLemonStack project directory and use the commands below.
+The `.env` file in each project directory contains the project settings. The `./volumes` directory
+contains most of the project data. The rest of the data is in docker volumes that are isolated per
+project.
 
 ## Usage
 

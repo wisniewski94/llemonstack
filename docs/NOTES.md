@@ -16,8 +16,8 @@ container logs in Docker Desktop.
 
 **Code:**
 
-- [ ] Create Flowise example templates of Web Scrape QnA configured with pgvector and LiteLLM
-      See https://docs.flowiseai.com/use-cases/web-scrape-qna
+- [ ] Create Flowise example templates of Web Scrape QnA configured with pgvector and LiteLLM See
+      https://docs.flowiseai.com/use-cases/web-scrape-qna
 - [ ] Configure OpenWeb UI to use postgres
 - [ ] Rebuild example n8n templates to use LiteLLM, use env.LITELLM_API_KEY
 
@@ -34,8 +34,7 @@ container logs in Docker Desktop.
 
 - [x] Disable supabase-analytics, it eats memory and CPU & is not needed
 - [x] Move supabase volumes to ./volumes to make backup easier and protect against .repos deletion
-- [x] Add dozzle labels to services to group logging
-      See https://dozzle.dev/guide/container-groups
+- [x] Add dozzle labels to services to group logging See https://dozzle.dev/guide/container-groups
 - [x] Delete ./volumes dir during reset script
 - [x] Disable Logflare in supabase docker; it hammers the disk
       https://www.reddit.com/r/Supabase/comments/1fw2g62/disable_or_adjust_logging_self_hosted/
@@ -78,20 +77,22 @@ container logs in Docker Desktop.
 
 **Someday / low priority:**
 
-- [ ] Remove all container_name from docker-compose.yml to allow for multiple stacks to run at the same time
-- [ ] During init, set a unique base port and then set all exposed (host) ports to an offset.
-      This allows for multiple stacks to run simultaneously
+- [ ] Remove all container_name from docker-compose.yml to allow for multiple stacks to run at the
+      same time
+- [ ] During init, set a unique base port and then set all exposed (host) ports to an offset. This
+      allows for multiple stacks to run simultaneously
 
 - [ ] Use a global .llemonstack directory to manage all projects
 
-  - [ ] Check for project name collisions since the docker volumes will collide
-        if the project name is the same
+  - [ ] Check for project name collisions since the docker volumes will collide if the project name
+        is the same
 
 - [ ] Configure zep to use LiteLLM proxy
 
 - [ ] Refactor scripts with [Repo Prompt](https://repoprompt.com/)?
 
-  - [ ] Implement config files for each service, make it easier to add services without modifying code
+  - [ ] Implement config files for each service, make it easier to add services without modifying
+        code
   - [ ] Split functions into libs
   - [ ] Create standalone exec to run all script commands
 
