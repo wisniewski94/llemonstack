@@ -23,6 +23,9 @@ container logs in Docker Desktop.
 
 - [ ] Publish llemonstack as a npm module to install globally
 
+  - [ ] Create .llemonstack dir in user home and store registry of projects
+    - [ ] Check registry on init to make sure there aren't conflicts with the volumes
+    - [ ] OR move all non bind-mount volumes to bind mount
   - [ ] Refactor to use .llemonstack dir for all config, repos, etc.
   - [x] Register llmn as bin alias for main.ts
   - [x] Create an install script that installs deno and git and checks for docker

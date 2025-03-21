@@ -9,6 +9,7 @@
  * ```
  */
 import { Input, Secret, Select } from '@cliffy/prompt'
+import * as path from 'jsr:@std/path'
 import { loadEnv } from './lib/env.ts'
 import {
   generateJWT,
@@ -30,6 +31,7 @@ import {
   isSupabaseStarted,
   LLEMONSTACK_CONFIG_DIR,
   LLEMONSTACK_CONFIG_FILE,
+  LLEMONSTACK_INSTALL_DIR,
   prepareEnv,
   runCommand,
   setupRepos,
@@ -185,7 +187,7 @@ async function createEnvFile(): Promise<void> {
     throw new Error('Environment file already exists')
   }
   try {
-    await Deno.copyFile('.env.example', ENVFILE)
+    await Deno.copyFile(path.join(LLEMONSTACK_INSTALL_DIR, '.env.example'), ENVFILE)
     // TODO: get .env.example from the LLemonStack install dir, future use
     // const envExamplePath = path.join(LLEMONSTACK_INSTALL_DIR, '.env.example')
     // await Deno.copyFile(envExamplePath, ENVFILE)

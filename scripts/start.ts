@@ -885,7 +885,7 @@ export async function getComposeFile(
     // This parses the actual compose files for the service
     file = await getComposeFileFromService(service)
   }
-  return file
+  return file ? path.join(LLEMONSTACK_INSTALL_DIR, file) : null
 }
 
 export function getBuildFile(
