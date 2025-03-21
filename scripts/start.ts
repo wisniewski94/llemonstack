@@ -1136,36 +1136,6 @@ export async function prepareSupabaseEnv(
       Deno.exit(1)
     }
   }
-
-  // Location of the .env file in the directory of the override docker-compose.yml file.
-  // docker/supabase/
-  // Docker auto loads this .env file to populate environment variables in the supabase docker-compose.yml files.
-  const supabaseEnv = escapePath(
-    path.join('docker', 'supabase', '.env'),
-  )
-  // The config.supabase.env file contains most of the base environment variables
-  // for the supabase docker-compose.yml. The rest are in the root .env
-  const configEnv = path.join('docker', 'supabase', 'config.supabase.env')
-
-  // TODO: get config.supabase.env from the LLemonStack install dir, future use
-  // try {
-  //   configEnv = await getConfigFile(configEnv, { silent: false, create: true })
-  // } catch (error) {
-  //   showError(`Error getting config file: ${configEnv}`, error)
-  //   Deno.exit(1)
-  // }
-
-  // Copy config.supabase.env to docker/supabase/.env,
-  // then append the contents of the root .env file.
-  // The contents of config.supabase.env take precedence over .env.
-  // Env file loaders use the first defined value in an .env file
-  await Deno.copyFile(configEnv, supabaseEnv)
-  const envContent = await Deno.readTextFile(ENVFILE)
-  await Deno.writeTextFile(supabaseEnv, envContent, { append: true })
-
-  // Also copy the .env to supabase repo in case the original supabase docker-compose.yml
-  // is used instead of the custom override docker-compose.yml file.
-  await Deno.copyFile(supabaseEnv, path.join(supabaseRepoDir, 'docker', '.env'))
 }
 
 /**
