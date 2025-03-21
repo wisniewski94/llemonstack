@@ -73,7 +73,7 @@ export async function update(
       await stop(projectName, { all: true })
     }
 
-    // Get the latest code for .repos
+    // Get the latest code for repos
     showAction('Update code repos...')
     await setupRepos({ pull: true })
 

@@ -21,7 +21,7 @@ volumes:
 services:
   studio:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: studio
     container_name: supabase-studio
     labels:
@@ -32,7 +32,7 @@ services:
 
   kong:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: kong
     container_name: supabase-kong
     labels:
@@ -43,11 +43,11 @@ services:
       analytics:
         condition: service_healthy
     volumes:
-      - ../../.repos/supabase/docker/volumes/api/kong.yml:/home/kong/temp.yml:ro,z
+      - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/api/kong.yml:/home/kong/temp.yml:ro,z
 
   auth:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: auth
     container_name: supabase-auth
     labels:
@@ -60,7 +60,7 @@ services:
 
   rest:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: rest
     container_name: supabase-rest
     labels:
@@ -73,7 +73,7 @@ services:
 
   realtime:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: realtime
     container_name: supabase-realtime
     labels:
@@ -87,7 +87,7 @@ services:
 
   storage:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: storage
     labels:
       dev.dozzle.group: Supabase
@@ -103,7 +103,7 @@ services:
 
   imgproxy:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: imgproxy
     labels:
       dev.dozzle.group: Supabase
@@ -112,7 +112,7 @@ services:
 
   meta:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: meta
     labels:
       dev.dozzle.group: Supabase
@@ -124,7 +124,7 @@ services:
 
   functions:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: functions
     container_name: supabase-functions
     labels:
@@ -168,7 +168,7 @@ services:
   # Supabase Logflare
   # analytics:
   #   extends:
-  #     file: ../../.repos/supabase/docker/docker-compose.yml
+  #     file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
   #     service: analytics
   #   ports:
   #     - ${SUPABASE_LOGFLARE_PORT:-4000}:4000
@@ -179,7 +179,7 @@ services:
   # Supabase Postgres - primary database container
   db:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: db
     labels:
       dev.dozzle.group: Supabase
@@ -193,29 +193,29 @@ services:
       # Custom configuration for the database
       - db-config:/etc/postgresql-custom
       # Init and migration scripts; these are copied from the extended db service
-      - ../../.repos/supabase/docker/volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
-      - ../../.repos/supabase/docker/volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
-      - ../../.repos/supabase/docker/volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
-      - ../../.repos/supabase/docker/volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
-      - ../../.repos/supabase/docker/volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
-      - ../../.repos/supabase/docker/volumes/db/logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
-      - ../../.repos/supabase/docker/volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
+      - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/db/realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
+      - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/db/webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
+      - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/db/roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
+      - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
+      - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
+      - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/db/logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
+      - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
 
   vector:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: vector
     labels:
       dev.dozzle.group: Supabase
     volumes:
-      - ../../.repos/supabase/docker/volumes/logs/vector.yml:/etc/vector/vector.yml:ro,z
+      - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/logs/vector.yml:/etc/vector/vector.yml:ro,z
       - ${DOCKER_SOCKET_LOCATION}:/var/run/docker.sock:ro,z
 
   # Supabase Supervisor & Pooler Proxy
   # Exposes postgres port to the host
   supavisor:
     extends:
-      file: ../../.repos/supabase/docker/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml
       service: supavisor
     labels:
       dev.dozzle.group: Supabase
@@ -228,4 +228,4 @@ services:
       analytics:
         condition: service_healthy
     volumes:
-      - ../../.repos/supabase/docker/volumes/pooler/pooler.exs:/etc/pooler/pooler.exs:ro,z
+      - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/pooler/pooler.exs:/etc/pooler/pooler.exs:ro,z

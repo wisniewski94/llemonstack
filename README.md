@@ -477,14 +477,6 @@ To reset supabase, delete the volumes directory, the restart the services.
 ```bash
 # Run the reset script to reset everything to a clean state
 deno run reset
-
-# Or, to only reset supabase...
-deno run stop
-# Delete the entire supabase directory to remove supabase/docker/volumes
-rm -rf .repos/supabase
-# Optionally delete the db_config volume
-docker volume rm llemonstack_db-config
-deno run start
 ```
 
 ### Network Issues

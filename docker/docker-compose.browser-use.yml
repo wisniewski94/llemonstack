@@ -5,7 +5,7 @@ services:
       dev.dozzle.group: Browser Use
     platform: ${TARGETPLATFORM:-linux/amd64}
     extends:
-      file: ../.repos/browser-use-web-ui/docker-compose.yml
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/browser-use-web-ui/docker-compose.yml
       service: browser-use-webui
     environment:
       # BROWSER_USE_* specific environment variables
@@ -25,4 +25,4 @@ services:
       - BROWSER_USE_LOGGING_LEVEL=${BROWSER_USE_LOGGING_LEVEL:-info}
       - ANONYMIZED_TELEMETRY=false
       # See additional configuration in the extended docker compose file
-      # ../.repos/browser-use-web-ui/docker-compose.yml
+      # ${LLEMONSTACK_REPOS_PATH:-.}/browser-use-web-ui/docker-compose.yml

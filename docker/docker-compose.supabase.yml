@@ -10,4 +10,4 @@ include:
 # To use the original supabase docker-compose.yml file, uncomment the below includes
 # and comment out the above include.
 # include:
-#   - ../.repos/supabase/docker/docker-compose.yml
+#   - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/docker-compose.yml

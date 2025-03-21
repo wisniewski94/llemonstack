@@ -3,7 +3,7 @@
  * Reset the stack to a clean state
  *
  * Deletes all docker images, volumes, and networks.
- * Deletes all .repos subfolders.
+ * Deletes all repos subfolders.
  * Delete contents of the shared folder.
  * Optionally runs the update script.
  * Optionally starts the stack.
@@ -138,7 +138,7 @@ export async function reset(
     // Get the latest compose files, skipping any that don't exist
     const composeFiles = filterExistingFiles(ALL_COMPOSE_FILES)
 
-    // Get the latest code for .repos
+    // Get the latest code for repos
     if (composeFiles.length > 0) {
       showAction('\nStopping services and cleaning up docker images...')
       await dockerComposeCleanup(projectName, composeFiles)
@@ -162,7 +162,7 @@ export async function reset(
       showInfo(`> ${COMMANDS.cleanSystemCache}`)
     }
 
-    showAction('\nCleaning up .repos directory...')
+    showAction('\nCleaning up repos directory...')
     await cleanReposDir()
 
     showAction('\nCleaning up shared folder...')

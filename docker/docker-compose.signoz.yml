@@ -104,7 +104,7 @@ services:
         mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
     restart: on-failure
     volumes:
-      - ../.repos/signoz/common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
+      - ${LLEMONSTACK_REPOS_PATH:-.}/signoz/common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
 
   zookeeper-1:
     !!merge <<: *zookeeper-defaults
@@ -130,13 +130,13 @@ services:
     #   - "8123:8123"
     #   - "9181:9181"
     volumes:
-      - ../.repos/signoz/common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
-      - ../.repos/signoz/common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
-      - ../.repos/signoz/common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
-      - ../.repos/signoz/common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
-      - ../.repos/signoz/common/clickhouse/cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
+      - ${LLEMONSTACK_REPOS_PATH:-.}/signoz/common/clickhouse/config.xml:/etc/clickhouse-server/config.xml
+      - ${LLEMONSTACK_REPOS_PATH:-.}/signoz/common/clickhouse/users.xml:/etc/clickhouse-server/users.xml
+      - ${LLEMONSTACK_REPOS_PATH:-.}/signoz/common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
+      - ${LLEMONSTACK_REPOS_PATH:-.}/signoz/common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
+      - ${LLEMONSTACK_REPOS_PATH:-.}/signoz/common/clickhouse/cluster.xml:/etc/clickhouse-server/config.d/cluster.xml
       - clickhouse:/var/lib/clickhouse/
-      # - ../.repos/signoz/common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
+      # - ${LLEMONSTACK_REPOS_PATH:-.}/signoz/common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
 
   alertmanager:
     !!merge <<: *common
@@ -163,8 +163,8 @@ services:
     #   - "3301:8080"     # signoz port
     #   - "6060:6060"     # pprof port
     volumes:
-      - ../.repos/signoz/common/signoz/prometheus.yml:/root/config/prometheus.yml
-      - ../.repos/signoz/common/dashboards:/root/config/dashboards
+      - ${LLEMONSTACK_REPOS_PATH:-.}/signoz/common/signoz/prometheus.yml:/root/config/prometheus.yml
+      - ${LLEMONSTACK_REPOS_PATH:-.}/signoz/common/dashboards:/root/config/dashboards
       - sqlite:/var/lib/signoz/
     environment:
       - ClickHouseUrl=tcp://clickhouse:9000
@@ -196,7 +196,7 @@ services:
     ports:
       - "3301:3301"
     volumes:
-      - ../.repos/signoz/common/signoz/nginx-config.conf:/etc/nginx/conf.d/default.conf
+      - ${LLEMONSTACK_REPOS_PATH:-.}/signoz/common/signoz/nginx-config.conf:/etc/nginx/conf.d/default.conf
 
   otel-collector:
     !!merge <<: *db-depend
@@ -209,7 +209,7 @@ services:
       - --feature-gates=-pkg.translator.prometheus.NormalizeName
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
-      - ../.repos/signoz/common/signoz/otel-collector-opamp-config.yaml:/etc/manager-config.yaml
+      - ${LLEMONSTACK_REPOS_PATH:-.}/signoz/common/signoz/otel-collector-opamp-config.yaml:/etc/manager-config.yaml
     environment:
       - OTEL_RESOURCE_ATTRIBUTES=host.name=signoz-host,os.type=linux
       - LOW_CARDINAL_EXCEPTION_GROUPING=false

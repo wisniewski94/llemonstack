@@ -47,7 +47,7 @@ export const ENVFILE = path.join(Deno.cwd(), '.env')
 export const DEFAULT_PROJECT_NAME = 'llemonstack'
 
 // Directory used to git clone repositories: supabase, zep, etc.
-export const REPO_DIR_BASE = '.repos'
+export const REPO_DIR_BASE = 'repos'
 
 // Directory used to share files between services
 // Added as a volume in docker-compose.yml
@@ -62,7 +62,7 @@ export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config
 export const DEBUG = Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
 
 export const ROOT_DIR = Deno.cwd()
-export const REPO_DIR = escapePath(path.join(ROOT_DIR, REPO_DIR_BASE))
+export const REPO_DIR = escapePath(path.join(LLEMONSTACK_CONFIG_DIR, REPO_DIR_BASE))
 export const SHARED_DIR = escapePath(path.join(ROOT_DIR, SHARED_DIR_BASE))
 export const COMPOSE_IMAGES_CACHE = {} as Record<string, ServiceImage[]>
 
@@ -502,6 +502,7 @@ export function escapePath(file: string): string {
 export function dockerEnv({ volumesDir }: { volumesDir?: string } = {}): Record<string, string> {
   return {
     LLEMONSTACK_VOLUMES_PATH: getVolumesPath(volumesDir),
+    LLEMONSTACK_REPOS_PATH: REPO_DIR,
   }
 }
 
@@ -1061,7 +1062,7 @@ export async function setupRepos({
   all?: boolean
   silent?: boolean
 } = {}): Promise<void> {
-  // Ensure .repos directory exists
+  // Ensure repos directory exists
   try {
     await fs.ensureDir(REPO_DIR)
   } catch (error) {
