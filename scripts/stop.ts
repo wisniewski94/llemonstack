@@ -13,19 +13,17 @@
  */
 
 import {
-  ALL_COMPOSE_FILES,
   ALL_COMPOSE_SERVICES,
-  COMPOSE_FILES,
   type ComposeService,
   DEFAULT_PROJECT_NAME,
-  filterExistingFiles,
   getComposeFile,
-  getProfilesArgs,
+  isEnabled,
   prepareEnv,
   runCommand,
   setupRepos,
   showAction,
   showError,
+  showInfo,
 } from './start.ts'
 
 async function removeAllNetworks(projectName: string): Promise<void> {
@@ -59,45 +57,49 @@ async function removeAllNetworks(projectName: string): Promise<void> {
 
 async function stopServices(
   projectName: string,
-  composeFiles: string[],
+  composeServices: ComposeService[],
   { all = false }: { all?: boolean } = {},
 ): Promise<void> {
-  try {
-    await runCommand('docker', {
-      args: [
-        'compose',
-        '-p',
-        projectName,
-        ...composeFiles.map((file) => ['-f', file]).flat(),
-        ...getProfilesArgs({ all }),
-        'down',
-        '--remove-orphans',
-      ],
-    })
-  } catch (error) {
-    showError('Error during docker compose down', error)
-  }
+  // Stop all services in parallel
+  await Promise.all(composeServices.map(async ([service]) => {
+    await stopService(projectName, service)
+  }))
 
   // Return early if not stopping all services
   if (!all) return
 
   // Clean up all containers for the project
   // This is necessary when .env settings are changed and the above docker compose
-  // command did not catch all running containers.
+  // commands did not catch all running containers.
   try {
     // Get containers separated by newlines
     const containers = (await runCommand(
-      `docker ps -aq --filter label=com.docker.compose.project=${projectName}`,
-      { captureOutput: true },
-    )).toList()
+      'docker',
+      {
+        args: [
+          'ps',
+          '-a',
+          '--format',
+          '{"ID":"{{.ID}}","Name":"{{.Names}}"}',
+          '--filter',
+          `label=com.docker.compose.project=${projectName}`,
+        ],
+        captureOutput: true,
+        silent: true,
+      },
+    )).toJsonList()
     if (containers.length > 0) {
-      await runCommand(`docker rm -f ${containers.join(' ')}`, {
+      showAction(`Removing ${containers.length} containers that didn't stop properly...`)
+      showInfo(`Containers:\n${containers.map((c) => `- ${c.Name}`).join('\n')}`)
+      await runCommand('docker', {
+        args: ['rm', '-f', ...containers.map((c) => c.ID as string)],
         silent: true,
       })
     }
   } catch (error) {
     showError('Error removing containers', error)
   }
+  showAction('All services stopped')
 }
 
 /**
@@ -119,16 +121,26 @@ export async function stopService(
     if (!composeFile) {
       throw new Error(`No compose file found for service: ${service}`)
     }
-    await runCommand('docker', {
+    showAction(`Stopping ${service}...`)
+    const result = await runCommand('docker', {
       args: [
         'compose',
+        '--ansi',
+        'never',
         '-p',
         projectName,
         '-f',
         composeFile,
         'down',
       ],
+      silent: true,
+      captureOutput: true,
     })
+    if (result.success) {
+      showAction(`${service} stopped`)
+    } else {
+      showError(`Error stopping ${service}`, result.stderr)
+    }
   } catch (error) {
     showError(`Error stopping ${service}`, error)
   }
@@ -147,7 +159,9 @@ export async function stop(
       showError(`Unknown service: ${service}`)
       showAction('\nAvailable services:')
       ALL_COMPOSE_SERVICES.forEach(([service]) => {
-        console.log(`- ${service}`)
+        if (isEnabled(service)) {
+          showInfo(`- ${service}`)
+        }
       })
       Deno.exit(1)
     }
@@ -171,11 +185,12 @@ export async function stop(
   }
 
   if (service) {
-    await stopService(projectName, service, { composeFile: composeService?.[1] })
-  } else if (stopAll) {
-    await stopServices(projectName, filterExistingFiles(ALL_COMPOSE_FILES), { all: true })
+    await stopService(projectName, service)
   } else {
-    await stopServices(projectName, filterExistingFiles(COMPOSE_FILES), { all: false })
+    const services = ALL_COMPOSE_SERVICES.filter(([service]) => {
+      return stopAll || isEnabled(service)
+    })
+    await stopServices(projectName, services, { all: stopAll })
   }
 
   showAction('Cleaning up networks...')

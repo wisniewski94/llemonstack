@@ -43,52 +43,54 @@ export const ENVFILE = path.join(Deno.cwd(), '.env')
 /*******************************************************************************
  * CONFIG
  *******************************************************************************/
+
 // Project name for docker compose
 export const DEFAULT_PROJECT_NAME = 'llemonstack'
-
-// Directory used to git clone repositories: supabase, zep, etc.
-export const REPO_DIR_BASE = 'repos'
-
-// Directory used to share files between services
-// Added as a volume in docker-compose.yml
-export const SHARED_DIR_BASE = 'shared'
-
-export const IMPORT_DIR_BASE = 'import'
-
-export const LLEMONSTACK_CONFIG_DIR = path.join(Deno.cwd(), '.llemonstack')
-export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config.json')
 
 // Enable extra debug logging
 export const DEBUG = Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
 
+// TODO: refactor all config to call getConfig instead of using global vars
+const CONFIG = await getConfig({ autoCreate: true })
+
+// Directory used to git clone repositories: supabase, zep, etc.
+// TODO: remove this and replace with a better sanity check in reset.ts
+export const REPO_DIR_BASE = path.basename(CONFIG.dirs.repos)
+
+export const IMPORT_DIR_BASE = CONFIG.dirs.import
+
 export const ROOT_DIR = Deno.cwd()
-export const REPO_DIR = escapePath(path.join(LLEMONSTACK_CONFIG_DIR, REPO_DIR_BASE))
-export const SHARED_DIR = escapePath(path.join(ROOT_DIR, SHARED_DIR_BASE))
+
+export const LLEMONSTACK_CONFIG_DIR = path.resolve(ROOT_DIR, CONFIG.dirs.config)
+export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config.json')
+
+export const REPO_DIR = escapePath(path.resolve(ROOT_DIR, CONFIG.dirs.repos))
+export const SHARED_DIR = escapePath(path.resolve(ROOT_DIR, CONFIG.dirs.shared))
 export const COMPOSE_IMAGES_CACHE = {} as Record<string, ServiceImage[]>
 
-// All services with a docker-compose.yml file
+// All services with a docker-compose.yaml file
 // Includes services with a custom Dockerfile
 // [service name, compose file, auto run]
 // When auto run is true, the service is started automatically if enabled.
 // When auto run is false, the service needs to be started manually.
 export type ComposeService = [string, string, boolean]
 export const ALL_COMPOSE_SERVICES: ComposeService[] = [
-  ['supabase', path.join('docker', 'docker-compose.supabase.yml'), true],
-  ['n8n', path.join('docker', 'docker-compose.n8n.yml'), true],
-  ['flowise', path.join('docker', 'docker-compose.flowise.yml'), true],
-  ['neo4j', path.join('docker', 'docker-compose.neo4j.yml'), true],
-  ['zep', path.join('docker', 'docker-compose.zep.yml'), true],
-  ['browser-use', path.join('docker', 'docker-compose.browser-use.yml'), false], // Uses a custom start function
-  ['qdrant', path.join('docker', 'docker-compose.qdrant.yml'), true],
-  ['openwebui', path.join('docker', 'docker-compose.openwebui.yml'), true],
-  ['ollama', path.join('docker', 'docker-compose.ollama.yml'), false], // Uses a custom start function
-  ['prometheus', path.join('docker', 'docker-compose.prometheus.yml'), true],
-  ['redis', path.join('docker', 'docker-compose.redis.yml'), true],
-  ['clickhouse', path.join('docker', 'docker-compose.clickhouse.yml'), true],
-  ['minio', path.join('docker', 'docker-compose.minio.yml'), true],
-  ['langfuse', path.join('docker', 'docker-compose.langfuse.yml'), true],
-  ['litellm', path.join('docker', 'docker-compose.litellm.yml'), true],
-  ['dozzle', path.join('docker', 'docker-compose.dozzle.yml'), true],
+  ['supabase', path.join('services', 'supabase', 'docker-compose.yaml'), true],
+  ['n8n', path.join('services', 'n8n', 'docker-compose.yaml'), true],
+  ['flowise', path.join('services', 'flowise', 'docker-compose.yaml'), true],
+  ['neo4j', path.join('services', 'neo4j', 'docker-compose.yaml'), true],
+  ['zep', path.join('services', 'zep', 'docker-compose.yaml'), true],
+  ['browser-use', path.join('services', 'browser-use', 'docker-compose.yaml'), false], // Uses a custom start function
+  ['qdrant', path.join('services', 'qdrant', 'docker-compose.yaml'), true],
+  ['openwebui', path.join('services', 'openwebui', 'docker-compose.yaml'), true],
+  ['ollama', path.join('services', 'ollama', 'docker-compose.yaml'), false], // Uses a custom start function
+  ['prometheus', path.join('services', 'prometheus', 'docker-compose.yaml'), true],
+  ['redis', path.join('services', 'redis', 'docker-compose.yaml'), true],
+  ['clickhouse', path.join('services', 'clickhouse', 'docker-compose.yaml'), true],
+  ['minio', path.join('services', 'minio', 'docker-compose.yaml'), true],
+  ['langfuse', path.join('services', 'langfuse', 'docker-compose.yaml'), true],
+  ['litellm', path.join('services', 'litellm', 'docker-compose.yaml'), true],
+  ['dozzle', path.join('services', 'dozzle', 'docker-compose.yaml'), true],
 ]
 
 // Groups of services, dependencies first
@@ -109,7 +111,7 @@ export const SERVICE_GROUPS: [string, string[]][] = [
 // Docker compose files for services with a custom Dockerfile
 export const COMPOSE_BUILD_FILES = [
   isEnabled('browser-use') && [
-    path.join('docker', 'docker-compose.browser-use.yml'),
+    path.join('services', 'browser-use', 'docker-compose.yaml'),
     {
       // env vars to pass to build
       // browser-use has a special Dockerfile for arm64 / Mac silicon
@@ -188,6 +190,21 @@ const REQUIRED_VOLUMES = [
  * TYPES
  *******************************************************************************/
 
+export interface Config {
+  initialized: string // ISO 8601 timestamp if initialized, otherwise empty
+  version: string // Version of LLemonStack used to create the config
+  projectName: string
+  envFile: string
+  timestamp?: string // ISO 8601 timestamp from 0.1.0 config
+  dirs: {
+    config: string // .llemonstack
+    repos: string
+    import: string
+    shared: string
+    volumes: string
+  }
+}
+
 type EnvVars = Record<string, string | boolean | number>
 
 // Custom error class for runCommand
@@ -258,6 +275,12 @@ export class RunCommandOutput {
   }
   toList(): string[] {
     return this._output.stdout.split('\n').filter(Boolean).map((line) => line.trim())
+  }
+  toJsonList(): Array<Record<string, unknown>> {
+    const output = this._output.stdout.trim()
+    return !output ? [] : output.split('\n').map((output) => JSON.parse(output)).filter(
+      Boolean,
+    )
   }
 }
 
@@ -502,7 +525,10 @@ export function escapePath(file: string): string {
 export function dockerEnv({ volumesDir }: { volumesDir?: string } = {}): Record<string, string> {
   return {
     LLEMONSTACK_VOLUMES_PATH: getVolumesPath(volumesDir),
+    LLEMONSTACK_SHARED_VOLUME_PATH: path.resolve(ROOT_DIR, CONFIG.dirs.shared),
+    LLEMONSTACK_IMPORT_VOLUME_PATH: path.resolve(ROOT_DIR, CONFIG.dirs.import),
     LLEMONSTACK_REPOS_PATH: REPO_DIR,
+    LLEMONSTACK_NETWORK_NAME: `${Deno.env.get('LLEMONSTACK_PROJECT_NAME')}_network`,
   }
 }
 
@@ -512,7 +538,7 @@ export function dockerEnv({ volumesDir }: { volumesDir?: string } = {}): Record<
  * @returns The absolute path to the volumes directory
  */
 export function getVolumesPath(volumesDir?: string) {
-  // Convert LLEMONSTACK_VOLUMES_DIR into an absolute path to use in docker-compose.yml files
+  // Convert LLEMONSTACK_VOLUMES_DIR into an absolute path to use in docker-compose.yaml files
   const volumes_dir = volumesDir || Deno.env.get('LLEMONSTACK_VOLUMES_DIR') || './volumes'
   return path.resolve(ROOT_DIR, volumes_dir)
 }
@@ -538,7 +564,8 @@ export async function runCommand(
     silent = false
   }
 
-  const stdout = captureOutput ? 'piped' : 'inherit'
+  // If silent is true, pipe output so streamStdout receives output below
+  const stdout = captureOutput ? 'piped' : silent ? 'piped' : 'inherit'
   const stderr = stdout
 
   // Auto load env from .env file
@@ -596,7 +623,6 @@ export async function runCommand(
     stdout,
     stderr,
     env: cmdEnv,
-    // cwd,
   })
 
   // Spawn the command
@@ -630,9 +656,8 @@ export async function runCommand(
   const streamStdout = async () => {
     for await (const chunk of process.stdout) {
       const text = decoder.decode(chunk)
-      if (captureOutput) {
-        stdoutCollector += text
-      } else {
+      stdoutCollector += text
+      if (!silent) {
         // Stream to console in real-time
         Deno.stdout.writeSync(chunk)
       }
@@ -643,9 +668,8 @@ export async function runCommand(
   const streamStderr = async () => {
     for await (const chunk of process.stderr) {
       const text = decoder.decode(chunk)
-      if (captureOutput) {
-        stderrCollector += text
-      } else {
+      stderrCollector += text
+      if (!silent) {
         // Stream to console in real-time
         Deno.stderr.writeSync(chunk)
       }
@@ -876,7 +900,7 @@ export async function getComposeFile(
   let file: string | null
   // If no service is provided, use the first "default" compose file
   if (!service) {
-    file = ALL_COMPOSE_FILES[0] // docker-compose.yml
+    file = ALL_COMPOSE_FILES[0] // docker-compose.yaml
   } else {
     // Try to find the service in the compose file name
     file = ALL_COMPOSE_FILES.find((file) => file.includes(service)) || null
@@ -931,7 +955,7 @@ export async function buildImage(
 export function filterExistingFiles(files: string[]): string[] {
   return files.filter((file) => {
     const exists = fs.existsSync(file)
-    if (!fs.existsSync(file)) {
+    if (!exists) {
       showInfo(`Skipping non-existent file: ${file}`)
     }
     return exists
@@ -1084,37 +1108,120 @@ export async function setupRepos({
   !silent && showInfo(`${all ? 'All repositories' : 'Repositories'} are ready`)
 }
 
-/**
- * Get a config file from the current directory .llemonstack/config
- *
- * If create is true, missing config file will be copied from LLEMONSTACK_INSTALL_DIR
- * @param file - The file to get
- * @param silent - Whether to show messages
- * @param create - Whether to create the file if it doesn't exist, creates from template in LLEMONSTACK_INSTALL_DIR
- * @returns The path to the config file
- */
-export async function getConfigFile(
-  filePath: string,
-  { silent = false, create = true }: { silent?: boolean; create?: boolean } = {},
-): Promise<string> {
-  const configFile = path.join(LLEMONSTACK_CONFIG_DIR, filePath)
+export async function getConfig(
+  {
+    projectName = DEFAULT_PROJECT_NAME || 'llemonstack',
+    autoCreate = false,
+    silent = false,
+    version = VERSION,
+    configFile = '',
+    configDir = '',
+  }: {
+    projectName?: string
+    autoCreate?: boolean
+    silent?: boolean
+    version?: string
+    configFile?: string
+    configDir?: string
+  } = {},
+): Promise<Config> {
+  if (DEBUG) {
+    silent = false
+  }
+  if (!configDir) {
+    configDir = configDir || ('LLEMONSTACK_CONFIG_DIR' in globalThis && LLEMONSTACK_CONFIG_DIR)
+      ? LLEMONSTACK_CONFIG_DIR
+      : '.llemonstack'
+  }
+  if (!configFile) {
+    configFile = path.join(configDir, 'config.json')
+  }
+
+  let config: Config
   if (!fs.existsSync(configFile)) {
-    if (create) {
-      const templateFile = path.join(LLEMONSTACK_INSTALL_DIR, filePath)
-      !silent &&
-        showInfo(`Config file not found, attempting to create from template: ${templateFile}`)
-      if (!fs.existsSync(templateFile)) {
-        throw new Error(`Config template file not found: ${templateFile}`)
+    if (autoCreate) {
+      try {
+        config = await getConfigTemplate(version, { silent })
+      } catch (error) {
+        showError(`Unable to find config template for version: ${version}`, error)
+        showUserAction(
+          `Please update LLemonStack and try again, or create a custom config file here: ${configFile}`,
+        )
+        Deno.exit(1)
       }
-      await fs.ensureDir(path.dirname(configFile))
-      await Deno.copyFile(templateFile, configFile)
-      !silent && showInfo(`Config file created from template: ${configFile}`)
+      config.projectName = projectName
+      config.initialized = ''
+      await saveConfigFile(config)
     } else {
       throw new Error(`Config file not found: ${configFile}`)
     }
-  } else {
-    !silent && showInfo(`Config file found: ${configFile}`)
   }
+  config = JSON.parse(await Deno.readTextFile(configFile)) as Config
+
+  // Migrate from 0.1.0 timestamp
+  if (!config.initialized && config.timestamp) {
+    config.initialized = config.timestamp
+    delete config.timestamp
+    await saveConfigFile(config)
+  }
+
+  // Ensure all required dirs are present
+  if (
+    !config?.dirs?.config || !config?.dirs?.repos || !config?.dirs?.import ||
+    !config?.dirs?.shared || !config?.dirs?.volumes
+  ) {
+    const template = await getConfigTemplate(config.version, { silent })
+    config.dirs = {
+      ...template.dirs,
+      ...config.dirs,
+    }
+    await saveConfigFile(config)
+  }
+
+  return config
+}
+
+async function getConfigTemplate(
+  version: string,
+  { silent = false }: { silent?: boolean } = {},
+): Promise<Config> {
+  if (!fs.existsSync(LLEMONSTACK_INSTALL_DIR)) {
+    throw new Error(`LLemonStack install dir not found: ${LLEMONSTACK_INSTALL_DIR}`)
+  }
+  const _getFile = (version: string): string | false => {
+    const file = path.join(LLEMONSTACK_INSTALL_DIR, 'config', `config.${version}.json`)
+    return fs.existsSync(file) ? file : false
+  }
+  let file = await _getFile(version)
+  if (!file) {
+    file = await _getFile(VERSION)
+    !silent && showWarning(`Unable to find config template for version: ${version}: ${file}`)
+  }
+  if (!file) {
+    throw new Error(`Config template file not found: ${file}`)
+  }
+  const config = JSON.parse(await Deno.readTextFile(file)) as Config
+  return config
+}
+
+export async function saveConfigFile(
+  config: Config,
+  { configFile, configDir }: { configFile?: string; configDir?: string } = {},
+): Promise<string> {
+  if (!configFile) {
+    if (!configDir) {
+      configDir = configDir || ('LLEMONSTACK_CONFIG_DIR' in globalThis && LLEMONSTACK_CONFIG_DIR)
+        ? LLEMONSTACK_CONFIG_DIR
+        : '.llemonstack'
+    }
+    await fs.ensureDir(configDir)
+    configFile = path.join(configDir, 'config.json')
+  }
+  await fs.ensureDir(path.dirname(configFile))
+  await Deno.writeTextFile(
+    configFile,
+    JSON.stringify(config, null, 2),
+  )
   return configFile
 }
 
@@ -1125,7 +1232,7 @@ export async function prepareSupabaseEnv(
   { silent = false }: { silent?: boolean } = {},
 ): Promise<void> {
   // Check if the supabase repo directory exists
-  // It contains the root docker-compose.yml file to start supabase services
+  // It contains the root docker-compose.yaml file to start supabase services
   const supabaseRepoDir = getRepoPath('supabase')
   if (!fs.existsSync(supabaseRepoDir)) {
     // Try to fix the issue by cloning all the repos
@@ -1140,7 +1247,7 @@ export async function prepareSupabaseEnv(
 }
 
 /**
- * Create volumes dirs required by docker-compose.yml files
+ * Create volumes dirs required by docker-compose.yaml files
  *
  * Uses LLEMONSTACK_VOLUMES_DIR env var to determine the path to the
  * base volumes directory.
@@ -1219,10 +1326,10 @@ export async function prepareEnv({ silent = false }: { silent?: boolean } = {}):
     Deno.exit(1)
   }
 
-  // Prepare the custom supabase .env file needed for the supabase docker-compose.yml file
+  // Prepare the custom supabase .env file needed for the supabase docker-compose.yaml file
   await prepareSupabaseEnv({ silent })
 
-  // Create volumes dirs required by docker-compose.yml files
+  // Create volumes dirs required by docker-compose.yaml files
   await createRequiredVolumes({ silent })
 
   !silent && showInfo('✔️ Supabase environment successfully setup')
@@ -1261,7 +1368,10 @@ async function startBrowserUse(projectName: string): Promise<void> {
   if (!buildFile) {
     throw new Error('Browser-use build file not found')
   }
-  const composeFile = buildFile[0]
+  const composeFile = await getComposeFile('browser-use')
+  if (!composeFile) {
+    throw new Error('Browser-use compose file not found')
+  }
   const imageName = `${projectName}-browser-use-webui`
   const envVars = buildFile[1] as Record<string, string>
 
@@ -1310,11 +1420,37 @@ export async function isSupabaseStarted(projectName: string): Promise<boolean> {
   return (result.includes('supabase')) as boolean
 }
 
+export async function prepareNetwork(): Promise<void> {
+  const network = dockerEnv().LLEMONSTACK_NETWORK_NAME
+  const result = await runCommand('docker', {
+    args: ['network', 'ls'],
+    captureOutput: true,
+    silent: true,
+  })
+  if (!result.toString().includes(network)) {
+    await runCommand('docker', {
+      args: ['network', 'create', network],
+      silent: true,
+    })
+    DEBUG && showDebug(`Created network: ${network}`)
+  } else {
+    DEBUG && showDebug(`Network already exists: ${network}`)
+  }
+}
+
 export async function startService(
   projectName: string,
   service: string,
-  { envVars = {}, profiles }: { envVars?: EnvVars; profiles?: string[] } = {},
+  { envVars = {}, profiles, createNetwork = true }: {
+    envVars?: EnvVars
+    profiles?: string[]
+    createNetwork?: boolean
+  } = {},
 ) {
+  if (createNetwork) {
+    await prepareNetwork()
+  }
+
   const composeFile = await getComposeFile(service)
   if (!composeFile) {
     throw new Error(`Docker compose file not found for ${service}: ${composeFile}`)
@@ -1322,6 +1458,8 @@ export async function startService(
   await runCommand('docker', {
     args: [
       'compose',
+      '--ansi',
+      'never',
       '-p',
       projectName,
       ...getProfilesArgs({ profiles }),
@@ -1334,7 +1472,7 @@ export async function startService(
       'COMPOSE_IGNORE_ORPHANS': true,
       ...envVars,
     },
-    silent: true,
+    silent: false,
   })
 }
 
@@ -1351,34 +1489,24 @@ export async function startServices(
   services: string[],
   { envVars = {} }: { envVars?: EnvVars } = {},
 ) {
-  const composeFiles = await Promise.all(services.map(async (service) => {
-    const composeFile = await getComposeFile(service)
-    if (!composeFile) {
-      throw new Error(`Docker compose file not found for ${service}: ${composeFile}`)
+  // Create the network if it doesn't exist
+  await prepareNetwork()
+
+  // Start all services in parallel
+  await Promise.all(services.map(async (service) => {
+    try {
+      await startService(projectName, service, { envVars, createNetwork: false })
+    } catch (error) {
+      showError(`Failed to start service ${service}:`, error)
+      throw error
     }
-    return composeFile
   }))
-  await runCommand('docker', {
-    args: [
-      'compose',
-      '-p',
-      projectName,
-      ...composeFiles.map((file) => ['-f', file]).flat(),
-      'up',
-      '-d',
-    ].filter(Boolean),
-    env: {
-      'COMPOSE_IGNORE_ORPHANS': true,
-      ...envVars,
-    },
-    silent: true,
-  })
 }
 
 export async function isInitialized(): Promise<boolean> {
   try {
-    await Deno.stat(LLEMONSTACK_CONFIG_FILE)
-    return true
+    const config = await getConfig()
+    return !!config.initialized.trim()
   } catch (_error) {
     return false
   }

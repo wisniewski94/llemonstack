@@ -101,13 +101,13 @@ const {
   context,
   SpanStatusCode,
   SpanKind,
-} = require('@opentelemetry/api')
-const flat = require('flat')
-const tracer = trace.getTracer('n8n-instrumentation', '1.0.0')
+} = require("@opentelemetry/api")
+const flat = require("flat")
+const tracer = trace.getTracer("n8n-instrumentation", "1.0.0")
 
 function setupN8nOpenTelemetry() {
   try {
-    const { WorkflowExecute } = require('n8n-core')
+    const { WorkflowExecute } = require("n8n-core")
 
     /**
      * Patch the workflow execution to wrap the entire run in a workflow-level span.
@@ -119,19 +119,19 @@ function setupN8nOpenTelemetry() {
     /** @param {import('n8n-workflow').Workflow} workflow */
     WorkflowExecute.prototype.processRunExecutionData = function (workflow) {
       const wfData = workflow || {}
-      const workflowId = wfData?.id ?? ''
-      const workflowName = wfData?.name ?? ''
+      const workflowId = wfData?.id ?? ""
+      const workflowName = wfData?.name ?? ""
 
       const workflowAttributes = {
-        'n8n.workflow.id': workflowId,
-        'n8n.workflow.name': workflowName,
+        "n8n.workflow.id": workflowId,
+        "n8n.workflow.name": workflowName,
         ...flat(wfData?.settings ?? {}, {
-          delimiter: '.',
+          delimiter: ".",
           transformKey: (key) => `n8n.workflow.settings.${key}`,
         }),
       }
 
-      const span = tracer.startSpan('n8n.workflow.execute', {
+      const span = tracer.startSpan("n8n.workflow.execute", {
         attributes: workflowAttributes,
         kind: SpanKind.INTERNAL,
       })
@@ -159,7 +159,7 @@ function setupN8nOpenTelemetry() {
                 code: SpanStatusCode.ERROR,
                 message: String(error.message || error),
               })
-            },
+            }
           )
           .finally(() => {
             span.end()
@@ -193,39 +193,39 @@ function setupN8nOpenTelemetry() {
       runIndex,
       additionalData,
       mode,
-      abortSignal,
+      abortSignal
     ) {
       // Safeguard against undefined this context
       if (!this) {
-        console.warn('WorkflowExecute context is undefined')
+        console.warn("WorkflowExecute context is undefined")
         return originalRunNode.apply(this, arguments)
       }
 
-      const executionId = additionalData?.executionId ?? 'unknown'
-      const userId = additionalData?.userId ?? 'unknown'
+      const executionId = additionalData?.executionId ?? "unknown"
+      const userId = additionalData?.userId ?? "unknown"
 
-      const node = executionData?.node ?? 'unknown'
-      let credInfo = 'none'
-      if (node?.credentials && typeof node.credentials === 'object') {
+      const node = executionData?.node ?? "unknown"
+      let credInfo = "none"
+      if (node?.credentials && typeof node.credentials === "object") {
         const credTypes = Object.keys(node.credentials)
         if (credTypes.length) {
           credInfo = credTypes
             .map((type) => {
               const cred = node.credentials?.[type]
-              return cred && typeof cred === 'object'
-                ? cred.name ?? `${type} (id:${cred?.id ?? 'unknown'})`
+              return cred && typeof cred === "object"
+                ? cred.name ?? `${type} (id:${cred?.id ?? "unknown"})`
                 : type
             })
-            .join(', ')
+            .join(", ")
         }
       }
 
       const nodeAttributes = {
-        'n8n.workflow.id': workflow?.id ?? 'unknown',
-        'n8n.execution.id': executionId,
+        "n8n.workflow.id": workflow?.id ?? "unknown",
+        "n8n.execution.id": executionId,
       }
 
-      const flattenedNode = flat(node ?? {}, { delimiter: '.' })
+      const flattenedNode = flat(node ?? {}, { delimiter: "." })
       for (const [key, value] of Object.entries(flattenedNode)) {
         nodeAttributes[`n8n.node.${key}`] = value
       }
@@ -248,11 +248,11 @@ function setupN8nOpenTelemetry() {
               const outputData = result?.data?.[runIndex]
               const finalJson = outputData?.map((item) => item.json)
               nodeSpan.setAttribute(
-                'n8n.node.output_json',
-                JSON.stringify(finalJson),
+                "n8n.node.output_json",
+                JSON.stringify(finalJson)
               )
             } catch (error) {
-              console.warn('Failed to set node output attributes: ', error)
+              console.warn("Failed to set node output attributes: ", error)
             }
             return result
           } catch (error) {
@@ -261,16 +261,16 @@ function setupN8nOpenTelemetry() {
               code: SpanStatusCode.ERROR,
               message: String(error.message || error),
             })
-            nodeSpan.setAttribute('n8n.node.status', 'error')
+            nodeSpan.setAttribute("n8n.node.status", "error")
             throw error
           } finally {
             nodeSpan.end()
           }
-        },
+        }
       )
     }
   } catch (e) {
-    console.error('Failed to set up n8n OpenTelemetry instrumentation:', e)
+    console.error("Failed to set up n8n OpenTelemetry instrumentation:", e)
   }
 }
 
@@ -279,42 +279,42 @@ module.exports = setupN8nOpenTelemetry
 
 ```javascript
 // tracing.js
-'use strict'
+"use strict"
 
 // Enable proper async context propagation globally.
 const {
   AsyncHooksContextManager,
-} = require('@opentelemetry/context-async-hooks')
-const { context } = require('@opentelemetry/api')
+} = require("@opentelemetry/context-async-hooks")
+const { context } = require("@opentelemetry/api")
 const contextManager = new AsyncHooksContextManager()
 context.setGlobalContextManager(contextManager.enable())
 
-const opentelemetry = require('@opentelemetry/sdk-node')
-const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http')
-const { OTLPLogExporter } = require('@opentelemetry/exporter-logs-otlp-http')
+const opentelemetry = require("@opentelemetry/sdk-node")
+const { OTLPTraceExporter } = require("@opentelemetry/exporter-trace-otlp-http")
+const { OTLPLogExporter } = require("@opentelemetry/exporter-logs-otlp-http")
 const {
   getNodeAutoInstrumentations,
-} = require('@opentelemetry/auto-instrumentations-node')
-const { registerInstrumentations } = require('@opentelemetry/instrumentation')
-const { Resource } = require('@opentelemetry/resources')
+} = require("@opentelemetry/auto-instrumentations-node")
+const { registerInstrumentations } = require("@opentelemetry/instrumentation")
+const { Resource } = require("@opentelemetry/resources")
 const {
   SemanticResourceAttributes,
-} = require('@opentelemetry/semantic-conventions')
-const setupN8nOpenTelemetry = require('./n8n-otel-instrumentation')
-const winston = require('winston')
+} = require("@opentelemetry/semantic-conventions")
+const setupN8nOpenTelemetry = require("./n8n-otel-instrumentation")
+const winston = require("winston")
 
 const logger = winston.createLogger({
-  level: 'info',
+  level: "info",
   format: winston.format.json(),
   transports: [new winston.transports.Console()],
 })
 
 const autoInstrumentations = getNodeAutoInstrumentations({
-  '@opentelemetry/instrumentation-dns': { enabled: false },
-  '@opentelemetry/instrumentation-net': { enabled: false },
-  '@opentelemetry/instrumentation-tls': { enabled: false },
-  '@opentelemetry/instrumentation-fs': { enabled: false },
-  '@opentelemetry/instrumentation-pg': {
+  "@opentelemetry/instrumentation-dns": { enabled: false },
+  "@opentelemetry/instrumentation-net": { enabled: false },
+  "@opentelemetry/instrumentation-tls": { enabled: false },
+  "@opentelemetry/instrumentation-fs": { enabled: false },
+  "@opentelemetry/instrumentation-pg": {
     enhancedDatabaseReporting: true,
   },
 })
@@ -330,17 +330,18 @@ const sdk = new opentelemetry.NodeSDK({
     new opentelemetry.logs.SimpleLogRecordProcessor(new OTLPLogExporter()),
   ],
   resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || 'n8n',
+    [SemanticResourceAttributes.SERVICE_NAME]:
+      process.env.OTEL_SERVICE_NAME || "n8n",
   }),
   traceExporter: new OTLPTraceExporter({
     headers: {
-      'x-honeycomb-team': process.env.HONEYCOMB_API_KEY,
+      "x-honeycomb-team": process.env.HONEYCOMB_API_KEY,
     },
   }),
 })
 
-process.on('uncaughtException', async (err) => {
-  logger.error('Uncaught Exception', { error: err })
+process.on("uncaughtException", async (err) => {
+  logger.error("Uncaught Exception", { error: err })
   const span = opentelemetry.trace.getActiveSpan()
   if (span) {
     span.recordException(err)
@@ -349,13 +350,13 @@ process.on('uncaughtException', async (err) => {
   try {
     await sdk.forceFlush()
   } catch (flushErr) {
-    logger.error('Error flushing telemetry data', { error: flushErr })
+    logger.error("Error flushing telemetry data", { error: flushErr })
   }
   process.exit(1)
 })
 
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Promise Rejection', { error: reason })
+process.on("unhandledRejection", (reason, promise) => {
+  logger.error("Unhandled Promise Rejection", { error: reason })
 })
 
 sdk.start()
@@ -366,8 +367,9 @@ sdk.start()
 From
 [this n8n community forum post](https://community.n8n.io/t/swap-smith-langchain-for-langfuse/47748/7).
 
-This example shows how to use Langfuse in the LangChain Code node. Langfuse is used in the example
-code to send traces and fetch the prompt from Langfuse's prompt registry.
+This example shows how to use Langfuse in the LangChain Code node. Langfuse is
+used in the example code to send traces and fetch the prompt from Langfuse's
+prompt registry.
 
 ```bash
 FROM n8nio/n8n:1.53.2
@@ -378,7 +380,7 @@ RUN npm install -g \
 USER node
 ```
 
-Then set these env vars in the `docker-compose.n8n.yml` file.
+Then set these env vars in the `services/n8n/docker-compose.yaml` file.
 
 ```yaml
 environment:
@@ -391,12 +393,12 @@ environment:
 
 ```javascript
 // Example LangChain Code Node
-const { PromptTemplate } = require('@langchain/core/prompts')
-const { CallbackHandler } = require('langfuse-langchain')
-const { Langfuse } = require('langfuse')
+const { PromptTemplate } = require("@langchain/core/prompts")
+const { CallbackHandler } = require("langfuse-langchain")
+const { Langfuse } = require("langfuse")
 
 // ID of the prompt in Langfuse prompt registry
-const prompt_id = 'test-1'
+const prompt_id = "test-1"
 
 // Langfuse configuration
 const langfuseParams = {
@@ -418,11 +420,11 @@ async function executeWithLangfuse() {
   const prompt = await langfuse.getPrompt(prompt_id)
 
   const promptTemplate = PromptTemplate.fromTemplate(
-    prompt.getLangchainPrompt(),
+    prompt.getLangchainPrompt()
   )
 
   // Get the language model from n8n input
-  const llm = await this.getInputConnectionData('ai_languageModel', 0)
+  const llm = await this.getInputConnectionData("ai_languageModel", 0)
 
   // Create the chain using pipe
   const chain = promptTemplate.pipe(llm)
@@ -430,7 +432,7 @@ async function executeWithLangfuse() {
   // Invoke the chain with Langfuse handler
   const output = await chain.invoke(
     { topic: topic },
-    { callbacks: [langfuseHandler] }, // Enable Langfuse traces
+    { callbacks: [langfuseHandler] } // Enable Langfuse traces
   )
 
   return [{ json: { output } }]

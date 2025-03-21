@@ -120,7 +120,7 @@ main
     }
     if (!options.skipStart) {
       showAction('Starting the stack to import data...')
-      await start(options.project || DEFAULT_PROJECT_NAME)
+      await start(options.project || DEFAULT_PROJECT_NAME, { skipOutput: true })
     }
     for (const svc of services) {
       const service = svc[0]
@@ -137,7 +137,7 @@ main
 const exportServices = new EnumType(['n8n'])
 main
   .command('export')
-  .description('Export data to ./export dir for supported services: n8n')
+  .description('Export data to ./shared dir for supported services: n8n')
   .type('service', exportServices)
   .arguments('[...service:service[]]')
   .action(async (options, ...services) => {
@@ -147,7 +147,7 @@ main
     }
     for (const svc of services) {
       const service = svc[0]
-      const { runExport } = await import(`./scripts/${service}_import.ts`)
+      const { runExport } = await import(`./scripts/${service}_export.ts`)
       await runExport(options.project || DEFAULT_PROJECT_NAME)
     }
   })

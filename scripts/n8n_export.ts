@@ -128,10 +128,10 @@ async function runExportCommands(projectName: string): Promise<void> {
   }
 }
 export async function runExport(projectName: string): Promise<void> {
-  showAction(`Preparing export dirs in ./shared folder...`)
+  showAction(`Preparing export folders in ./shared...`)
   const dirs = await prepareBackupDir()
   showInfo(`Export dirs:\n  ${dirs.map((d) => d[1]).join('\n  ')}`)
-  showAction(`Exporting...`)
+  showAction(`Exporting n8n workflows and credentials...`)
   await runExportCommands(projectName)
   showInfo(`Export complete`)
 }

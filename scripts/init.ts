@@ -160,8 +160,7 @@ async function createConfigFile(): Promise<void> {
   try {
     // Create the config file with initial configuration
     const config = {
-      initialized: true,
-      timestamp: new Date().toISOString(),
+      initialized: new Date().toISOString(),
       version: VERSION,
     }
     await Deno.writeTextFile(

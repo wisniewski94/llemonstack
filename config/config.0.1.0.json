@@ -1,0 +1,13 @@
+{
+  "initialized": "2025-00-00T00:00:00.000Z",
+  "version": "0.1.0",
+  "projectName": "${LLEMONSTACK_PROJECT_NAME}",
+  "envFile": ".env",
+  "dirs": {
+    "config": ".llemonstack",
+    "repos": ".llemonstack/repos",
+    "import": "import",
+    "shared": "shared",
+    "volumes": "volumes"
+  }
+}

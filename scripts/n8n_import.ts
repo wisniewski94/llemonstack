@@ -24,6 +24,8 @@ import {
   IMPORT_DIR_BASE,
   loadEnv,
   prepareEnv,
+  RunCommandOutput,
+  showAction,
   showError,
   showInfo,
   showWarning,
@@ -133,23 +135,46 @@ async function importToN8n(
     // Replace all ${var} template in credentials import folder with env vars
     await prepareCredentialsImport()
 
+    const getNumImported = (results: RunCommandOutput) => {
+      const matches = results.stdout.match(/Importing (\d+) /)
+      return matches ? parseInt(matches[1]) : 0
+    }
+
+    let results: RunCommandOutput
+
     // Import credentials from import/n8n/credentials
-    await runContainerCommand(projectName, 'n8n', 'n8n', {
+    results = await runContainerCommand(projectName, 'n8n', 'n8n', {
       args: [
         'import:credentials',
         '--separate',
         '--input=/import/credentials',
       ],
+      silent: true,
+      captureOutput: true,
     })
+    if (!results.success) {
+      showError('Error importing credentials', results.stderr)
+    } else {
+      showAction(`Imported ${getNumImported(results)} credentials`)
+      showInfo(results.stdout)
+    }
 
     // Import workflows from import/n8n/workflows
-    await runContainerCommand(projectName, 'n8n', 'n8n', {
+    results = await runContainerCommand(projectName, 'n8n', 'n8n', {
       args: [
         'import:workflow',
         '--separate',
         '--input=/import/workflows',
       ],
+      silent: true,
+      captureOutput: true,
     })
+    if (!results.success) {
+      showError('Error importing workflows', results.stderr)
+    } else {
+      showAction(`Imported ${getNumImported(results)} workflows`)
+      showInfo(results.stdout)
+    }
 
     // TODO: archive BEFORE the import to capture the state before
     // env vars are replaced. Then delete the converted files after import.
