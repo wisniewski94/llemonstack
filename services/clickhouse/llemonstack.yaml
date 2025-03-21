@@ -1,0 +1,3 @@
+service: clickhouse
+
+compose_file: docker-compose.yaml

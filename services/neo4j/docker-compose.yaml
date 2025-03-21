@@ -1,0 +1,38 @@
+# Neo4j
+#
+# Graph database.
+# Used by Zep.
+#
+# https://github.com/neo4j/neo4j
+
+networks:
+  default:
+    name: ${LLEMONSTACK_NETWORK_NAME}
+    external: true
+
+volumes:
+  neo4j_data:
+    driver: local
+  neo4j_logs:
+    driver: local
+
+services:
+  neo4j:
+    image: neo4j:5
+    container_name: neo4j
+    labels:
+      dev.dozzle.group: Data Stores
+    healthcheck:
+      test: wget http://localhost:7687 || exit 1
+      interval: 1s
+      timeout: 10s
+      retries: 20
+      start_period: 3s
+    ports:
+      - "7474:7474" # HTTP
+      - "7687:7687" # Bolt
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    environment:
+      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}

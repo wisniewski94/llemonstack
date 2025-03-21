@@ -1,0 +1,113 @@
+# Zep
+#
+# Zep is a memory layer for AI agents. It can be used as a memory store for
+# n8n workflows.
+#
+# As of March 2025, zepai/zep:latest (1.0.2) is not compatible with n8n.
+# This is due to the zep-js package which is a dependency of langchain inside of n8n.
+# Once the zep-js package is updated, n8n will work again. In the meantime,
+# either downgrade zep to 0.27.2 below or use the Cloud version of Zep in n8n.
+#
+# See https://github.com/n8n-io/n8n/issues/11120
+#
+# To check the version of zep-js, run the following in the n8n container:
+#
+# ```
+# # Run in n8n container
+# jq -r '.version' /usr/local/lib/node_modules/n8n/node_modules/@getzep/zep-js/package.json
+# ```
+#
+# The eirlier 0.27.2 version of zep does not use a temporal graph database. Graphiti was added
+# in September 2024 with Neo4j under the hood to provide better accuracy for chats.
+# See https://blog.getzep.com/announcing-zep-community-edition/
+#
+# Until n8n updates their zep-js package version, the best solution is to use the Cloud version
+# of zep with n8n and the local CE version of zep for custom code.
+#
+# https://www.getzep.com/
+#
+# Zep service health check:
+# http://localhost:8010/healthz
+
+# Zep requires a postgres database.
+# include:
+#   - ../supabase/docker-compose.yaml
+#   - ../neo4j/docker-compose.yaml
+
+networks:
+  default:
+    name: ${LLEMONSTACK_NETWORK_NAME}
+    external: true
+
+services:
+  zep:
+    container_name: zep
+    labels:
+      dev.dozzle.group: Vector Stores
+    image: zepai/zep:latest # 1.0.2 as of March 2025
+    # TODO: downgrade to 0.27.2 until langchain and n8n update their zep-js package version
+    # https://github.com/getzep/zep/pkgs/container/zep
+    # https://github.com/getzep/zep/blob/v0.27.2/docker-compose.yaml
+    # image: ghcr.io/getzep/zep:latest # 0.27.2 as of March 2025
+    ports:
+      - "8010:8000"
+    volumes:
+      - ./zep.yaml:/app/zep.yaml
+    environment:
+      # Environment variables are used in zep.yaml
+      - ZEP_CONFIG_FILE=zep.yaml
+      - POSTGRES_HOST=${ZEP_POSTGRES_HOST:-${POSTGRES_HOST_INTERNAL:-supavisor}}
+      - POSTGRES_USER=${ZEP_POSTGRES_USER:-postgres}${POSTGRES_USER_TENANT_SUFFIX}
+      - POSTGRES_PASSWORD=${ZEP_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}
+      - POSTGRES_SCHEMA=${ZEP_POSTGRES_SCHEMA:-public}
+      - ZEP_API_SECRET=${ZEP_API_SECRET}
+      - ZEP_LOG_LEVEL=${ZEP_LOG_LEVEL:-info}
+      - ZEP_LOG_FORMAT=${ZEP_LOG_FORMAT:-console}
+      - OPENAI_API_KEY=${ZEP_OPENAI_API_KEY}
+      - MODEL_NAME=${ZEP_MODEL_NAME}
+      - NEO4J_USER=${NEO4J_USER}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+    depends_on:
+      graphiti:
+        condition: service_healthy
+      # Only uncomment db depencency health check if include is uncommented above
+      # db: # From ../supabase/docker-compose.yaml
+      #   condition: service_healthy
+      # neo4j: # From ../neo4j/docker-compose.yaml
+      #   condition: service_healthy
+
+  graphiti:
+    container_name: zep-graphiti
+    labels:
+      dev.dozzle.group: Vector Stores
+    image: zepai/graphiti:0.3
+    ports:
+      - "8003:8003"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8003/healthcheck')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    environment:
+      # See https://help.getzep.com/ce/quickstart
+      # Set OPENAI_BASE_URL to use LiteLLM or other LLM providers
+      - OPENAI_BASE_URL=${ZEP_OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - OPENAI_API_KEY=${ZEP_OPENAI_API_KEY}
+      - MODEL_NAME=${ZEP_MODEL_NAME}
+
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=${NEO4J_USER}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+
+      - PORT=8003
+
+    # Uncomment depends_on if include is uncommented above
+    # depends_on:
+    #   neo4j:
+    #     condition: service_healthy

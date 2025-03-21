@@ -1,0 +1,165 @@
+# Flowise
+#
+# https://docs.flowiseai.com/configuration/
+
+# Flowise requires a postgres database.
+# Comment this ection out if using sqlite database.
+# include:
+#   - ../supabase/docker-compose.yaml
+
+networks:
+  default:
+    name: ${LLEMONSTACK_NETWORK_NAME}
+    external: true
+
+services:
+  flowise:
+    container_name: flowise
+    labels:
+      dev.dozzle.group: Workflows
+    image: flowiseai/flowise
+    restart: unless-stopped
+    ports:
+      - 3001:3000
+    environment:
+      # See:
+      # - https://docs.flowiseai.com/configuration/environment-variables
+      # - https://github.com/FlowiseAI/Flowise/blob/main/docker/.env.example
+      # - https://github.com/FlowiseAI/Flowise/tree/main/docker
+      - PORT=3000
+
+      # Credentials, if blank auth is disabled
+      - FLOWISE_USERNAME=${FLOWISE_USERNAME:-}
+      - FLOWISE_PASSWORD=${FLOWISE_PASSWORD:-}
+
+      # - NUMBER_OF_PROXIES=1
+      # - CORS_ORIGINS=*
+      # - IFRAME_ORIGINS=*
+
+      # Logging
+      # - DEBUG=true
+      # - LOG_LEVEL=debug # error, info, verbose, debug
+      # - LOG_PATH=/Flowise/packages/server/logs
+
+      # Database - supabase postgres
+      - DATABASE_TYPE=postgres
+      - DATABASE_HOST=${POSTGRES_HOST_INTERNAL:-supavisor}
+      - DATABASE_PORT=5432
+      - DATABASE_USER=${FLOWISE_POSTGRES_USER:-postgres}${POSTGRES_USER_TENANT_SUFFIX:-}
+      - DATABASE_PASSWORD=${FLOWISE_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}
+      - DATABASE_NAME=postgres
+      - DATABASE_SSL=false
+
+      # Store API keys in /root/.flowise/config/api.json
+      # .flowise dir is mounted from host to allow start script to find API keys
+      - APIKEY_STORAGE_TYPE=json # db | json
+      - APIKEY_PATH=/root/.flowise/config
+
+      - DISABLE_FLOWISE_TELEMETRY=true
+
+      # NodeJS Dependencies
+      - TOOL_FUNCTION_BUILTIN_DEP=* # NodeJS native dependencies, * for all
+      - TOOL_FUNCTION_EXTERNAL_DEP=axios,moment,lodash # npm dependencies
+
+      - SHOW_COMMUNITY_NODES=true
+      # - DISABLED_NODES= # comma separated list of nodes to disable
+
+      ######################
+      # METRICS COLLECTION
+      #######################
+      # TODO: enable metrics in prometheus
+      # - ENABLE_METRICS=false
+      # - METRICS_PROVIDER=prometheus # prometheus | open_telemetry
+      # - METRICS_INCLUDE_NODE_METRICS=true  # default is true
+      # - METRICS_SERVICE_NAME=FlowiseAI
+
+      # ONLY NEEDED if METRICS_PROVIDER=open_telemetry
+      # TODO: configure with signoz
+      # - METRICS_OPEN_TELEMETRY_METRIC_ENDPOINT=http://localhost:4318/v1/metrics
+      # - METRICS_OPEN_TELEMETRY_PROTOCOL=http # http | grpc | proto (default is http)
+      # - METRICS_OPEN_TELEMETRY_DEBUG=true # default is false
+
+      # Global agent proxy
+      # See https://www.npmjs.com/package/global-agent
+      # Mostly used for corporate proxies compliance or logging
+      # - GLOBAL_AGENT_HTTP_PROXY=CorporateHttpProxyUrl
+      # - GLOBAL_AGENT_HTTPS_PROXY=CorporateHttpsProxyUrl
+      # - GLOBAL_AGENT_NO_PROXY=ExceptionHostsToBypassProxyIfNeeded
+
+      ######################
+      # STORAGE
+      #######################
+      - STORAGE_TYPE=local # local | s3
+      - BLOB_STORAGE_PATH=/root/.flowise
+      - FLOWISE_FILE_SIZE_LIMIT=10mb
+
+      # S3 Comaptible Storage
+      # TODO: connect to minio
+      # - S3_STORAGE_BUCKET_NAME=flowise
+      # - S3_STORAGE_ACCESS_KEY_ID=AKIA6666666666666666
+      # - S3_STORAGE_SECRET_ACCESS_KEY=6666666666666666666666666666666666666666
+      # - S3_STORAGE_REGION=us-west-2
+      # - S3_ENDPOINT_URL=https://s3.us-west-2.amazonaws.com
+      # - S3_FORCE_PATH_STYLE=false
+
+      - SECRETKEY_STORAGE_TYPE=local # local | aws
+      - SECRETKEY_PATH=/root/.flowise/config
+
+      # Custom Model List Config
+      # see https://raw.githubusercontent.com/FlowiseAI/Flowise/main/packages/components/models.json for the format
+      # TODO: pre-populate with LiteLLM models on startup?
+      # - MODEL_LIST_CONFIG_JSON=/your_model_list_config_file_path
+
+      ######################
+      # OBSERVABILITY
+      #######################
+      # TODO: configure with langfuse
+      # - LANGCHAIN_TRACING_V2=true
+      # - LANGCHAIN_ENDPOINT=https://api.smith.langchain.com
+      # - LANGCHAIN_API_KEY=ls_prod_1234567890
+      # - LANGCHAIN_PROJECT=smith-langchain-project
+
+      ######################
+      # QUEUE CONFIGURATION
+      ######################
+      # Flowise runs on NodeJS main thread by default.
+      # Use queue to scale out to multiple workers.
+      # Requires a separate
+      # See:
+      # - https://docs.flowiseai.com/configuration/running-flowise-using-queue
+      # - https://docs.flowiseai.com/configuration/running-in-production
+      # - QUEUE_NAME=flowise-queue
+      # - QUEUE_REDIS_EVENT_STREAM_MAX_LEN=100000
+      # - WORKER_CONCURRENCY=100000
+      # - REDIS_URL=
+      # - REDIS_HOST=localhost
+      # - REDIS_PORT=6379
+      # - REDIS_USERNAME=
+      # - REDIS_PASSWORD=
+      # - REDIS_TLS=
+      # - REDIS_CERT=
+      # - REDIS_KEY=
+      # - REDIS_CA=
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    healthcheck:
+      test: wget -q -O- http://flowise:3000/api/v1/ping | grep -q 'pong'
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+    volumes:
+      - ${LLEMONSTACK_VOLUMES_PATH:-../volumes}/flowise:/root/.flowise
+
+    # Set FLOWISE_START_MODE to "worker" to run in queue mode
+    entrypoint: /bin/sh -c "sleep 3; flowise ${FLOWISE_START_MODE:-start}"
+
+    # Supabase postgres database healthcheck
+    # Comment this section out if using sqlite database.
+    # Only uncomment depencency health check if include is uncommented above
+    # depends_on:
+    #   db: # From ../supabase/docker-compose.yaml
+    #     condition: service_healthy

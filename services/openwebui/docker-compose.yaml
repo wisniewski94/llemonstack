@@ -1,0 +1,130 @@
+# Open Web UI for Ollama
+#
+# See https://docs.openwebui.com/
+
+networks:
+  default:
+    name: ${LLEMONSTACK_NETWORK_NAME}
+    external: true
+
+volumes:
+  open-webui:
+    driver: local
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    labels:
+      dev.dozzle.group: Local LLM
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - open-webui:/app/backend/data
+    environment:
+      # See https://docs.openwebui.com/getting-started/env-configuration
+
+      - GLOBAL_LOG_LEVEL=${OPENWEBUI_GLOBAL_LOG_LEVEL:-info}
+
+      # Ollama
+      - ENABLE_OLLAMA_API=true # default true
+      - OLLAMA_BASE_URL=${OPENWEB_OLLAMA_BASE_URL:-http://localhost:11434} # relative to the host web browser
+
+      - ENV=dev # dev | prod - dev enables FastAPI docs on /docs
+      # - PORT=8080
+
+      # User Accounts
+      - ENABLE_SIGNUP=true # defaults to true, only set to false when ENABLE_OAUTH_SIGNUP is true
+      - ENABLE_OAUTH_SIGNUP=false
+
+      # Webhooks
+      # See https://docs.openwebui.com/getting-started/env-configuration#webhook_url
+      # - WEBHOOK_URL
+
+      # Data Storage: uploads, data, cache, vector, etc.
+      # - DATA_DIR=/app/backend/data
+
+      # Configure OpenAI API
+      - ENABLE_OPENAI_API=true # default true
+      - OPENAI_API_BASE_URL=${OPENWEBUI_OPENAI_API_BASE_URL:-} # e.g. https://api.openai.com/v1
+      - OPENAI_API_KEY=${OPENWEBUI_OPENAI_API_KEY:-}
+      # - OPENAI_API_BASE_URLS= # for load balancing
+      # - OPENAI_API_KEYS=
+
+      # - USE_OLLAMA_DOCKER=false
+      # - USE_CUDA_DOCKER=false
+      # - USE_CUDA_DOCKER_VER=cu121
+      # - USE_EMBEDDING_MODEL_DOCKER=sentence-transformers/all-MiniLM-L6-v2
+      # - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
+      # - SCARF_NO_ANALYTICS=true
+      # - DO_NOT_TRACK=true
+      # - ANONYMIZED_TELEMETRY=false
+      # - WHISPER_MODEL=base
+      # - WHISPER_MODEL_DIR=/app/backend/data/cache/whisper/models
+
+      # - VECTOR_DB=pgvector # pgvector | chroma | milvus | qdrant | opensearch
+      # - RAG_EMBEDDING_ENGINE= # ollama | openai | (empty for default)
+      # - RAG_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+      # - RAG_RERANKING_MODEL=
+
+      # - PGVECTOR_DB_URL=
+      # - QDRANT_URI=
+      # - QDRANT_API_KEY=
+
+      # Database
+      # TODO: configure with supavisor
+      # - DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+      # - DATABASE_POOL_SIZE=10
+      # - DATABASE_POOL_MAX_OVERFLOW=0
+      # - DATABASE_POOL_TIMEOUT=30 # seconds, default is 30
+      # - DATABASE_POOL_RECYCLE=3600
+
+      # Redis
+      # - ENABLE_WEBSOCKET_SUPPORT=false # enables websocket support with redis
+      # - WEBSOCKET_MANAGER=redis
+      # - WEBSOCKET_REDIS_URL=redis://localhost:6379
+
+      # S3
+      # TODO: configure with minio
+      # - STORAGE_PROVIDER=s3 # s3 | gc2 | azure | (empty for local, default)
+      # See https://docs.openwebui.com/getting-started/env-configuration#amazon-s3-storage
+      # - S3_ENDPOINT_URL=
+      # - S3_ACCESS_KEY_ID=
+      # - S3_SECRET_ACCESS_KEY=
+      # - S3_BUCKET_NAME=
+      # - S3_REGION_NAME=
+
+      # - ENABLE_RAG_WEB_SEARCH=true # enables web search for RAG
+      # - ENABLE_SEARCH_QUERY_GENERATION=true # search query generation
+      # See https://docs.openwebui.com/getting-started/env-configuration#rag_web_search_engine
+      # Requires search provider API keys to be set
+      # - RAG_WEB_SEARCH_ENGINE=brave # tavily | duckduckgo | google_pse | brave
+      # - RAG_WEB_LOADER_ENGINE=safe_web # safe_web | playwright
+
+      # - SENTENCE_TRANSFORMERS_HOME=/app/backend/data/cache/embedding/models
+      # - TIKTOKEN_ENCODING_NAME=cl100k_base
+      # - TIKTOKEN_CACHE_DIR=/app/backend/data/cache/tiktoken
+      # - TASK_MODEL=
+      # - TASK_MODEL_EXTERNAL=
+
+      # - TITLE_GENERATION_PROMPT_TEMPLATE= # used for generating chat titles
+
+      # - OFFLINE_MODE=false # true | false - disables all API calls to external services
+
+      # - RESET_CONFIG_ON_START=false # true | false - resets the config.json on startup, clears persistent config settings
+
+      # - DOCKER=true
+      # - CORS_ALLOW_ORIGIN=*
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --silent --fail http://localhost:8080/health | jq -ne 'input.status == true' || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s

@@ -1,0 +1,3 @@
+service: browser-use
+
+compose_file: docker-compose.yaml

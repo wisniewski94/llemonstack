@@ -1,0 +1,3 @@
+service: signoz
+
+compose_file: docker-compose.yaml

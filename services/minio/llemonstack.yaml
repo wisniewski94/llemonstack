@@ -1,0 +1,3 @@
+service: minio
+
+compose_file: docker-compose.yaml

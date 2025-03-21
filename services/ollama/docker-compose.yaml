@@ -1,0 +1,87 @@
+networks:
+  default:
+    name: ${LLEMONSTACK_NETWORK_NAME}
+    external: true
+
+volumes:
+  ollama_storage:
+
+x-ollama: &service-ollama
+  image: ollama/ollama:latest
+  container_name: ollama
+  labels:
+    dev.dozzle.group: Local LLM
+  restart: unless-stopped
+  ports:
+    - 11434:11434
+  volumes:
+    - ollama_storage:/root/.ollama
+
+x-init-ollama: &init-ollama
+  image: ollama/ollama:latest
+  container_name: ollama-pull-llama
+  volumes:
+    - ollama_storage:/root/.ollama
+  entrypoint: /bin/sh
+  command:
+    - "-c"
+    - "sleep 3; OLLAMA_HOST=ollama:11434 ollama pull qwen2.5:7b-instruct-q4_K_M; OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text"
+
+services:
+  # Run ollama without GPU
+  ollama-cpu:
+    profiles:
+      - ollama-cpu
+    <<: *service-ollama
+
+  # Run ollama with NVIDIA GPU
+  ollama-gpu-nvidia:
+    profiles:
+      - ollama-gpu-nvidia
+    <<: *service-ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Run ollama with AMD GPU
+  ollama-gpu-amd:
+    profiles:
+      - ollama-gpu-amd
+    <<: *service-ollama
+    image: ollama/ollama:rocm
+    devices:
+      - "/dev/kfd"
+      - "/dev/dri"
+
+  #
+  # OLLAMA PULL PROFILES
+  #
+
+  # Pull ollama without GPU
+  ollama-pull-cpu:
+    profiles:
+      - ollama-cpu
+    <<: *init-ollama
+    depends_on:
+      - ollama-cpu
+
+  # Pull ollama with NVIDIA GPU
+  ollama-pull-gpu-nvidia:
+    profiles:
+      - ollama-gpu-nvidia
+    <<: *init-ollama
+    depends_on:
+      - ollama-gpu-nvidia
+
+  # Pull ollama with AMD GPU
+  ollama-pull-gpu-amd:
+    profiles:
+      - ollama-gpu-amd
+    <<: *init-ollama
+    image: ollama/ollama:rocm
+    depends_on:
+      - ollama-gpu-amd

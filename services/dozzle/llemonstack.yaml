@@ -1,0 +1,3 @@
+service: dozzle
+
+compose_file: docker-compose.yaml

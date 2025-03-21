@@ -1,0 +1,3 @@
+service: supabase
+
+compose_file: docker-compose.yaml

@@ -1,0 +1,3 @@
+service: openwebui
+
+compose_file: docker-compose.yaml

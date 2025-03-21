@@ -1,0 +1,3 @@
+service: n8n
+
+compose_file: docker-compose.yaml

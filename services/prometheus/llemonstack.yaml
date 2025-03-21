@@ -1,0 +1,3 @@
+service: prometheus
+
+compose_file: docker-compose.yaml

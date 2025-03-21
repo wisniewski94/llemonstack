@@ -370,7 +370,7 @@ instance, unfortunately. There are two options in this case:
    ollama pull deepseek-r1:1.5b
    ```
 
-   See [docker-compose-ollama.yml](docker-compose-ollama.yml) for the specific models used by the
+   See [services/ollama/docker-compose.yaml](docker-compose.yaml) for the specific models used by the
    Docker container.
 
    Once ollama is running locally and `ENABLE_OLLAMA=host` is set in .env, start the services with

@@ -1,0 +1,3 @@
+service: flowise
+
+compose_file: docker-compose.yaml

@@ -1,0 +1,3 @@
+service: neo4j
+
+compose_file: docker-compose.yaml

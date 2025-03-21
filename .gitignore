@@ -3,7 +3,7 @@
 # Ignore all .env files except .env.example
 .env.*
 !.env.example
-!docker/**/.env
+!services/**/.env
 volumes/
 shared/
 .repos/*

@@ -1,0 +1,3 @@
+service: qdrant
+
+compose_file: docker-compose.yaml
