@@ -13,8 +13,8 @@
  */
 
 import {
-  dockerPs,
-  type DockerPsResult,
+  dockerComposePs,
+  type DockerComposePsResult,
   getDockerNetworks,
   removeDockerNetwork,
   runDockerCommand,
@@ -74,7 +74,7 @@ async function stopServices(
   // commands did not catch all running containers.
   try {
     // Get containers separated by newlines
-    const containers = await dockerPs({ projectName }) as DockerPsResult
+    const containers = await dockerComposePs(projectName) as DockerComposePsResult
     if (containers.length > 0) {
       showAction(`Removing ${containers.length} containers that didn't stop properly...`)
       showInfo(`Containers:\n${containers.map((c) => `- ${c.Name}`).join('\n')}`)

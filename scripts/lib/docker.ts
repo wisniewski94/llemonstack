@@ -211,31 +211,48 @@ export async function isServiceRunning(
   service: string,
   { projectName }: { projectName?: string },
 ) {
-  const result = await dockerPs({ projectName }) as DockerPsResult
+  const result = await dockerComposePs(
+    projectName || dockerEnv().LLEMONSTACK_PROJECT_NAME,
+  ) as DockerComposePsResult
   return result.some((c) => c.Name === service)
 }
 
-export type DockerPsResult = Array<{ ID: string; Name: string }>
-export const DefaultDockerFormatTemplate = '{"ID":"{{.ID}}","Name":"{{.Names}}"}'
-export async function dockerPs(
-  { projectName, format = DefaultDockerFormatTemplate }: { projectName?: string; format?: string } =
-    {},
-): Promise<DockerPsResult | RunCommandOutput> {
+export type DockerComposePsResult = Array<{
+  ID?: string
+  Name?: string
+  Health?: string
+  Status?: string
+  Image?: string
+  Service?: string
+  Project?: string
+  RunningFor?: string
+  Size?: string
+  State?: string
+}>
+
+export async function dockerComposePs(
+  projectName: string,
+  { format = 'json' }: { format?: string } = {},
+): Promise<DockerComposePsResult | string[]> {
   const results = await runCommand(
     'docker',
     {
       args: [
+        'compose',
+        '-p',
+        projectName,
         'ps',
         '-a',
         '--format',
         format,
-        ...(projectName ? ['--filter', `label=com.docker.compose.project=${projectName}`] : []),
       ],
       captureOutput: true,
       silent: true,
     },
   )
-  return format === DefaultDockerFormatTemplate ? results.toJsonList() as DockerPsResult : results
+  return format.startsWith('table')
+    ? results.toList()
+    : results.toJsonList() as DockerComposePsResult
 }
 
 export async function prepareDockerNetwork(
