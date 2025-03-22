@@ -26,8 +26,6 @@ import { getFlowiseApiKey } from './lib/flowise.ts'
 // Immediately load .env file
 await loadEnv({ silent: true })
 
-const isArm64 = getArch().includes('arm64')
-
 // Get version from package.json
 export const LLEMONSTACK_INSTALL_DIR = path.join(
   path.dirname(path.fromFileUrl(import.meta.url)),
@@ -80,7 +78,7 @@ export const ALL_COMPOSE_SERVICES: ComposeService[] = [
   ['flowise', path.join('services', 'flowise', 'docker-compose.yaml'), true],
   ['neo4j', path.join('services', 'neo4j', 'docker-compose.yaml'), true],
   ['zep', path.join('services', 'zep', 'docker-compose.yaml'), true],
-  ['browser-use', path.join('services', 'browser-use', 'docker-compose.yaml'), false], // Uses a custom start function
+  ['browser-use', path.join('services', 'browser-use', 'docker-compose.yaml'), true], // Uses a custom start function
   ['qdrant', path.join('services', 'qdrant', 'docker-compose.yaml'), true],
   ['openwebui', path.join('services', 'openwebui', 'docker-compose.yaml'), true],
   ['ollama', path.join('services', 'ollama', 'docker-compose.yaml'), false], // Uses a custom start function
@@ -108,19 +106,6 @@ export const SERVICE_GROUPS: [string, string[]][] = [
   ['apps', ['n8n', 'flowise', 'browser-use', 'openwebui', 'ollama']],
 ]
 
-// Docker compose files for services with a custom Dockerfile
-export const COMPOSE_BUILD_FILES = [
-  isEnabled('browser-use') && [
-    path.join('services', 'browser-use', 'docker-compose.yaml'),
-    {
-      // env vars to pass to build
-      // browser-use has a special Dockerfile for arm64 / Mac silicon
-      TARGETPLATFORM: isArm64 ? 'linux/arm64' : 'linux/amd64',
-      DOCKERFILE: isArm64 ? 'Dockerfile.arm64' : 'Dockerfile',
-    },
-  ],
-].filter(Boolean) as [string, Record<string, string>][]
-
 // All Docker compose files
 export const ALL_COMPOSE_FILES = ALL_COMPOSE_SERVICES.map(
   ([_service, file]) => file,
@@ -130,8 +115,6 @@ export const ALL_COMPOSE_FILES = ALL_COMPOSE_SERVICES.map(
 export const COMPOSE_FILES = ALL_COMPOSE_SERVICES.map(([service, file]) => {
   return isEnabled(service) ? file : null
 })
-  // Add build files
-  .concat(COMPOSE_BUILD_FILES.map((arr) => arr[0] as string))
   // Remove false values and duplicates
   .filter((value, index, self) => value && self.indexOf(value) === index) as string[]
 
@@ -426,14 +409,6 @@ export function showInfo(message: string): void {
 }
 
 /**
- * Get the architecture of the system to pass to docker compose
- * @returns "linux/arm64" or "linux/amd64"
- */
-export function getArch(): string {
-  return Deno.build.arch === 'aarch64' ? 'linux/arm64' : 'linux/amd64'
-}
-
-/**
  * Get the host platform
  * @returns macos | linux | windows | other
  */
@@ -449,6 +424,28 @@ export function getOS(): string {
     default:
       return 'other'
   }
+}
+
+function getDockerTargetPlatform(): string {
+  // Map Deno OS to Docker OS
+  // const os = Deno.build.os
+  // const dockerOs = os === 'windows' ? 'windows' : 'linux'
+  const dockerOs = 'linux'
+
+  // Map Deno arch to Docker arch
+  const dockerArch = Deno.build.arch === 'aarch64' ? 'arm64' : 'amd64'
+
+  // Return in Docker format: os/arch
+  return `${dockerOs}/${dockerArch}`
+}
+
+/**
+ * Returns Dockerfile.arm64 if on Mac Silicon or aarch64 platform
+ * @returns {string} Dockerfile.arm64 or empty string
+ */
+function getDockerfileArch(): string {
+  const arch = Deno.build.arch === 'aarch64' ? 'arm64' : ''
+  return arch ? `Dockerfile.${arch}` : ''
 }
 
 /**
@@ -529,6 +526,8 @@ export function dockerEnv({ volumesDir }: { volumesDir?: string } = {}): Record<
     LLEMONSTACK_IMPORT_VOLUME_PATH: path.resolve(ROOT_DIR, CONFIG.dirs.import),
     LLEMONSTACK_REPOS_PATH: REPO_DIR,
     LLEMONSTACK_NETWORK_NAME: `${Deno.env.get('LLEMONSTACK_PROJECT_NAME')}_network`,
+    TARGETPLATFORM: getDockerTargetPlatform(), // Docker platform for building images
+    DOCKERFILE_ARCH: getDockerfileArch(), // Dockerfile.arm64 if on Mac Silicon or aarch64 platform
   }
 }
 
@@ -911,16 +910,6 @@ export async function getComposeFile(
     file = await getComposeFileFromService(service)
   }
   return file ? path.join(LLEMONSTACK_INSTALL_DIR, file) : null
-}
-
-export function getBuildFile(
-  service: string,
-): [string, object] | false {
-  const file = COMPOSE_BUILD_FILES.find((arr) => arr[0].includes(service))
-  if (!file) {
-    throw new Error(`Docker compose build file not found for ${service}`)
-  }
-  return file
 }
 
 export async function buildImage(
@@ -1363,45 +1352,6 @@ export function getOllamaHost(): string {
   return host
 }
 
-async function startBrowserUse(projectName: string): Promise<void> {
-  const buildFile = getBuildFile('browser-use')
-  if (!buildFile) {
-    throw new Error('Browser-use build file not found')
-  }
-  const composeFile = await getComposeFile('browser-use')
-  if (!composeFile) {
-    throw new Error('Browser-use compose file not found')
-  }
-  const imageName = `${projectName}-browser-use-webui`
-  const envVars = buildFile[1] as Record<string, string>
-
-  let imageExists = false
-
-  try {
-    // Check if browser-use image already exists
-    const imageCheckResult = (await runCommand(`docker images ${imageName}`, {
-      captureOutput: true,
-      silent: true,
-    })).toString()
-    imageExists = imageCheckResult.includes(imageName)
-  } catch (error) {
-    showError(`Error checking for browser-use image`, error)
-  }
-
-  if (imageExists) {
-    showAction(`Browser-use image exists, skipping build`)
-  } else {
-    showAction(
-      `Browser-use image not found, building. This will take a while...`,
-    )
-  }
-
-  // Build the image if it doesn't exist
-  !imageExists && (await buildImage(projectName, composeFile, envVars))
-
-  await startService(projectName, 'browser-use', { envVars })
-}
-
 /**
  * Check if supabase was started by any of the services that depend on it
  * @param projectName
@@ -1699,12 +1649,6 @@ export async function start(
           await startServices(projectName, enabledGroupServices)
         }
       }
-    }
-
-    // Special handling for browser-use
-    if (isEnabled('browser-use') && !service || service === 'browser-use') {
-      showAction(`\nStarting browser-use...`)
-      await startBrowserUse(projectName)
     }
 
     // Special handling for Ollama

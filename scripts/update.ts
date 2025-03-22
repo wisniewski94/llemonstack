@@ -18,8 +18,6 @@
  * ```
  */
 import {
-  buildImage,
-  COMPOSE_BUILD_FILES,
   COMPOSE_FILES,
   confirm,
   DEFAULT_PROJECT_NAME,
@@ -80,16 +78,6 @@ export async function update(
     // Pull latest images
     showAction('Pulling latest docker images...')
     await pullImages(projectName)
-
-    // Rebuild all custom Dockerfile images
-    if (COMPOSE_BUILD_FILES.length > 0) {
-      showAction('Rebuilding custom Docker images...')
-      for (const buildFile of COMPOSE_BUILD_FILES) {
-        const composeFile = buildFile[0]
-        const envVars = buildFile[1]
-        await buildImage(projectName, composeFile, envVars, { noCache: true })
-      }
-    }
 
     // Show the software versions for images that support it
     showAction('\n------ VERSIONS ------')

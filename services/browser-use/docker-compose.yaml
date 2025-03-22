@@ -5,13 +5,18 @@ networks:
 
 services:
   browser-use-webui:
+    extends:
+      file: ${LLEMONSTACK_REPOS_PATH:-.}/browser-use-web-ui/docker-compose.yml
+      service: browser-use-webui
+    build:
+      context: ${LLEMONSTACK_REPOS_PATH:-.}/browser-use-web-ui
+      dockerfile: ${BROWSER_USE_DOCKERFILE:-${DOCKERFILE_ARCH:-${DOCKERFILE:-Dockerfile}}}
+      args:
+        TARGETPLATFORM: ${TARGETPLATFORM:-linux/amd64}
     container_name: browser-use-webui
     labels:
       dev.dozzle.group: Browser Use
     platform: ${TARGETPLATFORM:-linux/amd64}
-    extends:
-      file: ${LLEMONSTACK_REPOS_PATH:-.}/browser-use-web-ui/docker-compose.yml
-      service: browser-use-webui
     environment:
       # BROWSER_USE_* specific environment variables
       - CHROME_PERSISTENT_SESSION=${BROWSER_USE_CHROME_PERSISTENT_SESSION:-true}
