@@ -12,6 +12,7 @@
  * ```
  */
 
+import { dockerPs, type DockerPsResult } from './lib/docker.ts'
 import {
   ALL_COMPOSE_SERVICES,
   type ComposeService,
@@ -73,21 +74,7 @@ async function stopServices(
   // commands did not catch all running containers.
   try {
     // Get containers separated by newlines
-    const containers = (await runCommand(
-      'docker',
-      {
-        args: [
-          'ps',
-          '-a',
-          '--format',
-          '{"ID":"{{.ID}}","Name":"{{.Names}}"}',
-          '--filter',
-          `label=com.docker.compose.project=${projectName}`,
-        ],
-        captureOutput: true,
-        silent: true,
-      },
-    )).toJsonList()
+    const containers = await dockerPs({ projectName }) as DockerPsResult
     if (containers.length > 0) {
       showAction(`Removing ${containers.length} containers that didn't stop properly...`)
       showInfo(`Containers:\n${containers.map((c) => `- ${c.Name}`).join('\n')}`)

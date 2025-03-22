@@ -94,6 +94,37 @@ export function replaceDockerComposeVars(
   )
 }
 
+export async function isServiceRunning(
+  service: string,
+  { projectName }: { projectName?: string },
+) {
+  const result = await dockerPs({ projectName }) as DockerPsResult
+  return result.some((c) => c.Name === service)
+}
+
+export type DockerPsResult = Array<{ ID: string; Name: string }>
+export const DefaultDockerFormatTemplate = '{"ID":"{{.ID}}","Name":"{{.Names}}"}'
+export async function dockerPs(
+  { projectName, format = DefaultDockerFormatTemplate }: { projectName?: string; format?: string } =
+    {},
+): Promise<DockerPsResult | RunCommandOutput> {
+  const results = await runCommand(
+    'docker',
+    {
+      args: [
+        'ps',
+        '-a',
+        '--format',
+        format,
+        ...(projectName ? ['--filter', `label=com.docker.compose.project=${projectName}`] : []),
+      ],
+      captureOutput: true,
+      silent: true,
+    },
+  )
+  return format === DefaultDockerFormatTemplate ? results : results.toJsonList() as DockerPsResult
+}
+
 export async function prepareDockerNetwork(
   // TODO: get network from config
   network = dockerEnv().LLEMONSTACK_NETWORK_NAME,

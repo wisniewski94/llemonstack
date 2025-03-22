@@ -17,7 +17,7 @@ export async function checkHealth(projectName: string) {
   // docker compose -p llemonstack ps -a | awk 'NR>1 {print $1}' | xargs -I {} docker inspect --format='{{.Name}}: {{if .State.Health}}{{.State.Health.Status}}{{else}}No health check{{end}}' {}
   try {
     // Get all containers and their health status
-    const result = await runCommand(
+    const containers = (await runCommand(
       'docker',
       {
         args: [
@@ -32,18 +32,13 @@ export async function checkHealth(projectName: string) {
         captureOutput: true,
         silent: true,
       },
-    )
+    )).toJsonList()
 
-    const containers = result.stdout.split('\n').filter(Boolean)
     for (const container of containers) {
-      const containerData = JSON.parse(container)
       console.log(
-        `${containerData.Name}: (${
-          containerData.Health || 'No health check'
-        }) ${containerData.Status}`,
+        `${container.Name}: (${container.Health || 'No health check'}) ${container.Status}`,
       )
     }
-    return result.stdout
   } catch (error) {
     console.error(`Error checking container health: ${error}`)
     throw error

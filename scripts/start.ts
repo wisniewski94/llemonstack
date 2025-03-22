@@ -21,7 +21,7 @@ import { load as loadDotEnv } from 'jsr:@std/dotenv'
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
 import * as yaml from 'jsr:@std/yaml'
-import { prepareDockerNetwork, replaceDockerComposeVars } from './lib/docker.ts'
+import { isServiceRunning, prepareDockerNetwork, replaceDockerComposeVars } from './lib/docker.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
 import { CommandError, RunCommandOutput } from './lib/runCommand.ts'
 import {
@@ -1230,17 +1230,7 @@ export function getOllamaHost(): string {
  * @param projectName
  */
 export async function isSupabaseStarted(projectName: string): Promise<boolean> {
-  const result = (await runCommand('docker', {
-    args: [
-      'ps',
-      '-a',
-      '--filter',
-      `label=com.docker.compose.project=${projectName}`,
-    ],
-    captureOutput: true,
-    silent: true,
-  })).toString()
-  return (result.includes('supabase')) as boolean
+  return await isServiceRunning('supabase', { projectName })
 }
 
 export async function startService(
@@ -1317,13 +1307,11 @@ export async function isInitialized(): Promise<boolean> {
   }
 }
 
-export async function outputServicesInfo({
+async function outputServicesInfo({
   projectName,
-  supabaseStarted,
   ollamaProfile,
 }: {
   projectName: string
-  supabaseStarted: boolean
   ollamaProfile: string
 }): Promise<void> {
   //
@@ -1350,7 +1338,7 @@ export async function outputServicesInfo({
       'Password': Deno.env.get('BROWSER_USE_VNC_PASSWORD'),
     })
   }
-  if (supabaseStarted) {
+  if (isEnabled('supabase')) {
     showService('Supabase', `http://localhost:8000`)
     showCredentials({
       'Username': Deno.env.get('SUPABASE_DASHBOARD_USERNAME'),
@@ -1395,7 +1383,7 @@ export async function outputServicesInfo({
   showInfo('For connecting services within the stack, use the following endpoints.')
   showInfo('i.e. for n8n credentials, postgres connections, API requests, etc.\n')
 
-  if (supabaseStarted) {
+  if (isEnabled('supabase')) {
     showService('Supabase Postgres DB Host', 'db')
     showCredentials({
       'Username': 'postgres',
@@ -1517,9 +1505,6 @@ export async function start(
       }
     }
 
-    // Check if supabase was started by any of the services that depend on it
-    const supabaseStarted = await isSupabaseStarted(projectName)
-
     if (service) {
       showAction(`\n${service} started successfully!`)
     } else {
@@ -1529,7 +1514,6 @@ export async function start(
     if (!skipOutput) {
       await outputServicesInfo({
         projectName,
-        supabaseStarted,
         ollamaProfile,
       })
     }
