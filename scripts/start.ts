@@ -26,6 +26,7 @@ import {
   isServiceRunning,
   prepareDockerNetwork,
   replaceDockerComposeVars,
+  runDockerComposeCommand,
 } from './lib/docker.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
 import { CommandError, runCommand } from './lib/runCommand.ts'
@@ -1041,23 +1042,13 @@ export async function startService(
   if (!composeFile) {
     throw new Error(`Docker compose file not found for ${service}: ${composeFile}`)
   }
-  await runCommand('docker', {
-    args: [
-      'compose',
-      '--ansi',
-      'never',
-      '-p',
-      projectName,
-      ...getProfilesArgs({ profiles }),
-      '-f',
-      composeFile,
-      'up',
-      '-d',
-    ].filter(Boolean),
-    env: {
-      'COMPOSE_IGNORE_ORPHANS': true,
-      ...envVars,
-    },
+  await runDockerComposeCommand('up', {
+    projectName,
+    composeFile,
+    profiles,
+    ansi: 'never',
+    args: ['-d'],
+    env: envVars,
     silent: false,
   })
 }
