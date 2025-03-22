@@ -12,8 +12,14 @@
  * ```
  */
 
-import { dockerPs, type DockerPsResult } from './lib/docker.ts'
-import { runCommand } from './lib/runCommand.ts'
+import {
+  dockerPs,
+  type DockerPsResult,
+  getDockerNetworks,
+  removeDockerNetwork,
+  runDockerCommand,
+  runDockerComposeCommand,
+} from './lib/docker.ts'
 import {
   ALL_COMPOSE_SERVICES,
   type ComposeService,
@@ -34,15 +40,9 @@ async function removeAllNetworks(projectName: string): Promise<void> {
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       // Remove all networks for project
-      const networks = (await runCommand(
-        `docker network ls --filter label=com.docker.compose.project=${projectName} --format "{{.ID}}"`,
-        { captureOutput: true },
-      )).toList()
+      const networks = await getDockerNetworks({ projectName })
       if (networks.length > 0) {
-        await runCommand(
-          `docker network rm -f ${networks}`,
-          { silent: true },
-        )
+        await removeDockerNetwork(networks, { silent: true })
       } else {
         break
       }
@@ -78,8 +78,8 @@ async function stopServices(
     if (containers.length > 0) {
       showAction(`Removing ${containers.length} containers that didn't stop properly...`)
       showInfo(`Containers:\n${containers.map((c) => `- ${c.Name}`).join('\n')}`)
-      await runCommand('docker', {
-        args: ['rm', '-f', ...containers.map((c) => c.ID as string)],
+      await runDockerCommand('rm', {
+        args: ['-f', ...containers.map((c) => c.ID as string)],
         silent: true,
       })
     }
@@ -109,17 +109,9 @@ export async function stopService(
       throw new Error(`No compose file found for service: ${service}`)
     }
     showAction(`Stopping ${service}...`)
-    const result = await runCommand('docker', {
-      args: [
-        'compose',
-        '--ansi',
-        'never',
-        '-p',
-        projectName,
-        '-f',
-        composeFile,
-        'down',
-      ],
+    const result = await runDockerComposeCommand('down', {
+      composeFile,
+      projectName,
       silent: true,
       captureOutput: true,
     })
@@ -184,7 +176,10 @@ export async function stop(
   if (stopAll) {
     await removeAllNetworks(projectName)
   }
-  await runCommand(`docker network prune -f`)
+  await runDockerCommand('network', {
+    args: ['prune', '-f'],
+    silent: true,
+  })
 
   if (service) {
     showAction(`Service ${service} stopped`)

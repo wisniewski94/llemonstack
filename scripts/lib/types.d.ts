@@ -1,6 +1,9 @@
-import { RunCommandOutput as RunCommandOutputClass } from './runCommand.ts'
+import {
+  CommandError as CommandErrorClass,
+  RunCommandOutput as RunCommandOutputClass,
+} from './runCommand.ts'
 
-export interface Config {
+interface Config {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty
   version: string // Version of LLemonStack used to create the config
   projectName: string
@@ -17,7 +20,7 @@ export interface Config {
 
 type EnvVars = Record<string, string | boolean | number>
 
-export interface CommandOutput {
+interface CommandOutput {
   stdout: string
   stderr: string
   code: number
@@ -25,8 +28,11 @@ export interface CommandOutput {
   signal?: Deno.Signal | null
 }
 
-export type RunCommandOutput = InstanceType<typeof RunCommandOutputClass>
-export interface RunCommandOptions {
+type RunCommandOutput = InstanceType<typeof RunCommandOutputClass>
+
+type CommandError = InstanceType<typeof CommandErrorClass>
+
+interface RunCommandOptions {
   args?: Array<string | false>
   silent?: boolean
   captureOutput?: boolean
@@ -35,14 +41,14 @@ export interface RunCommandOptions {
   debug?: boolean
 }
 
-export type OllamaProfile =
+type OllamaProfile =
   | 'ollama-cpu'
   | 'ollama-gpu-amd'
   | 'ollama-gpu-nvidia'
   | 'ollama-host'
   | 'ollama-false'
 
-export interface RepoService {
+interface RepoService {
   url: string // URL of the repo
   dir: string // Name of repo dir to use in the repos folder
   sparseDir?: string | string[] // Directory to sparse clone into
@@ -50,7 +56,7 @@ export interface RepoService {
   checkFile?: string // File to check for existence to determine if repo is ready
 }
 
-export interface ServiceImage {
+interface ServiceImage {
   service: string
   containerName: string
   image: string
@@ -60,7 +66,7 @@ export interface ServiceImage {
 }
 
 // Define the type for the Docker Compose configuration
-export interface ComposeConfig {
+interface ComposeConfig {
   include?: string | string[] | { path: string }[]
   services?: {
     [key: string]: {

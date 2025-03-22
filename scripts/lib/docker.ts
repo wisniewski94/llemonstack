@@ -28,6 +28,31 @@ export function dockerEnv({ volumesDir }: { volumesDir?: string } = {}): Record<
   }
 }
 
+export async function getDockerNetworks(
+  { projectName }: { projectName?: string },
+): Promise<string[]> {
+  const networks = await runDockerCommand('network', {
+    args: [
+      'ls',
+      ...(projectName ? ['--filter', `label=com.docker.compose.project=${projectName}`] : []),
+      '--format',
+      '{{.ID}}',
+    ],
+    captureOutput: true,
+  })
+  return networks.toList()
+}
+
+export async function removeDockerNetwork(
+  networks: string | string[],
+  { silent = true }: { silent?: boolean } = {},
+): Promise<RunCommandOutput> {
+  return await runDockerCommand('network', {
+    args: ['rm', '-f', ...(Array.isArray(networks) ? networks : [networks])],
+    silent,
+  })
+}
+
 /**
  * Run a docker compose command and return the output
  *
@@ -180,7 +205,7 @@ export async function dockerPs(
       silent: true,
     },
   )
-  return format === DefaultDockerFormatTemplate ? results : results.toJsonList() as DockerPsResult
+  return format === DefaultDockerFormatTemplate ? results.toJsonList() as DockerPsResult : results
 }
 
 export async function prepareDockerNetwork(
