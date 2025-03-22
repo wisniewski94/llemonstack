@@ -169,6 +169,36 @@ function getDockerTargetPlatform(): string {
 }
 
 /**
+ * Build a docker image
+ *
+ * @param projectName - The name of the project
+ * @param composeFile - The path to the compose file
+ * @param envVars - The environment variables to set
+ */
+// export async function buildImage(
+//   projectName: string,
+//   composeFile: string,
+//   envVars?: Record<string, string>,
+//   { noCache = false }: { noCache?: boolean } = {},
+// ): Promise<void> {
+//   await runCommand(
+//     'docker',
+//     {
+//       args: [
+//         'compose',
+//         '-p',
+//         projectName,
+//         '-f',
+//         composeFile,
+//         'build',
+//         noCache && '--no-cache',
+//       ],
+//       env: envVars,
+//     },
+//   )
+// }
+
+/**
  * Returns Dockerfile.arm64 if on Mac Silicon or aarch64 platform
  * @returns {string} Dockerfile.arm64 or empty string
  */

@@ -599,29 +599,6 @@ export async function getComposeFile(
   return file ? path.join(LLEMONSTACK_INSTALL_DIR, file) : null
 }
 
-export async function buildImage(
-  projectName: string,
-  composeFile: string,
-  envVars?: Record<string, string>,
-  { noCache = false }: { noCache?: boolean } = {},
-): Promise<void> {
-  await runCommand(
-    'docker',
-    {
-      args: [
-        'compose',
-        '-p',
-        projectName,
-        '-f',
-        composeFile,
-        'build',
-        noCache && '--no-cache',
-      ],
-      env: envVars,
-    },
-  )
-}
-
 /**
  * Filter out files that don't exist.
  *
