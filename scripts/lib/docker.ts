@@ -47,6 +47,7 @@ export async function runDockerComposeCommand(
     composeFile,
     projectName,
     profiles,
+    ansi = 'auto',
     args, // Additonal args to pass after the docker command
     silent = false,
     captureOutput = false,
@@ -56,6 +57,7 @@ export async function runDockerComposeCommand(
     composeFile?: string
     projectName?: string
     profiles?: string[]
+    ansi?: 'auto' | 'never' | 'always'
     args?: Array<string | false>
     silent?: boolean
     captureOutput?: boolean
@@ -66,6 +68,7 @@ export async function runDockerComposeCommand(
   return await runCommand('docker', {
     args: [
       'compose',
+      ...(ansi ? ['--ansi', ansi] : []),
       '-p',
       projectName || dockerEnv().LLEMONSTACK_PROJECT_NAME,
       ...(composeFile ? ['-f', composeFile] : []),
