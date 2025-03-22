@@ -104,7 +104,7 @@ export async function runCommand(
   let cmdCmd = cmd
   let cmdArgs = (args?.filter(Boolean) || []) as string[]
   const cmdEnv: Record<string, string> = {
-    // TODO: remove this
+    // TODO: remove this after finishing migration to docker.ts lib
     ...(cmd.includes('docker') ? dockerEnv() : {}), // Add docker specific env vars
     ...envVars,
     ...Object.fromEntries( // Convert all env values to strings
@@ -133,15 +133,30 @@ export async function runCommand(
 
   // Save cmd for debugging & error messages
   const fullCmd = [
-    Object.entries(env)
-      .map(([key, value]) => `${key}=${value}`)
-      .join(' '),
     cmdCmd,
     cmdArgs.join(' '),
   ].filter(Boolean).join(' ')
 
   if (debug) {
-    showDebug(`Running command: ${fullCmd}`)
+    // Show full command with escaped quotes
+    const bashFullCmd = [
+      Object.entries(env)
+        .map(([key, value]) => {
+          // Escape quotes
+          const escapedValue = String(value).replaceAll('"', '\\"').replaceAll("'", "\\'")
+          return `${key}="${escapedValue}"`
+        })
+        .join(' '),
+      cmdCmd,
+      cmdArgs.map((arg) => {
+        const escapedArg = String(arg).replaceAll('"', '\\"').replaceAll("'", "\\'")
+        return `"${escapedArg}"`
+      }).join(' '),
+    ].filter(Boolean).join(' ')
+    showDebug(
+      `Running command: ${fullCmd}\n` +
+        `  > ${bashFullCmd}`,
+    )
     // Extra debugging info, comment out when not needed
     // showDebug(`Deno.Command: ${cmdCmd}`)
     // showDebug('[args]:', cmdArgs)
