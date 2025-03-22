@@ -9,6 +9,8 @@
  * ```
  */
 
+import { dockerRun } from './lib/docker.ts'
+import { ServiceImage } from './lib/types.d.ts'
 import {
   ALL_COMPOSE_FILES,
   DEFAULT_PROJECT_NAME,
@@ -18,7 +20,6 @@ import {
   isEnabled,
   prepareEnv,
   runCommand,
-  ServiceImage,
   showAction,
   showError,
   showHeader,
@@ -82,6 +83,7 @@ function showTable(header: RowType, rows: RowType[]) {
  * Starts a new container so there's a chance the version differs from any running containers.
  */
 async function getAppVersion(
+  projectName: string,
   service: string, // Service name
   composeFile: string, // Compose file
   entrypoint: string, // Entrypoint
@@ -105,21 +107,12 @@ async function getAppVersion(
     }
   }
   try {
-    const version = (await runCommand('docker', {
-      args: [
-        'compose',
-        '-f',
-        composeFile,
-        'run',
-        '--rm',
-        '--entrypoint',
-        entrypoint,
-        service,
-        ...cmdArgs,
-      ],
-      captureOutput: true,
-      silent: true,
-    })).toString().trim()
+    const version = (await dockerRun(
+      projectName,
+      service,
+      entrypoint,
+      { args: cmdArgs },
+    )).toString().trim()
     // Get the last line of the output in case the version output multiple lines
     serviceImage.version = version.split('\n').pop() || ''
     return serviceImage
@@ -129,7 +122,7 @@ async function getAppVersion(
   return serviceImage
 }
 
-async function getAppVersions(): Promise<string[][]> {
+async function getAppVersions(projectName: string): Promise<string[][]> {
   // Get enabled services and process them in parallel
   const results = await Promise.all(
     Object.keys(SERVICES_WITH_APP_VERSION)
@@ -142,6 +135,7 @@ async function getAppVersions(): Promise<string[][]> {
         }
         const [entrypoint, ...args] = SERVICES_WITH_APP_VERSION[service]
         const serviceImage = await getAppVersion(
+          projectName,
           service,
           composeFile,
           entrypoint,
@@ -286,7 +280,7 @@ export async function versions(projectName: string): Promise<void> {
 
   try {
     const appVersionsPromise = (Object.keys(SERVICES_WITH_APP_VERSION).length > 0)
-      ? getAppVersions()
+      ? getAppVersions(projectName)
       : Promise.resolve([])
 
     const imageVersionRows = await showImageVersions()

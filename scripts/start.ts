@@ -21,7 +21,17 @@ import { load as loadDotEnv } from 'jsr:@std/dotenv'
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
 import * as yaml from 'jsr:@std/yaml'
+import { prepareDockerNetwork, replaceDockerComposeVars } from './lib/docker.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
+import { CommandError, RunCommandOutput } from './lib/runCommand.ts'
+import {
+  ComposeConfig,
+  Config,
+  EnvVars,
+  OllamaProfile,
+  RepoService,
+  ServiceImage,
+} from './lib/types.d.ts'
 
 // Immediately load .env file
 await loadEnv({ silent: true })
@@ -168,148 +178,6 @@ const REQUIRED_VOLUMES = [
   { volume: 'flowise/uploads' },
   { volume: 'minio' },
 ]
-
-/*******************************************************************************
- * TYPES
- *******************************************************************************/
-
-export interface Config {
-  initialized: string // ISO 8601 timestamp if initialized, otherwise empty
-  version: string // Version of LLemonStack used to create the config
-  projectName: string
-  envFile: string
-  timestamp?: string // ISO 8601 timestamp from 0.1.0 config
-  dirs: {
-    config: string // .llemonstack
-    repos: string
-    import: string
-    shared: string
-    volumes: string
-  }
-}
-
-type EnvVars = Record<string, string | boolean | number>
-
-// Custom error class for runCommand
-export class CommandError extends Error {
-  code: number
-  stdout: string
-  stderr: string
-  cmd: string // the command that was run
-
-  constructor(
-    message: string,
-    {
-      code,
-      stdout,
-      stderr,
-      cmd,
-    }: {
-      code: number
-      stdout: string
-      stderr: string
-      cmd: string
-    },
-  ) {
-    super(message)
-    this.code = code
-    this.stdout = stdout
-    this.stderr = stderr
-    this.cmd = cmd
-  }
-  override toString(): string {
-    let str = this.message
-    str += this.cmd ? `\nCmd: '${this.cmd}'` : ''
-    str += this.stderr ? `\nError:${this.stderr}` : ''
-    return str
-  }
-}
-
-export interface CommandOutput {
-  stdout: string
-  stderr: string
-  code: number
-  success: boolean
-  signal?: Deno.Signal | null
-}
-
-export class RunCommandOutput {
-  private _output: CommandOutput
-  constructor(output: CommandOutput) {
-    this._output = output
-  }
-  get stdout(): string {
-    return this._output.stdout
-  }
-  get stderr(): string {
-    return this._output.stderr
-  }
-  get code(): number {
-    return this._output.code
-  }
-  get success(): boolean {
-    return this._output.success
-  }
-  get signal(): Deno.Signal | null | undefined {
-    return this._output.signal
-  }
-  toString(): string {
-    return this._output.stdout
-  }
-  toList(): string[] {
-    return this._output.stdout.split('\n').filter(Boolean).map((line) => line.trim())
-  }
-  toJsonList(): Array<Record<string, unknown>> {
-    const output = this._output.stdout.trim()
-    return !output ? [] : output.split('\n').map((output) => JSON.parse(output)).filter(
-      Boolean,
-    )
-  }
-}
-
-export type OllamaProfile =
-  | 'ollama-cpu'
-  | 'ollama-gpu-amd'
-  | 'ollama-gpu-nvidia'
-  | 'ollama-host'
-  | 'ollama-false'
-
-export interface RepoService {
-  url: string // URL of the repo
-  dir: string // Name of repo dir to use in the repos folder
-  sparseDir?: string | string[] // Directory to sparse clone into
-  sparse?: boolean // Whether to sparse clone
-  checkFile?: string // File to check for existence to determine if repo is ready
-}
-
-export interface ServiceImage {
-  service: string
-  containerName: string
-  image: string
-  build?: string
-  version?: string
-  imageName?: string // The name of the image without the version
-}
-
-// Define the type for the Docker Compose configuration
-export interface ComposeConfig {
-  include?: string | string[] | { path: string }[]
-  services?: {
-    [key: string]: {
-      image?: string
-      extends?: {
-        file: string
-        service?: string
-      }
-      build?: {
-        dockerfile: string
-        context?: string
-        dockerfile_inline?: string
-      }
-      container_name?: string
-    }
-  }
-}
 
 /*******************************************************************************
  * FUNCTIONS
@@ -769,6 +637,11 @@ export async function getImagesFromComposeYml(
     return []
   }
   processedFiles.add(composeFile)
+
+  // Expand any variables in the compose file path
+  if (composeFile.includes('${')) {
+    composeFile = replaceDockerComposeVars(composeFile, dockerEnv())
+  }
 
   try {
     // Read the compose file
@@ -1370,24 +1243,6 @@ export async function isSupabaseStarted(projectName: string): Promise<boolean> {
   return (result.includes('supabase')) as boolean
 }
 
-export async function prepareNetwork(): Promise<void> {
-  const network = dockerEnv().LLEMONSTACK_NETWORK_NAME
-  const result = await runCommand('docker', {
-    args: ['network', 'ls'],
-    captureOutput: true,
-    silent: true,
-  })
-  if (!result.toString().includes(network)) {
-    await runCommand('docker', {
-      args: ['network', 'create', network],
-      silent: true,
-    })
-    DEBUG && showDebug(`Created network: ${network}`)
-  } else {
-    DEBUG && showDebug(`Network already exists: ${network}`)
-  }
-}
-
 export async function startService(
   projectName: string,
   service: string,
@@ -1398,7 +1253,7 @@ export async function startService(
   } = {},
 ) {
   if (createNetwork) {
-    await prepareNetwork()
+    await prepareDockerNetwork()
   }
 
   const composeFile = await getComposeFile(service)
@@ -1440,7 +1295,7 @@ export async function startServices(
   { envVars = {} }: { envVars?: EnvVars } = {},
 ) {
   // Create the network if it doesn't exist
-  await prepareNetwork()
+  await prepareDockerNetwork()
 
   // Start all services in parallel
   await Promise.all(services.map(async (service) => {

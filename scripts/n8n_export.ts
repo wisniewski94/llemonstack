@@ -11,13 +11,12 @@
 
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
+import { dockerExec } from './lib/docker.ts'
 import {
   DEFAULT_PROJECT_NAME,
   getComposeFile,
   isEnabled,
-  runCommand,
   showAction,
-  showError,
   showInfo,
   showWarning,
 } from './start.ts'
@@ -55,49 +54,49 @@ interface ServiceExportCommand {
   hostDir: string // Directory to export to on host
 }
 
-// TODO: replace with runContainerCommand in lib/containers.ts
-/**
- * Execs a command in a running container
- * @param {string} projectName - The name of the project
- * @param {string} service - The name of the service
- * @param {string} composeFile - The path to the compose file
- * @param {string} entrypoint - The entrypoint of the service
- * @param {string[]} cmdArgs - The arguments to pass to the service
- * @returns {string} The output of the command
- */
-async function runContainerCommand(
-  projectName: string,
-  service: string, // Service name
-  composeFile: string, // Compose file
-  entrypoint: string, // Entrypoint, app to run; e.g. 'node'
-  cmdArgs: string[], // Args to pass to the app
-  { silent = false }: { silent?: boolean } = {},
-): Promise<string> {
-  let results = ''
-  try {
-    // Execute a command inside a running container
-    const cmdResult = await runCommand('docker', {
-      args: [
-        'compose',
-        '-p',
-        projectName,
-        '-f',
-        composeFile,
-        'exec',
-        service,
-        entrypoint,
-        ...cmdArgs,
-      ],
-      captureOutput: true,
-      silent,
-    })
-    results = cmdResult.toString()
-  } catch (error) {
-    showError(`Error running command in ${service}`, error)
-  }
+// TODO: replace with dockerExec in lib/docker.ts
+// /**
+//  * Execs a command in a running container
+//  * @param {string} projectName - The name of the project
+//  * @param {string} service - The name of the service
+//  * @param {string} composeFile - The path to the compose file
+//  * @param {string} entrypoint - The entrypoint of the service
+//  * @param {string[]} cmdArgs - The arguments to pass to the service
+//  * @returns {string} The output of the command
+//  */
+// async function runContainerCommand(
+//   projectName: string,
+//   service: string, // Service name
+//   composeFile: string, // Compose file
+//   entrypoint: string, // Entrypoint, app to run; e.g. 'node'
+//   cmdArgs: string[], // Args to pass to the app
+//   { silent = false }: { silent?: boolean } = {},
+// ): Promise<string> {
+//   let results = ''
+//   try {
+//     // Execute a command inside a running container
+//     const cmdResult = await runCommand('docker', {
+//       args: [
+//         'compose',
+//         '-p',
+//         projectName,
+//         '-f',
+//         composeFile,
+//         'exec',
+//         service,
+//         entrypoint,
+//         ...cmdArgs,
+//       ],
+//       captureOutput: true,
+//       silent,
+//     })
+//     results = cmdResult.toString()
+//   } catch (error) {
+//     showError(`Error running command in ${service}`, error)
+//   }
 
-  return results
-}
+//   return results
+// }
 
 type BackupDirs = [service: string, backupDir: string][]
 async function prepareBackupDir(): Promise<BackupDirs> {
@@ -118,13 +117,17 @@ async function runExportCommands(projectName: string): Promise<void> {
         showWarning(`Compose file not found for ${serviceCommand.service}, skipping`)
       continue
     }
-    await runContainerCommand(
-      projectName,
-      serviceCommand.service,
+    await dockerExec(projectName, serviceCommand.service, serviceCommand.cmd, {
+      args: serviceCommand.args,
       composeFile,
-      serviceCommand.cmd,
-      serviceCommand.args,
-    )
+    })
+    // await runContainerCommand(
+    //   projectName,
+    //   serviceCommand.service,
+    //   composeFile,
+    //   serviceCommand.cmd,
+    //   serviceCommand.args,
+    // )
   }
 }
 export async function runExport(projectName: string): Promise<void> {

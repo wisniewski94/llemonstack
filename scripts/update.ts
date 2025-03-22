@@ -39,6 +39,7 @@ async function pullImages(projectName: string): Promise<void> {
       '-p',
       projectName,
       ...COMPOSE_FILES.map((file) => ['-f', file]).flat(),
+      // TODO: get profiles for each service config, currently ollama will not be updated?
       ...getProfilesArgs(), // Only pull images for enabled profiles
       'pull',
     ],

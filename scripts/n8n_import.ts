@@ -17,14 +17,14 @@
 
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
-import { runContainerCommand } from './lib/containers.ts'
+import { dockerExec } from './lib/docker.ts'
+import { RunCommandOutput } from './lib/runCommand.ts'
 import {
   confirm,
   DEFAULT_PROJECT_NAME,
   IMPORT_DIR_BASE,
   loadEnv,
   prepareEnv,
-  RunCommandOutput,
   showAction,
   showError,
   showInfo,
@@ -143,7 +143,7 @@ async function importToN8n(
     let results: RunCommandOutput
 
     // Import credentials from import/n8n/credentials
-    results = await runContainerCommand(projectName, 'n8n', 'n8n', {
+    results = await dockerExec(projectName, 'n8n', 'n8n', {
       args: [
         'import:credentials',
         '--separate',
@@ -160,7 +160,7 @@ async function importToN8n(
     }
 
     // Import workflows from import/n8n/workflows
-    results = await runContainerCommand(projectName, 'n8n', 'n8n', {
+    results = await dockerExec(projectName, 'n8n', 'n8n', {
       args: [
         'import:workflow',
         '--separate',
