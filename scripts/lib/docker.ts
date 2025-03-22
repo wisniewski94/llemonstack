@@ -24,7 +24,7 @@ export function dockerEnv({ volumesDir }: { volumesDir?: string } = {}): Record<
     LLEMONSTACK_NETWORK_NAME: `${Deno.env.get('LLEMONSTACK_PROJECT_NAME')}_network`,
     TARGETPLATFORM: getDockerTargetPlatform(), // Docker platform for building images
     DOCKERFILE_ARCH: getDockerfileArch(), // Dockerfile.arm64 if on Mac Silicon or aarch64 platform
-    IGNORE_ORPHANS: 'true', // Always ignore orphan container warnings
+    COMPOSE_IGNORE_ORPHANS: 'true', // Always ignore orphan container warnings
   }
 }
 
