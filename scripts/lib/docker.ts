@@ -73,7 +73,7 @@ export async function runDockerComposeCommand(
     projectName,
     profiles,
     ansi = 'auto',
-    args, // Additonal args to pass after the docker command
+    args, // Additional args to pass after the docker command
     silent = false,
     captureOutput = false,
     env = {},
@@ -127,7 +127,7 @@ export async function runDockerComposeCommand(
 export async function runDockerCommand(
   cmd: string, // Docker command: ps, network, ls, etc.
   {
-    args, // Additonal args to pass after the docker command
+    args, // Additional args to pass after the docker command
     silent = false,
     captureOutput = false,
     env = {},
