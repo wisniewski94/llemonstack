@@ -17,13 +17,13 @@
  * deno run update -f
  * ```
  */
+import { runCommand } from './lib/runCommand.ts'
 import {
   COMPOSE_FILES,
   confirm,
   DEFAULT_PROJECT_NAME,
   getProfilesArgs,
   prepareEnv,
-  runCommand,
   setupRepos,
   showAction,
   showError,

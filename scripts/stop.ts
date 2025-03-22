@@ -13,6 +13,7 @@
  */
 
 import { dockerPs, type DockerPsResult } from './lib/docker.ts'
+import { runCommand } from './lib/runCommand.ts'
 import {
   ALL_COMPOSE_SERVICES,
   type ComposeService,
@@ -20,7 +21,6 @@ import {
   getComposeFile,
   isEnabled,
   prepareEnv,
-  runCommand,
   setupRepos,
   showAction,
   showError,

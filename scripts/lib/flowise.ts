@@ -1,5 +1,6 @@
 import * as path from '@std/path'
-import { DEBUG, dockerEnv, showDebug, showError } from '../start.ts'
+import { DEBUG, showDebug, showError } from '../start.ts'
+import { dockerEnv } from './docker.ts'
 
 /**
  * Get the Flowise API key from the config file

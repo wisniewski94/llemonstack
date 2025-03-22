@@ -1,3 +1,5 @@
+import { RunCommandOutput as RunCommandOutputClass } from './runCommand.ts'
+
 export interface Config {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty
   version: string // Version of LLemonStack used to create the config
@@ -21,6 +23,16 @@ export interface CommandOutput {
   code: number
   success: boolean
   signal?: Deno.Signal | null
+}
+
+export type RunCommandOutput = InstanceType<typeof RunCommandOutputClass>
+export interface RunCommandOptions {
+  args?: Array<string | false>
+  silent?: boolean
+  captureOutput?: boolean
+  env?: EnvVars
+  autoLoadEnv?: boolean
+  debug?: boolean
 }
 
 export type OllamaProfile =

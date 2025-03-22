@@ -9,7 +9,7 @@
  * ```
  */
 
-import { dockerRun } from './lib/docker.ts'
+import { dockerRun, runDockerCommand } from './lib/docker.ts'
 import { ServiceImage } from './lib/types.d.ts'
 import {
   ALL_COMPOSE_FILES,
@@ -19,7 +19,6 @@ import {
   getImagesFromComposeYml,
   isEnabled,
   prepareEnv,
-  runCommand,
   showAction,
   showError,
   showHeader,
@@ -225,9 +224,8 @@ async function showImageVersions(): Promise<RowType[]> {
       }
       if (!serviceImage.version || /latest|main/i.test(serviceImage.version || '')) {
         try {
-          const version = (await runCommand('docker', {
+          const version = (await runDockerCommand('inspect', {
             args: [
-              'inspect',
               '--format',
               '{{index .Config.Labels "org.opencontainers.image.version"}}',
               serviceImage.image,

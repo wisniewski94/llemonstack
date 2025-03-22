@@ -22,6 +22,7 @@
  */
 import * as fs from 'jsr:@std/fs'
 import { clearConfigFile, clearEnvFile } from './init.ts'
+import { runCommand } from './lib/runCommand.ts'
 import {
   ALL_COMPOSE_FILES,
   confirm,
@@ -32,7 +33,6 @@ import {
   prepareEnv,
   REPO_DIR,
   REPO_DIR_BASE,
-  runCommand,
   setupRepos,
   SHARED_DIR,
   showAction,
