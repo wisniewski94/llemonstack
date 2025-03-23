@@ -5,8 +5,7 @@ Adds automatic tracing of n8n workflows to the otel provider configured in env v
 The OTEL example was originally shared by Stuart Johnson in this
 [n8n community forum post](https://community.n8n.io/t/n8n-successfully-instrumented-with-opentelemetry/78468).
 
-The code has been modified to fix some minor bugs and consolidate the tracing
-code into one file.
+The code has been modified to fix some minor bugs and consolidate the tracing code into one file.
 
 FFmpeg is installed and useable from run command nodes in n8n.
 
@@ -30,7 +29,7 @@ n8n workflows are then automatically logged to the OTEL backend (e.g. Honeycomb)
 
 View traces in Honeycomb to see the full workflow session.
 
-Here's an example screenshot showing an n8n workflow execution
-being traced in Honeycomb. The example workflow threw an error.
+Here's an example screenshot showing an n8n workflow execution being traced in Honeycomb. The
+example workflow threw an error.
 
 ![n8n workflow with OpenTelemetry tracing in Honeycomb](../../../../docs/assets/screenshot_otel-n8n-trace1.png)

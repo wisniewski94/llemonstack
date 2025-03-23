@@ -1,4 +1,4 @@
-"use strict"
+'use strict'
 /**
  * This file is used to instrument the n8n application with OpenTelemetry.
  * It's run by the docker entrypoint.sh script before starting n8n.
@@ -12,26 +12,26 @@
  * TODO: add subnode instrumentation.
  */
 
-const opentelemetry = require("@opentelemetry/sdk-node")
-const { OTLPTraceExporter } = require("@opentelemetry/exporter-trace-otlp-http")
-const { OTLPLogExporter } = require("@opentelemetry/exporter-logs-otlp-http")
+const opentelemetry = require('@opentelemetry/sdk-node')
+const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http')
+const { OTLPLogExporter } = require('@opentelemetry/exporter-logs-otlp-http')
 const {
   getNodeAutoInstrumentations,
-} = require("@opentelemetry/auto-instrumentations-node")
-const { registerInstrumentations } = require("@opentelemetry/instrumentation")
-const { resourceFromAttributes } = require("@opentelemetry/resources")
+} = require('@opentelemetry/auto-instrumentations-node')
+const { registerInstrumentations } = require('@opentelemetry/instrumentation')
+const { resourceFromAttributes } = require('@opentelemetry/resources')
 const {
   SEMRESATTRS_SERVICE_NAME,
-} = require("@opentelemetry/semantic-conventions")
-const winston = require("winston")
+} = require('@opentelemetry/semantic-conventions')
+const winston = require('winston')
 const {
   trace,
   context,
   SpanStatusCode,
   SpanKind,
-} = require("@opentelemetry/api")
-const flatten = require("flat") // flattens objects into a single level
-const { envDetector, hostDetector, processDetector } = require('@opentelemetry/resources');
+} = require('@opentelemetry/api')
+const flatten = require('flat') // flattens objects into a single level
+const { envDetector, hostDetector, processDetector } = require('@opentelemetry/resources')
 
 const LOGPREFIX = '[Tracing]'
 const LOG_LEVEL = getEnv('TRACING_LOG_LEVEL', 'info')
@@ -47,11 +47,11 @@ console.log(`${LOGPREFIX}: Starting n8n OpenTelemetry instrumentation`)
 // Turn off auto-instrumentation for dns, net, tls, fs
 // Enable enhancedDatabaseReporting for pg
 const autoInstrumentations = getNodeAutoInstrumentations({
-  "@opentelemetry/instrumentation-dns": { enabled: false },
-  "@opentelemetry/instrumentation-net": { enabled: false },
-  "@opentelemetry/instrumentation-tls": { enabled: false },
-  "@opentelemetry/instrumentation-fs": { enabled: false },
-  "@opentelemetry/instrumentation-pg": {
+  '@opentelemetry/instrumentation-dns': { enabled: false },
+  '@opentelemetry/instrumentation-net': { enabled: false },
+  '@opentelemetry/instrumentation-tls': { enabled: false },
+  '@opentelemetry/instrumentation-fs': { enabled: false },
+  '@opentelemetry/instrumentation-pg': {
     enhancedDatabaseReporting: true,
   },
 })
@@ -69,11 +69,12 @@ console.log(`${LOGPREFIX}: Configuring Winston logger with level: ${LOG_LEVEL}`)
 setupWinstonLogger(LOG_LEVEL)
 
 // Configure and start the OpenTelemetry SDK
-console.log(`${LOGPREFIX}: Configuring OpenTelemetry SDK with log level: ${process.env.OTEL_LOG_LEVEL}`)
+console.log(
+  `${LOGPREFIX}: Configuring OpenTelemetry SDK with log level: ${process.env.OTEL_LOG_LEVEL}`,
+)
 const sdk = setupOpenTelemetryNodeSDK()
 
 sdk.start()
-
 
 ////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS
@@ -118,11 +119,11 @@ function processOtelEnvironmentVariables() {
 function awaitAttributes(detector) {
   return {
     async detect(config) {
-      const resource = detector.detect(config);
-      await resource.waitForAsyncAttributes?.();
-      return resource;
+      const resource = detector.detect(config)
+      await resource.waitForAsyncAttributes?.()
+      return resource
     },
-  };
+  }
 }
 
 /**
@@ -143,7 +144,7 @@ function setupOpenTelemetryNodeSDK() {
       awaitAttributes(hostDetector),
     ],
     resource: resourceFromAttributes({
-      [SEMRESATTRS_SERVICE_NAME]: getEnv('OTEL_SERVICE_NAME', "n8n"),
+      [SEMRESATTRS_SERVICE_NAME]: getEnv('OTEL_SERVICE_NAME', 'n8n'),
     }),
     traceExporter: new OTLPTraceExporter(),
   })
@@ -157,16 +158,16 @@ function setupOpenTelemetryNodeSDK() {
  * - Logs unhandled promise rejections to the console
  * - Logs errors to the console
  */
-function setupWinstonLogger(logLevel = "info") {
+function setupWinstonLogger(logLevel = 'info') {
   const logger = winston.createLogger({
     level: logLevel,
     format: winston.format.json(),
     transports: [new winston.transports.Console()],
   })
 
-  process.on("uncaughtException", async (err) => {
-    console.error("Uncaught Exception", err) // Log error object to console
-    logger.error("Uncaught Exception", { error: err })
+  process.on('uncaughtException', async (err) => {
+    console.error('Uncaught Exception', err) // Log error object to console
+    logger.error('Uncaught Exception', { error: err })
     const span = opentelemetry.trace.getActiveSpan()
     if (span) {
       span.recordException(err)
@@ -175,13 +176,13 @@ function setupWinstonLogger(logLevel = "info") {
     try {
       await sdk.forceFlush()
     } catch (flushErr) {
-      logger.error("Error flushing telemetry data", { error: flushErr })
+      logger.error('Error flushing telemetry data', { error: flushErr })
     }
     process.exit(1)
   })
 
-  process.on("unhandledRejection", (reason, promise) => {
-    logger.error("Unhandled Promise Rejection", { error: reason })
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled Promise Rejection', { error: reason })
   })
 }
 
@@ -193,11 +194,11 @@ function setupWinstonLogger(logLevel = "info") {
  */
 function setupN8nOpenTelemetry() {
   // Setup n8n workflow execution tracing
-  const tracer = trace.getTracer("n8n-instrumentation", "1.0.0")
+  const tracer = trace.getTracer('n8n-instrumentation', '1.0.0')
 
   try {
     // Import n8n core modules
-    const { WorkflowExecute } = require("n8n-core")
+    const { WorkflowExecute } = require('n8n-core')
 
     /**
      * Patch the workflow execution
@@ -211,18 +212,18 @@ function setupN8nOpenTelemetry() {
     /** @param {import('n8n-workflow').Workflow} workflow */
     WorkflowExecute.prototype.processRunExecutionData = function (workflow) {
       const wfData = workflow || {}
-      const workflowId = wfData?.id ?? ""
-      const workflowName = wfData?.name ?? ""
+      const workflowId = wfData?.id ?? ''
+      const workflowName = wfData?.name ?? ''
 
       const workflowAttributes = {
-        "n8n.workflow.id": workflowId,
-        "n8n.workflow.name": workflowName,
+        'n8n.workflow.id': workflowId,
+        'n8n.workflow.name': workflowName,
         ...flatten(wfData?.settings ?? {}, {
-          delimiter: ".",
+          delimiter: '.',
           transformKey: (key) => `n8n.workflow.settings.${key}`,
         }),
       }
-      const span = tracer.startSpan("n8n.workflow.execute", {
+      const span = tracer.startSpan('n8n.workflow.execute', {
         attributes: workflowAttributes,
         kind: SpanKind.INTERNAL,
       })
@@ -253,7 +254,7 @@ function setupN8nOpenTelemetry() {
                 code: SpanStatusCode.ERROR,
                 message: String(error.message || error),
               })
-            }
+            },
           )
           .finally(() => {
             span.end()
@@ -286,15 +287,15 @@ function setupN8nOpenTelemetry() {
       runIndex,
       additionalData,
       mode,
-      abortSignal
+      abortSignal,
     ) {
       // Safeguard against undefined this context
       if (!this) {
-        console.warn("WorkflowExecute context is undefined")
+        console.warn('WorkflowExecute context is undefined')
         return originalRunNode.apply(this, arguments)
       }
 
-      const node = executionData?.node ?? "unknown"
+      const node = executionData?.node ?? 'unknown'
 
       // TODO: get and log credentials used.
       // See
@@ -324,22 +325,22 @@ function setupN8nOpenTelemetry() {
       //   }
       // }
 
-      const executionId = additionalData?.executionId ?? "unknown"
-      const userId = additionalData?.userId ?? "unknown"
+      const executionId = additionalData?.executionId ?? 'unknown'
+      const userId = additionalData?.userId ?? 'unknown'
       const nodeAttributes = {
-        "n8n.workflow.id": workflow?.id ?? "unknown",
-        "n8n.execution.id": executionId,
-        "n8n.user.id": userId,
+        'n8n.workflow.id': workflow?.id ?? 'unknown',
+        'n8n.execution.id': executionId,
+        'n8n.user.id': userId,
         // "n8n.credentials": credInfo || "none",
       }
 
       // Flatten the n8n node object into a single level of attributes
-      const flattenedNode = flatten(node ?? {}, { delimiter: "." })
+      const flattenedNode = flatten(node ?? {}, { delimiter: '.' })
       for (const [key, value] of Object.entries(flattenedNode)) {
         if (typeof value === 'string' || typeof value === 'number') {
-          nodeAttributes[`n8n.node.${key}`] = value;
+          nodeAttributes[`n8n.node.${key}`] = value
         } else {
-          nodeAttributes[`n8n.node.${key}`] = JSON.stringify(value);
+          nodeAttributes[`n8n.node.${key}`] = JSON.stringify(value)
         }
       }
 
@@ -376,11 +377,11 @@ function setupN8nOpenTelemetry() {
               const outputData = result?.data?.[runIndex]
               const finalJson = outputData?.map((item) => item.json)
               nodeSpan.setAttribute(
-                "n8n.node.output_json",
-                JSON.stringify(finalJson)
+                'n8n.node.output_json',
+                JSON.stringify(finalJson),
               )
             } catch (error) {
-              console.warn("Failed to set node output attributes: ", error)
+              console.warn('Failed to set node output attributes: ', error)
             }
             return result
           } catch (error) {
@@ -389,15 +390,15 @@ function setupN8nOpenTelemetry() {
               code: SpanStatusCode.ERROR,
               message: String(error.message || error),
             })
-            nodeSpan.setAttribute("n8n.node.status", "error")
+            nodeSpan.setAttribute('n8n.node.status', 'error')
             throw error
           } finally {
             nodeSpan.end()
           }
-        }
+        },
       )
     }
   } catch (e) {
-    console.error("Failed to set up n8n OpenTelemetry instrumentation:", e)
+    console.error('Failed to set up n8n OpenTelemetry instrumentation:', e)
   }
 }

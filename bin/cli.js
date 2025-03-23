@@ -39,7 +39,7 @@ function main() {
   // Run the Deno script
   const result = spawnSync('deno', ['run', '--allow-all', mainTsPath, ...args], {
     stdio: 'inherit',
-    shell: true
+    shell: true,
   })
 
   // Exit with the same code as the Deno process

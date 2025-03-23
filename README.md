@@ -194,8 +194,8 @@ deno install # Install dependencies
 npm link # Enable the global llmn command
 ```
 
-`npm link` creates a global symbolic link for `llmn` to `bin/cli.js`.
-Once the link is enabled, the `llmn` command can be run from any directory.
+`npm link` creates a global symbolic link for `llmn` to `bin/cli.js`. Once the link is enabled, the
+`llmn` command can be run from any directory.
 
 3. Create a new LLemonStack project
 
@@ -211,13 +211,13 @@ llmn init
 LLemonStack supports multiple projects on the same machine. This allows you to experiment with
 different settings or keep client projects separate from personal projects.
 
-To create multiple projects, make sure the current stack is stopped by running `llmn stop`
-in the project directory. Then create a new project directory and run `llmn init`
-inside of the new directory.
+To create multiple projects, make sure the current stack is stopped by running `llmn stop` in the
+project directory. Then create a new project directory and run `llmn init` inside of the new
+directory.
 
-Each project directory contains the unique `.env` file as well as the `volumes`
-directory that stores that stack data. Contents of the `volumes` directory contains
-database data and other persistent data needed to run the stack.
+Each project directory contains the unique `.env` file as well as the `volumes` directory that
+stores that stack data. Contents of the `volumes` directory contains database data and other
+persistent data needed to run the stack.
 
 ## Usage
 
@@ -275,9 +275,9 @@ llmn schema
 llmn completions
 ```
 
-To enable auto completions for llmn, add the appropriate line below to your shell .rc file.
-Then source your .rc file to enable completions in the current shell:
-`source ~/.bashrc` or `source ~/.zshrc`
+To enable auto completions for llmn, add the appropriate line below to your shell .rc file. Then
+source your .rc file to enable completions in the current shell: `source ~/.bashrc` or
+`source ~/.zshrc`
 
 ```bash
 # Bash: ~/.bashrc
@@ -407,8 +407,8 @@ instance, unfortunately. There are two options in this case:
    ollama pull deepseek-r1:1.5b
    ```
 
-   See [services/ollama/docker-compose.yaml](docker-compose.yaml) for the specific models used by the
-   Docker container.
+   See [services/ollama/docker-compose.yaml](docker-compose.yaml) for the specific models used by
+   the Docker container.
 
    Once ollama is running locally and `ENABLE_OLLAMA=host` is set in .env, start the services with
    `llmn start`

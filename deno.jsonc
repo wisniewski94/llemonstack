@@ -23,7 +23,7 @@
     "singleQuote": true,
     "proseWrap": "always",
     "semiColons": false,
-    "exclude": ["tmp/", "examples/", "import/", "shared/", "volumes/"]
+    "exclude": ["tmp/", "examples/", "import/", "shared/", "volumes/", "*.yaml"]
   },
   "lint": {
     "exclude": ["tmp/", "examples/", "import/", "shared/", "volumes/"]
