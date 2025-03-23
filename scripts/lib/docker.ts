@@ -79,7 +79,7 @@ export async function runDockerComposeCommand(
     env = {},
     autoLoadEnv = true, // If true, load env from .env file
   }: {
-    composeFile?: string
+    composeFile?: string | string[]
     projectName?: string
     profiles?: string[]
     ansi?: 'auto' | 'never' | 'always'
@@ -90,13 +90,14 @@ export async function runDockerComposeCommand(
     autoLoadEnv?: boolean
   } = {},
 ): Promise<RunCommandOutput> {
+  const composeFiles = Array.isArray(composeFile) ? composeFile : [composeFile]
   return await runCommand('docker', {
     args: [
       'compose',
       ...(ansi ? ['--ansi', ansi] : []),
       '-p',
       projectName || dockerEnv().LLEMONSTACK_PROJECT_NAME,
-      ...(composeFile ? ['-f', composeFile] : []),
+      ...(composeFiles.map((file) => file ? ['-f', file] : []).flat()),
       ...(profiles || []),
       cmd,
       ...(args || []),

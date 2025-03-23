@@ -21,18 +21,18 @@
  * ```
  */
 import * as fs from 'jsr:@std/fs'
+import * as path from 'jsr:@std/path'
 import { clearConfigFile, clearEnvFile } from './init.ts'
-import { runCommand } from './lib/runCommand.ts'
+import { runDockerCommand, runDockerComposeCommand } from './lib/docker.ts'
 import {
-  ALL_COMPOSE_FILES,
+  ALL_COMPOSE_SERVICES,
   confirm,
   DEFAULT_PROJECT_NAME,
-  filterExistingFiles,
+  getComposeFileFromService,
   getProfilesArgs,
   getVolumesPath,
   prepareEnv,
   REPO_DIR,
-  REPO_DIR_BASE,
   setupRepos,
   SHARED_DIR,
   showAction,
@@ -43,35 +43,31 @@ import {
 } from './start.ts'
 import { update } from './update.ts'
 
-const COMMANDS = {
-  cleanBuildCache: 'docker builder prune -a',
-  cleanSystemCache: 'docker system prune -a --volumes',
-}
+const DOCKER_CLEANUP_COMMANDS = [
+  'docker builder prune -a',
+  'docker system prune -a --volumes',
+]
 
 async function dockerComposeCleanup(
   projectName: string,
-  composeFiles: string[],
 ): Promise<void> {
+  const composeFiles = await ALL_COMPOSE_SERVICES
   // Make sure repos exist before running docker compose cleanup
   await setupRepos({ all: true })
   // Iterate through each compose file and run the down command individually
   // This catches any errors with compose files that extend a non-existent file.
-  for (const composeFile of composeFiles) {
+  for (const [service, composeFile] of composeFiles) {
     try {
-      await runCommand('docker', {
-        args: [
-          'compose',
-          '-p',
-          projectName,
-          '-f',
-          composeFile,
-          ...getProfilesArgs({ all: true }),
-          'down',
-          '--rmi',
-          'all',
-          '--volumes',
-          '--remove-orphans',
-        ],
+      const composeFile = await getComposeFileFromService(service)
+      if (!composeFile || !fs.existsSync(composeFile)) {
+        showInfo(`Skip ${service} teardown, compose file not found: ${composeFile}`)
+        continue
+      }
+      await runDockerComposeCommand('down', {
+        projectName,
+        composeFile,
+        profiles: getProfilesArgs({ all: true }),
+        args: ['--rmi', 'all', '--volumes', '--remove-orphans'],
       })
     } catch (error) {
       showError(`Error downing ${composeFile}: ${error}`)
@@ -79,36 +75,35 @@ async function dockerComposeCleanup(
   }
 }
 
-async function dockerBuilderCleanUp(): Promise<void> {
-  await runCommand(COMMANDS.cleanBuildCache)
+async function runCleanupCommand(command: string): Promise<void> {
+  const args = command.split(' ').slice(1) // Get array and remove 'docker'
+  await runDockerCommand(args[0], { args: args.slice(1) })
 }
 
-async function dockerSystemCleanUp(): Promise<void> {
-  await runCommand(COMMANDS.cleanSystemCache)
-}
-
+/**
+ * Clean a directory by deleting it and recreating it
+ * @param dir - The directory to clean
+ */
 async function cleanDir(dir: string): Promise<void> {
   try {
-    if (await fs.exists(dir)) {
-      await Deno.remove(dir, { recursive: true })
+    if (!await fs.exists(dir)) {
+      showInfo(`Directory does not exist: ${dir}`)
+      return
     }
+
+    // Safety check: prevent deleting directories outside the current working directory
+    const normalizedDir = path.normalize(dir)
+    const normalizedCwd = path.normalize(Deno.cwd())
+    if (!normalizedDir.startsWith(normalizedCwd)) {
+      showError(`Security error: Cannot clean directory outside of project: ${dir}`)
+      showUserAction('Please delete the directory and try again.')
+      Deno.exit(1)
+    }
+
+    await Deno.remove(dir, { recursive: true })
     await Deno.mkdir(dir)
   } catch (error) {
     showError(`Error cleaning directory (${dir})`, error)
-  }
-}
-
-async function cleanSharedDir(): Promise<void> {
-  const dir = SHARED_DIR
-  if (dir.includes('shared')) { // Sanity check
-    await cleanDir(dir)
-  }
-}
-
-async function cleanReposDir(): Promise<void> {
-  const dir = REPO_DIR
-  if (dir.includes(REPO_DIR_BASE)) { // Sanity check
-    await cleanDir(dir)
   }
 }
 
@@ -116,113 +111,101 @@ export async function reset(
   projectName: string,
   { skipPrompt = false, skipCache = false }: { skipPrompt?: boolean; skipCache?: boolean } = {},
 ): Promise<void> {
-  try {
-    if (!skipPrompt) {
-      showWarning(
-        `WARNING: This will delete ALL data for your '${projectName}' stack.`,
-      )
-      showInfo(
-        '\nThis script deletes all docker images, volumes, and networks.\n' +
-          'It resets the stack to the original clean state.\n' +
-          'This can take a while.\n',
-      )
-      showWarning('Please backup all data before proceeding.')
-      if (!confirm('Are you sure you want to continue?')) {
-        showInfo('Reset cancelled')
-        return
-      }
-    }
-
-    await prepareEnv({ silent: false })
-
-    // Get the latest compose files, skipping any that don't exist
-    const composeFiles = filterExistingFiles(ALL_COMPOSE_FILES)
-
-    // Get the latest code for repos
-    if (composeFiles.length > 0) {
-      showAction('\nStopping services and cleaning up docker images...')
-      await dockerComposeCleanup(projectName, composeFiles)
-    } else {
-      showInfo(
-        'No existing compose files found, skipping docker compose cleanup',
-      )
-    }
-
-    if (!skipCache) {
-      if (confirm('Do you want to clean the docker cache?', false)) {
-        await dockerBuilderCleanUp()
-        await dockerSystemCleanUp()
-      } else {
-        showInfo('Skipping docker cache cleanup')
-      }
-    } else {
-      showAction('\nSkipping docker cache cleanup, --skip-cache was used')
-      showInfo('To manually clean the docker cache, run:')
-      showInfo(`> ${COMMANDS.cleanBuildCache}`)
-      showInfo(`> ${COMMANDS.cleanSystemCache}`)
-    }
-
-    showAction('\nCleaning up repos directory...')
-    await cleanReposDir()
-
-    showAction('\nCleaning up shared folder...')
-    if (!skipPrompt) {
-      showInfo(
-        'The shared folder is used to share files between the docker services and the host machine.\n' +
-          'It is not needed for the stack to run and can be deleted.',
-      )
-      showWarning(
-        'Please verify the contents of the shared folder before deleting it.',
-      )
-      showInfo(`Shared folder: ${SHARED_DIR}`)
-    }
-    if (
-      skipPrompt || confirm('Do you want to delete the shared folder?', true)
-    ) {
-      await cleanSharedDir()
-      showInfo('Shared folder reset')
-    } else {
-      showInfo('Skipping shared folder cleanup')
-    }
-
-    // Don't update the stack by default
-    if (!skipPrompt && confirm('Do you want to update the stack to latest versions?', false)) {
-      showAction('\nUpdating the stack...')
-      showInfo(
-        'Updating the stack will only update services enabled in your .env file.',
-      )
-      await update(projectName, { skipStop: true, skipPrompt: true })
-    } else {
-      showInfo('Skipping stack update')
-    }
-
-    await clearEnvFile()
-    await clearConfigFile()
-    showInfo('Environment and config files reset')
-
-    const volumesDir = getVolumesPath()
-    showAction('\nResetting volumes...')
-    showInfo(
-      '\nThe volumes dir contains data from the docker containers.\n' +
-        'It should be deleted to completely reset the stack.\n' +
-        'Please verify the contents of the volumes dir before deleting it.\n\n' +
-        `Volumes dir: ${volumesDir}`,
+  if (!skipPrompt) {
+    showWarning(
+      `WARNING: This will delete ALL data for your '${projectName}' stack.`,
     )
-
-    if (confirm('Delete the volumes dir?')) {
-      await Deno.remove(volumesDir, { recursive: true })
-      showInfo('Volumes dir deleted')
-    } else {
-      showInfo('Skipping volumes dir deletion')
+    showInfo(
+      '\nThis script deletes all docker images, volumes, and networks.\n' +
+        'It resets the stack to the original clean state.\n' +
+        'This can take a while.\n',
+    )
+    showWarning('Please backup all data before proceeding.')
+    if (!confirm('Are you sure you want to continue?')) {
+      showInfo('Reset cancelled')
+      return
     }
-
-    showAction('\nReset successfully completed!')
-
-    showUserAction('Run `deno run init` to reinitialize the stack')
-  } catch (error) {
-    showError(error)
-    Deno.exit(1)
   }
+
+  await prepareEnv({ silent: false })
+
+  // Get the latest code for repos
+  showAction('\nStopping services and cleaning up docker images...')
+  await dockerComposeCleanup(projectName)
+
+  if (!skipCache) {
+    if (skipPrompt || confirm('Do you want to clean the docker cache?', false)) {
+      for (const cmd in DOCKER_CLEANUP_COMMANDS) {
+        await runCleanupCommand(DOCKER_CLEANUP_COMMANDS[cmd])
+      }
+    } else {
+      showInfo('Skipping docker cache cleanup')
+    }
+  } else {
+    showAction('\nSkipping docker cache cleanup, --skip-cache was used')
+    showInfo('To manually clean the docker cache, run:')
+    for (const cmd in DOCKER_CLEANUP_COMMANDS) {
+      showInfo(`> ${cmd}`)
+    }
+  }
+
+  showAction('\nCleaning up repos directory...')
+  await cleanDir(REPO_DIR)
+
+  showAction('\nCleaning up shared folder...')
+  if (!skipPrompt) {
+    showInfo(
+      'The shared folder is used to share files between the docker services and the host machine.\n' +
+        'It is not needed for the stack to run and can be deleted.',
+    )
+    showWarning(
+      'Please verify the contents of the shared folder before deleting it.',
+    )
+    showInfo(`Shared folder: ${SHARED_DIR}`)
+  }
+  if (
+    skipPrompt || confirm('Do you want to delete the shared folder?', true)
+  ) {
+    await cleanDir(SHARED_DIR)
+    showInfo('Shared folder reset')
+  } else {
+    showInfo('Skipping shared folder cleanup')
+  }
+
+  // Don't update the stack by default
+  if (!skipPrompt && confirm('Do you want to update the stack to latest versions?', false)) {
+    showAction('\nUpdating the stack...')
+    showInfo(
+      'Updating the stack will only update services enabled in your .env file.',
+    )
+    await update(projectName, { skipStop: true, skipPrompt: true })
+  } else {
+    showInfo('Skipping stack update')
+  }
+
+  await clearEnvFile()
+  await clearConfigFile()
+  showInfo('Environment and config files reset')
+
+  const volumesDir = getVolumesPath()
+  showAction('\nResetting volumes...')
+  showInfo(
+    '\nThe volumes dir contains data from the docker containers.\n' +
+      'It should be deleted to completely reset the stack.\n' +
+      'Please verify the contents of the volumes dir before deleting it.\n\n' +
+      `Volumes dir: ${volumesDir}`,
+  )
+
+  if (confirm('Delete the volumes dir?')) {
+    await Deno.remove(volumesDir, { recursive: true })
+    showInfo('Volumes dir deleted')
+  } else {
+    showInfo('Skipping volumes dir deletion')
+  }
+
+  showAction('\nReset successfully completed!')
+
+  showUserAction('Run `deno run init` to reinitialize the stack')
 }
 
 // Run script if this file is executed directly

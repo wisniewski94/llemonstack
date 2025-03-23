@@ -67,10 +67,6 @@ export const DEBUG = Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
 // TODO: refactor all config to call getConfig instead of using global vars
 export const CONFIG = await getConfig({ autoCreate: true })
 
-// Directory used to git clone repositories: supabase, zep, etc.
-// TODO: remove this and replace with a better sanity check in reset.ts
-export const REPO_DIR_BASE = path.basename(CONFIG.dirs.repos)
-
 export const IMPORT_DIR_BASE = CONFIG.dirs.import
 
 export const ROOT_DIR = Deno.cwd()

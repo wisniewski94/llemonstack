@@ -10,6 +10,7 @@
  */
 import { Input, Secret, Select } from '@cliffy/prompt'
 import * as path from 'jsr:@std/path'
+import { runDockerCommand } from './lib/docker.ts'
 import { loadEnv } from './lib/env.ts'
 import {
   generateJWT,
@@ -33,7 +34,6 @@ import {
   LLEMONSTACK_CONFIG_FILE,
   LLEMONSTACK_INSTALL_DIR,
   prepareEnv,
-  runCommand,
   setupRepos,
   showAction,
   showError,
@@ -409,25 +409,20 @@ async function createServiceSchemas(): Promise<Record<AllEnvVarKeys, string>> {
 }
 
 /**
- * Check if a project with the given name already exists in Docker Compose
+ * Check if a project with the same project name is already running
  * @param projectName - The name of the project to check
  * @returns True if the project exists, false otherwise
  */
 async function isExistingProject(projectName: string): Promise<boolean> {
   try {
-    // Run docker compose ls command with JSON output format
-    const { stdout } = await runCommand('docker', {
-      args: ['compose', 'ls', '--format', 'json'],
+    // Check if any project has the given name
+    // This will only find projects that are running or haven't been fully stopped.
+    const projects = (await runDockerCommand('compose', {
+      args: ['ls', '--format', 'json'],
       captureOutput: true,
       silent: true,
-    })
-    // Parse the JSON output
-    const projects = JSON.parse(stdout)
-
-    // Check if any project has the given name
-    return projects.some((project: { Name: string }) =>
-      project.Name.toLowerCase() === projectName.toLowerCase()
-    )
+    })).toJson() as Array<{ Name: string }>
+    return projects.some((project) => project.Name.toLowerCase() === projectName.toLowerCase())
   } catch (error) {
     // If command fails, log the error but don't fail the initialization
     showError('Failed to check if project exists', error)

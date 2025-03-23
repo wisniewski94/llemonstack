@@ -9,7 +9,7 @@
  * ```
  */
 
-import { dockerRun, runDockerCommand } from './lib/docker.ts'
+import { dockerRun, prepareDockerNetwork, runDockerCommand } from './lib/docker.ts'
 import { ServiceImage } from './lib/types.d.ts'
 import {
   ALL_COMPOSE_FILES,
@@ -275,6 +275,7 @@ export async function versions(projectName: string): Promise<void> {
   showHeader('Docker Image Versions')
 
   await prepareEnv({ silent: true })
+  await prepareDockerNetwork()
 
   try {
     const appVersionsPromise = (Object.keys(SERVICES_WITH_APP_VERSION).length > 0)

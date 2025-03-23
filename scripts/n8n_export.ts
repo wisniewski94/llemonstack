@@ -54,50 +54,6 @@ interface ServiceExportCommand {
   hostDir: string // Directory to export to on host
 }
 
-// TODO: replace with dockerExec in lib/docker.ts
-// /**
-//  * Execs a command in a running container
-//  * @param {string} projectName - The name of the project
-//  * @param {string} service - The name of the service
-//  * @param {string} composeFile - The path to the compose file
-//  * @param {string} entrypoint - The entrypoint of the service
-//  * @param {string[]} cmdArgs - The arguments to pass to the service
-//  * @returns {string} The output of the command
-//  */
-// async function runContainerCommand(
-//   projectName: string,
-//   service: string, // Service name
-//   composeFile: string, // Compose file
-//   entrypoint: string, // Entrypoint, app to run; e.g. 'node'
-//   cmdArgs: string[], // Args to pass to the app
-//   { silent = false }: { silent?: boolean } = {},
-// ): Promise<string> {
-//   let results = ''
-//   try {
-//     // Execute a command inside a running container
-//     const cmdResult = await runCommand('docker', {
-//       args: [
-//         'compose',
-//         '-p',
-//         projectName,
-//         '-f',
-//         composeFile,
-//         'exec',
-//         service,
-//         entrypoint,
-//         ...cmdArgs,
-//       ],
-//       captureOutput: true,
-//       silent,
-//     })
-//     results = cmdResult.toString()
-//   } catch (error) {
-//     showError(`Error running command in ${service}`, error)
-//   }
-
-//   return results
-// }
-
 type BackupDirs = [service: string, backupDir: string][]
 async function prepareBackupDir(): Promise<BackupDirs> {
   const dirs: BackupDirs = []
@@ -121,13 +77,6 @@ async function runExportCommands(projectName: string): Promise<void> {
       args: serviceCommand.args,
       composeFile,
     })
-    // await runContainerCommand(
-    //   projectName,
-    //   serviceCommand.service,
-    //   composeFile,
-    //   serviceCommand.cmd,
-    //   serviceCommand.args,
-    // )
   }
 }
 export async function runExport(projectName: string): Promise<void> {

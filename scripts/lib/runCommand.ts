@@ -28,6 +28,10 @@ export class RunCommandOutput {
   toList(): string[] {
     return this._output.stdout.split('\n').filter(Boolean).map((line) => line.trim())
   }
+  toJson(): Record<string, unknown> | Array<unknown> {
+    const output = this._output.stdout.trim()
+    return !output ? {} : JSON.parse(output)
+  }
   toJsonList(): Array<Record<string, unknown>> {
     const output = this._output.stdout.trim()
     return !output ? [] : output.split('\n').map((output) => JSON.parse(output)).filter(
