@@ -1,12 +1,6 @@
 #!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Stop and restart the services
- *
- * Usage:
- *
- * ```bash
- * deno run restart
- * ```
  */
 import { DEFAULT_PROJECT_NAME, showError, start } from './start.ts' // Adjust the path as necessary
 import { stop } from './stop.ts' // Adjust the path as necessary

@@ -58,7 +58,7 @@ See [examples/zep/README.md](examples/zep/README.md) for details and the quick f
 ## Overview
 
 **LLemonStack** installs and runs a fully featured low code AI agent development playground,
-including local LLMs and chat interfaces, from a single command: `deno run start`
+including local LLMs and chat interfaces, from a single command: `llmn start`
 
 Supports running on Linux, Mac, or Windows. Built on a Macbook M2, tested on Linux and Windows with
 WSL 2.
@@ -189,65 +189,105 @@ In a terminal, run the following commands
 git clone https://github.com/llemonstack/llemonstack.git
 ```
 
-2. Install dependencies
+2. Install dependencies & enable `llmn` command
 
 ```bash
-cd llemonstack && deno install
+cd llemonstack
+deno install
+npm link # Enabled the llmn command
 ```
 
-3. Run the setup script to configure the environment variables
+`npm link` creates a global symbolic link for `llmn` to `bin/cli.js`.
+Once the link is enabled, the `llmn` command can be run from any directory.
+
+3. Create a new LLemonStack project
 
 ```bash
-deno run init
+# Create a new project directory anywhere on your system
+cd ..
+mkdir my_llemonstack_project && cd my_llemonstack_project
+
+# Run the init script to configure a new stack
+llmn init
 ```
 
 LLemonStack supports multiple projects on the same machine. This allows you to experiment with
 different settings or keep client projects separate from personal projects.
 
-To create multiple projects, simply re-run the `git clone` step above in a new directory, then run
-the `deno run init` script.
+To create multiple projects, make sure the current stack is stopped by running `llmn stop`
+in the project directory. Then create a new project directory and run `llmn init`
+inside of the new directory.
 
-To switch projects, `cd` into a different LLemonStack project directory and use the commands below.
-The `.env` file in each project directory contains the project settings. The `./volumes` directory
-contains most of the project data. The rest of the data is in docker volumes that are isolated per
-project.
+Each project directory contains the unique `.env` file as well as the `volumes`
+directory that stores that stack data. Contents of the `volumes` directory contains
+database data and other persistent data needed to run the stack.
 
 ## Usage
 
 ```bash
+# Shows the cli help with all the available commands
+llmn --help
+
 # Init a new project
-deno run init
+llmn init
 
 # Start the services
 # Automatically installs dependencies & docker images as needed
-deno run start
+llmn start
 # Start a single service
-deno run start [service]
+llmn start [service]
 
 # Stop all services
-deno run stop
+llmn stop
 # Stop a specific service
-deno run stop [service]
-# ex: deno run stop n8n
+llmn stop [service]
+# ex: llmn stop n8n
 
 # Show versions of all the stack services
-deno run versions
+llmn versions
 
 # Update the stack services to the latest versions
-deno run update
+llmn update
 
-# Restart the services - runs stop & start
-deno run restart
+# Restart services - runs stop & start
+llmn restart
+llmn restart [service]
 
-# Import & Export
-# Batch import n8n workflows & credentials from import/n8n
-deno run import:n8n
-# Export n8n templates to shared/backups/n8n
-deno run export:n8n
+# Import
+# Import data from ./import dir into all services that support importing
+# Currently n8n & flowise
+llmn import
+# Import n8n only
+llmn import n8n
+
+# Export
+# Export data to shared/ dir for all services that support exporting
+# Currently only n8n is supported
+llmn export n8n
 
 # Reset the stack to the original default state
 # Deletes all data & images and resets docker cache
-deno run reset
+llmn reset
+
+# Create/remove a postgres schema
+# Used by the init script, but can be useful for creating new schemas
+# to keep n8n or flowise workflow data isolated from other tables.
+llmn schema
+
+# Generates bash|zsh completions for llmn
+llmn completions
+```
+
+To enable auto completions for llmn, add the appropriate line below to your shell .rc file.
+Then source your .rc file to enable completions in the current shell:
+`source ~/.bashrc` or `source ~/.zshrc`
+
+```bash
+# Bash: ~/.bashrc
+source <(llmn completions bash)
+
+# Zsh: ~/.zshrc
+source <(llmn completions zsh)
 ```
 
 <br />
@@ -374,7 +414,7 @@ instance, unfortunately. There are two options in this case:
    Docker container.
 
    Once ollama is running locally and `ENABLE_OLLAMA=host` is set in .env, start the services with
-   `deno run start`
+   `llmn start`
 
    Open WebUI should show the installed models in the dropdown if everything is working correctly.
 
@@ -392,10 +432,10 @@ To update all containers to their latest versions (n8n, Open WebUI, etc.), run t
 
 ```bash
 # Update docker images to use the latest versions
-deno run update
+llmn update
 
 # Start the services
-deno run start
+llmn start
 ```
 
 <br />
@@ -426,14 +466,14 @@ preserve the original templates.
 ```bash
 # Import will throw an error if n8n is not already running
 # Start services (if needed)
-deno run start
+llmn start
 
 # Copy files into the import/n8n directory
 # For example...
 cp examples/n8n/credentials/*.json import/n8n/credentials
 
 # Run the import script
-deno run import:n8n
+llmn import n8n
 
 # Credential in import/n8n/credentials will be imported
 # Workflows in import/n8n/workflows will be imported
@@ -448,7 +488,7 @@ workflows and credentials before importing.
 ### Exporting & Backing Up n8n Templates
 
 ```bash
-deno run export:n8n
+llmn export n8n
 # Exports n8n credentials and workflows to share/backups/n8n
 ```
 
@@ -477,7 +517,7 @@ To reset supabase, delete the volumes directory, the restart the services.
 
 ```bash
 # Run the reset script to reset everything to a clean state
-deno run reset
+llmn reset
 ```
 
 ### Network Issues

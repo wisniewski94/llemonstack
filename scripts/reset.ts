@@ -7,18 +7,6 @@
  * Delete contents of the shared folder.
  * Optionally runs the update script.
  * Optionally starts the stack.
- *
- * Usage:
- *
- * ```bash
- * deno run reset
- *
- * # Skip the prompt
- * deno run reset reset -f
- *
- * # Skip cleaning docker cache
- * deno run reset --skip-cache
- * ```
  */
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
@@ -205,7 +193,7 @@ export async function reset(
 
   showAction('\nReset successfully completed!')
 
-  showUserAction('Run `deno run init` to reinitialize the stack')
+  showUserAction('Run `llmn init` to reinitialize the stack')
 }
 
 // Run script if this file is executed directly

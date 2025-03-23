@@ -2,20 +2,7 @@
 /**
  * Update to the latest sources & images
  *
- * Pulls the latest changes for docker images.
- *
- * Usage:
- *
- * ```bash
- * deno run update
- *
- * # Skip stopping the services
- * deno run update --skip-stop
- * deno run update -s
- *
- * # Skip the prompt
- * deno run update -f
- * ```
+ * Pulls and builds the latest changes for docker images.
  */
 import { runDockerComposeCommand } from './lib/docker.ts'
 import {

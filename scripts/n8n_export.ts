@@ -1,12 +1,6 @@
 #!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Export workflows from n8n
- *
- * Usage:
- *
- * ```bash
- * deno run export
- * ```
  */
 
 import * as fs from 'jsr:@std/fs'

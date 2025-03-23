@@ -30,7 +30,7 @@ container logs in Docker Desktop.
   - [x] Register llmn as bin alias for main.ts
   - [x] Create an install script that installs deno and git and checks for docker
   - [ ] Update README.md with instructions on installing through npm
-  - [ ] Update README.md with `llmn` commands instead of `deno run`
+  - [x] Update README.md with `llmn` commands instead of `deno run`
 
 - [x] Disable supabase-analytics, it eats memory and CPU & is not needed
 - [x] Move supabase volumes to ./volumes to make backup easier and protect against .repos deletion

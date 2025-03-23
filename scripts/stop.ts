@@ -1,15 +1,6 @@
 #!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Stop the stack by downing docker containers and cleaning up networks.
- *
- * Usage:
- *
- * ```bash
- * deno run stop
- *
- * # Stop all services regardless of ENABLED status
- * deno run stop --all
- * ```
  */
 
 import {

@@ -1,19 +1,6 @@
 {
   "tasks": {
-    "llemonstack": "deno run --allow-read --allow-env --allow-run --allow-write main.ts",
-    "init": "deno run --allow-read --allow-env --allow-run --allow-write --allow-net scripts/init.ts",
-    "start": "deno run --allow-read --allow-env --allow-run --allow-write scripts/start.ts",
-    "stop": "deno run --allow-read --allow-env --allow-run --allow-write scripts/stop.ts --all",
-    "restart": "deno run --allow-read --allow-env --allow-run --allow-write scripts/restart.ts",
-    "reset": "deno run --allow-read --allow-env --allow-run --allow-write scripts/reset.ts",
-    "update": "deno run --allow-read --allow-env --allow-run --allow-write scripts/update.ts",
-    "import:n8n": "deno run --allow-read --allow-env --allow-run --allow-write scripts/n8n_import.ts --skip-start",
-    "export:n8n": "deno run --allow-read --allow-env --allow-run --allow-write scripts/n8n_export.ts",
-    "import:flowise": "deno run --allow-read --allow-env --allow-run --allow-write --allow-net scripts/flowise_import.ts --skip-start",
-    "versions": "deno run --allow-read --allow-env --allow-run --allow-write scripts/versions.ts",
-    "schema:create": "deno run --allow-read --allow-env --allow-run --allow-net scripts/schema.ts create",
-    "schema:remove": "deno run --allow-read --allow-env --allow-run --allow-net scripts/schema.ts remove",
-    "litellm:models:add": "deno run --allow-read --allow-env --allow-run --allow-net scripts/litellm.ts"
+    "llmn": "deno run --allow-read --allow-env --allow-run --allow-write main.ts"
   },
   "imports": {
     "@cliffy/ansi": "jsr:@cliffy/ansi@^1.0.0-rc.7",

@@ -1,12 +1,6 @@
 #!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Setup required env variables
- *
- * Usage:
- *
- * ```bash
- * deno run setup
- * ```
  */
 import { Input, Secret, Select } from '@cliffy/prompt'
 import * as path from 'jsr:@std/path'

@@ -1,18 +1,6 @@
 #!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Import workflows and credentials from the import folder
- *
- * Usage:
- *
- * ```bash
- * deno run import:n8n
- *
- * # Skip the prompt to confirm the import
- * deno run import:n8n -f
- *
- * # Skip archiving after importing
- * deno run import:n8n --skip-archive
- * ```
  */
 
 import * as fs from 'jsr:@std/fs'

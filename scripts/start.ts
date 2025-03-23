@@ -1,19 +1,6 @@
 #!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Start docker services
- *
- * This is the main script that configures and starts the stack.
- *
- * Usage:
- *
- * ```bash
- * deno run start
- * ```
- *
- * To add a new service...
- * 1. Add the compose file to the docker/ folder
- * 2. Add the service to the ALL_COMPOSE_SERVICES array below
- * 3. Add a startService call in the main start function
  */
 
 import { colors } from '@cliffy/ansi/colors'
@@ -1243,7 +1230,7 @@ export async function start(
   try {
     if (!await isInitialized()) {
       showWarning('Project not initialized', '❌')
-      showUserAction('\nPlease run the init script first: deno run init')
+      showUserAction('\nPlease run the init script first: llmn init')
       Deno.exit(1)
     }
 

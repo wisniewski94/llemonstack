@@ -1,18 +1,6 @@
 #!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Import workflows and credentials from the import folder
- *
- * Usage:
- *
- * ```bash
- * deno run import:flowise
- *
- * # Skip the prompt to confirm the import
- * deno run import:flowise -f
- *
- * # Skip archiving after importing
- * deno run import:flowise --skip-archive
- * ```
  */
 
 import * as fs from 'jsr:@std/fs'

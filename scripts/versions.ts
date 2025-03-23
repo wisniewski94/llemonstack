@@ -1,12 +1,6 @@
 #!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Show the versions of the services that support it
- *
- * Usage:
- *
- * ```bash
- * deno run versions
- * ```
  */
 
 import { dockerRun, prepareDockerNetwork, runDockerCommand } from './lib/docker.ts'
