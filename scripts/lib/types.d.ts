@@ -3,7 +3,7 @@ import {
   RunCommandOutput as RunCommandOutputClass,
 } from './runCommand.ts'
 
-interface Config {
+interface ProjectConfig {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty
   version: string // Version of LLemonStack used to create the config
   projectName: string

@@ -19,9 +19,9 @@ import { getFlowiseApiKey } from './lib/flowise.ts'
 import { CommandError, runCommand } from './lib/runCommand.ts'
 import {
   ComposeConfig,
-  Config,
   EnvVars,
   OllamaProfile,
+  ProjectConfig,
   RepoService,
   ServiceImage,
 } from './lib/types.d.ts'
@@ -745,6 +745,7 @@ export async function setupRepos({
   !silent && showInfo(`${all ? 'All repositories' : 'Repositories'} are ready`)
 }
 
+// TODO: replace with config
 export async function getConfig(
   {
     projectName = DEFAULT_PROJECT_NAME || 'llemonstack',
@@ -761,7 +762,7 @@ export async function getConfig(
     configFile?: string
     configDir?: string
   } = {},
-): Promise<Config> {
+): Promise<ProjectConfig> {
   if (DEBUG) {
     silent = false
   }
@@ -774,7 +775,7 @@ export async function getConfig(
     configFile = path.join(configDir, 'config.json')
   }
 
-  let config: Config
+  let config: ProjectConfig
   if (!fs.existsSync(configFile)) {
     if (autoCreate) {
       try {
@@ -793,7 +794,7 @@ export async function getConfig(
       throw new Error(`Config file not found: ${configFile}`)
     }
   }
-  config = JSON.parse(await Deno.readTextFile(configFile)) as Config
+  config = JSON.parse(await Deno.readTextFile(configFile)) as ProjectConfig
 
   // Migrate from 0.1.0 timestamp
   if (!config.initialized && config.timestamp) {
@@ -818,10 +819,11 @@ export async function getConfig(
   return config
 }
 
+// TODO: replace with config
 async function getConfigTemplate(
   version: string,
   { silent = false }: { silent?: boolean } = {},
-): Promise<Config> {
+): Promise<ProjectConfig> {
   if (!fs.existsSync(LLEMONSTACK_INSTALL_DIR)) {
     throw new Error(`LLemonStack install dir not found: ${LLEMONSTACK_INSTALL_DIR}`)
   }
@@ -837,12 +839,13 @@ async function getConfigTemplate(
   if (!file) {
     throw new Error(`Config template file not found: ${file}`)
   }
-  const config = JSON.parse(await Deno.readTextFile(file)) as Config
+  const config = JSON.parse(await Deno.readTextFile(file)) as ProjectConfig
   return config
 }
 
+// TODO: replace with config
 export async function saveConfigFile(
-  config: Config,
+  config: ProjectConfig,
   { configFile, configDir }: { configFile?: string; configDir?: string } = {},
 ): Promise<string> {
   if (!configFile) {
