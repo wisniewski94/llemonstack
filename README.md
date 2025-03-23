@@ -190,8 +190,8 @@ git clone https://github.com/llemonstack/llemonstack.git
 
 ```bash
 cd llemonstack
-deno install
-npm link # Enabled the llmn command
+deno install # Install dependencies
+npm link # Enable the global llmn command
 ```
 
 `npm link` creates a global symbolic link for `llmn` to `bin/cli.js`.
