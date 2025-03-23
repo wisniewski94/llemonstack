@@ -1022,7 +1022,7 @@ export function getOllamaHost(): string {
  * @param projectName
  */
 export async function isSupabaseStarted(projectName: string): Promise<boolean> {
-  return await isServiceRunning('supabase', { projectName })
+  return await isServiceRunning('supabase', { projectName, match: 'partial' })
 }
 
 export async function startService(

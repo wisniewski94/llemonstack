@@ -209,12 +209,14 @@ function getDockerfileArch(): string {
 
 export async function isServiceRunning(
   service: string,
-  { projectName }: { projectName?: string },
+  { projectName, match = 'exact' }: { projectName?: string; match?: 'exact' | 'partial' },
 ) {
   const result = await dockerComposePs(
     projectName || dockerEnv().LLEMONSTACK_PROJECT_NAME,
   ) as DockerComposePsResult
-  return result.some((c) => c.Name === service)
+  return result.some((c) =>
+    match === 'exact' ? c.Name === service : c.Name?.toLowerCase().includes(service.toLowerCase())
+  )
 }
 
 export type DockerComposePsResult = Array<{
