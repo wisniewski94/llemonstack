@@ -23,9 +23,9 @@
     "singleQuote": true,
     "proseWrap": "always",
     "semiColons": false,
-    "exclude": ["tmp/", "examples/", "import/", "shared/", "volumes/", "bin/"]
+    "exclude": ["tmp/", "examples/", "import/", "shared/", "volumes/"]
   },
   "lint": {
-    "exclude": ["tmp/", "examples/", "import/", "shared/", "volumes/", "bin/"]
+    "exclude": ["tmp/", "examples/", "import/", "shared/", "volumes/"]
   }
 }

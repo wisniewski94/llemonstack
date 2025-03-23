@@ -138,9 +138,11 @@ function main() {
   }
   if (!requirementsMet) {
     console.error('Requirements not met. Please see above error messages to install missing requirements before using LLemonStack.')
+    // deno-lint-ignore no-process-global
     process.exit(1)
   } else {
     console.log('All requirements met. LLemonStack is ready to use!')
+    // deno-lint-ignore no-process-global
     process.exit(0)
   }
 }

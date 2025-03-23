@@ -20,7 +20,6 @@
   "deno.codeLens.references": false,
   "deno.codeLens.test": true,
   "deno.disablePaths": [
-    "./bin",
     "./services/n8n/build",
     "./services/supabase/dummy-analytics",
     "./services/pgbackup/build"
