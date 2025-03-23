@@ -17,12 +17,11 @@
  * deno run update -f
  * ```
  */
-import { runCommand } from './lib/runCommand.ts'
+import { runDockerComposeCommand } from './lib/docker.ts'
 import {
   COMPOSE_FILES,
   confirm,
   DEFAULT_PROJECT_NAME,
-  getProfilesArgs,
   prepareEnv,
   setupRepos,
   showAction,
@@ -33,17 +32,55 @@ import { stop } from './stop.ts'
 import { versions } from './versions.ts'
 
 async function pullImages(projectName: string): Promise<void> {
-  await runCommand('docker', {
-    args: [
-      'compose',
-      '-p',
-      projectName,
-      ...COMPOSE_FILES.map((file) => ['-f', file]).flat(),
-      // TODO: get profiles for each service config, currently ollama will not be updated?
-      ...getProfilesArgs(), // Only pull images for enabled profiles
-      'pull',
-    ],
-  })
+  // Run pull for each profile in parallel
+  const composeFiles = COMPOSE_FILES
+
+  // Split compose files into batches of 5 to avoid overwhelming the system
+  const batchSize = 4
+  const composeBatches = []
+
+  // Create batches from the compose files
+  for (let i = 0; i < composeFiles.length; i += batchSize) {
+    composeBatches.push(composeFiles.slice(i, i + batchSize))
+  }
+
+  // Process each batch sequentially
+  for (let i = 0; i < composeBatches.length; i++) {
+    const batch = composeBatches[i]
+    showInfo(`Processing batch ${i + 1} of ${composeBatches.length} (${batch.length} files)`)
+
+    // Pull images in parallel
+    await Promise.all(
+      batch.map((composeFile) =>
+        runDockerComposeCommand(
+          'pull',
+          {
+            projectName,
+            composeFile,
+            ansi: 'never',
+            // TODO: add support for service specific profiles
+            // ...getProfilesArgs(), // Only pull images for enabled profiles
+          },
+        )
+      ),
+    )
+    // Build images in parallel
+    await Promise.all(
+      batch.map((composeFile) =>
+        runDockerComposeCommand(
+          'build',
+          {
+            projectName,
+            composeFile,
+            ansi: 'never',
+            // TODO: add support for service specific profiles
+            // ...getProfilesArgs(), // Only pull images for enabled profiles
+            args: ['--no-cache'],
+          },
+        )
+      ),
+    )
+  }
 }
 
 export async function update(
