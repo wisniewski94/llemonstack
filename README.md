@@ -26,16 +26,13 @@ fixes.
 
 ## Changelog
 
+- Mar 23, 2035: v0.2.0: introduce `llmn` command
+
+  - Moved all services to services/ dir for better isolation
+  - All services now run independently with separate docker-compose.yml
+  - Several bug fixes, start refactoring code for service based API
+
 - Mar 15, 2025: BREAKING CHANGE: moved container volumes to ./volumes
-
-  - See .env.example for LLEMONSTACK_VOLUMES_DIR
-  - To migrate: copy supabase data to new volumes location
-
-    ```bash
-    cp -a .repos/supabase/docker/volumes/db/data ./volumes/supabase/db/
-    cp -a .repos/supabase/docker/volumes/functions ./volumes/supabase/functions
-    ```
-
 - Mar 14, 2025: BREAKING CHANGE: switched to using supavisor instead of direct postgres db
   connection
   - See .env.example for changes to env variables
