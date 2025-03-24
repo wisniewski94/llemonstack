@@ -21,7 +21,7 @@ import {
   showUserAction,
   showWarning,
 } from './lib/logger.ts'
-import { EnvVars, OllamaProfile } from './lib/types.d.ts'
+import { EnvVars } from './lib/types.d.ts'
 
 const config = Config.getInstance()
 await config.initialize()
@@ -64,6 +64,7 @@ export const isEnabled = config.isEnabled
  * @param service
  * @returns
  */
+// TODO: move to config
 export async function getComposeFileFromService(service: string): Promise<string | null> {
   // Iterate through all compose files to find the service
   for (const composeFile of COMPOSE_FILES) {
@@ -76,6 +77,7 @@ export async function getComposeFileFromService(service: string): Promise<string
   return null
 }
 
+// TODO: move to config
 export async function getComposeFile(
   service: string,
 ): Promise<string | null> {
@@ -339,6 +341,7 @@ function getRelativePath(pathStr: string): string {
 /**
  * Call this function before running any other scripts
  */
+// TODO: move to config
 export async function prepareEnv({ silent = false }: { silent?: boolean } = {}): Promise<void> {
   !silent && showInfo('Preparing environment...')
 
@@ -364,6 +367,7 @@ export async function prepareEnv({ silent = false }: { silent?: boolean } = {}):
  * @param all - Whether to use all profiles
  * @returns The profiles command
  */
+// TODO: move to config or remove altogether
 export function getProfilesArgs({
   all = false,
   profiles,
@@ -375,17 +379,9 @@ export function getProfilesArgs({
   return profilesList.map((profile) => ['--profile', profile]).flat()
 }
 
-export function getOllamaProfile(): OllamaProfile {
-  return `ollama-${Deno.env.get('ENABLE_OLLAMA')?.trim() || 'false'}` as OllamaProfile
-}
+export const getOllamaProfile = config.getOllamaProfile
 
-export function getOllamaHost(): string {
-  // Use the OLLAMA_HOST env var if it is set, otherwise check Ollama profile settings
-  const host = Deno.env.get('OLLAMA_HOST') || (getOllamaProfile() === 'ollama-host')
-    ? 'host.docker.internal:11434'
-    : 'ollama:11434'
-  return host
-}
+export const getOllamaHost = config.getOllamaHost
 
 /**
  * Check if supabase was started by any of the services that depend on it
