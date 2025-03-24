@@ -1,10 +1,10 @@
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
-import projectTemplate from '../../config/config.0.2.0.json' with { type: 'json' }
-import { LLemonStackConfig } from './config/llemonstack.ts'
-import { ServiceConfig } from './config/service.ts'
-import * as fs from './fs.ts'
-import { failure, TryCatchResult } from './try-catch.ts'
-import { ProjectConfig } from './types.d.ts'
+import projectTemplate from '../../../config/config.0.2.0.json' with { type: 'json' }
+import * as fs from '../fs.ts'
+import { failure, TryCatchResult } from '../try-catch.ts'
+import { ProjectConfig } from '../types.d.ts'
+import { LLemonStackConfig } from './llemonstack.ts'
+import { ServiceConfig } from './service.ts'
 
 export class Config {
   private static instance: Config
