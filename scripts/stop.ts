@@ -11,6 +11,7 @@ import {
   runDockerCommand,
   runDockerComposeCommand,
 } from './lib/docker.ts'
+import { showAction, showError, showInfo } from './lib/logger.ts'
 import {
   ALL_COMPOSE_SERVICES,
   type ComposeService,
@@ -19,9 +20,6 @@ import {
   isEnabled,
   prepareEnv,
   setupRepos,
-  showAction,
-  showError,
-  showInfo,
 } from './start.ts'
 
 async function removeAllNetworks(projectName: string): Promise<void> {

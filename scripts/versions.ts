@@ -6,20 +6,16 @@
 import { colors } from '@cliffy/ansi/colors'
 import { CellType, Column, Row, RowType, Table } from '@cliffy/table'
 import { dockerRun, prepareDockerNetwork, runDockerCommand } from './lib/docker.ts'
+import { showAction, showError, showHeader, showInfo, showWarning } from './lib/logger.ts'
 import { ServiceImage } from './lib/types.d.ts'
 import {
   ALL_COMPOSE_FILES,
   DEFAULT_PROJECT_NAME,
   getComposeFile,
   getImageFromCompose,
-  getImagesFromComposeYml,
+  getImagesFromComposeYaml,
   isEnabled,
   prepareEnv,
-  showAction,
-  showError,
-  showHeader,
-  showInfo,
-  showWarning,
 } from './start.ts'
 
 const COMPOSE_FILES = ALL_COMPOSE_FILES
@@ -61,9 +57,11 @@ function truncate(cell: string | CellType) {
   const strNoColors = colors.stripAnsiCode(cellStr)
   if (strNoColors.length > MAX_COLUMN_WIDTH) {
     // Get any ANSI escape sequences at the start of the string
+    // cspell:disable
     const ansiRegex =
       // deno-lint-ignore no-control-regex
       /^(?:[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><])+/
+    // cspell:enable
     const ansiMatch = cellStr.match(ansiRegex)
     const ansiPrefix = ansiMatch ? ansiMatch[0] : ''
     const ansiSuffix = ansiPrefix ? '\x1b[0m' : ''
@@ -181,7 +179,7 @@ async function showImageVersions(): Promise<RowType[]> {
     COMPOSE_FILES.map(async (composeFile) => {
       let images: ServiceImage[] = []
       try {
-        images = await getImagesFromComposeYml(composeFile)
+        images = await getImagesFromComposeYaml(composeFile)
         return { composeFile, images, error: null }
       } catch (error) {
         if (error instanceof Deno.errors.NotFound) {
@@ -317,11 +315,13 @@ export async function versions(projectName: string): Promise<void> {
       ], imageVersionRows)
     }
 
+    showHeader('Service App Versions')
     const appVersionRows = await appVersionsPromise
     if (appVersionRows.length > 0) {
-      showHeader('Service App Versions')
       showInfo('Version of apps inside the container, if available.\n')
       showTable(['Service', 'App Version', 'Docker Image'], appVersionRows)
+    } else {
+      showInfo('No app versions found')
     }
     console.log('\n')
   } catch (error) {

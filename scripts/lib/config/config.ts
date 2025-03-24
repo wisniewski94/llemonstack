@@ -18,6 +18,7 @@ export class Config {
   // Base configuration
   readonly configDir: string
   readonly configFile: string
+  readonly defaultProjectName: string = 'llemonstack'
 
   get DEBUG(): boolean {
     return Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
@@ -74,8 +75,13 @@ export class Config {
     return this._env
   }
 
+  // Returns the LLemonStack version for the current project
   get version(): string {
-    return this._project.version
+    return this._project.version || this._llemonstack.version
+  }
+
+  get installVersion(): string {
+    return this._llemonstack.version
   }
 
   private constructor() {
@@ -147,6 +153,9 @@ export class Config {
     }
 
     this._initialized = true
+
+    // this.DEBUG && console.log('INITIALIZING CONFIG: this should only appear once')
+
     return result
   }
 

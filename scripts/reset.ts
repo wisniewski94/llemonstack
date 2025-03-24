@@ -13,18 +13,20 @@ import { Config } from './lib/config/config.ts'
 import { runDockerCommand, runDockerComposeCommand } from './lib/docker.ts'
 import { fs, path } from './lib/fs.ts'
 import {
-  ALL_COMPOSE_SERVICES,
   confirm,
-  DEFAULT_PROJECT_NAME,
-  getComposeFileFromService,
-  getProfilesArgs,
-  prepareEnv,
-  setupRepos,
   showAction,
   showError,
   showInfo,
   showUserAction,
   showWarning,
+} from './lib/logger.ts'
+import {
+  ALL_COMPOSE_SERVICES,
+  DEFAULT_PROJECT_NAME,
+  getComposeFileFromService,
+  getProfilesArgs,
+  prepareEnv,
+  setupRepos,
 } from './start.ts'
 import { update } from './update.ts'
 

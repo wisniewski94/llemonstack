@@ -7,15 +7,8 @@ import { RunCommandOutput } from './lib/command.ts'
 import { Config } from './lib/config/config.ts'
 import { dockerExec } from './lib/docker.ts'
 import { fs, path } from './lib/fs.ts'
-import {
-  confirm,
-  DEFAULT_PROJECT_NAME,
-  prepareEnv,
-  showAction,
-  showError,
-  showInfo,
-  showWarning,
-} from './start.ts'
+import { confirm, showAction, showError, showInfo, showWarning } from './lib/logger.ts'
+import { DEFAULT_PROJECT_NAME, prepareEnv } from './start.ts'
 
 const config = Config.getInstance()
 await config.initialize()

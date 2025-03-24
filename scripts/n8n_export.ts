@@ -5,14 +5,8 @@
 
 import { dockerExec } from './lib/docker.ts'
 import { fs, path } from './lib/fs.ts'
-import {
-  DEFAULT_PROJECT_NAME,
-  getComposeFile,
-  isEnabled,
-  showAction,
-  showInfo,
-  showWarning,
-} from './start.ts'
+import { showAction, showInfo, showWarning } from './lib/logger.ts'
+import { DEFAULT_PROJECT_NAME, getComposeFile, isEnabled } from './start.ts'
 
 // Relative path of backup dir in shared dir
 const BACKUP_DIR_N8N = 'backups/n8n'

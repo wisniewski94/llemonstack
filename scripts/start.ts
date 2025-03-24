@@ -5,7 +5,7 @@
 
 import { colors } from '@cliffy/ansi/colors'
 import * as yaml from 'jsr:@std/yaml'
-import { CommandError, runCommand } from './lib/command.ts'
+import { runCommand } from './lib/command.ts'
 import { Config } from './lib/config/config.ts'
 import {
   dockerEnv,
@@ -16,22 +16,21 @@ import {
 } from './lib/docker.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
 import { fs, path } from './lib/fs.ts'
+import {
+  showAction,
+  showCredentials,
+  showDebug,
+  showError,
+  showHeader,
+  showInfo,
+  showService,
+  showUserAction,
+  showWarning,
+} from './lib/logger.ts'
 import { ComposeConfig, EnvVars, OllamaProfile, RepoService, ServiceImage } from './lib/types.d.ts'
 
 const config = Config.getInstance()
 await config.initialize()
-
-// Get version from package.json
-export const LLEMONSTACK_INSTALL_DIR = path.join(
-  path.dirname(path.fromFileUrl(import.meta.url)),
-  '../',
-)
-const packageJson = JSON.parse(
-  Deno.readTextFileSync(path.join(LLEMONSTACK_INSTALL_DIR, 'package.json')),
-)
-export const VERSION = packageJson.version
-
-export const ENVFILE = config.envFile
 
 /*******************************************************************************
  * CONFIG
@@ -41,16 +40,9 @@ export const ENVFILE = config.envFile
 export const DEFAULT_PROJECT_NAME = 'llemonstack'
 
 // Enable extra debug logging
-export const DEBUG = config.DEBUG
+const DEBUG = config.DEBUG
 
-export const IMPORT_DIR_BASE = config.importDir
-
-export const ROOT_DIR = Deno.cwd()
-
-export const LLEMONSTACK_CONFIG_DIR = config.configDir
-export const LLEMONSTACK_CONFIG_FILE = config.configFile
-export const REPO_DIR = config.repoDir
-export const SHARED_DIR = config.sharedDir
+const ROOT_DIR = Deno.cwd()
 
 export const COMPOSE_IMAGES_CACHE = {} as Record<string, ServiceImage[]>
 
@@ -61,22 +53,22 @@ export const COMPOSE_IMAGES_CACHE = {} as Record<string, ServiceImage[]>
 // When auto run is false, the service needs to be started manually.
 export type ComposeService = [string, string, boolean]
 export const ALL_COMPOSE_SERVICES: ComposeService[] = [
-  ['supabase', path.join('services', 'supabase', 'docker-compose.yaml'), true],
-  ['n8n', path.join('services', 'n8n', 'docker-compose.yaml'), true],
-  ['flowise', path.join('services', 'flowise', 'docker-compose.yaml'), true],
-  ['neo4j', path.join('services', 'neo4j', 'docker-compose.yaml'), true],
-  ['zep', path.join('services', 'zep', 'docker-compose.yaml'), true],
-  ['browser-use', path.join('services', 'browser-use', 'docker-compose.yaml'), true], // Uses a custom start function
-  ['qdrant', path.join('services', 'qdrant', 'docker-compose.yaml'), true],
-  ['openwebui', path.join('services', 'openwebui', 'docker-compose.yaml'), true],
-  ['ollama', path.join('services', 'ollama', 'docker-compose.yaml'), false], // Uses a custom start function
-  ['prometheus', path.join('services', 'prometheus', 'docker-compose.yaml'), true],
-  ['redis', path.join('services', 'redis', 'docker-compose.yaml'), true],
-  ['clickhouse', path.join('services', 'clickhouse', 'docker-compose.yaml'), true],
-  ['minio', path.join('services', 'minio', 'docker-compose.yaml'), true],
-  ['langfuse', path.join('services', 'langfuse', 'docker-compose.yaml'), true],
-  ['litellm', path.join('services', 'litellm', 'docker-compose.yaml'), true],
-  ['dozzle', path.join('services', 'dozzle', 'docker-compose.yaml'), true],
+  ['supabase', path.join('supabase', 'docker-compose.yaml'), true],
+  ['n8n', path.join('n8n', 'docker-compose.yaml'), true],
+  ['flowise', path.join('flowise', 'docker-compose.yaml'), true],
+  ['neo4j', path.join('neo4j', 'docker-compose.yaml'), true],
+  ['zep', path.join('zep', 'docker-compose.yaml'), true],
+  ['browser-use', path.join('browser-use', 'docker-compose.yaml'), true], // Uses a custom start function
+  ['qdrant', path.join('qdrant', 'docker-compose.yaml'), true],
+  ['openwebui', path.join('openwebui', 'docker-compose.yaml'), true],
+  ['ollama', path.join('ollama', 'docker-compose.yaml'), false], // Uses a custom start function
+  ['prometheus', path.join('prometheus', 'docker-compose.yaml'), true],
+  ['redis', path.join('redis', 'docker-compose.yaml'), true],
+  ['clickhouse', path.join('clickhouse', 'docker-compose.yaml'), true],
+  ['minio', path.join('minio', 'docker-compose.yaml'), true],
+  ['langfuse', path.join('langfuse', 'docker-compose.yaml'), true],
+  ['litellm', path.join('litellm', 'docker-compose.yaml'), true],
+  ['dozzle', path.join('dozzle', 'docker-compose.yaml'), true],
 ]
 
 // Groups of services, dependencies first
@@ -94,9 +86,9 @@ export const SERVICE_GROUPS: [string, string[]][] = [
   ['apps', ['n8n', 'flowise', 'browser-use', 'openwebui', 'ollama']],
 ]
 
-// All Docker compose files
+// All Docker compose files: absolute paths
 export const ALL_COMPOSE_FILES = ALL_COMPOSE_SERVICES.map(
-  ([_service, file]) => file,
+  ([_service, file]) => path.join(config.servicesDir, file),
 ) as string[]
 
 // Docker compose files for enabled services, includes build files
@@ -160,99 +152,6 @@ const REQUIRED_VOLUMES = [
 /*******************************************************************************
  * FUNCTIONS
  *******************************************************************************/
-
-/**
- * Prompt the user to confirm an action
- * @param message - The message to display to the user
- * @returns True if the user confirms, false otherwise
- */
-export function confirm(message: string, defaultAnswer: boolean = false): boolean {
-  const input = prompt(`${colors.yellow(message)} ${defaultAnswer ? '[Y/n]' : '[y/N]'}`)
-  return input?.toLowerCase() === 'y' || (!input && defaultAnswer)
-}
-
-export function showDebug(message: string, ...args: unknown[]): void {
-  if (DEBUG) {
-    showInfo(`[DEBUG] ${message}`)
-    args?.length && args.forEach((arg) => {
-      showInfo(`  ${typeof arg === 'object' ? JSON.stringify(arg) : arg}`)
-    })
-  }
-}
-
-// Shows magenta text, prompting user to take an action later on
-export function showUserAction(message: string): void {
-  console.log(`${colors.magenta(message)}`)
-}
-
-// Shows service name in default and url in yellow text
-export function showService(service: string, url: string): void {
-  console.log(`${service}: ${colors.yellow(url)}`)
-}
-
-// Shows username and password in gray text
-export function showCredentials(credentials: Record<string, string | null | undefined>): void {
-  for (const [key, value] of Object.entries(credentials)) {
-    value && showInfo(`  ${key}: ${value}`)
-  }
-}
-
-// Shows green text
-export function showAction(message: string): void {
-  console.log(`${colors.green(message)}`)
-}
-
-// Shows cyan text in uppercase
-export function showHeader(message: string, len = 50): void {
-  const padding = '-'.repeat((len - message.length - 2) / 2)
-  let header = `${padding} ${message} ${padding}`
-  if (header.length < len) {
-    header += '-' // handle odd number of characters
-  }
-  console.log(`\n${colors.cyan.bold(header)}`)
-}
-
-export function showError(msgOrError: string | unknown, err?: unknown): void {
-  const message = (typeof msgOrError === 'string') ? msgOrError : null
-  const error = err || msgOrError
-  const logError = (message: string, ...args: unknown[]) => {
-    if (args.length > 0 && args[0] === message) {
-      args.shift()
-    }
-    console.error(colors.red(message), ...args)
-  }
-  if (error instanceof CommandError) {
-    message && logError(message)
-    logError(`Command failed: "${error.cmd}" \n${error.stderr}`)
-  } else {
-    let errorMessage: string | undefined
-    if (error && typeof error === 'object') {
-      errorMessage = 'message' in error
-        ? error.message as string
-        : 'stderr' in error
-        ? error.stderr as string
-        : String(error)
-    } else {
-      errorMessage = String(error)
-    }
-    if (message) {
-      logError(message, errorMessage)
-    } else {
-      logError(errorMessage)
-    }
-  }
-}
-
-// Shows red text
-export function showWarning(message: string, emoji?: string): void {
-  emoji = (emoji === undefined) ? '❗ ' : emoji ? `${emoji} ` : ''
-  console.warn(`${emoji}${colors.yellow.bold(message)}`)
-}
-
-// Shows gray text
-export function showInfo(message: string): void {
-  console.log(`${colors.gray(message)}`)
-}
 
 /**
  * Get the host platform
@@ -319,7 +218,7 @@ export function isEnabled(envVar: string): boolean {
 export async function getComposeFileFromService(service: string): Promise<string | null> {
   // Iterate through all compose files to find the service
   for (const composeFile of COMPOSE_FILES) {
-    const serviceImages = await getImagesFromComposeYml(composeFile)
+    const serviceImages = await getImagesFromComposeYaml(composeFile)
     const serviceImage = serviceImages.find((img) => img.service === service)
     if (serviceImage) {
       return composeFile
@@ -335,7 +234,7 @@ export async function getComposeFileFromService(service: string): Promise<string
  * @param {Set<string>} [processedFiles] - Set of already processed files to avoid circular references
  * @returns {Array<ServiceImage>} An array of objects with the service name and image
  */
-export async function getImagesFromComposeYml(
+export async function getImagesFromComposeYaml(
   composeFile: string,
   processedFiles: Set<string> = new Set(),
 ): Promise<Array<ServiceImage>> {
@@ -374,12 +273,18 @@ export async function getImagesFromComposeYml(
         if (typeof include === 'string') {
           // If include is a string, use it directly as the path
           const includePath = path.resolve(path.dirname(composeFile), include)
-          const includedImages = await getImagesFromComposeYml(includePath, new Set(processedFiles))
+          const includedImages = await getImagesFromComposeYaml(
+            includePath,
+            new Set(processedFiles),
+          )
           serviceImages.push(...includedImages)
         } else if (include && typeof include === 'object' && include.path) {
           // If include is an object with a path property
           const includePath = path.resolve(path.dirname(composeFile), include.path)
-          const includedImages = await getImagesFromComposeYml(includePath, new Set(processedFiles))
+          const includedImages = await getImagesFromComposeYaml(
+            includePath,
+            new Set(processedFiles),
+          )
           serviceImages.push(...includedImages)
         }
       }
@@ -428,7 +333,7 @@ export async function getImagesFromComposeYml(
             : service.extends.file
 
           // Recursively get images from the extended file
-          const extendedImages = await getImagesFromComposeYml(
+          const extendedImages = await getImagesFromComposeYaml(
             extendedFilePath,
             new Set(processedFiles),
           )
@@ -475,27 +380,20 @@ export async function getImageFromCompose(
   composeFile: string,
   service: string,
 ): Promise<ServiceImage | null> {
-  const serviceImages = await getImagesFromComposeYml(composeFile)
+  const serviceImages = await getImagesFromComposeYaml(composeFile)
   return serviceImages.find((img) => img.service === service) || null
 }
 
 export async function getComposeFile(
-  service: string | undefined = undefined,
+  service: string,
 ): Promise<string | null> {
-  let file: string | null
-  // If no service is provided, use the first "default" compose file
-  if (!service) {
-    file = ALL_COMPOSE_FILES[0] // docker-compose.yaml
-  } else {
-    // Try to find the service in the compose file name
-    file = ALL_COMPOSE_FILES.find((file) => file.includes(service)) || null
-  }
-  if (!file && service) {
+  let file = ALL_COMPOSE_FILES.find((file) => file.includes(service))
+  if (!file) {
     // Reverse lookup the compose file from the service name
     // This parses the actual compose files for the service
-    file = await getComposeFileFromService(service)
+    file = await getComposeFileFromService(service) || undefined
   }
-  return file ? path.join(LLEMONSTACK_INSTALL_DIR, file) : null
+  return file ? file : null
 }
 
 /**
@@ -523,11 +421,11 @@ export async function checkPrerequisites(): Promise<void> {
 }
 
 function getRepoPath(repoName: string): string {
-  return escapePath(path.join(REPO_DIR, repoName))
+  return escapePath(path.join(config.repoDir, repoName))
 }
 
 /**
- * Clone a service repo into REPO_DIR
+ * Clone a service repo into repo dir
  */
 async function setupRepo(
   repoName: string,
@@ -560,7 +458,7 @@ async function setupRepo(
     await runCommand('git', {
       args: [
         '-C',
-        escapePath(REPO_DIR),
+        escapePath(config.repoDir),
         'clone',
         sparse && '--filter=blob:none',
         sparse && '--no-checkout',
@@ -640,9 +538,9 @@ export async function setupRepos({
 } = {}): Promise<void> {
   // Ensure repos directory exists
   try {
-    await fs.ensureDir(REPO_DIR)
+    await fs.ensureDir(config.repoDir)
   } catch (error) {
-    showError(`Unable to create repos dir: ${REPO_DIR}`, error)
+    showError(`Unable to create repos dir: ${config.repoDir}`, error)
     Deno.exit(1)
   }
 
@@ -753,7 +651,7 @@ function getRelativePath(pathStr: string): string {
 export async function prepareEnv({ silent = false }: { silent?: boolean } = {}): Promise<void> {
   !silent && showInfo('Preparing environment...')
 
-  if (!fs.existsSync(ENVFILE)) {
+  if (!fs.existsSync(config.envFile)) {
     showError('Error: .env file not found')
     showUserAction(
       'Please create a .env file in the root directory and try again.',

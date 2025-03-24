@@ -8,14 +8,19 @@
 
 import { Command, EnumType } from '@cliffy/command'
 import { CompletionsCommand } from '@cliffy/command/completions'
-import { DEFAULT_PROJECT_NAME, showAction, showInfo, start, VERSION } from './scripts/start.ts'
+import { Config } from './scripts/lib/config/config.ts'
+import { showAction, showInfo } from './scripts/lib/logger.ts'
+import { DEFAULT_PROJECT_NAME, start } from './scripts/start.ts'
+
+const config = Config.getInstance()
+await config.initialize()
 
 const logLevelType = new EnumType(['debug', 'info', 'warn', 'error'])
 
 // Base command options
 const main = new Command()
   .name('llmn')
-  .version(VERSION)
+  .version(config.installVersion)
   .description('Command line for LLemonStack local AI agent stack')
   .globalEnv('DEBUG=<enable:boolean>', 'Enable debug output')
   .globalEnv('LLEMONSTACK_PROJECT_NAME=<project:string>', 'Project name')

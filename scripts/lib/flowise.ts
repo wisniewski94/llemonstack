@@ -1,6 +1,11 @@
-import * as path from '@std/path'
-import { DEBUG, showDebug, showError } from '../start.ts'
-import { dockerEnv } from './docker.ts'
+import { Config } from './config/config.ts'
+import { path } from './fs.ts'
+import { showDebug, showError } from './logger.ts'
+
+const config = Config.getInstance()
+await config.initialize()
+
+const DEBUG = config.DEBUG
 
 /**
  * Get the Flowise API key from the config file
@@ -9,7 +14,7 @@ import { dockerEnv } from './docker.ts'
  */
 export async function getFlowiseApiKey(): Promise<{ apiKey: string; keyName: string } | null> {
   const configPath = path.join(
-    dockerEnv().LLEMONSTACK_VOLUMES_PATH,
+    config.volumesDir,
     'flowise',
     'config',
     'api.json',

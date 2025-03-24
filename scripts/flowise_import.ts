@@ -3,20 +3,18 @@
  * Import workflows and credentials from the import folder
  */
 
+import { Config } from './lib/config/config.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
 import { fs, path } from './lib/fs.ts'
-import {
-  confirm,
-  DEFAULT_PROJECT_NAME,
-  IMPORT_DIR_BASE,
-  prepareEnv,
-  showError,
-  showInfo,
-  showWarning,
-} from './start.ts'
+import { showError, showInfo, showWarning } from './lib/logger.ts'
+import { DEFAULT_PROJECT_NAME, prepareEnv } from './start.ts'
+
+const config = Config.getInstance()
+await config.initialize()
+
 const FLOWISE_BASE_URL = 'http://localhost:3001'
-const FLOWISE_IMPORT_DIR = path.join(IMPORT_DIR_BASE, 'flowise')
-const ARCHIVE_BASE_DIR = path.join(IMPORT_DIR_BASE, `.imported`)
+const FLOWISE_IMPORT_DIR = path.join(config.importDir, 'flowise')
+const ARCHIVE_BASE_DIR = path.join(config.importDir, `.imported`)
 
 async function resetFlowiseImportFolder(importDir: string): Promise<void> {
   showInfo(`Clearing import folder: ${importDir}`)
@@ -68,7 +66,7 @@ async function importFolder(
   const subdir = type === 'MULTIAGENT' ? 'agentflows' : 'chatflows'
 
   // Import Flowise workflows from JSON files
-  const flowiseImportDir = path.join(IMPORT_DIR_BASE, 'flowise', subdir)
+  const flowiseImportDir = path.join(config.importDir, 'flowise', subdir)
 
   // Ensure the import directory exists
   await fs.ensureDir(flowiseImportDir)

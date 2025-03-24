@@ -9,7 +9,7 @@ export class LLemonStackConfig {
   constructor() {
     this.installDir = fs.path.join(
       fs.path.dirname(fs.path.fromFileUrl(import.meta.url)),
-      '../../',
+      '../../../',
     )
   }
 }

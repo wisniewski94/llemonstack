@@ -2,7 +2,8 @@
 /**
  * Stop and restart the services
  */
-import { DEFAULT_PROJECT_NAME, showError, start } from './start.ts' // Adjust the path as necessary
+import { showError } from './lib/logger.ts'
+import { DEFAULT_PROJECT_NAME, start } from './start.ts' // Adjust the path as necessary
 import { stop } from './stop.ts' // Adjust the path as necessary
 
 export async function restart(

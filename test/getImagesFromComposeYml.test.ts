@@ -6,9 +6,9 @@ import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
 import { afterEach, beforeEach, it } from 'jsr:@std/testing/bdd'
 import { assertSpyCall, spy } from 'jsr:@std/testing/mock'
-import { COMPOSE_IMAGES_CACHE, getImagesFromComposeYml } from '../scripts/start.ts'
+import { COMPOSE_IMAGES_CACHE, getImagesFromComposeYaml } from '../scripts/start.ts'
 
-Deno.test('getImagesFromComposeYml', () => {
+Deno.test('getImagesFromComposeYaml', () => {
   const testDir = path.join(Deno.cwd(), 'test_tmp')
   const composeDir = path.join(testDir, 'docker')
 
@@ -42,7 +42,7 @@ services:
     await Deno.writeTextFile(composeFile, composeContent)
 
     // Test the function
-    const result = await getImagesFromComposeYml(composeFile)
+    const result = await getImagesFromComposeYaml(composeFile)
 
     // Verify results
     assertEquals(result.length, 2)
@@ -64,7 +64,7 @@ services:
 `
     await Deno.writeTextFile(composeFile, composeContent)
 
-    const result = await getImagesFromComposeYml(composeFile)
+    const result = await getImagesFromComposeYaml(composeFile)
 
     assertEquals(result.length, 2)
     assertEquals(result[0].service, 'service1')
@@ -94,7 +94,7 @@ services:
 `
     await Deno.writeTextFile(extendingComposeFile, extendingComposeContent)
 
-    const result = await getImagesFromComposeYml(extendingComposeFile)
+    const result = await getImagesFromComposeYaml(extendingComposeFile)
 
     assertEquals(result.length, 1)
     assertEquals(result[0].service, 'extended-service')
@@ -126,7 +126,7 @@ services:
     // Spy on console.warn to verify warning is logged
     const warnSpy = spy(console, 'warn')
 
-    const result = await getImagesFromComposeYml(composeFile1)
+    const result = await getImagesFromComposeYaml(composeFile1)
 
     // Should not throw and should return empty array
     assertEquals(result.length, 0)
@@ -146,7 +146,7 @@ services:
     await Deno.writeTextFile(composeFile, composeContent)
 
     // First call should read the file
-    const result1 = await getImagesFromComposeYml(composeFile)
+    const result1 = await getImagesFromComposeYaml(composeFile)
 
     // Modify the file (this change should not be reflected in the second call)
     const modifiedContent = `
@@ -157,7 +157,7 @@ services:
     await Deno.writeTextFile(composeFile, modifiedContent)
 
     // Second call should use the cache
-    const result2 = await getImagesFromComposeYml(composeFile)
+    const result2 = await getImagesFromComposeYaml(composeFile)
 
     // Results should be identical despite file change
     assertEquals(result1, result2)
@@ -169,7 +169,7 @@ services:
 
     await assertRejects(
       async () => {
-        await getImagesFromComposeYml(nonExistentFile)
+        await getImagesFromComposeYaml(nonExistentFile)
       },
       Error,
       'No such file or directory',
@@ -189,7 +189,7 @@ services:
 
     await assertRejects(
       async () => {
-        await getImagesFromComposeYml(invalidYamlFile)
+        await getImagesFromComposeYaml(invalidYamlFile)
       },
       Error,
     )
@@ -203,7 +203,7 @@ version: '3'
 `
     await Deno.writeTextFile(emptyComposeFile, emptyContent)
 
-    const result = await getImagesFromComposeYml(emptyComposeFile)
+    const result = await getImagesFromComposeYaml(emptyComposeFile)
 
     assertEquals(result.length, 0)
   })
@@ -240,7 +240,7 @@ services:
 `
     await Deno.writeTextFile(topComposeFile, topComposeContent)
 
-    const result = await getImagesFromComposeYml(topComposeFile)
+    const result = await getImagesFromComposeYaml(topComposeFile)
 
     assertEquals(result.length, 1)
     assertEquals(result[0].service, 'top-service')
@@ -269,7 +269,7 @@ services:
 `
     await Deno.writeTextFile(overrideComposeFile, overrideComposeContent)
 
-    const result = await getImagesFromComposeYml(overrideComposeFile)
+    const result = await getImagesFromComposeYaml(overrideComposeFile)
 
     assertEquals(result.length, 1)
     assertEquals(result[0].service, 'override-service')
