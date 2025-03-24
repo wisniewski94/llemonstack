@@ -609,7 +609,7 @@ export async function init(
       showService('Download Ollama', 'https://ollama.com/docs/installation')
       showUserAction('Run `ollama run` on your host machine to start the service\n')
     }
-    showUserAction('Start the stack with `deno run start`')
+    showUserAction('Start the stack with `llmn start`')
   } catch (error) {
     showError(error)
     Deno.exit(1)
