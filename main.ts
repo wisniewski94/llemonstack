@@ -9,11 +9,15 @@
 import { Command, EnumType } from '@cliffy/command'
 import { CompletionsCommand } from '@cliffy/command/completions'
 import { Config } from './scripts/lib/config/config.ts'
-import { showAction, showInfo } from './scripts/lib/logger.ts'
+import { showAction, showError, showInfo } from './scripts/lib/logger.ts'
 import { DEFAULT_PROJECT_NAME, start } from './scripts/start.ts'
 
 const config = Config.getInstance()
-await config.initialize()
+const result = await config.initialize()
+if (!result.success) {
+  showError('Error initializing config', result.error)
+  Deno.exit(1)
+}
 
 const logLevelType = new EnumType(['debug', 'info', 'warn', 'error'])
 
