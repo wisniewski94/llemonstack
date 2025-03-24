@@ -6,18 +6,15 @@
 import { colors } from '@cliffy/ansi/colors'
 import { CellType, Column, Row, RowType, Table } from '@cliffy/table'
 import { getImageFromCompose, getImagesFromComposeYaml } from './lib/compose.ts'
+import { Config } from './lib/config/config.ts'
 import { dockerRun, prepareDockerNetwork, runDockerCommand } from './lib/docker.ts'
 import { showAction, showError, showHeader, showInfo, showWarning } from './lib/logger.ts'
 import { ServiceImage } from './lib/types.d.ts'
-import {
-  ALL_COMPOSE_FILES,
-  DEFAULT_PROJECT_NAME,
-  getComposeFile,
-  isEnabled,
-  prepareEnv,
-} from './start.ts'
+import { DEFAULT_PROJECT_NAME, prepareEnv } from './start.ts'
 
-const COMPOSE_FILES = ALL_COMPOSE_FILES
+const config = Config.getInstance()
+await config.initialize()
+
 const MAX_COLUMN_WIDTH = 50
 
 /**
@@ -116,7 +113,7 @@ async function getAppVersion(
     }
     serviceImage = tmp
   } catch (error) {
-    if (isEnabled(service)) {
+    if (config.isEnabled(service)) {
       showError(`Error getting image for ${service}`, error)
     }
     serviceImage = {
@@ -145,9 +142,9 @@ async function getAppVersions(projectName: string): Promise<string[][]> {
   // Get enabled services and process them in parallel
   const results = await Promise.all(
     Object.keys(SERVICES_WITH_APP_VERSION)
-      .filter((service) => isEnabled(service))
+      .filter((service) => config.isEnabled(service))
       .map(async (service) => {
-        const composeFile = getComposeFile(service)
+        const composeFile = config.getComposeFile(service)
         if (!composeFile) {
           showWarning(`Compose file not found for ${service}`)
           return { service, containerName: '', version: '', image: '' } as ServiceImage
@@ -175,7 +172,7 @@ async function showImageVersions(): Promise<RowType[]> {
   // Iterate through all compose files to get images
   // Process all compose files in parallel
   const composeResults = await Promise.all(
-    COMPOSE_FILES.map(async (composeFile) => {
+    config.getComposeFiles().map(async (composeFile) => {
       let images: ServiceImage[] = []
       try {
         images = await getImagesFromComposeYaml(composeFile)

@@ -1,12 +1,7 @@
 import { Config } from './lib/config/config.ts'
-import { confirm, showAction, showError, showInfo } from './lib/logger.ts'
+import { confirm, showAction, showError, showInfo, showWarning } from './lib/logger.ts'
 import { createServiceSchema, removeServiceSchema } from './lib/postgres.ts'
-import {
-  ALL_COMPOSE_SERVICES,
-  DEFAULT_PROJECT_NAME,
-  isSupabaseStarted,
-  startService,
-} from './start.ts'
+import { DEFAULT_PROJECT_NAME, isSupabaseStarted, startService } from './start.ts'
 import { stopService } from './stop.ts'
 
 const config = Config.getInstance()
@@ -23,8 +18,9 @@ export async function schema(projectName: string, action: string, service: strin
   }
 
   // Make sure it's a valid service
-  if (!ALL_COMPOSE_SERVICES.find(([s]) => s === service)) {
-    if (!confirm(`Unknown service: ${service}. Continue?`)) {
+  if (!config.getComposeService(service)) {
+    showWarning(`Unknown service name: ${service}`)
+    if (!confirm(`Continue anyway?`)) {
       Deno.exit(1)
     }
   }

@@ -260,7 +260,7 @@ export class Config {
     return (value && value.trim().toLowerCase() === 'true') as boolean
   }
 
-  public getAllComposeServices(): ComposeService[] {
+  public getComposeServices(): ComposeService[] {
     if (this._composeServices.length === 0) {
       // Cache the compose services with absolute paths
       return this._composeServices = ALL_COMPOSE_SERVICES.map(
@@ -274,7 +274,7 @@ export class Config {
   }
 
   public getComposeService(service: string): ComposeService | null {
-    return this.getAllComposeServices().find(([s]) => s === service) || null
+    return this.getComposeServices().find(([s]) => s === service) || null
   }
 
   public getServiceGroups(): [string, string[]][] {
@@ -290,7 +290,7 @@ export class Config {
    * @returns {string[]}
    */
   public getComposeFiles({ all = false }: { all?: boolean } = {}): string[] {
-    return this.getAllComposeServices().map(
+    return this.getComposeServices().map(
       ([service, file]) => {
         if (!all && !this.isEnabled(service)) {
           return false

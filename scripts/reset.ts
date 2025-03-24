@@ -20,13 +20,7 @@ import {
   showUserAction,
   showWarning,
 } from './lib/logger.ts'
-import {
-  ALL_COMPOSE_SERVICES,
-  DEFAULT_PROJECT_NAME,
-  getProfilesArgs,
-  prepareEnv,
-  setupRepos,
-} from './start.ts'
+import { DEFAULT_PROJECT_NAME, getProfilesArgs, prepareEnv, setupRepos } from './start.ts'
 import { update } from './update.ts'
 
 const config = Config.getInstance()
@@ -40,12 +34,14 @@ const DOCKER_CLEANUP_COMMANDS = [
 async function dockerComposeCleanup(
   projectName: string,
 ): Promise<void> {
-  const composeFiles = await ALL_COMPOSE_SERVICES
+  const services = config.getComposeServices()
+
   // Make sure repos exist before running docker compose cleanup
   await setupRepos({ all: true })
+
   // Iterate through each compose file and run the down command individually
   // This catches any errors with compose files that extend a non-existent file.
-  for (const [service, composeFile] of composeFiles) {
+  for (const [service, composeFile] of services) {
     try {
       if (!composeFile || !fs.existsSync(composeFile)) {
         showInfo(`Skip ${service} teardown, compose file not found: ${composeFile}`)

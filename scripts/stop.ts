@@ -3,6 +3,7 @@
  * Stop the stack by downing docker containers and cleaning up networks.
  */
 
+import { Config } from './lib/config/config.ts'
 import {
   dockerComposePs,
   type DockerComposePsResult,
@@ -12,15 +13,11 @@ import {
   runDockerComposeCommand,
 } from './lib/docker.ts'
 import { showAction, showError, showInfo } from './lib/logger.ts'
-import {
-  ALL_COMPOSE_SERVICES,
-  type ComposeService,
-  DEFAULT_PROJECT_NAME,
-  getComposeFile,
-  isEnabled,
-  prepareEnv,
-  setupRepos,
-} from './start.ts'
+import { ComposeService } from './lib/types.d.ts'
+import { DEFAULT_PROJECT_NAME, prepareEnv, setupRepos } from './start.ts'
+
+const config = Config.getInstance()
+await config.initialize()
 
 async function removeAllNetworks(projectName: string): Promise<void> {
   const MAX_RETRIES = 3
@@ -92,7 +89,7 @@ export async function stopService(
 ): Promise<void> {
   try {
     if (!composeFile) {
-      composeFile = getComposeFile(service)
+      composeFile = config.getComposeFile(service)
     }
     if (!composeFile) {
       throw new Error(`No compose file found for service: ${service}`)
@@ -122,12 +119,12 @@ export async function stop(
   let composeService: ComposeService | undefined
   if (service) {
     stopAll = false
-    composeService = ALL_COMPOSE_SERVICES.find(([s]) => s === service)
+    composeService = service && config.getComposeService(service) || undefined
     if (!composeService) {
       showError(`Unknown service: ${service}`)
       showAction('\nAvailable services:')
-      ALL_COMPOSE_SERVICES.forEach(([service]) => {
-        if (isEnabled(service)) {
+      config.getComposeServices().forEach(([service]) => {
+        if (config.isEnabled(service)) {
           showInfo(`- ${service}`)
         }
       })
@@ -155,8 +152,8 @@ export async function stop(
   if (service) {
     await stopService(projectName, service)
   } else {
-    const services = ALL_COMPOSE_SERVICES.filter(([service]) => {
-      return stopAll || isEnabled(service)
+    const services = config.getComposeServices().filter(([service]) => {
+      return stopAll || config.isEnabled(service)
     })
     await stopServices(projectName, services, { all: stopAll })
   }

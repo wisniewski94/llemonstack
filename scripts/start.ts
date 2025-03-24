@@ -35,31 +35,9 @@ export const DEFAULT_PROJECT_NAME = config.defaultProjectName
 // Enable extra debug logging
 const DEBUG = config.DEBUG
 
-// All services with a docker-compose.yaml file
-// Includes services with a custom Dockerfile
-// [service name, compose file, auto run]
-// When auto run is true, the service is started automatically if enabled.
-// When auto run is false, the service needs to be started manually.
-export type ComposeService = [string, string, boolean]
-export const ALL_COMPOSE_SERVICES = config.getAllComposeServices()
-
-// Groups of services, dependencies first
-export const SERVICE_GROUPS = config.getServiceGroups()
-
-// All Docker compose files: absolute paths
-export const ALL_COMPOSE_FILES = config.getComposeFiles({ all: true })
-
-// Docker compose files for enabled services, includes build files
-export const COMPOSE_FILES = config.getComposeFiles()
-
-export const isEnabled = config.isEnabled
-
 /*******************************************************************************
  * FUNCTIONS
  *******************************************************************************/
-
-// TODO: update references in other files to use config directly
-export const getComposeFile = (service: string) => config.getComposeFile(service)
 
 /**
  * Filter out files that don't exist.
@@ -595,10 +573,10 @@ export async function start(
       await startService(projectName, service)
     } else {
       // Start all services by service group
-      for (const [groupName, groupServices] of SERVICE_GROUPS) {
+      for (const [groupName, groupServices] of config.getServiceGroups()) {
         const enabledGroupServices = groupServices.filter((service) =>
           config.isEnabled(service) &&
-          ALL_COMPOSE_SERVICES.find(([s, _, autoRun]) => s === service && autoRun)
+          config.getComposeServices().find(([s, _, autoRun]) => s === service && autoRun)
         )
         if (enabledGroupServices.length > 0) {
           showAction(`\nStarting ${groupName} services...`)

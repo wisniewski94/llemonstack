@@ -107,7 +107,9 @@ export function showMessages(messages: LogMessage[]): void {
         break
       case 'debug':
         if (Config.getInstance().DEBUG) {
-          showDebug(message.message, message.args)
+          message.args !== undefined
+            ? showDebug(message.message, message.args)
+            : showDebug(message.message)
         }
         break
       default:

@@ -4,15 +4,19 @@
  *
  * Pulls and builds the latest changes for docker images.
  */
+import { Config } from './lib/config/config.ts'
 import { runDockerComposeCommand } from './lib/docker.ts'
 import { confirm, showAction, showError, showInfo } from './lib/logger.ts'
-import { COMPOSE_FILES, DEFAULT_PROJECT_NAME, prepareEnv, setupRepos } from './start.ts'
+import { DEFAULT_PROJECT_NAME, prepareEnv, setupRepos } from './start.ts'
 import { stop } from './stop.ts'
 import { versions } from './versions.ts'
 
+const config = Config.getInstance()
+await config.initialize()
+
 async function pullImages(projectName: string): Promise<void> {
   // Run pull for each profile in parallel
-  const composeFiles = COMPOSE_FILES
+  const composeFiles = config.getComposeFiles()
 
   // Split compose files into batches of 5 to avoid overwhelming the system
   const batchSize = 4
