@@ -36,7 +36,7 @@ export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
    * @returns this instance for chaining
    */
   addMessage(
-    level: 'error' | 'warning' | 'info',
+    level: LogMessage['level'],
     message: string,
     ...args: unknown[]
   ): TryCatchResult<T, E> {
@@ -81,18 +81,8 @@ export class TryCatchError extends Error {
   }
 }
 
-// export class TryCatchResult<T, E = Error> {
-//   data: T | null
-//   error: E | null
-//   success: boolean
-//   messages?: Array<{
-//     level: 'error' | 'warning' | 'info'
-//     message: string
-//   }>
-// }
-
 type LogMessage = {
-  level: 'error' | 'warning' | 'info'
+  level: 'error' | 'warning' | 'info' | 'debug'
   message: string
   args?: unknown[]
 }
