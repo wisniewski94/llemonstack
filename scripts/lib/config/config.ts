@@ -136,7 +136,11 @@ export class Config {
       const saveResult = await this.save()
       if (!saveResult.success) {
         result.error = saveResult.error
-        result.addMessage('error', 'Error saving project config from template', saveResult.error)
+        result.addMessage(
+          'error',
+          `Error saving project config from template: ${this.configFile}`,
+          saveResult.error,
+        )
       }
     }
 
@@ -144,17 +148,17 @@ export class Config {
     const env = await loadEnv({ envPath: this.envFile })
     // Set OLLAMA_HOST
     // TODO: remove this once scripts are migrated to use Config
-    this._env.OLLAMA_HOST = this.getOllamaHost()
+    env.OLLAMA_HOST = this.getOllamaHost()
     Deno.env.set('OLLAMA_HOST', this._env.OLLAMA_HOST)
     this.setEnv(env)
+
+    this.DEBUG && console.log('INITIALIZING CONFIG: this should only appear once')
 
     if (!result.success) {
       return failure(`Error loading project config file: ${this.configFile}`, result)
     }
 
     this._initialized = true
-
-    // this.DEBUG && console.log('INITIALIZING CONFIG: this should only appear once')
 
     return result
   }
@@ -178,6 +182,15 @@ export class Config {
    * @returns {Promise<TryCatchResult<boolean>>}
    */
   private async save(): Promise<TryCatchResult<boolean>> {
+    if (!fs.isInsideCwd(this.configFile).data) {
+      return new TryCatchResult<boolean, Error>({
+        data: false,
+        error: new Error(
+          'Config directory is outside the current working directory, unsafe to proceed',
+        ),
+        success: false,
+      })
+    }
     return await fs.saveJson(this.configFile, this._project)
   }
 

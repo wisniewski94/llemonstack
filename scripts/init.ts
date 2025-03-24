@@ -15,17 +15,8 @@ import {
   supabaseAnonJWTPayload,
   supabaseServiceJWTPayload,
 } from './lib/jwt.ts'
-import { createServiceSchema, isPostgresConnectionValid } from './lib/postgres.ts'
-import { reset } from './reset.ts'
 import {
-  checkPrerequisites,
   confirm,
-  DEFAULT_PROJECT_NAME,
-  getOS,
-  isInitialized,
-  isSupabaseStarted,
-  prepareEnv,
-  setupRepos,
   showAction,
   showError,
   showHeader,
@@ -33,6 +24,17 @@ import {
   showService,
   showUserAction,
   showWarning,
+} from './lib/logger.ts'
+import { createServiceSchema, isPostgresConnectionValid } from './lib/postgres.ts'
+import { reset } from './reset.ts'
+import {
+  checkPrerequisites,
+  DEFAULT_PROJECT_NAME,
+  getOS,
+  isInitialized,
+  isSupabaseStarted,
+  prepareEnv,
+  setupRepos,
   startService,
 } from './start.ts' // Adjust the path as necessary
 

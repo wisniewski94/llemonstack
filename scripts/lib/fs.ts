@@ -43,7 +43,21 @@ export async function dirExists(path: string): Promise<TryCatchResult<boolean>> 
   }
 }
 
+export function isInsideCwd(filePath: string): TryCatchResult<boolean> {
+  const cwd = Deno.cwd()
+  const relativePath = path.relative(cwd, filePath)
+  return new TryCatchResult<boolean>({ data: relativePath !== '', error: null, success: true })
+}
+
 export async function saveJson(filePath: string, data: unknown): Promise<TryCatchResult<boolean>> {
+  const dirResult = await tryCatch(fs.ensureDir(path.dirname(filePath)))
+  if (!dirResult.success) {
+    return new TryCatchResult<boolean, Error>({
+      data: false,
+      error: dirResult.error || new Error('Unknown error'),
+      success: false,
+    })
+  }
   return await tryCatchSuccess(Deno.writeTextFile(filePath, JSON.stringify(data, null, 2)))
 }
 

@@ -5,16 +5,8 @@
  * Pulls and builds the latest changes for docker images.
  */
 import { runDockerComposeCommand } from './lib/docker.ts'
-import {
-  COMPOSE_FILES,
-  confirm,
-  DEFAULT_PROJECT_NAME,
-  prepareEnv,
-  setupRepos,
-  showAction,
-  showError,
-  showInfo,
-} from './start.ts'
+import { confirm, showAction, showError, showInfo } from './lib/logger.ts'
+import { COMPOSE_FILES, DEFAULT_PROJECT_NAME, prepareEnv, setupRepos } from './start.ts'
 import { stop } from './stop.ts'
 import { versions } from './versions.ts'
 
