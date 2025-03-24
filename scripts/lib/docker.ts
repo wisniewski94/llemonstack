@@ -10,7 +10,7 @@ import { Config } from './config/config.ts'
 import type { EnvVars, RunCommandOutput } from './types.d.ts'
 
 const config = Config.getInstance()
-config.initialize()
+await config.initialize()
 
 /**
  * Gets required environment variables to always pass to docker commands
