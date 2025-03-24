@@ -85,3 +85,19 @@ interface ComposeConfig {
     }
   }
 }
+
+//
+// TryCatchResult
+//
+
+export type LogMessage =
+  & {
+    level: 'error' | 'warning' | 'info' | 'debug'
+    message: string
+    error?: Error | unknown // Include error object when level is "error"
+    args?: unknown
+  }
+  & (
+    | { level: 'error'; error: Error | unknown } // Error is required when level is "error"
+    | { level: 'warning' | 'info' | 'debug' } // Error is not required for other levels
+  )

@@ -1,6 +1,7 @@
 import { colors } from '@cliffy/ansi/colors'
 import { CommandError } from './command.ts'
 import { Config } from './config/config.ts'
+import type { LogMessage } from './types.d.ts'
 
 /**
  * Prompt the user to confirm an action
@@ -93,4 +94,26 @@ export function showWarning(message: string, emoji?: string): void {
 // Shows gray text
 export function showInfo(message: string): void {
   console.log(`${colors.gray(message)}`)
+}
+
+export function showMessages(messages: LogMessage[]): void {
+  messages.forEach((message) => {
+    switch (message.level) {
+      case 'error':
+        showError(message.message, message.error)
+        break
+      case 'warning':
+        showWarning(message.message)
+        break
+      case 'debug':
+        if (Config.getInstance().DEBUG) {
+          showDebug(message.message, message.args)
+        }
+        break
+      default:
+      case 'info':
+        showInfo(message.message)
+        break
+    }
+  })
 }

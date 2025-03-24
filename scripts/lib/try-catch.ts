@@ -1,4 +1,10 @@
-// From https://gist.github.com/t3dotgg/a486c4ae66d32bf17c09c73609dacc5b
+/**
+ * TryCatch library
+ *
+ * Inspired by https://gist.github.com/t3dotgg/a486c4ae66d32bf17c09c73609dacc5b
+ */
+
+import type { LogMessage } from './types.d.ts'
 
 /**
  * TryCatchResult class
@@ -38,9 +44,9 @@ export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
   addMessage(
     level: LogMessage['level'],
     message: string,
-    ...args: unknown[]
+    { error, args }: { error?: Error | unknown; args?: unknown } = {},
   ): TryCatchResult<T, E> {
-    this.messages.push({ level, message, args })
+    this.messages.push({ level, message, error, args })
     return this
   }
 
@@ -79,12 +85,6 @@ export class TryCatchError extends Error {
       this.stack = `${this.stack}\n\nCaused by: ${originalError.stack}`
     }
   }
-}
-
-type LogMessage = {
-  level: 'error' | 'warning' | 'info' | 'debug'
-  message: string
-  args?: unknown[]
 }
 
 export type Success<T> = {

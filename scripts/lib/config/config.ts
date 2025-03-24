@@ -12,8 +12,12 @@ export class Config {
   private _llemonstack: LLemonStackConfig
   private _project: ProjectConfig = projectTemplate
   private _services: Record<string, ServiceConfig> = {}
-  private _initialized: boolean = false
   private _env: Record<string, string> = {}
+  private _initializeResult: TryCatchResult<Config, Error> = new TryCatchResult<Config, Error>({
+    data: this,
+    error: new Error('Config not initialized'),
+    success: false,
+  })
 
   // Base configuration
   readonly configDir: string
@@ -104,11 +108,11 @@ export class Config {
    * @returns {Promise<Config>}
    */
   public async initialize(): Promise<TryCatchResult<Config, Error>> {
-    const result = new TryCatchResult<Config, Error>({ data: this, error: null, success: true })
-
-    if (this._initialized) {
-      return result
+    if (this._initializeResult.success) {
+      return this._initializeResult
     }
+
+    const result = new TryCatchResult<Config, Error>({ data: this, error: null, success: true })
 
     let updated = false // Track if the project config was updated and needs to be saved
 
@@ -139,7 +143,7 @@ export class Config {
         result.addMessage(
           'error',
           `Error saving project config from template: ${this.configFile}`,
-          saveResult.error,
+          { error: saveResult.error },
         )
       }
     }
@@ -152,13 +156,14 @@ export class Config {
     Deno.env.set('OLLAMA_HOST', this._env.OLLAMA_HOST)
     this.setEnv(env)
 
-    this.DEBUG && console.log('INITIALIZING CONFIG: this should only appear once')
+    result.addMessage('debug', 'INITIALIZING CONFIG: this should only appear once')
 
     if (!result.success) {
       return failure(`Error loading project config file: ${this.configFile}`, result)
     }
 
-    this._initialized = true
+    // Cache the initialized result so scripts can process messages
+    this._initializeResult = result
 
     return result
   }
