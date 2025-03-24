@@ -4,11 +4,11 @@
 import { assertEquals, assertRejects } from 'jsr:@std/assert'
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
-import { afterEach, beforeEach, it } from 'jsr:@std/testing/bdd'
+import { afterEach, beforeEach, describe, it } from 'jsr:@std/testing/bdd'
 import { assertSpyCall, spy } from 'jsr:@std/testing/mock'
 import { COMPOSE_IMAGES_CACHE, getImagesFromComposeYaml } from '../scripts/start.ts'
 
-Deno.test('getImagesFromComposeYaml', () => {
+describe('getImagesFromComposeYaml', () => {
   const testDir = path.join(Deno.cwd(), 'test_tmp')
   const composeDir = path.join(testDir, 'docker')
 
