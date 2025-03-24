@@ -5,7 +5,6 @@
 import { Input, Secret, Select } from '@cliffy/prompt'
 import { Config } from './lib/config/config.ts'
 import { runDockerCommand } from './lib/docker.ts'
-import { loadEnv } from './lib/env.ts'
 import { path } from './lib/fs.ts'
 import {
   generateJWT,
@@ -220,7 +219,7 @@ async function updateEnvFile(
     return tmp
   }, envFileContent)
   await Deno.writeTextFile(CONFIG.envFile, updatedEnvFileContent)
-  return await loadEnv({ reload: true, expand: false })
+  return await CONFIG.loadEnv({ reload: true, expand: false })
 }
 
 /**
@@ -504,10 +503,10 @@ export async function init(
       await createEnvFile()
     }
 
-    // Get env vars and populate Deno.env
-    let envVars = await loadEnv({ reload: true, expand: false })
+    // Create a copy of env vars to modify
+    let envVars = { ...CONFIG.env }
 
-    showInfo('.env file is ready to configure\n')
+    showInfo('.env file is ready to configure')
 
     showAction('\nSetting up service repositories...')
     await setupRepos({ all: true })
@@ -541,6 +540,10 @@ export async function init(
     }
 
     envVars.LLEMONSTACK_PROJECT_NAME = projectName
+    const result = await CONFIG.setProjectName(projectName)
+    if (!result.success) {
+      showError(result.error)
+    }
 
     // Generate random security keys
     envVars = await setSecurityKeys(envVars)

@@ -4,7 +4,7 @@
 
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
-import { tryCatch, TryCatchResult, tryCatchSuccess } from './try-catch.ts'
+import { tryCatch, tryCatchBoolean, TryCatchResult } from './try-catch.ts'
 
 // Re-export fs and path
 export { fs, path }
@@ -67,7 +67,7 @@ export async function saveJson(filePath: string, data: unknown): Promise<TryCatc
       success: false,
     })
   }
-  return await tryCatchSuccess(Deno.writeTextFile(filePath, JSON.stringify(data, null, 2)))
+  return await tryCatchBoolean(Deno.writeTextFile(filePath, JSON.stringify(data, null, 2)))
 }
 
 export async function readJson<T>(filePath: string): Promise<TryCatchResult<T>> {

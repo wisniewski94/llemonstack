@@ -129,7 +129,7 @@ export async function tryCatch<T, E = Error>(
  * @param promise - The promise to wrap
  * @returns A TryCatchResult object with the result of the promise
  */
-export async function tryCatchSuccess<E = Error>(
+export async function tryCatchBoolean<E = Error>(
   promise: Promise<void>,
 ): Promise<TryCatchResult<boolean, E>> {
   try {
@@ -155,4 +155,15 @@ export function failure<T, E extends Error = Error>(
   }
   result.error = new TryCatchError(newMessage, result.error || undefined) as E
   return result
+}
+
+/**
+ * Returns a new TryCatchResult object with the data set and success set to true
+ * @param data - The data to set
+ * @returns A new TryCatchResult
+ */
+export function success<T>(
+  data: T,
+): TryCatchResult<T, Error> {
+  return new TryCatchResult<T, Error>({ data, error: null, success: true })
 }

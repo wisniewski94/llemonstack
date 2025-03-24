@@ -136,7 +136,6 @@ async function setupRepo(
   } = {},
 ): Promise<void> {
   const dir = config.serviceRepoPath(service, repoDir)
-  console.log('repo dir', dir)
   if (sparseDir) {
     sparse = true
   }

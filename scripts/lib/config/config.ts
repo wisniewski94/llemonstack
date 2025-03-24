@@ -2,7 +2,7 @@ import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import projectTemplate from '../../../config/config.0.2.0.json' with { type: 'json' }
 import { loadEnv } from '../env.ts'
 import * as fs from '../fs.ts'
-import { failure, TryCatchResult } from '../try-catch.ts'
+import { failure, success, TryCatchResult } from '../try-catch.ts'
 import {
   ComposeService,
   OllamaProfile,
@@ -41,7 +41,8 @@ export class Config {
   }
 
   get projectName(): string {
-    return this._env.LLEMONSTACK_PROJECT_NAME || this._project.projectName
+    return this._env.LLEMONSTACK_PROJECT_NAME || this._project.projectName ||
+      this.defaultProjectName
   }
 
   get envFile(): string {
@@ -166,7 +167,7 @@ export class Config {
     }
 
     if (updated) {
-      const saveResult = await this.save()
+      const saveResult = await this.saveConfig()
       if (!saveResult.success) {
         result.error = saveResult.error
         result.addMessage(
@@ -178,12 +179,7 @@ export class Config {
     }
 
     // Load .env file
-    const env = await loadEnv({ envPath: this.envFile })
-    // Set OLLAMA_HOST
-    // TODO: remove this once scripts are migrated to use Config
-    env.OLLAMA_HOST = this.getOllamaHost()
-    Deno.env.set('OLLAMA_HOST', this._env.OLLAMA_HOST)
-    this.setEnv(env)
+    await this.loadEnv()
 
     result.addMessage('debug', 'INITIALIZING CONFIG: this should only appear once')
 
@@ -195,6 +191,53 @@ export class Config {
     this._initializeResult = result
 
     return result
+  }
+
+  public async loadEnv(
+    { envPath = this.envFile, reload = false, expand = true }: {
+      envPath?: string
+      reload?: boolean
+      expand?: boolean
+    } = {},
+  ): Promise<Record<string, string>> {
+    const env = await loadEnv({ envPath, reload, expand })
+    // Set OLLAMA_HOST
+    // TODO: remove this once scripts are migrated to use Config
+    env.OLLAMA_HOST = this.getOllamaHost()
+    Deno.env.set('OLLAMA_HOST', this._env.OLLAMA_HOST)
+    this.setEnv(env) // Update env cache
+    return env
+  }
+
+  /**
+   * Set the project name
+   * @param name - The new project name
+   * @param {Object} options - Options object
+   * @param {boolean} options.save - Save the config after updating the project name
+   * @param {boolean} options.updateEnv - Update the LLEMONSTACK_PROJECT_NAME environment variable
+   */
+  public async setProjectName(
+    name: string,
+    { save = true, updateEnv = true }: { save?: boolean; updateEnv?: boolean } = {},
+  ): Promise<TryCatchResult<boolean>> {
+    const envKey = 'LLEMONSTACK_PROJECT_NAME'
+    if (updateEnv && this._env[envKey]) {
+      this.updateEnv(envKey, name)
+    }
+    this._project.projectName = name
+    if (save) {
+      return await this.saveConfig()
+    }
+    return success<boolean>(true)
+  }
+
+  private updateEnv(key: string, value: string) {
+    // Clone env object
+    const env = { ...this._env }
+    env[key] = value
+    Deno.env.set(key, value)
+    this._env = env
+    return this._env
   }
 
   /**
@@ -307,7 +350,7 @@ export class Config {
    * Save the project config to the config file
    * @returns {Promise<TryCatchResult<boolean>>}
    */
-  private async save(): Promise<TryCatchResult<boolean>> {
+  private async saveConfig(): Promise<TryCatchResult<boolean>> {
     if (!fs.isInsideCwd(this.configFile).data) {
       return new TryCatchResult<boolean, Error>({
         data: false,
