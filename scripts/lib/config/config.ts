@@ -1,8 +1,9 @@
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import projectTemplate from '../../../config/config.0.2.0.json' with { type: 'json' }
+import { loadEnv } from '../env.ts'
 import * as fs from '../fs.ts'
 import { failure, TryCatchResult } from '../try-catch.ts'
-import { ProjectConfig } from '../types.d.ts'
+import { OllamaProfile, ProjectConfig } from '../types.d.ts'
 import { LLemonStackConfig } from './llemonstack.ts'
 import { ServiceConfig } from './service.ts'
 
@@ -12,14 +13,22 @@ export class Config {
   private _project: ProjectConfig = projectTemplate
   private _services: Record<string, ServiceConfig> = {}
   private _initialized: boolean = false
+  private _env: Record<string, string> = {}
 
   // Base configuration
   readonly configDir: string
   readonly configFile: string
-  readonly DEBUG: boolean = false
+
+  get DEBUG(): boolean {
+    return Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
+  }
 
   get projectName(): string {
-    return this._project.projectName
+    return this._env.LLEMONSTACK_PROJECT_NAME || this._project.projectName
+  }
+
+  get envFile(): string {
+    return fs.path.resolve(Deno.cwd(), this._project.envFile)
   }
 
   get installDir(): string {
@@ -57,11 +66,18 @@ export class Config {
     return this._project
   }
 
+  get projectInitialized(): boolean {
+    return !!this._project.initialized.trim()
+  }
+
+  get env(): Record<string, string> {
+    return this._env
+  }
+
   private constructor() {
     this._llemonstack = new LLemonStackConfig()
     this.configDir = fs.path.join(Deno.cwd(), this._llemonstack.configDirBase)
     this.configFile = fs.path.join(this.configDir, 'config.json')
-    this.DEBUG = Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
   }
 
   public static getInstance(): Config {
@@ -114,6 +130,14 @@ export class Config {
       }
     }
 
+    // Load .env file
+    const env = await loadEnv({ envPath: this.envFile })
+    // Set OLLAMA_HOST
+    // TODO: remove this once scripts are migrated to use Config
+    this._env.OLLAMA_HOST = this.getOllamaHost()
+    Deno.env.set('OLLAMA_HOST', this._env.OLLAMA_HOST)
+    this.setEnv(env)
+
     if (!result.success) {
       return failure(`Error loading project config file: ${this.configFile}`, result)
     }
@@ -122,12 +146,46 @@ export class Config {
     return result
   }
 
+  // HACK: need a better way of handling Ollama profiles and host settings
+  public getOllamaProfile(): OllamaProfile {
+    return `ollama-${Deno.env.get('ENABLE_OLLAMA')?.trim() || 'false'}` as OllamaProfile
+  }
+
+  // HACK: need a better way of handling Ollama profiles and host settings
+  public getOllamaHost(): string {
+    // Use the OLLAMA_HOST env var if it is set, otherwise check Ollama profile settings
+    const host = Deno.env.get('OLLAMA_HOST') || (this.getOllamaProfile() === 'ollama-host')
+      ? 'host.docker.internal:11434'
+      : 'ollama:11434'
+    return host
+  }
+
   /**
    * Save the project config to the config file
    * @returns {Promise<TryCatchResult<boolean>>}
    */
   private async save(): Promise<TryCatchResult<boolean>> {
     return await fs.saveJson(this.configFile, this._project)
+  }
+
+  /**
+   * Create an immutable proxy of the env object
+   * @returns {Proxy<Record<string, string>>}
+   */
+  private setEnv<T extends Record<string, string>>(obj: T): Record<string, string> {
+    this._env = new Proxy(obj, {
+      set(_target, property, _value) {
+        throw new Error(
+          `Cannot modify env: property '${String(property)}' cannot be set`,
+        )
+      },
+      deleteProperty(_target, property) {
+        throw new Error(
+          `Cannot modify env: property '${String(property)}' cannot be deleted`,
+        )
+      },
+    })
+    return this._env
   }
 
   /**
