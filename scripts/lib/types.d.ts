@@ -1,7 +1,7 @@
 import {
   CommandError as CommandErrorClass,
   RunCommandOutput as RunCommandOutputClass,
-} from './runCommand.ts'
+} from './command.ts'
 
 interface ProjectConfig {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty

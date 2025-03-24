@@ -5,8 +5,8 @@
  */
 
 import { getComposeFile } from '../start.ts'
+import { runCommand } from './command.ts'
 import { Config } from './config/config.ts'
-import { runCommand } from './runCommand.ts'
 import type { EnvVars, RunCommandOutput } from './types.d.ts'
 
 const config = Config.getInstance()

@@ -8,6 +8,7 @@ import { load as loadDotEnv } from 'jsr:@std/dotenv'
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
 import * as yaml from 'jsr:@std/yaml'
+import { CommandError, runCommand } from './lib/command.ts'
 import {
   dockerEnv,
   isServiceRunning,
@@ -16,7 +17,6 @@ import {
   runDockerComposeCommand,
 } from './lib/docker.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
-import { CommandError, runCommand } from './lib/runCommand.ts'
 import {
   ComposeConfig,
   EnvVars,

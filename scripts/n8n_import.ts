@@ -5,8 +5,8 @@
 
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
+import { RunCommandOutput } from './lib/command.ts'
 import { dockerExec } from './lib/docker.ts'
-import { RunCommandOutput } from './lib/runCommand.ts'
 import {
   confirm,
   DEFAULT_PROJECT_NAME,
