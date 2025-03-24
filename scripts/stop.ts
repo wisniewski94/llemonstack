@@ -92,7 +92,7 @@ export async function stopService(
 ): Promise<void> {
   try {
     if (!composeFile) {
-      composeFile = await getComposeFile(service)
+      composeFile = getComposeFile(service)
     }
     if (!composeFile) {
       throw new Error(`No compose file found for service: ${service}`)

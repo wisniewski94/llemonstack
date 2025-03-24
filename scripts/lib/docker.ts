@@ -4,7 +4,6 @@
  * TODO: move all docker related functions here
  */
 
-import { getComposeFile } from '../start.ts'
 import { runCommand } from './command.ts'
 import { Config } from './config/config.ts'
 import type { EnvVars, RunCommandOutput } from './types.d.ts'
@@ -305,7 +304,7 @@ export async function dockerExec(
   } = {},
 ): Promise<RunCommandOutput> {
   if (!composeFile) {
-    composeFile = (await getComposeFile(service)) || undefined
+    composeFile = config.getComposeFile(service) || undefined
   }
   if (!composeFile) {
     throw new Error(`Compose file not found for ${service}`)
@@ -349,7 +348,7 @@ export async function dockerRun(
   } = {},
 ): Promise<RunCommandOutput> {
   if (!composeFile) {
-    composeFile = (await getComposeFile(service)) || undefined
+    composeFile = config.getComposeFile(service) || undefined
   }
   if (!composeFile) {
     throw new Error(`Compose file not found for ${service}`)

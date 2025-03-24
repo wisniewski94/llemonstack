@@ -5,7 +5,6 @@
 
 import { colors } from '@cliffy/ansi/colors'
 import { runCommand } from './lib/command.ts'
-import { getImagesFromComposeYaml } from './lib/compose.ts'
 import { Config } from './lib/config/config.ts'
 import { isServiceRunning, prepareDockerNetwork, runDockerComposeCommand } from './lib/docker.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
@@ -59,36 +58,8 @@ export const isEnabled = config.isEnabled
  * FUNCTIONS
  *******************************************************************************/
 
-/**
- * Reverse looks up the compose file from the service name
- * @param service
- * @returns
- */
-// TODO: move to config
-export async function getComposeFileFromService(service: string): Promise<string | null> {
-  // Iterate through all compose files to find the service
-  for (const composeFile of COMPOSE_FILES) {
-    const serviceImages = await getImagesFromComposeYaml(composeFile)
-    const serviceImage = serviceImages.find((img) => img.service === service)
-    if (serviceImage) {
-      return composeFile
-    }
-  }
-  return null
-}
-
-// TODO: move to config
-export async function getComposeFile(
-  service: string,
-): Promise<string | null> {
-  let file = ALL_COMPOSE_FILES.find((file) => file.includes(service))
-  if (!file) {
-    // Reverse lookup the compose file from the service name
-    // This parses the actual compose files for the service
-    file = await getComposeFileFromService(service) || undefined
-  }
-  return file ? file : null
-}
+// TODO: update references in other files to use config directly
+export const getComposeFile = (service: string) => config.getComposeFile(service)
 
 /**
  * Filter out files that don't exist.
@@ -403,7 +374,7 @@ export async function startService(
     await prepareDockerNetwork()
   }
 
-  const composeFile = await getComposeFile(service)
+  const composeFile = config.getComposeFile(service)
   if (!composeFile) {
     throw new Error(`Docker compose file not found for ${service}: ${composeFile}`)
   }

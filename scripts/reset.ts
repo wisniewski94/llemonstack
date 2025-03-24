@@ -23,7 +23,6 @@ import {
 import {
   ALL_COMPOSE_SERVICES,
   DEFAULT_PROJECT_NAME,
-  getComposeFileFromService,
   getProfilesArgs,
   prepareEnv,
   setupRepos,
@@ -48,7 +47,6 @@ async function dockerComposeCleanup(
   // This catches any errors with compose files that extend a non-existent file.
   for (const [service, composeFile] of composeFiles) {
     try {
-      const composeFile = await getComposeFileFromService(service)
       if (!composeFile || !fs.existsSync(composeFile)) {
         showInfo(`Skip ${service} teardown, compose file not found: ${composeFile}`)
         continue

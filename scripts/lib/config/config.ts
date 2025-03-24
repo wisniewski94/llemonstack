@@ -25,6 +25,7 @@ export class Config {
   private _project: ProjectConfig = projectTemplate
   private _services: Record<string, ServiceConfig> = {}
   private _env: Record<string, string> = {}
+  private _composeServices: ComposeService[] = [] // Cached compose services with absolute paths
   private _initializeResult: TryCatchResult<Config, Error> = new TryCatchResult<Config, Error>({
     data: this,
     error: new Error('Config not initialized'),
@@ -260,7 +261,20 @@ export class Config {
   }
 
   public getAllComposeServices(): ComposeService[] {
-    return ALL_COMPOSE_SERVICES
+    if (this._composeServices.length === 0) {
+      // Cache the compose services with absolute paths
+      return this._composeServices = ALL_COMPOSE_SERVICES.map(
+        (service) => {
+          service[1] = fs.path.join(this.servicesDir, service[1])
+          return service
+        },
+      )
+    }
+    return this._composeServices
+  }
+
+  public getComposeService(service: string): ComposeService | null {
+    return this.getAllComposeServices().find(([s]) => s === service) || null
   }
 
   public getServiceGroups(): [string, string[]][] {
@@ -276,15 +290,19 @@ export class Config {
    * @returns {string[]}
    */
   public getComposeFiles({ all = false }: { all?: boolean } = {}): string[] {
-    return ALL_COMPOSE_SERVICES.map(
+    return this.getAllComposeServices().map(
       ([service, file]) => {
         if (!all && !this.isEnabled(service)) {
           return false
         }
-        return fs.path.join(this.servicesDir, file)
+        return file
       },
     )
       .filter((value, index, self) => value && self.indexOf(value) === index) as string[]
+  }
+
+  public getComposeFile(service: string): string | null {
+    return this.getComposeService(service)?.[1] || null
   }
 
   public getReposConfig(): Record<string, RepoService> {
@@ -334,24 +352,6 @@ export class Config {
     // repoDir could be a different name thant the service
     return fs.escapePath(fs.path.join(this.repoDir, (repoDir || service).toLowerCase()))
   }
-
-  /**
-   * Reverse looks up the compose file from the service name
-   * @param service
-   * @returns
-   */
-  // getComposeFileFromService -> getServiceComposeFile
-  // public async getServiceComposeFile(service: string): Promise<string | null> {
-  //   // Iterate through all compose files to find the service
-  //   for (const composeFile of COMPOSE_FILES) {
-  //     const serviceImages = await getImagesFromComposeYaml(composeFile)
-  //     const serviceImage = serviceImages.find((img) => img.service === service)
-  //     if (serviceImage) {
-  //       return composeFile
-  //     }
-  //   }
-  //   return null
-  // }
 
   /**
    * Save the project config to the config file

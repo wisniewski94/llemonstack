@@ -147,7 +147,7 @@ async function getAppVersions(projectName: string): Promise<string[][]> {
     Object.keys(SERVICES_WITH_APP_VERSION)
       .filter((service) => isEnabled(service))
       .map(async (service) => {
-        const composeFile = await getComposeFile(service)
+        const composeFile = getComposeFile(service)
         if (!composeFile) {
           showWarning(`Compose file not found for ${service}`)
           return { service, containerName: '', version: '', image: '' } as ServiceImage

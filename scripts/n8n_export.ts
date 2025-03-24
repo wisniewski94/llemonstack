@@ -54,7 +54,7 @@ async function prepareBackupDir(): Promise<BackupDirs> {
 
 async function runExportCommands(projectName: string): Promise<void> {
   for (const serviceCommand of SERVICES_EXPORT_COMMANDS) {
-    const composeFile = await getComposeFile(serviceCommand.service)
+    const composeFile = getComposeFile(serviceCommand.service)
     if (!composeFile) {
       isEnabled(serviceCommand.service) &&
         showWarning(`Compose file not found for ${serviceCommand.service}, skipping`)
