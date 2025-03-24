@@ -296,7 +296,7 @@ export async function dockerExec(
   projectName: string,
   service: string,
   cmd: string,
-  { composeFile, args, silent = true, captureOutput = false }: {
+  { composeFile, args, silent = false, captureOutput = false }: {
     composeFile?: string
     args?: Array<string | false>
     silent?: boolean
