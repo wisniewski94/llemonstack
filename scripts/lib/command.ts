@@ -108,8 +108,6 @@ export async function runCommand(
   let cmdCmd = cmd
   let cmdArgs = (args?.filter(Boolean) || []) as string[]
   const cmdEnv: Record<string, string> = {
-    // TODO: remove this after finishing migration to docker.ts lib
-    ...(cmd.includes('docker') ? dockerEnv() : {}), // Add docker specific env vars
     ...envVars,
     ...Object.fromEntries( // Convert all env values to strings
       Object.entries(env).map(([k, v]) => [k, String(v)]),
