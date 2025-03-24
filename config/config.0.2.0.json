@@ -8,6 +8,13 @@
     "repos": ".llemonstack/repos",
     "import": "import",
     "shared": "shared",
-    "volumes": ".llemonstack/volumes"
+    "volumes": "volumes"
+  },
+  "services": {
+    "n8n": {
+      "dir": "services/n8n",
+      "enabled": true,
+      "composeFile": "docker-compose.yaml"
+    }
   }
 }
