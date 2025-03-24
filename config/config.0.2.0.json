@@ -1,7 +1,7 @@
 {
-  "initialized": "2025-00-00T00:00:00.000Z",
+  "initialized": "",
   "version": "0.2.0",
-  "projectName": "${LLEMONSTACK_PROJECT_NAME}",
+  "projectName": "llemonstack",
   "envFile": ".env",
   "dirs": {
     "config": ".llemonstack",
