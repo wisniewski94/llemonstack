@@ -267,16 +267,23 @@ export class Config {
     return SERVICE_GROUPS
   }
 
-  public getAllComposeFiles(): string[] {
+  /**
+   * Get services compose yaml files
+   *
+   * Filter out disabled services unless all is true.
+   *
+   * @param {boolean} all - Include all services, even disabled ones
+   * @returns {string[]}
+   */
+  public getComposeFiles({ all = false }: { all?: boolean } = {}): string[] {
     return ALL_COMPOSE_SERVICES.map(
-      ([_service, file]) => fs.path.join(config.servicesDir, file),
-    ) as string[]
-  }
-
-  public getEnabledComposeFiles(): string[] {
-    return ALL_COMPOSE_SERVICES.map(([service, file]) => {
-      return this.isEnabled(service) ? file : null
-    }) // Remove false values and duplicates
+      ([service, file]) => {
+        if (!all && !this.isEnabled(service)) {
+          return false
+        }
+        return fs.path.join(this.servicesDir, file)
+      },
+    )
       .filter((value, index, self) => value && self.indexOf(value) === index) as string[]
   }
 

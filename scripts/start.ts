@@ -48,10 +48,10 @@ export const ALL_COMPOSE_SERVICES = config.getAllComposeServices()
 export const SERVICE_GROUPS = config.getServiceGroups()
 
 // All Docker compose files: absolute paths
-export const ALL_COMPOSE_FILES = config.getAllComposeFiles()
+export const ALL_COMPOSE_FILES = config.getComposeFiles({ all: true })
 
 // Docker compose files for enabled services, includes build files
-export const COMPOSE_FILES = config.getEnabledComposeFiles()
+export const COMPOSE_FILES = config.getComposeFiles()
 
 export const isEnabled = config.isEnabled
 
