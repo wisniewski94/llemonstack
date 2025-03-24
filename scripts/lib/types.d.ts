@@ -15,6 +15,7 @@ interface ProjectConfig {
     import: string
     shared: string
     volumes: string
+    services?: string
   }
 }
 

@@ -4,10 +4,13 @@
  * TODO: move all docker related functions here
  */
 
-import * as path from 'jsr:@std/path'
-import { CONFIG, getComposeFile, getVolumesPath, REPO_DIR, ROOT_DIR } from '../start.ts'
+import { getComposeFile } from '../start.ts'
+import { Config } from './config/config.ts'
 import { runCommand } from './runCommand.ts'
 import type { EnvVars, RunCommandOutput } from './types.d.ts'
+
+const config = Config.getInstance()
+config.initialize()
 
 /**
  * Gets required environment variables to always pass to docker commands
@@ -15,13 +18,13 @@ import type { EnvVars, RunCommandOutput } from './types.d.ts'
  * @param volumesDir - The directory config to use for volumes, defaults to LLEMONSTACK_VOLUMES_DIR env var value
  * @returns Record<string, string>
  */
-export function dockerEnv({ volumesDir }: { volumesDir?: string } = {}): Record<string, string> {
+export function dockerEnv(): Record<string, string> {
   return {
-    LLEMONSTACK_VOLUMES_PATH: getVolumesPath(volumesDir),
-    LLEMONSTACK_SHARED_VOLUME_PATH: path.resolve(ROOT_DIR, CONFIG.dirs.shared),
-    LLEMONSTACK_IMPORT_VOLUME_PATH: path.resolve(ROOT_DIR, CONFIG.dirs.import),
-    LLEMONSTACK_REPOS_PATH: REPO_DIR,
-    LLEMONSTACK_NETWORK_NAME: `${Deno.env.get('LLEMONSTACK_PROJECT_NAME')}_network`,
+    LLEMONSTACK_VOLUMES_PATH: config.volumesDir,
+    LLEMONSTACK_SHARED_VOLUME_PATH: config.sharedDir,
+    LLEMONSTACK_IMPORT_VOLUME_PATH: config.importDir,
+    LLEMONSTACK_REPOS_PATH: config.repoDir,
+    LLEMONSTACK_NETWORK_NAME: config.dockerNetworkName,
     TARGETPLATFORM: getDockerTargetPlatform(), // Docker platform for building images
     DOCKERFILE_ARCH: getDockerfileArch(), // Dockerfile.arm64 if on Mac Silicon or aarch64 platform
     COMPOSE_IGNORE_ORPHANS: 'true', // Always ignore orphan container warnings
@@ -96,7 +99,7 @@ export async function runDockerComposeCommand(
       'compose',
       ...(ansi ? ['--ansi', ansi] : []),
       '-p',
-      projectName || dockerEnv().LLEMONSTACK_PROJECT_NAME,
+      projectName || config.projectName,
       ...(composeFiles.map((file) => file ? ['-f', file] : []).flat()),
       ...(profiles || []),
       cmd,
@@ -213,7 +216,7 @@ export async function isServiceRunning(
   { projectName, match = 'exact' }: { projectName?: string; match?: 'exact' | 'partial' },
 ) {
   const result = await dockerComposePs(
-    projectName || dockerEnv().LLEMONSTACK_PROJECT_NAME,
+    projectName || config.projectName,
   ) as DockerComposePsResult
   return result.some((c) =>
     match === 'exact' ? c.Name === service : c.Name?.toLowerCase().includes(service.toLowerCase())
@@ -260,7 +263,7 @@ export async function dockerComposePs(
 
 export async function prepareDockerNetwork(
   // TODO: get network from config
-  network = dockerEnv().LLEMONSTACK_NETWORK_NAME,
+  network = config.dockerNetworkName,
 ): Promise<{ network: string; created: boolean }> {
   const result = await runCommand('docker', {
     args: ['network', 'ls'],

@@ -18,20 +18,35 @@ export class Config {
   readonly configFile: string
   readonly DEBUG: boolean = false
 
+  get projectName(): string {
+    return this._project.projectName
+  }
+
+  get dockerNetworkName(): string {
+    return `${this.projectName}_network`
+  }
+
   get repoDir(): string {
-    return fs.path.join(this.configDir, 'repos')
+    return fs.path.resolve(Deno.cwd(), this._project.dirs.repos)
   }
 
   get servicesDir(): string {
-    return fs.path.join(this.configDir, 'services')
+    if (this._project.dirs.services) {
+      return fs.path.resolve(Deno.cwd(), this._project.dirs.services)
+    }
+    return fs.path.join(this._llemonstack.installDir, 'services')
   }
 
   get importDir(): string {
-    return fs.path.join(Deno.cwd(), 'import')
+    return fs.path.resolve(Deno.cwd(), this._project.dirs.import)
   }
 
   get sharedDir(): string {
-    return fs.path.join(Deno.cwd(), 'shared')
+    return fs.path.resolve(Deno.cwd(), this._project.dirs.shared)
+  }
+
+  get volumesDir(): string {
+    return fs.path.resolve(Deno.cwd(), this._project.dirs.volumes)
   }
 
   get project(): ProjectConfig {
