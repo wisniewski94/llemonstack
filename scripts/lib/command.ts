@@ -1,6 +1,9 @@
-import { DEBUG, loadEnv, showDebug, showError, showInfo } from '../start.ts'
-import { dockerEnv } from './docker.ts' // TODO: remove this
+import { showDebug, showError, showInfo } from '../start.ts'
+import { Config } from './config/config.ts'
 import type { CommandOutput, RunCommandOptions } from './types.d.ts'
+
+const config = Config.getInstance()
+await config.initialize()
 
 export class RunCommandOutput {
   private _output: CommandOutput
@@ -94,7 +97,7 @@ export async function runCommand(
     captureOutput = false,
     env = {},
     autoLoadEnv = true, // If true, load env from .env file
-    debug = DEBUG ?? false, // TODO: replace with config.debug
+    debug = config.DEBUG ?? false,
   }: RunCommandOptions = {},
 ): Promise<RunCommandOutput> {
   // If silent is true, pipe output so streamStdout receives output below
@@ -103,7 +106,7 @@ export async function runCommand(
 
   // Auto load env from .env file
   // For security, don't use all Deno.env values, only use .env file values
-  const envVars = !autoLoadEnv ? {} : await loadEnv({ reload: false, silent: true })
+  const envVars = !autoLoadEnv ? {} : config.env
 
   let cmdCmd = cmd
   let cmdArgs = (args?.filter(Boolean) || []) as string[]
