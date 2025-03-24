@@ -3,6 +3,8 @@
  * Show the versions of the services that support it
  */
 
+import { colors } from '@cliffy/ansi/colors'
+import { CellType, Column, Row, RowType, Table } from '@cliffy/table'
 import { dockerRun, prepareDockerNetwork, runDockerCommand } from './lib/docker.ts'
 import { ServiceImage } from './lib/types.d.ts'
 import {
@@ -20,10 +22,8 @@ import {
   showWarning,
 } from './start.ts'
 
-import { colors } from '@cliffy/ansi/colors'
-import { Column, Row, RowType, Table } from '@cliffy/table'
-
 const COMPOSE_FILES = ALL_COMPOSE_FILES
+const MAX_COLUMN_WIDTH = 50
 
 /**
  * Services that support showing the software version
@@ -56,12 +56,41 @@ const SERVICES_WITH_APP_VERSION = {
   // ],
 } as Record<string, string[]>
 
+function truncate(cell: string | CellType) {
+  const cellStr = String(cell)
+  const strNoColors = colors.stripAnsiCode(cellStr)
+  if (strNoColors.length > MAX_COLUMN_WIDTH) {
+    // Get any ANSI escape sequences at the start of the string
+    const ansiRegex =
+      // deno-lint-ignore no-control-regex
+      /^(?:[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><])+/
+    const ansiMatch = cellStr.match(ansiRegex)
+    const ansiPrefix = ansiMatch ? ansiMatch[0] : ''
+    const ansiSuffix = ansiPrefix ? '\x1b[0m' : ''
+    if (ansiPrefix) {
+      return `${colors.gray('…')}${ansiPrefix}${
+        strNoColors.substring(strNoColors.length - (MAX_COLUMN_WIDTH - 3))
+      }${ansiSuffix}`
+    }
+    return `${colors.gray('…')}${cellStr.substring(cellStr.length - (MAX_COLUMN_WIDTH - 3))}`
+  }
+  return cell
+}
+
 function showTable(header: RowType, rows: RowType[]) {
   // Push header onto rows to preserve column alignment for headers
   rows.unshift(header.map((h) => colors.underline(h as string)))
+
+  // Truncate any column value longer than MAX_COLUMN_WIDTH
+  const truncatedRows = rows.map((row) => {
+    return row.map((cell) => {
+      return cell ? truncate(cell) : ''
+    })
+  })
+
   new Table()
     // .header(header)
-    .body(rows)
+    .body(truncatedRows)
     .padding(2)
     .indent(2)
     .border(false)
