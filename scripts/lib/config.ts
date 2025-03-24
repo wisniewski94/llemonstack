@@ -1,3 +1,4 @@
+import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import projectTemplate from '../../config/config.0.2.0.json' with { type: 'json' }
 import { LLemonStackConfig } from './config/llemonstack.ts'
 import { ServiceConfig } from './config/service.ts'
@@ -59,25 +60,42 @@ export class Config {
    */
   public async initialize(): Promise<TryCatchResult<Config, Error>> {
     const result = new TryCatchResult<Config, Error>({ data: this, error: null, success: true })
+
     if (this._initialized) {
       return result
     }
 
+    let updated = false // Track if the project config was updated and needs to be saved
+
     // Load project config file
     const readResult = await fs.readJson<ProjectConfig>(this.configFile)
+
     if (readResult.data) {
       this._project = readResult.data
     } else if (readResult.error instanceof Deno.errors.NotFound) {
       // File doesn't exist, populate with a template
       this._project = projectTemplate
       result.addMessage('info', 'Project config file not found, creating from template')
+      updated = true
+    } else {
+      result.error = readResult.error
+    }
+
+    if (!this.isValidProjectConfig()) {
+      this.updateProjectConfig(projectTemplate)
+      result.addMessage('info', 'Project config file is invalid, updating from template')
+      updated = true
+    }
+
+    if (updated) {
       const saveResult = await this.save()
       if (!saveResult.success) {
         result.error = saveResult.error
-        return failure('Error saving project config from template', result)
+        result.addMessage('error', 'Error saving project config from template', saveResult.error)
       }
-    } else {
-      result.error = readResult.error
+    }
+
+    if (!result.success) {
       return failure(`Error loading project config file: ${this.configFile}`, result)
     }
 
@@ -91,6 +109,81 @@ export class Config {
    */
   private async save(): Promise<TryCatchResult<boolean>> {
     return await fs.saveJson(this.configFile, this._project)
+  }
+
+  /**
+   * Check if the project config is valid
+   * @returns {boolean}
+   */
+  private isValidProjectConfig(config: ProjectConfig = this._project): boolean {
+    if (!config) {
+      return false
+    }
+
+    // Check if all required top-level keys from the template exist in the project config
+    const requiredKeys = [
+      'initialized',
+      'version',
+      'projectName',
+      'envFile',
+      'dirs',
+      // 'services',
+    ] as const
+    for (const key of requiredKeys) {
+      if (!(key in config)) {
+        return false
+      }
+
+      // For object properties, check if they have the expected structure
+      const templateValue = projectTemplate[key as keyof typeof projectTemplate]
+      const projectValue = config[key as keyof ProjectConfig]
+
+      if (
+        typeof templateValue === 'object' &&
+        templateValue !== null &&
+        !Array.isArray(templateValue)
+      ) {
+        // If the property is missing or not an object in the project config, it's invalid
+        if (
+          typeof projectValue !== 'object' ||
+          projectValue === null
+        ) {
+          return false
+        }
+
+        // For nested objects like dirs, services, etc., check if all template keys exist
+        const templateObj = templateValue as Record<string, unknown>
+        const projectObj = projectValue as Record<string, unknown>
+
+        for (const subKey of Object.keys(templateObj)) {
+          if (!(subKey in projectObj)) {
+            return false
+          }
+        }
+      }
+    }
+    return true
+  }
+
+  /**
+   * Merge the template with the current project config to ensure all keys are present
+   * @param template - The template to merge with the current project config
+   */
+  private updateProjectConfig(template: ProjectConfig = projectTemplate): void {
+    if (!this._project) {
+      this._project = { ...template }
+      return
+    }
+
+    const merged = deepMerge(
+      template as unknown as Record<string, unknown>,
+      { ...this._project } as unknown as Record<string, unknown>,
+    ) as unknown as ProjectConfig
+
+    // Set version to template version
+    merged.version = template.version
+
+    this._project = merged
   }
 }
 

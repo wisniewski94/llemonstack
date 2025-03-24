@@ -1,3 +1,6 @@
+import { path } from '../fs.ts'
+import { LLemonStackConfig } from './llemonstack.ts'
+
 export class ServiceConfig {
   private _name: string
   private _dir: string
@@ -18,7 +21,7 @@ export class ServiceConfig {
     this._composeFile = path.join(this._dir, composeFile)
   }
 
-  public async initialize(llemonstackConfig: LLemonStackConfig): Promise<void> {
+  public async initialize(_llemonstackConfig: LLemonStackConfig): Promise<void> {
     // this._dir = await getAbsoluteServiceDir(this._dir, { llemonstackConfig, name: this._name })
   }
 

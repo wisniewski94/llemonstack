@@ -66,7 +66,7 @@ Deno.test('Config', async (t) => {
     // @ts-ignore - temporarily override for testing
     configInstance._initialized = false
     // @ts-ignore - temporarily override for testing
-    configInstance.configFile = '' // Try to load the confiDir instead of a file
+    configInstance.configFile = '' // Try to load the configDir instead of a file
 
     const result = await configInstance.initialize()
 
@@ -115,6 +115,151 @@ Deno.test('Config', async (t) => {
     assertEquals(result.success, true)
     assertExists(result.data)
     assertEquals(result.error, null)
+  })
+
+  await t.step('isValidProjectConfig validates project config correctly', () => {
+    // @ts-ignore - temporarily override for testing
+    delete Config.instance
+    const configInstance = Config.getInstance()
+
+    // Valid config should pass validation
+    const validConfig = {
+      initialized: true,
+      version: '0.2.0',
+      projectName: 'test',
+      envFile: '.env',
+      dirs: {
+        config: '.llemonstack',
+        repos: 'repos',
+        shared: 'shared',
+        import: 'import',
+        volumes: 'volumes',
+      },
+    }
+    assertEquals(
+      // @ts-ignore - accessing private method for testing
+      configInstance.isValidProjectConfig(validConfig),
+      true,
+      'Valid config should pass validation',
+    )
+
+    // Missing required top-level key
+    const missingKeyConfig = { ...validConfig }
+    // @ts-ignore - accessing private method for testing
+    delete missingKeyConfig.initialized
+    assertEquals(
+      // @ts-ignore - accessing private method for testing
+      configInstance.isValidProjectConfig(missingKeyConfig),
+      false,
+      'Config missing required key should fail validation',
+    )
+
+    // Missing nested key in dirs
+    const missingNestedKeyConfig = {
+      ...validConfig,
+      dirs: { config: '.llemonstack', repos: 'repos', shared: 'shared' }, // missing import
+    }
+    assertEquals(
+      // @ts-ignore - accessing private method for testing
+      configInstance.isValidProjectConfig(missingNestedKeyConfig),
+      false,
+      'Config missing nested key should fail validation',
+    )
+
+    // Null config
+    assertEquals(
+      // @ts-ignore - accessing private method for testing
+      configInstance.isValidProjectConfig(null),
+      false,
+      'Null config should fail validation',
+    )
+
+    // Dirs is not an object
+    const invalidDirsConfig = {
+      ...validConfig,
+      dirs: 'not an object',
+    }
+    assertEquals(
+      // @ts-ignore - accessing private method for testing
+      configInstance.isValidProjectConfig(invalidDirsConfig),
+      false,
+      'Config with non-object dirs should fail validation',
+    )
+  })
+
+  await t.step('updateProjectConfig merges template with current config', () => {
+    // @ts-ignore - temporarily override for testing
+    delete Config.instance
+    const configInstance = Config.getInstance()
+
+    // Set up an incomplete project config
+    // @ts-ignore - accessing private property for testing
+    configInstance._project = {
+      initialized: '2025-00-00T00:00:00.000Z',
+      version: '0.1.0',
+      projectName: 'custom-project',
+      envFile: '.env.custom',
+      // @ts-ignore - missing dirs
+      dirs: {
+        config: 'custom-config',
+        // missing repos, shared, import
+      },
+    }
+
+    const template = {
+      initialized: true,
+      version: '0.2.0',
+      projectName: 'template-project',
+      envFile: '.env',
+      dirs: {
+        config: '.llemonstack',
+        repos: 'repos',
+        shared: 'shared',
+        import: 'import',
+      },
+      newField: 'new value',
+    }
+
+    // @ts-ignore - accessing private method for testing
+    configInstance.updateProjectConfig(template)
+
+    // @ts-ignore - accessing private property for testing
+    const updatedConfig = configInstance._project
+
+    // Original values should be preserved
+    assertEquals(
+      updatedConfig.projectName,
+      'custom-project',
+      'Original projectName should be preserved',
+    )
+    assertEquals(updatedConfig.envFile, '.env.custom', 'Original envFile should be preserved')
+    assertEquals(
+      updatedConfig.dirs.config,
+      'custom-config',
+      'Original dirs.config should be preserved',
+    )
+
+    // Missing values should be added from template
+    assertEquals(
+      updatedConfig.dirs.repos,
+      'repos',
+      'Missing dirs.repos should be added from template',
+    )
+    assertEquals(
+      updatedConfig.dirs.shared,
+      'shared',
+      'Missing dirs.shared should be added from template',
+    )
+    assertEquals(
+      updatedConfig.dirs.import,
+      'import',
+      'Missing dirs.import should be added from template',
+    )
+    // @ts-ignore - accessing private property for testing
+    assertEquals(updatedConfig.newField, 'new value', 'New field should be added from template')
+
+    // Version should be updated to match template
+    assertEquals(updatedConfig.version, '0.2.0', 'Version should be updated to match template')
   })
 
   // Clean up after all tests
