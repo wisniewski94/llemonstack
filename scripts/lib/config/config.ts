@@ -88,6 +88,23 @@ export class Config {
     return this._llemonstack.version
   }
 
+  /**
+   * Get the host platform
+   * @returns macOS | Linux | Windows | other
+   */
+  get os(): string {
+    switch (Deno.build.os) {
+      case 'darwin':
+        return 'macOS'
+      case 'windows':
+        return 'Windows'
+      case 'linux':
+        return 'Linux'
+      default:
+        return 'other'
+    }
+  }
+
   private constructor() {
     this._llemonstack = new LLemonStackConfig()
     this.configDir = fs.path.join(Deno.cwd(), this._llemonstack.configDirBase)
@@ -181,6 +198,36 @@ export class Config {
       : 'ollama:11434'
     return host
   }
+
+  /**
+   * Get the path to a service's repo or a specific directory in the service's repo
+   * @param service - The service to get the path to
+   * @param repoDir - Repo directory, can include subdirectories
+   * @returns The path to the service's repo
+   */
+  public serviceRepoPath(service: string, repoDir?: string): string {
+    // service is for future use if/when repos are migrated to services directory
+    // repoDir could be a different name thant the service
+    return fs.escapePath(fs.path.join(this.repoDir, (repoDir || service).toLowerCase()))
+  }
+
+  /**
+   * Reverse looks up the compose file from the service name
+   * @param service
+   * @returns
+   */
+  // getComposeFileFromService -> getServiceComposeFile
+  // public async getServiceComposeFile(service: string): Promise<string | null> {
+  //   // Iterate through all compose files to find the service
+  //   for (const composeFile of COMPOSE_FILES) {
+  //     const serviceImages = await getImagesFromComposeYaml(composeFile)
+  //     const serviceImage = serviceImages.find((img) => img.service === service)
+  //     if (serviceImage) {
+  //       return composeFile
+  //     }
+  //   }
+  //   return null
+  // }
 
   /**
    * Save the project config to the config file

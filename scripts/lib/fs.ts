@@ -9,6 +9,15 @@ import { tryCatch, TryCatchResult, tryCatchSuccess } from './try-catch.ts'
 // Re-export fs and path
 export { fs, path }
 
+/**
+ * Escape special characters in a path
+ * @param file - The file path to escape
+ * @returns The escaped path
+ */
+export function escapePath(file: string): string {
+  return path.normalize(file.replace(/(\s|`|\$|\\|"|&)/g, '\\$1'))
+}
+
 export async function fileExists(path: string): Promise<TryCatchResult<boolean>> {
   try {
     const fileInfo = await Deno.stat(path)

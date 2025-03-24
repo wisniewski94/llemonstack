@@ -6,7 +6,7 @@ import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
 import { afterEach, beforeEach, describe, it } from 'jsr:@std/testing/bdd'
 import { assertSpyCall, spy } from 'jsr:@std/testing/mock'
-import { COMPOSE_IMAGES_CACHE, getImagesFromComposeYaml } from '../scripts/start.ts'
+import { COMPOSE_IMAGES_CACHE, getImagesFromComposeYaml } from './compose.ts'
 
 describe('getImagesFromComposeYaml', () => {
   const testDir = path.join(Deno.cwd(), 'test_tmp')

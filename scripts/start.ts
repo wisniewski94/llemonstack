@@ -4,18 +4,12 @@
  */
 
 import { colors } from '@cliffy/ansi/colors'
-import * as yaml from 'jsr:@std/yaml'
 import { runCommand } from './lib/command.ts'
+import { getImagesFromComposeYaml } from './lib/compose.ts'
 import { Config } from './lib/config/config.ts'
-import {
-  dockerEnv,
-  isServiceRunning,
-  prepareDockerNetwork,
-  replaceDockerComposeVars,
-  runDockerComposeCommand,
-} from './lib/docker.ts'
+import { isServiceRunning, prepareDockerNetwork, runDockerComposeCommand } from './lib/docker.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
-import { fs, path } from './lib/fs.ts'
+import { escapePath, fs, path } from './lib/fs.ts'
 import {
   showAction,
   showCredentials,
@@ -27,7 +21,7 @@ import {
   showUserAction,
   showWarning,
 } from './lib/logger.ts'
-import { ComposeConfig, EnvVars, OllamaProfile, RepoService, ServiceImage } from './lib/types.d.ts'
+import { EnvVars, OllamaProfile, RepoService } from './lib/types.d.ts'
 
 const config = Config.getInstance()
 await config.initialize()
@@ -41,10 +35,6 @@ export const DEFAULT_PROJECT_NAME = 'llemonstack'
 
 // Enable extra debug logging
 const DEBUG = config.DEBUG
-
-const ROOT_DIR = Deno.cwd()
-
-export const COMPOSE_IMAGES_CACHE = {} as Record<string, ServiceImage[]>
 
 // All services with a docker-compose.yaml file
 // Includes services with a custom Dockerfile
@@ -135,11 +125,23 @@ const REQUIRED_VOLUMES = [
     volume: 'supabase/functions',
     seed: [ // Copy these dirs into functions volumes if they don't exist
       {
-        source: path.join(getRepoPath('supabase'), 'docker', 'volumes', 'functions', 'main'),
+        source: path.join(
+          config.serviceRepoPath('supabase'),
+          'docker',
+          'volumes',
+          'functions',
+          'main',
+        ),
         destination: 'main', // Relative to the volume path
       },
       {
-        source: path.join(getRepoPath('supabase'), 'docker', 'volumes', 'functions', 'hello'),
+        source: path.join(
+          config.serviceRepoPath('supabase'),
+          'docker',
+          'volumes',
+          'functions',
+          'hello',
+        ),
         destination: 'hello',
       },
     ],
@@ -152,44 +154,6 @@ const REQUIRED_VOLUMES = [
 /*******************************************************************************
  * FUNCTIONS
  *******************************************************************************/
-
-/**
- * Get the host platform
- * @returns macos | linux | windows | other
- */
-export function getOS(): string {
-  // os: "darwin" | "linux" | "android" | "windows" | "freebsd" | "netbsd" | "aix" | "solaris" | "illumos"
-  switch (Deno.build.os) {
-    case 'darwin':
-      return 'macos'
-    case 'windows':
-      return 'windows'
-    case 'linux':
-      return 'linux'
-    default:
-      return 'other'
-  }
-}
-
-/**
- * Escape special characters in a path
- * @param file - The file path to escape
- * @returns The escaped path
- */
-export function escapePath(file: string): string {
-  return path.normalize(file.replace(/(\s|`|\$|\\|"|&)/g, '\\$1'))
-}
-
-/**
- * Get the absolute path to the volumes directory
- * @param volumesDir - The directory config to use for volumes, defaults to LLEMONSTACK_VOLUMES_DIR env var value
- * @returns The absolute path to the volumes directory
- */
-export function getVolumesPath(volumesDir?: string) {
-  // Convert LLEMONSTACK_VOLUMES_DIR into an absolute path to use in docker-compose.yaml files
-  const volumes_dir = volumesDir || Deno.env.get('LLEMONSTACK_VOLUMES_DIR') || './volumes'
-  return path.resolve(ROOT_DIR, volumes_dir)
-}
 
 /**
  * Check if a service is enabled in .env file
@@ -225,163 +189,6 @@ export async function getComposeFileFromService(service: string): Promise<string
     }
   }
   return null
-}
-
-/**
- * Get the images from the compose file
- *
- * @param {string} composeFile - The path to the compose file
- * @param {Set<string>} [processedFiles] - Set of already processed files to avoid circular references
- * @returns {Array<ServiceImage>} An array of objects with the service name and image
- */
-export async function getImagesFromComposeYaml(
-  composeFile: string,
-  processedFiles: Set<string> = new Set(),
-): Promise<Array<ServiceImage>> {
-  // Return the cached images if they exist
-  if (COMPOSE_IMAGES_CACHE[composeFile]) {
-    return COMPOSE_IMAGES_CACHE[composeFile]
-  }
-
-  // Prevent circular references
-  if (processedFiles.has(composeFile)) {
-    showWarning(`Circular reference detected for ${composeFile}, skipping`)
-    return []
-  }
-  processedFiles.add(composeFile)
-
-  // Expand any variables in the compose file path
-  if (composeFile.includes('${')) {
-    composeFile = replaceDockerComposeVars(composeFile, dockerEnv())
-  }
-
-  try {
-    // Read the compose file
-    // const fileContents = await Deno.readTextFile(composeFile)
-    const fileContents = await Deno.readTextFile(composeFile)
-    const composeConfig = yaml.parse(fileContents) as ComposeConfig
-    const serviceImages: ServiceImage[] = []
-
-    // Check for include directive in the compose file
-    if (composeConfig.include) {
-      // Handle both array and single include formats
-      const includes = Array.isArray(composeConfig.include)
-        ? composeConfig.include
-        : [composeConfig.include]
-
-      for (const include of includes) {
-        if (typeof include === 'string') {
-          // If include is a string, use it directly as the path
-          const includePath = path.resolve(path.dirname(composeFile), include)
-          const includedImages = await getImagesFromComposeYaml(
-            includePath,
-            new Set(processedFiles),
-          )
-          serviceImages.push(...includedImages)
-        } else if (include && typeof include === 'object' && include.path) {
-          // If include is an object with a path property
-          const includePath = path.resolve(path.dirname(composeFile), include.path)
-          const includedImages = await getImagesFromComposeYaml(
-            includePath,
-            new Set(processedFiles),
-          )
-          serviceImages.push(...includedImages)
-        }
-      }
-    }
-
-    // Extract service names and their image values
-    if (composeConfig.services) {
-      for (const serviceName in composeConfig.services) {
-        const service = composeConfig.services[serviceName]
-        const containerName = service?.container_name
-
-        // Check if the service has an image directly
-        if (service && service.image) {
-          serviceImages.push({
-            service: serviceName,
-            image: service.image,
-            containerName: containerName || serviceName,
-          })
-        } else if (service && service.build) {
-          serviceImages.push({
-            service: serviceName,
-            image: '',
-            build: service.build.dockerfile
-              ? path.relative(
-                ROOT_DIR,
-                path.resolve(
-                  path.dirname(composeFile),
-                  service.build.context || '.',
-                  service.build.dockerfile,
-                ),
-              )
-              : (service.build.dockerfile_inline && `Inline Dockerfile`) ||
-                service.build.toString(),
-            containerName: containerName || serviceName,
-          })
-        }
-
-        // Check if the service extends another service
-        if (service && service.extends && service.extends.file) {
-          // Resolve the path to the extended file
-          const extendedFilePath = service.extends.file.startsWith('.')
-            ? path.resolve(
-              path.dirname(composeFile),
-              service.extends.file,
-            )
-            : service.extends.file
-
-          // Recursively get images from the extended file
-          const extendedImages = await getImagesFromComposeYaml(
-            extendedFilePath,
-            new Set(processedFiles),
-          )
-
-          // Find the specific service being extended
-          if (service.extends.service) {
-            const extendedServiceImage = extendedImages.find(
-              (img) => img.service === service?.extends?.service,
-            )
-
-            if (extendedServiceImage) {
-              // Only add if we don't already have an image for this service
-              if (!serviceImages.some((img) => img.service === serviceName)) {
-                serviceImages.push({
-                  service: serviceName,
-                  image: extendedServiceImage.image,
-                  build: extendedServiceImage.build,
-                  containerName: containerName || extendedServiceImage.containerName,
-                })
-              }
-            }
-          } else {
-            // Add all images from the extended file
-            serviceImages.push(...extendedImages)
-          }
-        }
-      }
-    }
-
-    COMPOSE_IMAGES_CACHE[composeFile] = serviceImages
-    return serviceImages
-  } catch (error) {
-    if (DEBUG) {
-      showDebug(
-        `Error reading compose file (${composeFile})`,
-        error,
-      )
-    }
-    throw error
-  }
-}
-
-export async function getImageFromCompose(
-  composeFile: string,
-  service: string,
-): Promise<ServiceImage | null> {
-  const serviceImages = await getImagesFromComposeYaml(composeFile)
-  return serviceImages.find((img) => img.service === service) || null
 }
 
 export async function getComposeFile(
@@ -420,15 +227,11 @@ export async function checkPrerequisites(): Promise<void> {
   showInfo('✔️ All prerequisites are installed')
 }
 
-function getRepoPath(repoName: string): string {
-  return escapePath(path.join(config.repoDir, repoName))
-}
-
 /**
  * Clone a service repo into repo dir
  */
 async function setupRepo(
-  repoName: string,
+  service: string,
   repoUrl: string,
   repoDir: string,
   {
@@ -445,7 +248,8 @@ async function setupRepo(
     silent?: boolean
   } = {},
 ): Promise<void> {
-  const dir = getRepoPath(repoDir)
+  const dir = config.serviceRepoPath(service, repoDir)
+  console.log('repo dir', dir)
   if (sparseDir) {
     sparse = true
   }
@@ -453,7 +257,7 @@ async function setupRepo(
     silent = false
   }
 
-  DEBUG && showDebug(`Cloning ${repoName} repo: ${repoUrl}${sparse ? ' [sparse]' : ''}`)
+  DEBUG && showDebug(`Cloning ${service} repo: ${repoUrl}${sparse ? ' [sparse]' : ''}`)
   if (!fs.existsSync(dir)) {
     await runCommand('git', {
       args: [
@@ -499,7 +303,7 @@ async function setupRepo(
     }
   } else {
     if (pull) {
-      !silent && showInfo(`${repoName} repo exists, pulling latest code...`)
+      !silent && showInfo(`${service} repo exists, pulling latest code...`)
       await runCommand('git', {
         args: [
           '-C',
@@ -512,13 +316,13 @@ async function setupRepo(
     if (checkFile) {
       const checkFilePath = path.join(dir, checkFile)
       if (!await fs.exists(checkFilePath)) {
-        const errMsg = `Required file ${checkFile} not found in ${repoName} directory: ${dir}`
+        const errMsg = `Required file ${checkFile} not found in ${service} directory: ${dir}`
         showWarning(errMsg)
         showUserAction(`Please check the repository structure and try again.`)
         throw new Error(errMsg)
       }
     }
-    !silent && showInfo(`✔️ ${repoName} repo is ready`)
+    !silent && showInfo(`✔️ ${service} repo is ready`)
   }
 }
 
@@ -566,7 +370,7 @@ export async function prepareSupabaseEnv(
 ): Promise<void> {
   // Check if the supabase repo directory exists
   // It contains the root docker-compose.yaml file to start supabase services
-  const supabaseRepoDir = getRepoPath('supabase')
+  const supabaseRepoDir = config.serviceRepoPath('supabase')
   if (!fs.existsSync(supabaseRepoDir)) {
     // Try to fix the issue by cloning all the repos
     !silent && showInfo(`Supabase repo not found: ${supabaseRepoDir}`)

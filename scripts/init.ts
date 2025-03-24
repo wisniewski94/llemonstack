@@ -30,7 +30,6 @@ import { reset } from './reset.ts'
 import {
   checkPrerequisites,
   DEFAULT_PROJECT_NAME,
-  getOS,
   isInitialized,
   isSupabaseStarted,
   prepareEnv,
@@ -304,7 +303,7 @@ function replacePostgresPasswords(
  * @returns The selected ollama profile
  */
 async function configOllama(): Promise<string> {
-  const gpuDisabled = getOS() === 'macos'
+  const gpuDisabled = CONFIG.os === 'macOS'
   if (gpuDisabled) {
     showWarning('GPU options are not currently available on macOS due to Docker limitations.\n')
   }

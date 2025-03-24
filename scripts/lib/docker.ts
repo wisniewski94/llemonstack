@@ -15,7 +15,6 @@ await config.initialize()
 /**
  * Gets required environment variables to always pass to docker commands
  *
- * @param volumesDir - The directory config to use for volumes, defaults to LLEMONSTACK_VOLUMES_DIR env var value
  * @returns Record<string, string>
  */
 export function dockerEnv(): Record<string, string> {
