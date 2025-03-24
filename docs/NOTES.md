@@ -16,6 +16,25 @@ container logs in Docker Desktop.
 
 **Code:**
 
+- [ ] Replace fs.existsSync with Deno.stat
+
+- [ ] Create service lib
+
+  - [ ] Load & parse service llemonstack.yaml
+  - [ ] Helper functions for version, schema, etc.
+
+- [x] Refactor to use Config lib
+- [x] Add tryCatch to libs
+
+- [x] Run `docker network create ${LLEMONSTACK_NETWORK_NAME}` before starting all services, or pull dummy-analytics out to separate compose file and start it to create the network?
+
+- [x] In all services compose files, set the network to external, set the default network name
+
+- [x] Rework start / stop scripts to run separate processes for each service. Loading of .env is only supported in the first docker-compose file dir and service names are merged which will lead to conflicts later on.
+
+- [ ] Cleanup settings.json and deno.jsonc after migrating to services/
+- [ ] Search and replace for docker/
+
 - [ ] Create Flowise example templates of Web Scrape QnA configured with pgvector and LiteLLM See
       https://docs.flowiseai.com/use-cases/web-scrape-qna
 - [ ] Configure OpenWeb UI to use postgres
@@ -340,50 +359,3 @@ The ONLY solution at this time is to roll back the zep container image to 0.27 u
 n8n update their zep-js package version.
 
 <br />
-
-## Postgres Notes
-
-LLemonStack includes scripts for creating custom postgres schemas. These are effectively separate
-databases inside of postgres and can be used to keep services isolated. At the very least, it
-prevents services from clobbering other services tables. For services like n8n that support table
-prefixes, custom schemas are not needed. For flowise, zep, etc. creating a custom schema is advised.
-
-```bash
-# Create a new schema for flowise
-deno run schema:create flowise
-# Outputs a postgres username and password
-# Use the username and password in docker/docker-compose.flowise.yml
-# BEFORE starting up flowise for the first time.
-
-# Flowise will then create it's tables inside of the service_flowise schema.
-```
-
-The custom schema flows really need to be added to the init script. Until then, the schema stuff is
-more for experimentation with new services in the the stack.
-
-It's probably best to completely refactor the scripts to separate services into modules that manage
-their own init, start, stop, etc. Basically modules that can auto configure themselves when their
-init functions are called.
-
-```bash
-# POSTGRES_PASSWORD is likely NOT in the current env, get it from .env files
-source .env
-# Or manually replace it in the below connection string
-
-# Connect directly from host to llemonstack postgres running in docker
-psql 'postgres://postgres.llemonstack:${POSTGRES_PASSWORD}@localhost:5432/postgres'
-```
-
-For postgres admin tools like TablePlus running on the host...
-
-```bash
-host: localhost
-port: 5432
-user: postgres.llemonstack
-pass: ${POSTGRES_PASSWORD}
-database: postgres
-ssl: PREFERRED, or DISABLED
-```
-
-Note the `llemonstack` tenant ID in the user name. This needs to match the POOLER_TENANT_ID in
-`docker/supabase.env` file.
