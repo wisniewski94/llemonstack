@@ -248,8 +248,8 @@ export async function runCommand(
     throw new CommandError(`Command failed`, {
       code: status.code,
       cmd: fullCmd,
-      stdout: '',
-      stderr: '',
+      stdout: stdoutCollector,
+      stderr: stderrCollector,
     })
   }
 
