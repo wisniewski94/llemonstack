@@ -4,6 +4,7 @@
  */
 import { Input, Secret, Select } from '@cliffy/prompt'
 import * as path from 'jsr:@std/path'
+import { Config } from './lib/config/config.ts'
 import { runDockerCommand } from './lib/docker.ts'
 import { loadEnv } from './lib/env.ts'
 import {
@@ -20,13 +21,9 @@ import {
   checkPrerequisites,
   confirm,
   DEFAULT_PROJECT_NAME,
-  ENVFILE,
   getOS,
   isInitialized,
   isSupabaseStarted,
-  LLEMONSTACK_CONFIG_DIR,
-  LLEMONSTACK_CONFIG_FILE,
-  LLEMONSTACK_INSTALL_DIR,
   prepareEnv,
   setupRepos,
   showAction,
@@ -37,8 +34,10 @@ import {
   showUserAction,
   showWarning,
   startService,
-  VERSION,
 } from './start.ts' // Adjust the path as necessary
+
+const CONFIG = Config.getInstance()
+await CONFIG.initialize()
 
 // Env var key names we care about
 type EnvVarsKeys = keyof {
@@ -136,7 +135,7 @@ const POSTGRES_SERVICES: Array<[string, PostgresServiceEnvKeys]> = [
 
 async function envFileExists(): Promise<boolean> {
   try {
-    await Deno.stat(ENVFILE)
+    await Deno.stat(CONFIG.envFile)
     return true
   } catch (_error) {
     return false
@@ -146,30 +145,31 @@ async function envFileExists(): Promise<boolean> {
 async function createConfigFile(): Promise<void> {
   // Check if the config directory exists
   try {
-    await Deno.stat(LLEMONSTACK_CONFIG_DIR)
+    await Deno.stat(CONFIG.configDir)
   } catch (_error) {
     // Create the config directory if it doesn't exist
-    await Deno.mkdir(LLEMONSTACK_CONFIG_DIR, { recursive: true })
+    await Deno.mkdir(CONFIG.configDir, { recursive: true })
   }
   try {
     // Create the config file with initial configuration
     const config = {
       initialized: new Date().toISOString(),
-      version: VERSION,
+      version: CONFIG.version,
     }
+    // TODO: use Config.save() instead
     await Deno.writeTextFile(
-      LLEMONSTACK_CONFIG_FILE,
+      CONFIG.configFile,
       JSON.stringify(config, null, 2),
     )
   } catch (error) {
-    showError(`Error creating config file: ${LLEMONSTACK_CONFIG_FILE}`, error)
+    showError(`Error creating config file: ${CONFIG.configFile}`, error)
   }
 }
 
 export async function clearConfigFile(): Promise<void> {
   try {
-    await Deno.stat(LLEMONSTACK_CONFIG_FILE)
-    await Deno.remove(LLEMONSTACK_CONFIG_FILE)
+    await Deno.stat(CONFIG.configFile)
+    await Deno.remove(CONFIG.configFile)
   } catch (_error) {
     // File doesn't exist, do nothing
   }
@@ -180,10 +180,7 @@ async function createEnvFile(): Promise<void> {
     throw new Error('Environment file already exists')
   }
   try {
-    await Deno.copyFile(path.join(LLEMONSTACK_INSTALL_DIR, '.env.example'), ENVFILE)
-    // TODO: get .env.example from the LLemonStack install dir, future use
-    // const envExamplePath = path.join(LLEMONSTACK_INSTALL_DIR, '.env.example')
-    // await Deno.copyFile(envExamplePath, ENVFILE)
+    await Deno.copyFile(path.join(CONFIG.installDir, '.env.example'), CONFIG.envFile)
   } catch (error) {
     throw new Error(`Failed to create .env file: ${error}`)
   }
@@ -191,7 +188,7 @@ async function createEnvFile(): Promise<void> {
 
 export async function clearEnvFile(): Promise<void> {
   if (await envFileExists()) {
-    await Deno.remove(ENVFILE)
+    await Deno.remove(CONFIG.envFile)
   }
 }
 
@@ -210,7 +207,7 @@ function projectNameValidator(value?: string): boolean | string {
 async function updateEnvFile(
   envVars: Record<AllEnvVarKeys, string>,
 ): Promise<Record<string, string>> {
-  const envFileContent = await Deno.readTextFile(ENVFILE)
+  const envFileContent = await Deno.readTextFile(CONFIG.envFile)
   const updatedEnvFileContent = Object.entries(envVars).reduce((acc, [key, value]) => {
     if (!value) return acc // Keep existing value in .env if key value not set
     const tmp = acc.replace(new RegExp(`${key}=.*`, 'g'), `${key}=${value}`)
@@ -221,7 +218,7 @@ async function updateEnvFile(
     }
     return tmp
   }, envFileContent)
-  await Deno.writeTextFile(ENVFILE, updatedEnvFileContent)
+  await Deno.writeTextFile(CONFIG.envFile, updatedEnvFileContent)
   return await loadEnv({ reload: true, expand: false })
 }
 
@@ -443,7 +440,7 @@ export async function init(
   // Script will fail if another LLemonStack, Supabase, etc. is already running on the required ports.
 
   try {
-    if (await isInitialized()) {
+    if (isInitialized()) {
       showWarning(`Project already initialized: ${projectName}`)
       const resetOption: string = await Select.prompt({
         message: 'How do you want to proceed?',

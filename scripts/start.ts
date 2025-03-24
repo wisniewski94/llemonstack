@@ -4,11 +4,11 @@
  */
 
 import { colors } from '@cliffy/ansi/colors'
-import { load as loadDotEnv } from 'jsr:@std/dotenv'
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
 import * as yaml from 'jsr:@std/yaml'
 import { CommandError, runCommand } from './lib/command.ts'
+import { Config } from './lib/config/config.ts'
 import {
   dockerEnv,
   isServiceRunning,
@@ -17,17 +17,10 @@ import {
   runDockerComposeCommand,
 } from './lib/docker.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
-import {
-  ComposeConfig,
-  EnvVars,
-  OllamaProfile,
-  ProjectConfig,
-  RepoService,
-  ServiceImage,
-} from './lib/types.d.ts'
+import { ComposeConfig, EnvVars, OllamaProfile, RepoService, ServiceImage } from './lib/types.d.ts'
 
-// Immediately load .env file
-await loadEnv({ silent: true })
+const config = Config.getInstance()
+await config.initialize()
 
 // Get version from package.json
 export const LLEMONSTACK_INSTALL_DIR = path.join(
@@ -39,7 +32,7 @@ const packageJson = JSON.parse(
 )
 export const VERSION = packageJson.version
 
-export const ENVFILE = path.join(Deno.cwd(), '.env')
+export const ENVFILE = config.envFile
 
 /*******************************************************************************
  * CONFIG
@@ -49,20 +42,17 @@ export const ENVFILE = path.join(Deno.cwd(), '.env')
 export const DEFAULT_PROJECT_NAME = 'llemonstack'
 
 // Enable extra debug logging
-export const DEBUG = Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
+export const DEBUG = config.DEBUG
 
-// TODO: refactor all config to call getConfig instead of using global vars
-export const CONFIG = await getConfig({ autoCreate: true })
-
-export const IMPORT_DIR_BASE = CONFIG.dirs.import
+export const IMPORT_DIR_BASE = config.importDir
 
 export const ROOT_DIR = Deno.cwd()
 
-export const LLEMONSTACK_CONFIG_DIR = path.resolve(ROOT_DIR, CONFIG.dirs.config)
-export const LLEMONSTACK_CONFIG_FILE = path.join(LLEMONSTACK_CONFIG_DIR, 'config.json')
+export const LLEMONSTACK_CONFIG_DIR = config.configDir
+export const LLEMONSTACK_CONFIG_FILE = config.configFile
+export const REPO_DIR = config.repoDir
+export const SHARED_DIR = config.sharedDir
 
-export const REPO_DIR = escapePath(path.resolve(ROOT_DIR, CONFIG.dirs.repos))
-export const SHARED_DIR = escapePath(path.resolve(ROOT_DIR, CONFIG.dirs.shared))
 export const COMPOSE_IMAGES_CACHE = {} as Record<string, ServiceImage[]>
 
 // All services with a docker-compose.yaml file
@@ -284,62 +274,6 @@ export function getOS(): string {
 }
 
 /**
- * Load the .env file
- *
- * TODO: replace contents of this function with loadEnv from lib/env.ts
- * during refactor. The lib version supports turning off variable expansion.
- * Just be sure to preserve the OLLAMA_HOST logic.
- *
- * If reload is false, Deno.env values will not be updated for any
- * values that were previously set. This protects against .env values
- * overwriting any values set in the command line when the script is run.
- *
- * If reload is true, all values in .env file will replace Deno.env
- * values even if they're blank in .env and already set in Deno.env.
- *
- * @param {Object} options - The options for loading the .env file
- * @param {string} options.envPath - The path to the .env file
- * @param {boolean} options.reload - Whether to reload the .env file
- * @param {boolean} options.silent - Whether to suppress output
- * @returns {Promise<Record<string, string>>} The environment variables
- */
-export async function loadEnv(
-  { envPath = '.env', reload = false, silent = true }: {
-    envPath?: string
-    reload?: boolean
-    silent?: boolean
-  } = {},
-): Promise<Record<string, string>> {
-  let envValues = {} as Record<string, string>
-  if (!reload) {
-    !silent && showInfo('Loading .env file')
-    envValues = await loadDotEnv({ envPath, export: true })
-  } else { // reload is true
-    !silent && showInfo('Reloading .env file')
-    envValues = await loadDotEnv({
-      envPath,
-      export: false, // Don't automatically export to Deno.env
-    })
-    // Set each variable in Deno.env
-    // loadDonEnv({ export: true }) will only set variables if undefined in Deno.env
-    // The reload flag sets all variables even if they are already set in Deno.env
-    for (const [key, value] of Object.entries(envValues)) {
-      Deno.env.set(key, value as string)
-    }
-  }
-
-  //
-  // Add dynamic env vars
-  //
-  // Set OLLAMA_HOST
-  // Uses existing env var if set, otherwise configures based on ENABLE_OLLAMA settings
-  envValues.OLLAMA_HOST = getOllamaHost()
-  reload && Deno.env.set('OLLAMA_HOST', envValues.OLLAMA_HOST)
-
-  return envValues
-}
-
-/**
  * Escape special characters in a path
  * @param file - The file path to escape
  * @returns The escaped path
@@ -347,24 +281,6 @@ export async function loadEnv(
 export function escapePath(file: string): string {
   return path.normalize(file.replace(/(\s|`|\$|\\|"|&)/g, '\\$1'))
 }
-
-// /**
-//  * Gets required environment variables to always pass to docker commands
-//  *
-//  * @param volumesDir - The directory config to use for volumes, defaults to LLEMONSTACK_VOLUMES_DIR env var value
-//  * @returns Record<string, string>
-//  */
-// export function dockerEnv({ volumesDir }: { volumesDir?: string } = {}): Record<string, string> {
-//   return {
-//     LLEMONSTACK_VOLUMES_PATH: getVolumesPath(volumesDir),
-//     LLEMONSTACK_SHARED_VOLUME_PATH: path.resolve(ROOT_DIR, CONFIG.dirs.shared),
-//     LLEMONSTACK_IMPORT_VOLUME_PATH: path.resolve(ROOT_DIR, CONFIG.dirs.import),
-//     LLEMONSTACK_REPOS_PATH: REPO_DIR,
-//     LLEMONSTACK_NETWORK_NAME: `${Deno.env.get('LLEMONSTACK_PROJECT_NAME')}_network`,
-//     TARGETPLATFORM: getDockerTargetPlatform(), // Docker platform for building images
-//     DOCKERFILE_ARCH: getDockerfileArch(), // Dockerfile.arm64 if on Mac Silicon or aarch64 platform
-//   }
-// }
 
 /**
  * Get the absolute path to the volumes directory
@@ -745,126 +661,6 @@ export async function setupRepos({
   !silent && showInfo(`${all ? 'All repositories' : 'Repositories'} are ready`)
 }
 
-// TODO: replace with config
-export async function getConfig(
-  {
-    projectName = DEFAULT_PROJECT_NAME || 'llemonstack',
-    autoCreate = false,
-    silent = false,
-    version = VERSION,
-    configFile = '',
-    configDir = '',
-  }: {
-    projectName?: string
-    autoCreate?: boolean
-    silent?: boolean
-    version?: string
-    configFile?: string
-    configDir?: string
-  } = {},
-): Promise<ProjectConfig> {
-  if (DEBUG) {
-    silent = false
-  }
-  if (!configDir) {
-    configDir = configDir || ('LLEMONSTACK_CONFIG_DIR' in globalThis && LLEMONSTACK_CONFIG_DIR)
-      ? LLEMONSTACK_CONFIG_DIR
-      : '.llemonstack'
-  }
-  if (!configFile) {
-    configFile = path.join(configDir, 'config.json')
-  }
-
-  let config: ProjectConfig
-  if (!fs.existsSync(configFile)) {
-    if (autoCreate) {
-      try {
-        config = await getConfigTemplate(version, { silent })
-      } catch (error) {
-        showError(`Unable to find config template for version: ${version}`, error)
-        showUserAction(
-          `Please update LLemonStack and try again, or create a custom config file here: ${configFile}`,
-        )
-        Deno.exit(1)
-      }
-      config.projectName = projectName
-      config.initialized = ''
-      await saveConfigFile(config)
-    } else {
-      throw new Error(`Config file not found: ${configFile}`)
-    }
-  }
-  config = JSON.parse(await Deno.readTextFile(configFile)) as ProjectConfig
-
-  // Migrate from 0.1.0 timestamp
-  if (!config.initialized && config.timestamp) {
-    config.initialized = config.timestamp
-    delete config.timestamp
-    await saveConfigFile(config)
-  }
-
-  // Ensure all required dirs are present
-  if (
-    !config?.dirs?.config || !config?.dirs?.repos || !config?.dirs?.import ||
-    !config?.dirs?.shared || !config?.dirs?.volumes
-  ) {
-    const template = await getConfigTemplate(config.version, { silent })
-    config.dirs = {
-      ...template.dirs,
-      ...config.dirs,
-    }
-    await saveConfigFile(config)
-  }
-
-  return config
-}
-
-// TODO: replace with config
-async function getConfigTemplate(
-  version: string,
-  { silent = false }: { silent?: boolean } = {},
-): Promise<ProjectConfig> {
-  if (!fs.existsSync(LLEMONSTACK_INSTALL_DIR)) {
-    throw new Error(`LLemonStack install dir not found: ${LLEMONSTACK_INSTALL_DIR}`)
-  }
-  const _getFile = (version: string): string | false => {
-    const file = path.join(LLEMONSTACK_INSTALL_DIR, 'config', `config.${version}.json`)
-    return fs.existsSync(file) ? file : false
-  }
-  let file = await _getFile(version)
-  if (!file) {
-    file = await _getFile(VERSION)
-    !silent && showWarning(`Unable to find config template for version: ${version}: ${file}`)
-  }
-  if (!file) {
-    throw new Error(`Config template file not found: ${file}`)
-  }
-  const config = JSON.parse(await Deno.readTextFile(file)) as ProjectConfig
-  return config
-}
-
-// TODO: replace with config
-export async function saveConfigFile(
-  config: ProjectConfig,
-  { configFile, configDir }: { configFile?: string; configDir?: string } = {},
-): Promise<string> {
-  if (!configFile) {
-    if (!configDir) {
-      configDir = configDir || ('LLEMONSTACK_CONFIG_DIR' in globalThis && LLEMONSTACK_CONFIG_DIR)
-        ? LLEMONSTACK_CONFIG_DIR
-        : '.llemonstack'
-    }
-    await fs.ensureDir(configDir)
-    configFile = path.join(configDir, 'config.json')
-  }
-  await fs.ensureDir(path.dirname(configFile))
-  await Deno.writeTextFile(
-    configFile,
-    JSON.stringify(config, null, 2),
-  )
-  return configFile
-}
-
 /**
  * Copy .env and docker/config.supabase.env contents to .env in the supabase repo
  */
@@ -901,7 +697,7 @@ async function createRequiredVolumes({ silent = false }: { silent?: boolean } = 
     silent = false
   }
 
-  const volumesPath = dockerEnv().LLEMONSTACK_VOLUMES_PATH
+  const volumesPath = config.volumesDir
 
   !silent && showInfo('Checking for required volumes...')
   DEBUG && showDebug(`Volumes base path: ${volumesPath}`)
@@ -1066,13 +862,8 @@ export async function startServices(
   }))
 }
 
-export async function isInitialized(): Promise<boolean> {
-  try {
-    const config = await getConfig()
-    return !!config.initialized.trim()
-  } catch (_error) {
-    return false
-  }
+export function isInitialized(): boolean {
+  return config.projectInitialized
 }
 
 async function outputServicesInfo({
@@ -1231,7 +1022,7 @@ export async function start(
     return
   }
   try {
-    if (!await isInitialized()) {
+    if (!isInitialized()) {
       showWarning('Project not initialized', '❌')
       showUserAction('\nPlease run the init script first: llmn init')
       Deno.exit(1)

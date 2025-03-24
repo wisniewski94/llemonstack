@@ -10,7 +10,10 @@
  * LOCAL_LLM_OPENAI_API_BASE_URL and LOCAL_LLM_OPENAI_HOST_PORT must be set in
  * .env file for OpenAI compatible models to be loaded.
  */
-import { loadEnv } from './lib/env.ts'
+import { Config } from './lib/config/config.ts'
+
+const config = Config.getInstance()
+await config.initialize()
 
 type LiteLLMModelList = Array<{
   id: string
@@ -187,7 +190,7 @@ async function addModelToLiteLLM(
 
 export async function loadModels() {
   // Load environment variables from .env file
-  const env = await loadEnv()
+  const env = config.env
 
   const LITELLM_API_BASE = env.LITELLM_API_BASE || 'http://localhost:3004'
   const LITELLM_API_KEY = env.LITELLM_API_KEY || env.LITELLM_MASTER_KEY

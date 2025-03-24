@@ -1,16 +1,19 @@
+import { Config } from './lib/config/config.ts'
 import { createServiceSchema, removeServiceSchema } from './lib/postgres.ts'
 import {
   ALL_COMPOSE_SERVICES,
   confirm,
   DEFAULT_PROJECT_NAME,
   isSupabaseStarted,
-  loadEnv,
   showAction,
   showError,
   showInfo,
   startService,
 } from './start.ts'
 import { stopService } from './stop.ts'
+
+const config = Config.getInstance()
+await config.initialize()
 
 export async function schema(projectName: string, action: string, service: string) {
   if (action !== 'create' && action !== 'remove') {
@@ -21,8 +24,6 @@ export async function schema(projectName: string, action: string, service: strin
     showError('Service name is required')
     Deno.exit(1)
   }
-
-  loadEnv()
 
   // Make sure it's a valid service
   if (!ALL_COMPOSE_SERVICES.find(([s]) => s === service)) {

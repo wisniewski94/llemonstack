@@ -11,6 +11,7 @@
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
 import { clearConfigFile, clearEnvFile } from './init.ts'
+import { Config } from './lib/config/config.ts'
 import { runDockerCommand, runDockerComposeCommand } from './lib/docker.ts'
 import {
   ALL_COMPOSE_SERVICES,
@@ -18,11 +19,8 @@ import {
   DEFAULT_PROJECT_NAME,
   getComposeFileFromService,
   getProfilesArgs,
-  getVolumesPath,
   prepareEnv,
-  REPO_DIR,
   setupRepos,
-  SHARED_DIR,
   showAction,
   showError,
   showInfo,
@@ -30,6 +28,9 @@ import {
   showWarning,
 } from './start.ts'
 import { update } from './update.ts'
+
+const config = Config.getInstance()
+await config.initialize()
 
 const DOCKER_CLEANUP_COMMANDS = [
   'docker builder prune -a',
@@ -138,7 +139,7 @@ export async function reset(
   }
 
   showAction('\nCleaning up repos directory...')
-  await cleanDir(REPO_DIR)
+  await cleanDir(config.repoDir)
 
   showAction('\nCleaning up shared folder...')
   if (!skipPrompt) {
@@ -149,12 +150,12 @@ export async function reset(
     showWarning(
       'Please verify the contents of the shared folder before deleting it.',
     )
-    showInfo(`Shared folder: ${SHARED_DIR}`)
+    showInfo(`Shared folder: ${config.sharedDir}`)
   }
   if (
     skipPrompt || confirm('Do you want to delete the shared folder?', true)
   ) {
-    await cleanDir(SHARED_DIR)
+    await cleanDir(config.sharedDir)
     showInfo('Shared folder reset')
   } else {
     showInfo('Skipping shared folder cleanup')
@@ -175,7 +176,7 @@ export async function reset(
   await clearConfigFile()
   showInfo('Environment and config files reset')
 
-  const volumesDir = getVolumesPath()
+  const volumesDir = config.volumesDir
   showAction('\nResetting volumes...')
   showInfo(
     '\nThe volumes dir contains data from the docker containers.\n' +

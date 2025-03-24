@@ -74,6 +74,10 @@ export class Config {
     return this._env
   }
 
+  get version(): string {
+    return this._project.version
+  }
+
   private constructor() {
     this._llemonstack = new LLemonStackConfig()
     this.configDir = fs.path.join(Deno.cwd(), this._llemonstack.configDirBase)

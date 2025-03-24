@@ -6,18 +6,20 @@
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
 import { RunCommandOutput } from './lib/command.ts'
+import { Config } from './lib/config/config.ts'
 import { dockerExec } from './lib/docker.ts'
 import {
   confirm,
   DEFAULT_PROJECT_NAME,
-  IMPORT_DIR_BASE,
-  loadEnv,
   prepareEnv,
   showAction,
   showError,
   showInfo,
   showWarning,
 } from './start.ts'
+
+const config = Config.getInstance()
+await config.initialize()
 
 async function resetN8nImportFolder(importDir: string): Promise<void> {
   showInfo(`Clearing import folder: ${importDir}`)
@@ -42,8 +44,8 @@ async function resetN8nImportFolder(importDir: string): Promise<void> {
 }
 
 async function archiveN8nImportFolder(): Promise<void> {
-  const n8nImportDir = path.join(IMPORT_DIR_BASE, 'n8n')
-  const archiveBaseDir = path.join(IMPORT_DIR_BASE, `.imported`)
+  const n8nImportDir = path.join(config.importDir, 'n8n')
+  const archiveBaseDir = path.join(config.importDir, `.imported`)
 
   // Create timestamp for unique archive folder
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
@@ -71,11 +73,11 @@ async function archiveN8nImportFolder(): Promise<void> {
  * This ensures the credentials are correct for the current stack configuration.
  */
 async function prepareCredentialsImport(): Promise<void> {
-  const credentialsDir = path.join(IMPORT_DIR_BASE, 'n8n', 'credentials')
+  const credentialsDir = path.join(config.importDir, 'n8n', 'credentials')
   const credentials = Deno.readDir(credentialsDir)
 
   // Load env vars from .env file
-  const envVars = await loadEnv({ silent: true })
+  const envVars = config.env
 
   for await (const credential of credentials) {
     const credentialPath = path.join(credentialsDir, credential.name)

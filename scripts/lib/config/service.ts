@@ -23,6 +23,10 @@ export class ServiceConfig {
 
   public async initialize(_llemonstackConfig: LLemonStackConfig): Promise<void> {
     // this._dir = await getAbsoluteServiceDir(this._dir, { llemonstackConfig, name: this._name })
+    // TODO: each service should initialize..
+    // - repo dir
+    // - configure .env file
+    // - setup required volumes
   }
 
   get composeFile(): string {
