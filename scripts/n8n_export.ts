@@ -3,9 +3,8 @@
  * Export workflows from n8n
  */
 
-import * as fs from 'jsr:@std/fs'
-import * as path from 'jsr:@std/path'
 import { dockerExec } from './lib/docker.ts'
+import { fs, path } from './lib/fs.ts'
 import {
   DEFAULT_PROJECT_NAME,
   getComposeFile,

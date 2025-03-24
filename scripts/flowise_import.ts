@@ -3,9 +3,8 @@
  * Import workflows and credentials from the import folder
  */
 
-import * as fs from 'jsr:@std/fs'
-import * as path from 'jsr:@std/path'
 import { getFlowiseApiKey } from './lib/flowise.ts'
+import { fs, path } from './lib/fs.ts'
 import {
   confirm,
   DEFAULT_PROJECT_NAME,

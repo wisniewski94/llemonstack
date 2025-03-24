@@ -4,8 +4,6 @@
  */
 
 import { colors } from '@cliffy/ansi/colors'
-import * as fs from 'jsr:@std/fs'
-import * as path from 'jsr:@std/path'
 import * as yaml from 'jsr:@std/yaml'
 import { CommandError, runCommand } from './lib/command.ts'
 import { Config } from './lib/config/config.ts'
@@ -17,6 +15,7 @@ import {
   runDockerComposeCommand,
 } from './lib/docker.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
+import { fs, path } from './lib/fs.ts'
 import { ComposeConfig, EnvVars, OllamaProfile, RepoService, ServiceImage } from './lib/types.d.ts'
 
 const config = Config.getInstance()

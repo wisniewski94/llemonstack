@@ -3,10 +3,10 @@
  * Setup required env variables
  */
 import { Input, Secret, Select } from '@cliffy/prompt'
-import * as path from 'jsr:@std/path'
 import { Config } from './lib/config/config.ts'
 import { runDockerCommand } from './lib/docker.ts'
 import { loadEnv } from './lib/env.ts'
+import { path } from './lib/fs.ts'
 import {
   generateJWT,
   generateRandomBase64,

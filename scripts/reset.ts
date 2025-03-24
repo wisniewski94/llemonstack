@@ -8,11 +8,10 @@
  * Optionally runs the update script.
  * Optionally starts the stack.
  */
-import * as fs from 'jsr:@std/fs'
-import * as path from 'jsr:@std/path'
 import { clearConfigFile, clearEnvFile } from './init.ts'
 import { Config } from './lib/config/config.ts'
 import { runDockerCommand, runDockerComposeCommand } from './lib/docker.ts'
+import { fs, path } from './lib/fs.ts'
 import {
   ALL_COMPOSE_SERVICES,
   confirm,

@@ -3,11 +3,10 @@
  * Import workflows and credentials from the import folder
  */
 
-import * as fs from 'jsr:@std/fs'
-import * as path from 'jsr:@std/path'
 import { RunCommandOutput } from './lib/command.ts'
 import { Config } from './lib/config/config.ts'
 import { dockerExec } from './lib/docker.ts'
+import { fs, path } from './lib/fs.ts'
 import {
   confirm,
   DEFAULT_PROJECT_NAME,
