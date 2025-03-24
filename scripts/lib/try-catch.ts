@@ -22,7 +22,7 @@ export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
 
   set error(error: E | null) {
     this._error = error
-    this.success = !!error
+    this.success = !error
   }
 
   get error(): E | null {
