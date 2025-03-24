@@ -2,7 +2,7 @@ import {
   CommandError as CommandErrorClass,
   RunCommandOutput as RunCommandOutputClass,
 } from './command.ts'
-
+import { Config } from './config/config.ts'
 interface ProjectConfig {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty
   version: string // Version of LLemonStack used to create the config
@@ -84,6 +84,23 @@ interface ComposeConfig {
       container_name?: string
     }
   }
+}
+
+type ComposeService = [string, string, boolean]
+
+type RequiredVolumeConfig = {
+  volume: string
+  seed?: {
+    source: string | ((config: Config) => string)
+    destination: string | ((config: Config) => string)
+  }[]
+}[]
+type RequiredVolume = {
+  volume: string
+  seed?: {
+    source: string
+    destination: string
+  }[]
 }
 
 //

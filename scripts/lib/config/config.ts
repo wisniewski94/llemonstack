@@ -3,9 +3,21 @@ import projectTemplate from '../../../config/config.0.2.0.json' with { type: 'js
 import { loadEnv } from '../env.ts'
 import * as fs from '../fs.ts'
 import { failure, TryCatchResult } from '../try-catch.ts'
-import { OllamaProfile, ProjectConfig } from '../types.d.ts'
+import {
+  ComposeService,
+  OllamaProfile,
+  ProjectConfig,
+  RepoService,
+  RequiredVolume,
+} from '../types.d.ts'
 import { LLemonStackConfig } from './llemonstack.ts'
 import { ServiceConfig } from './service.ts'
+import {
+  ALL_COMPOSE_SERVICES,
+  REPO_SERVICES,
+  REQUIRED_VOLUMES,
+  SERVICE_GROUPS,
+} from './services.config.ts'
 
 export class Config {
   private static instance: Config
@@ -183,6 +195,68 @@ export class Config {
     this._initializeResult = result
 
     return result
+  }
+
+  /**
+   * Check if a service is enabled in project config
+   * @param service - The service name
+   * @returns True if the service is enabled, false otherwise
+   */
+  public isEnabled(service: string): boolean {
+    const varName = `ENABLE_${service.toUpperCase().replace(/-/g, '_')}`
+    // Handle ollama special case
+    if (service === 'ollama') {
+      return !['ollama-false', 'ollama-host'].includes(this.getOllamaProfile())
+    }
+    const value = Deno.env.get(varName)
+    // If no env var is set, default to true
+    if (value === undefined || value === null) {
+      return true
+    }
+    return (value && value.trim().toLowerCase() === 'true') as boolean
+  }
+
+  public getAllComposeServices(): ComposeService[] {
+    return ALL_COMPOSE_SERVICES
+  }
+
+  public getServiceGroups(): [string, string[]][] {
+    return SERVICE_GROUPS
+  }
+
+  public getAllComposeFiles(): string[] {
+    return ALL_COMPOSE_SERVICES.map(
+      ([_service, file]) => fs.path.join(config.servicesDir, file),
+    ) as string[]
+  }
+
+  public getEnabledComposeFiles(): string[] {
+    return ALL_COMPOSE_SERVICES.map(([service, file]) => {
+      return this.isEnabled(service) ? file : null
+    }) // Remove false values and duplicates
+      .filter((value, index, self) => value && self.indexOf(value) === index) as string[]
+  }
+
+  public getReposConfig(): Record<string, RepoService> {
+    return REPO_SERVICES
+  }
+
+  public getRequiredVolumes(): RequiredVolume[] {
+    return REQUIRED_VOLUMES.map((volume) => {
+      const seed = volume.seed?.map((seed) => {
+        if (typeof seed.source === 'function') {
+          seed.source = seed.source(this)
+        }
+        if (typeof seed.destination === 'function') {
+          seed.destination = seed.destination(this)
+        }
+        return seed
+      })
+      return {
+        ...volume,
+        seed,
+      } as RequiredVolume
+    })
   }
 
   // HACK: need a better way of handling Ollama profiles and host settings

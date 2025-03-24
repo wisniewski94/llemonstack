@@ -21,7 +21,7 @@ import {
   showUserAction,
   showWarning,
 } from './lib/logger.ts'
-import { EnvVars, OllamaProfile, RepoService } from './lib/types.d.ts'
+import { EnvVars, OllamaProfile } from './lib/types.d.ts'
 
 const config = Config.getInstance()
 await config.initialize()
@@ -31,7 +31,7 @@ await config.initialize()
  *******************************************************************************/
 
 // Project name for docker compose
-export const DEFAULT_PROJECT_NAME = 'llemonstack'
+export const DEFAULT_PROJECT_NAME = config.defaultProjectName
 
 // Enable extra debug logging
 const DEBUG = config.DEBUG
@@ -42,137 +42,22 @@ const DEBUG = config.DEBUG
 // When auto run is true, the service is started automatically if enabled.
 // When auto run is false, the service needs to be started manually.
 export type ComposeService = [string, string, boolean]
-export const ALL_COMPOSE_SERVICES: ComposeService[] = [
-  ['supabase', path.join('supabase', 'docker-compose.yaml'), true],
-  ['n8n', path.join('n8n', 'docker-compose.yaml'), true],
-  ['flowise', path.join('flowise', 'docker-compose.yaml'), true],
-  ['neo4j', path.join('neo4j', 'docker-compose.yaml'), true],
-  ['zep', path.join('zep', 'docker-compose.yaml'), true],
-  ['browser-use', path.join('browser-use', 'docker-compose.yaml'), true], // Uses a custom start function
-  ['qdrant', path.join('qdrant', 'docker-compose.yaml'), true],
-  ['openwebui', path.join('openwebui', 'docker-compose.yaml'), true],
-  ['ollama', path.join('ollama', 'docker-compose.yaml'), false], // Uses a custom start function
-  ['prometheus', path.join('prometheus', 'docker-compose.yaml'), true],
-  ['redis', path.join('redis', 'docker-compose.yaml'), true],
-  ['clickhouse', path.join('clickhouse', 'docker-compose.yaml'), true],
-  ['minio', path.join('minio', 'docker-compose.yaml'), true],
-  ['langfuse', path.join('langfuse', 'docker-compose.yaml'), true],
-  ['litellm', path.join('litellm', 'docker-compose.yaml'), true],
-  ['dozzle', path.join('dozzle', 'docker-compose.yaml'), true],
-]
+export const ALL_COMPOSE_SERVICES = config.getAllComposeServices()
 
 // Groups of services, dependencies first
-export const SERVICE_GROUPS: [string, string[]][] = [
-  ['databases', [
-    'supabase',
-    'redis',
-    'clickhouse',
-    'neo4j',
-    'qdrant',
-    'prometheus',
-    'minio',
-  ]],
-  ['middleware', ['dozzle', 'langfuse', 'litellm', 'zep']],
-  ['apps', ['n8n', 'flowise', 'browser-use', 'openwebui', 'ollama']],
-]
+export const SERVICE_GROUPS = config.getServiceGroups()
 
 // All Docker compose files: absolute paths
-export const ALL_COMPOSE_FILES = ALL_COMPOSE_SERVICES.map(
-  ([_service, file]) => path.join(config.servicesDir, file),
-) as string[]
+export const ALL_COMPOSE_FILES = config.getAllComposeFiles()
 
 // Docker compose files for enabled services, includes build files
-export const COMPOSE_FILES = ALL_COMPOSE_SERVICES.map(([service, file]) => {
-  return isEnabled(service) ? file : null
-})
-  // Remove false values and duplicates
-  .filter((value, index, self) => value && self.indexOf(value) === index) as string[]
+export const COMPOSE_FILES = config.getEnabledComposeFiles()
 
-// Services that require cloning a repo
-const REPO_SERVICES: Record<string, RepoService> = {
-  supabase: {
-    url: 'https://github.com/supabase/supabase.git',
-    dir: 'supabase',
-    sparseDir: 'docker',
-    checkFile: 'docker/docker-compose.yml',
-  },
-  zep: {
-    url: 'https://github.com/getzep/zep.git',
-    dir: 'zep',
-    checkFile: 'docker-compose.ce.yaml',
-  },
-  'browser-use': {
-    url: 'https://github.com/browser-use/web-ui.git',
-    dir: 'browser-use-web-ui',
-    sparse: false,
-    checkFile: 'docker-compose.yml',
-  },
-  // 'signoz': {
-  //   url: 'https://github.com/SigNoz/signoz.git',
-  //   dir: 'signoz',
-  //   sparseDir: 'deploy',
-  //   checkFile: 'docker-compose.yml',
-  // },
-}
-
-// Volumes relative to LLEMONSTACK_VOLUMES_DIR, required by docker-compose.yml files to start services.
-// These directories will be created if they don't exist.
-// If seed: Copy these dirs or files into volumes if they don't exist
-const REQUIRED_VOLUMES = [
-  { volume: 'supabase/db/data' },
-  { volume: 'supabase/storage' },
-  {
-    volume: 'supabase/functions',
-    seed: [ // Copy these dirs into functions volumes if they don't exist
-      {
-        source: path.join(
-          config.serviceRepoPath('supabase'),
-          'docker',
-          'volumes',
-          'functions',
-          'main',
-        ),
-        destination: 'main', // Relative to the volume path
-      },
-      {
-        source: path.join(
-          config.serviceRepoPath('supabase'),
-          'docker',
-          'volumes',
-          'functions',
-          'hello',
-        ),
-        destination: 'hello',
-      },
-    ],
-  },
-  { volume: 'flowise/config' },
-  { volume: 'flowise/uploads' },
-  { volume: 'minio' },
-]
+export const isEnabled = config.isEnabled
 
 /*******************************************************************************
  * FUNCTIONS
  *******************************************************************************/
-
-/**
- * Check if a service is enabled in .env file
- * @param envVar - The environment variable to check
- * @returns True if the service is enabled, false otherwise
- */
-export function isEnabled(envVar: string): boolean {
-  const varName = `ENABLE_${envVar.toUpperCase().replace(/-/g, '_')}`
-  // Handle ollama special case
-  if (envVar === 'ollama') {
-    return !['ollama-false', 'ollama-host'].includes(getOllamaProfile())
-  }
-  const value = Deno.env.get(varName)
-  // If no env var is set, default to true
-  if (value === undefined || value === null) {
-    return true
-  }
-  return (value && value.trim().toLowerCase() === 'true') as boolean
-}
 
 /**
  * Reverse looks up the compose file from the service name
@@ -350,9 +235,9 @@ export async function setupRepos({
 
   // Setup all repos in parallel
   await Promise.all(
-    Object.entries(REPO_SERVICES)
+    Object.entries(config.getReposConfig())
       .map(([service, { url, dir, sparseDir, sparse, checkFile }]) => {
-        if (!all && !isEnabled(service)) {
+        if (!all && !config.isEnabled(service)) {
           return false
         }
         return setupRepo(service, url, dir, { sparseDir, sparse, pull, checkFile, silent })
@@ -403,7 +288,9 @@ async function createRequiredVolumes({ silent = false }: { silent?: boolean } = 
   !silent && showInfo('Checking for required volumes...')
   DEBUG && showDebug(`Volumes base path: ${volumesPath}`)
 
-  for (const volume of REQUIRED_VOLUMES) {
+  const requiredVolumes = config.getRequiredVolumes()
+
+  for (const volume of requiredVolumes) {
     const volumePath = path.join(volumesPath, volume.volume)
     try {
       const fileInfo = await Deno.stat(volumePath)
@@ -579,16 +466,16 @@ async function outputServicesInfo({
   //
   showHeader('Service Dashboards')
   showInfo('Access the dashboards in a browser on your host machine.\n')
-  isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
-  if (isEnabled('flowise')) {
+  config.isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
+  if (config.isEnabled('flowise')) {
     showService('Flowise', 'http://localhost:3001')
     showCredentials({
       'Username': Deno.env.get('FLOWISE_USERNAME'),
       'Password': Deno.env.get('FLOWISE_PASSWORD'),
     })
   }
-  isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:8080')
-  if (isEnabled('browser-use')) {
+  config.isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:8080')
+  if (config.isEnabled('browser-use')) {
     showService('Browser-Use', 'http://localhost:7788/')
     showService(
       'Browser-Use VNC',
@@ -598,43 +485,43 @@ async function outputServicesInfo({
       'Password': Deno.env.get('BROWSER_USE_VNC_PASSWORD'),
     })
   }
-  if (isEnabled('supabase')) {
+  if (config.isEnabled('supabase')) {
     showService('Supabase', `http://localhost:8000`)
     showCredentials({
       'Username': Deno.env.get('SUPABASE_DASHBOARD_USERNAME'),
       'Password': Deno.env.get('SUPABASE_DASHBOARD_PASSWORD'),
     })
   }
-  if (isEnabled('litellm')) {
+  if (config.isEnabled('litellm')) {
     showService('LiteLLM', 'http://localhost:3004/ui/')
     showCredentials({
       'Username': Deno.env.get('LITELLM_UI_USERNAME'),
       'Password': Deno.env.get('LITELLM_UI_PASSWORD'),
     })
   }
-  if (isEnabled('langfuse')) {
+  if (config.isEnabled('langfuse')) {
     showService('Langfuse', 'http://localhost:3005/')
     showCredentials({
       'Username': Deno.env.get('LANGFUSE_INIT_USER_EMAIL'),
       'Password': Deno.env.get('LANGFUSE_INIT_USER_PASSWORD'),
     })
   }
-  if (isEnabled('neo4j')) {
+  if (config.isEnabled('neo4j')) {
     showService('Neo4j', 'http://localhost:7474/browser/')
     showCredentials({
       'Username': Deno.env.get('NEO4J_USER'),
       'Password': Deno.env.get('NEO4J_PASSWORD'),
     })
   }
-  isEnabled('qdrant') && showService('Qdrant', 'http://localhost:6333/dashboard')
-  if (isEnabled('minio')) {
+  config.isEnabled('qdrant') && showService('Qdrant', 'http://localhost:6333/dashboard')
+  if (config.isEnabled('minio')) {
     showService('Minio', 'http://localhost:9091/')
     showCredentials({
       'Username': 'minio',
       'Password': Deno.env.get('MINIO_ROOT_PASSWORD'),
     })
   }
-  isEnabled('dozzle') && showService('Dozzle', 'http://localhost:8081/')
+  config.isEnabled('dozzle') && showService('Dozzle', 'http://localhost:8081/')
 
   //
   // API ENDPOINTS
@@ -643,7 +530,7 @@ async function outputServicesInfo({
   showInfo('For connecting services within the stack, use the following endpoints.')
   showInfo('i.e. for n8n credentials, postgres connections, API requests, etc.\n')
 
-  if (isEnabled('supabase')) {
+  if (config.isEnabled('supabase')) {
     showService('Supabase Postgres DB Host', 'db')
     showCredentials({
       'Username': 'postgres',
@@ -667,30 +554,30 @@ async function outputServicesInfo({
       'http://kong:8000/functions/v1/[function]',
     )
   }
-  isEnabled('n8n') && showService('n8n', 'http://n8n:5678')
-  if (isEnabled('flowise')) {
+  config.isEnabled('n8n') && showService('n8n', 'http://n8n:5678')
+  if (config.isEnabled('flowise')) {
     showService('Flowise', 'http://flowise:3000')
     const flowiseApi = await getFlowiseApiKey()
     showCredentials({
       [flowiseApi?.keyName || 'API Key']: flowiseApi?.apiKey || '',
     })
   }
-  if (isEnabled('litellm')) {
+  if (config.isEnabled('litellm')) {
     showService('LiteLLM', 'http://litellm:4000')
     showCredentials({
       'API Key': Deno.env.get('LITELLM_MASTER_KEY'),
     })
   }
-  if (isEnabled('zep')) {
+  if (config.isEnabled('zep')) {
     showService('Zep', 'http://zep:8000')
     showService('Zep Graphiti', 'http://graphiti:8003')
   }
-  isEnabled('neo4j') && showService('Neo4j', 'bolt://neo4j:7687')
-  isEnabled('qdrant') && showService('Qdrant', 'http://qdrant:6333')
-  isEnabled('redis') && showService('Redis', 'http://redis:6379')
-  isEnabled('clickhouse') && showService('Clickhouse', 'http://clickhouse:8123')
-  isEnabled('langfuse') && showService('Langfuse', 'http://langfuse:3000')
-  isEnabled('minio') && showService('Minio', 'http://minio:9000/')
+  config.isEnabled('neo4j') && showService('Neo4j', 'bolt://neo4j:7687')
+  config.isEnabled('qdrant') && showService('Qdrant', 'http://qdrant:6333')
+  config.isEnabled('redis') && showService('Redis', 'http://redis:6379')
+  config.isEnabled('clickhouse') && showService('Clickhouse', 'http://clickhouse:8123')
+  config.isEnabled('langfuse') && showService('Langfuse', 'http://langfuse:3000')
+  config.isEnabled('minio') && showService('Minio', 'http://minio:9000/')
 
   // Show any user actions
   // Show user action if using host Ollama
@@ -699,13 +586,13 @@ async function outputServicesInfo({
     showService('Ollama', ollamaUrl)
     showUserAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
     showUserAction('  Start Ollama on your computer: `ollama serve`')
-    if (isEnabled('n8n')) {
+    if (config.isEnabled('n8n')) {
       showUserAction(`  Set n8n Ollama credential url to: ${ollamaUrl}`)
       showUserAction(
         `  Or connect n8n to LiteLLM http://litellm:4000 to proxy requests to Ollama`,
       )
     }
-  } else if (isEnabled('ollama')) {
+  } else if (config.isEnabled('ollama')) {
     showService('Ollama', 'http://ollama:11434')
   }
   console.log('\n')
@@ -715,7 +602,7 @@ export async function start(
   projectName: string,
   { service, skipOutput = false }: { service?: string; skipOutput?: boolean } = {},
 ): Promise<void> {
-  if (service && !isEnabled(service)) {
+  if (service && !config.isEnabled(service)) {
     showWarning(`${service} is not enabled`)
     showInfo(
       `Set ENABLE_${service.toUpperCase().replaceAll('-', '_')} to true in .env to enable it`,
@@ -744,7 +631,7 @@ export async function start(
       // Start all services by service group
       for (const [groupName, groupServices] of SERVICE_GROUPS) {
         const enabledGroupServices = groupServices.filter((service) =>
-          isEnabled(service) &&
+          config.isEnabled(service) &&
           ALL_COMPOSE_SERVICES.find(([s, _, autoRun]) => s === service && autoRun)
         )
         if (enabledGroupServices.length > 0) {
