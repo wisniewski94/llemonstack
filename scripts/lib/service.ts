@@ -4,7 +4,7 @@
  * Services can provide a service.ts file to override the default behavior.
  * The service.ts file should export a Service class that extends the base Service class.
  */
-import { Config } from './config.bak.ts'
+import { Config } from './config/config.ts'
 
 // Use decorators for logger, config, etc.
 export class Service {

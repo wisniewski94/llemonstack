@@ -22,6 +22,10 @@ export class Config {
     return this._project.projectName
   }
 
+  get installDir(): string {
+    return this._llemonstack.installDir
+  }
+
   get dockerNetworkName(): string {
     return `${this.projectName}_network`
   }
