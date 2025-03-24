@@ -1,122 +1,124 @@
-import { assertEquals, assertExists } from 'jsr:@std/assert'
-import { beforeEach, describe, it } from 'jsr:@std/testing/bdd'
+import { assertEquals, assertExists, assertStrictEquals } from 'jsr:@std/assert'
+import { Stub, stub } from 'jsr:@std/testing/mock'
 import { Config, config } from './config.ts'
 import * as fs from './fs.ts'
 
-Deno.test('Config', () => {
-  describe('getInstance', () => {
-    it('should return a singleton instance', () => {
-      const instance1 = Config.getInstance()
-      const instance2 = Config.getInstance()
+Deno.test('Config', async (t) => {
+  let saveStub: Stub
 
-      assertEquals(instance1, instance2)
-      assertEquals(instance1, config)
+  // Set up the stub before all tests
+  await t.step('setup', () => {
+    // Prevent tests from saving config files to disk
+    // @ts-ignore - accessing private method for testing
+    saveStub = stub(Config.prototype, 'save', () => {
+      // console.log('saveStub called')
+      return {
+        data: true,
+        error: null,
+        success: true,
+      }
     })
+  })
 
-    describe('paths', () => {
-      let configInstance: Config
+  await t.step('getInstance should return a singleton instance', () => {
+    const instance1 = Config.getInstance()
+    const instance2 = Config.getInstance()
 
-      beforeEach(() => {
-        configInstance = Config.getInstance()
-      })
+    assertStrictEquals(instance1, config)
+    assertStrictEquals(instance1, instance2)
+  })
 
-      it('should have correct repoDir path', () => {
-        const expected = fs.path.join(configInstance.configDir, 'repos')
-        assertEquals(configInstance.repoDir, expected)
-      })
+  await t.step('default paths are configured', () => {
+    // @ts-ignore - temporarily override for testing
+    delete Config.instance
+    const configInstance = Config.getInstance()
 
-      it('should have correct servicesDir path', () => {
-        const expected = fs.path.join(configInstance.configDir, 'services')
-        assertEquals(configInstance.servicesDir, expected)
-      })
+    const expectedRepoDir = fs.path.join(configInstance.configDir, 'repos')
+    assertEquals(configInstance.repoDir, expectedRepoDir)
 
-      it('should have correct importDir path', () => {
-        const expected = fs.path.join(Deno.cwd(), 'import')
-        assertEquals(configInstance.importDir, expected)
-      })
+    const expectedServicesDir = fs.path.join(configInstance.configDir, 'services')
+    assertEquals(configInstance.servicesDir, expectedServicesDir)
 
-      it('should have correct sharedDir path', () => {
-        const expected = fs.path.join(Deno.cwd(), 'shared')
-        assertEquals(configInstance.sharedDir, expected)
-      })
-    })
+    const expectedImportDir = fs.path.join(Deno.cwd(), 'import')
+    assertEquals(configInstance.importDir, expectedImportDir)
 
-    describe('initialize', () => {
-      let configInstance: Config
+    const expectedSharedDir = fs.path.join(Deno.cwd(), 'shared')
+    assertEquals(configInstance.sharedDir, expectedSharedDir)
+  })
 
-      beforeEach(() => {
-        configInstance = Config.getInstance()
-      })
+  await t.step('initialize - success case', async () => {
+    // @ts-ignore - temporarily override for testing
+    delete Config.instance
+    const configInstance = Config.getInstance()
+    const result = await configInstance.initialize()
 
-      it('should initialize successfully when config file exists', async () => {
-        const result = await configInstance.initialize()
+    assertEquals(result.success, true)
+    assertExists(result.data)
+    assertExists(configInstance.project.dirs.config)
+    assertEquals(result.error, null)
+  })
 
-        assertEquals(result.success, true)
-        assertExists(result.data)
-        assertEquals(result.error, null)
-      })
+  await t.step('initialize - error handling', async () => {
+    // @ts-ignore - temporarily override for testing
+    delete Config.instance
+    const configInstance = Config.getInstance()
 
-      it("should create config file from template when it doesn't exist", async () => {
-        // Mock fs.readJson to simulate missing file
-        const originalReadJson = fs.readJson
-        fs.readJson = async () => ({
-          data: null,
-          error: new Deno.errors.NotFound(),
-          success: false,
-        })
+    // @ts-ignore - temporarily override for testing
+    configInstance._initialized = false
+    // @ts-ignore - temporarily override for testing
+    configInstance.configFile = '' // Try to load the confiDir instead of a file
 
-        // Mock fs.saveJson to avoid actual file creation
-        const originalSaveJson = fs.saveJson
-        fs.saveJson = async () => ({
-          data: true,
-          error: null,
-          success: true,
-        })
+    const result = await configInstance.initialize()
 
-        try {
-          const result = await configInstance.initialize()
-          assertEquals(result.success, true)
-          assertExists(result.data)
-          assertEquals(result.error, null)
-        } finally {
-          // Restore original functions
-          fs.readJson = originalReadJson
-          fs.saveJson = originalSaveJson
-        }
-      })
+    assertEquals(result.success, false, 'Success should be false')
+    assertExists(result.error, 'Error should exist')
+  })
 
-      it('should handle read errors gracefully', async () => {
-        // Mock fs.readJson to simulate error
-        const originalReadJson = fs.readJson
-        fs.readJson = async () => ({
-          data: null,
-          error: new Error('Read error'),
-          success: false,
-        })
+  await t.step('DEBUG flag', () => {
+    Deno.env.set('LLEMONSTACK_DEBUG', 'true')
+    // @ts-ignore - temporarily override for testing
+    delete Config.instance
+    const instance1 = Config.getInstance()
+    assertEquals(instance1.DEBUG, true)
 
-        try {
-          const result = await configInstance.initialize()
-          assertEquals(result.success, false)
-          assertExists(result.error)
-        } finally {
-          // Restore original function
-          fs.readJson = originalReadJson
-        }
-      })
-    })
+    Deno.env.delete('LLEMONSTACK_DEBUG')
+    // @ts-ignore - temporarily override for testing
+    delete Config.instance
+    const instance2 = Config.getInstance()
+    assertEquals(instance2.DEBUG, false)
+  })
 
-    describe('DEBUG flag', () => {
-      it("should be true when LLEMONSTACK_DEBUG env is 'true'", () => {
-        Deno.env.set('LLEMONSTACK_DEBUG', 'true')
-        const instance = Config.getInstance()
-        assertEquals(instance.DEBUG, true)
-      })
+  await t.step('Create missing config from template', async () => {
+    // @ts-ignore - temporarily override for testing
+    delete Config.instance
+    const configInstance = Config.getInstance()
+    // @ts-ignore - temporarily override for testing
+    configInstance._initialized = false
+    // @ts-ignore - temporarily override for testing
+    configInstance.configFile = 'some-non-existent-file.json'
 
-      it("should be false when LLEMONSTACK_DEBUG env is not 'true'", () => {
-        Deno.env.delete('LLEMONSTACK_DEBUG')
-        const instance = Config.getInstance()
-        assertEquals(instance.DEBUG, false)
-      })
-    })
+    const result = await configInstance.initialize()
+
+    // Verify that save was called once
+    assertEquals(saveStub.calls.length, 1, 'save method should be called exactly once')
+
+    // Check that the messages array contains the expected message about creating from template
+    assertExists(result.messages)
+    const hasTemplateMessage = result.messages.some((msg) =>
+      msg.message.includes('creating from template') && msg.level === 'info'
+    )
+    assertEquals(
+      hasTemplateMessage,
+      true,
+      'Expected message about creating from template not found',
+    )
+    assertEquals(result.success, true)
+    assertExists(result.data)
+    assertEquals(result.error, null)
+  })
+
+  // Clean up after all tests
+  await t.step('teardown', () => {
+    saveStub.restore()
   })
 })

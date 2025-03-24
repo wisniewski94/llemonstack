@@ -15,7 +15,7 @@ export class Config {
   // Base configuration
   readonly configDir: string
   readonly configFile: string
-  readonly DEBUG: boolean = Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
+  readonly DEBUG: boolean = false
 
   get repoDir(): string {
     return fs.path.join(this.configDir, 'repos')
@@ -33,10 +33,15 @@ export class Config {
     return fs.path.join(Deno.cwd(), 'shared')
   }
 
+  get project(): ProjectConfig {
+    return this._project
+  }
+
   private constructor() {
     this._llemonstack = new LLemonStackConfig()
     this.configDir = fs.path.join(Deno.cwd(), this._llemonstack.configDirBase)
     this.configFile = fs.path.join(this.configDir, 'config.json')
+    this.DEBUG = Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
   }
 
   public static getInstance(): Config {
@@ -65,6 +70,7 @@ export class Config {
     } else if (readResult.error instanceof Deno.errors.NotFound) {
       // File doesn't exist, populate with a template
       this._project = projectTemplate
+      result.addMessage('info', 'Project config file not found, creating from template')
       const saveResult = await this.save()
       if (!saveResult.success) {
         result.error = saveResult.error
@@ -72,7 +78,7 @@ export class Config {
       }
     } else {
       result.error = readResult.error
-      return failure(`Error loading project config file`, result)
+      return failure(`Error loading project config file: ${this.configFile}`, result)
     }
 
     this._initialized = true
