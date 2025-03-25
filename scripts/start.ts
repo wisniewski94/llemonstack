@@ -40,21 +40,8 @@ const DEBUG = config.DEBUG
  *******************************************************************************/
 
 /**
- * Filter out files that don't exist.
- *
- * @param files - The files to filter.
- * @returns The filtered files.
+ * Check if all prerequisites are installed
  */
-export function filterExistingFiles(files: string[]): string[] {
-  return files.filter((file) => {
-    const exists = fs.existsSync(file)
-    if (!exists) {
-      showInfo(`Skipping non-existent file: ${file}`)
-    }
-    return exists
-  })
-}
-
 export async function checkPrerequisites(): Promise<void> {
   // Commands will throw an error if the prerequisite is not installed
   await runCommand('docker --version')
