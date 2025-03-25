@@ -6,3 +6,6 @@ description: Minio is an open-source S3 compatible object storage server
 
 compose_file: docker-compose.yaml
 service_group: databases
+
+volumes:
+  - minio

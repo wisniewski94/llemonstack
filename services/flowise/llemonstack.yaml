@@ -6,3 +6,7 @@ description: Flowise is a visual programming tool for building AI workflows
 
 compose_file: docker-compose.yaml
 service_group: apps
+
+volumes:
+  - flowise/config
+  - flowise/uploads

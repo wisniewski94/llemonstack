@@ -67,12 +67,6 @@ export class Service {
   }
 
   get volumesSeeds(): { source: string; destination: string; from_repo?: true }[] {
-    if (!this._config.volumes_seeds) {
-      return []
-    }
-    return this._config.volumes_seeds.map((seed) => {
-      // todo check for from_repo flag
-      return { ...seed, source: path.join(this._dir, seed.source) }
-    })
+    return this._config.volumes_seeds ?? []
   }
 }

@@ -232,52 +232,62 @@ async function createRequiredVolumes({ silent = false }: { silent?: boolean } = 
   !silent && showInfo('Checking for required volumes...')
   DEBUG && showDebug(`Volumes base path: ${volumesPath}`)
 
-  const requiredVolumes = config.getRequiredVolumes()
+  const getRelativePath = (pathStr: string): string => {
+    return path.relative(Deno.cwd(), pathStr)
+  }
 
-  for (const volume of requiredVolumes) {
-    const volumePath = path.join(volumesPath, volume.volume)
-    try {
-      const fileInfo = await Deno.stat(volumePath)
-      if (fileInfo.isDirectory) {
-        DEBUG && showDebug(`✔️ ${volume.volume}`)
-      } else {
-        throw new Error(`Volume is not a directory: ${volumePath}`)
-      }
-    } catch (error) {
-      if (error instanceof Deno.errors.NotFound) {
-        await Deno.mkdir(volumePath, { recursive: true })
-        !silent && showInfo(`Created missing volume dir: ${volumePath}`)
-      } else {
-        throw error
-      }
-    }
-    if (volume.seed) {
-      for (const seed of volume.seed) {
-        const seedPath = path.join(volumePath, seed.destination)
-        try {
-          // Check if seedPath already exists before copying
-          const seedPathExists = await fs.exists(seedPath)
-          if (seedPathExists) {
-            DEBUG && showDebug(`Volume seed already exists: ${getRelativePath(seedPath)}`)
-            continue
-          }
-          await fs.copy(seed.source, seedPath, { overwrite: false })
-          !silent &&
-            showInfo(`Copied ${getRelativePath(seed.source)} to ${getRelativePath(seedPath)}`)
-        } catch (error) {
-          showError(
-            `Error copying seed: ${getRelativePath(seed.source)} to ${getRelativePath(seedPath)}`,
-            error,
-          )
+  const services = config.getServicesWithRequiredVolumes()
+
+  for (const service of services) {
+    // Create any required volume dirs
+    for (const volume of service.volumes) {
+      const volumePath = path.join(config.volumesDir, volume)
+      try {
+        const fileInfo = await Deno.stat(volumePath)
+        if (fileInfo.isDirectory) {
+          DEBUG && showDebug(`✔️ ${volume}`)
+        } else {
+          throw new Error(`Volume is not a directory: ${volumePath}`)
+        }
+      } catch (error) {
+        if (error instanceof Deno.errors.NotFound) {
+          await Deno.mkdir(volumePath, { recursive: true })
+          !silent && showInfo(`Created missing volume dir: ${volumePath}`)
+        } else {
+          throw error
         }
       }
     }
-  }
-  !silent && showInfo(`All required volumes exist`)
-}
 
-function getRelativePath(pathStr: string): string {
-  return path.relative(Deno.cwd(), pathStr)
+    // Copy any seed directories if needed
+    for (const seed of service.volumesSeeds) {
+      const seedPath = path.join(config.volumesDir, seed.destination)
+      try {
+        // Check if seedPath already exists before copying
+        const seedPathExists = await fs.exists(seedPath)
+        if (seedPathExists) {
+          DEBUG && showDebug(`Volume seed already exists: ${getRelativePath(seedPath)}`)
+          continue
+        }
+        let seedSource = seed.source
+        if (seed.from_repo && service.repoDir) {
+          seedSource = path.join(service.repoDir, seed.source)
+        } else {
+          throw new Error(`Volume seed requires repo to exist: ${seed.source}`)
+        }
+        await fs.copy(seedSource, seedPath, { overwrite: false })
+        !silent &&
+          showInfo(`Copied ${getRelativePath(seedSource)} to ${getRelativePath(seedPath)}`)
+      } catch (error) {
+        showError(
+          `Error copying seed: ${getRelativePath(seed.source)} to ${getRelativePath(seedPath)}`,
+          error,
+        )
+      }
+    }
+  }
+
+  !silent && showInfo(`All required volumes exist`)
 }
 
 /**
@@ -322,6 +332,7 @@ export function getProfilesArgs({
 }
 
 export const getOllamaProfile = config.getOllamaProfile
+console.log(`Ollama profile: ${getOllamaProfile()}`)
 
 export const getOllamaHost = config.getOllamaHost
 

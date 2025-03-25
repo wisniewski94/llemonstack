@@ -6,7 +6,6 @@ import { failure, success, TryCatchResult } from '../try-catch.ts'
 import { OllamaProfile, ProjectConfig, RequiredVolume, ServiceConfig } from '../types.d.ts'
 import { LLemonStackConfig } from './llemonstack.ts'
 import { Service } from './service.ts'
-import { REQUIRED_VOLUMES } from './services.config.ts'
 export class Config {
   private static instance: Config
   private _debug: boolean = false
@@ -385,23 +384,17 @@ export class Config {
     }).filter(Boolean) as Service[]
   }
 
-  public getRequiredVolumes(): RequiredVolume[] {
-    // TODO: iterate through enabled services to check service.volumes
-    return REQUIRED_VOLUMES.map((volume) => {
-      const seed = volume.seed?.map((seed) => {
-        if (typeof seed.source === 'function') {
-          seed.source = seed.source(this)
-        }
-        if (typeof seed.destination === 'function') {
-          seed.destination = seed.destination(this)
-        }
-        return seed
-      })
-      return {
-        ...volume,
-        seed,
-      } as RequiredVolume
+  public getServicesWithRequiredVolumes(): Service[] {
+    const services: Service[] = []
+    this.getAvailableServices().forEach((service) => {
+      if (
+        (service.volumes.length > 0 || service.volumesSeeds.length > 0) &&
+        this.isEnabled(service.service)
+      ) {
+        services.push(service)
+      }
     })
+    return services
   }
 
   // HACK: need a better way of handling Ollama profiles and host settings
