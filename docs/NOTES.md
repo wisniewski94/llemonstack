@@ -16,6 +16,16 @@ container logs in Docker Desktop.
 
 **Code:**
 
+- [x] Move ALL_COMPOSE_SERVICES to Config
+
+  - [x] Load from yaml''s from services/ dir then cache in config.json
+
+- [ ] Move enabled services from env vars to config.json
+
+- [x] Create helper function in logger lib for outputting TryCatchResult messages
+
+- [x] Test init script to make sure it's working with new Config lib
+
 - [ ] Replace fs.existsSync with Deno.stat
 
 - [ ] Create service lib
@@ -180,6 +190,7 @@ docker exec -it --user root n8n sh
 
 **Additional Services:**
 
+- https://github.com/langmanus/langmanus
 - https://github.com/danielmiessler/fabric
 - [MLFlow](https://github.com/mlflow/mlflow)
 - Observability services, see [OTEL.md](OTEL.md)
