@@ -120,6 +120,8 @@ export class Config {
     this._llemonstack = new LLemonStackConfig()
     this.configDir = fs.path.join(Deno.cwd(), this._llemonstack.configDirBase)
     this.configFile = fs.path.join(this.configDir, 'config.json')
+    this.DEBUG = `${Deno.env.get('LLEMONSTACK_DEBUG')} ${Deno.env.get('DEBUG')}`.toLowerCase()
+      .includes('true')
   }
 
   public static getInstance(): Config {
@@ -168,7 +170,11 @@ export class Config {
     // Load .env file
     await this.loadEnv()
 
-    this.DEBUG = Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
+    // Update DEBUG flag from env vars if not already enabled
+    if (!this.DEBUG) {
+      this.DEBUG = `${this._env.LLEMONSTACK_DEBUG} ${this._env.DEBUG}`.toLowerCase()
+        .includes('true')
+    }
 
     // Load services from services Directory
     const servicesResult = await this.loadServices()

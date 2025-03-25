@@ -14,7 +14,7 @@ import { DEFAULT_PROJECT_NAME, start } from './scripts/start.ts'
 
 const config = Config.getInstance()
 const result = await config.initialize()
-showLogMessages(result.messages)
+showLogMessages(result.messages, { debug: config.DEBUG })
 if (!result.success) {
   showError('Error initializing config', result.error)
   Deno.exit(1)

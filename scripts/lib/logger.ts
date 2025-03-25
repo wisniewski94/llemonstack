@@ -101,6 +101,7 @@ export function showInfo(message: string): void {
 
 export function showLogMessages(
   messages: LogMessage[],
+  { debug = false }: { debug?: boolean } = {},
 ): void {
   messages.forEach((message) => {
     switch (message.level) {
@@ -111,9 +112,11 @@ export function showLogMessages(
         showWarning(message.message)
         break
       case 'debug':
-        message.args !== undefined
-          ? showDebug(message.message, message.args)
-          : showDebug(message.message)
+        if (debug) {
+          message.args !== undefined
+            ? showDebug(message.message, message.args)
+            : showDebug(message.message)
+        }
         break
       default:
       case 'info':

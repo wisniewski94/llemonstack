@@ -10,7 +10,7 @@ Deno.test('Config', async (t) => {
   await t.step('setup', () => {
     // Prevent tests from saving config files to disk
     // @ts-ignore - accessing private method for testing
-    saveStub = stub(Config.prototype, 'save', () => {
+    saveStub = stub(Config.prototype, 'saveConfig', () => {
       // console.log('saveStub called')
       return {
         data: true,
@@ -74,7 +74,7 @@ Deno.test('Config', async (t) => {
     assertExists(result.error, 'Error should exist')
   })
 
-  await t.step('DEBUG flag', () => {
+  await t.step('LLEMONSTACK_DEBUG flag', () => {
     Deno.env.set('LLEMONSTACK_DEBUG', 'true')
     // @ts-ignore - temporarily override for testing
     delete Config.instance
@@ -82,6 +82,20 @@ Deno.test('Config', async (t) => {
     assertEquals(instance1.DEBUG, true)
 
     Deno.env.delete('LLEMONSTACK_DEBUG')
+    // @ts-ignore - temporarily override for testing
+    delete Config.instance
+    const instance2 = Config.getInstance()
+    assertEquals(instance2.DEBUG, false)
+  })
+
+  await t.step('DEBUG flag', () => {
+    Deno.env.set('DEBUG', 'true')
+    // @ts-ignore - temporarily override for testing
+    delete Config.instance
+    const instance1 = Config.getInstance()
+    assertEquals(instance1.DEBUG, true)
+
+    Deno.env.delete('DEBUG')
     // @ts-ignore - temporarily override for testing
     delete Config.instance
     const instance2 = Config.getInstance()
