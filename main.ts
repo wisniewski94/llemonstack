@@ -48,6 +48,15 @@ const main = new Command()
 
 // Initialize the LLemonStack environment
 main
+  .command('config')
+  .description('Configure the stack services')
+  .action(async (options) => {
+    const { configure } = await import('./scripts/configure.ts')
+    await configure(options.project || DEFAULT_PROJECT_NAME)
+  })
+
+// Initialize the LLemonStack environment
+main
   .command('init')
   .description('Initialize the LLemonStack environment')
   .action(async (options) => {
