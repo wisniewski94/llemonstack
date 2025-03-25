@@ -14,12 +14,10 @@ export function confirm(message: string, defaultAnswer: boolean = false): boolea
 }
 
 export function showDebug(message: string, ...args: unknown[]): void {
-  if (Config.getInstance().DEBUG) {
-    showInfo(`[DEBUG] ${message}`)
-    args?.length && args.forEach((arg) => {
-      showInfo(`  ${typeof arg === 'object' ? JSON.stringify(arg) : arg}`)
-    })
-  }
+  showInfo(`[DEBUG] ${message}`)
+  args?.length && args.forEach((arg) => {
+    showInfo(`  ${typeof arg === 'object' ? JSON.stringify(arg) : arg}`)
+  })
 }
 
 // Shows magenta text, prompting user to take an action later on
@@ -96,7 +94,9 @@ export function showInfo(message: string): void {
   console.log(`${colors.gray(message)}`)
 }
 
-export function showMessages(messages: LogMessage[]): void {
+export function showLogMessages(
+  messages: LogMessage[],
+): void {
   messages.forEach((message) => {
     switch (message.level) {
       case 'error':
@@ -106,11 +106,9 @@ export function showMessages(messages: LogMessage[]): void {
         showWarning(message.message)
         break
       case 'debug':
-        if (Config.getInstance().DEBUG) {
-          message.args !== undefined
-            ? showDebug(message.message, message.args)
-            : showDebug(message.message)
-        }
+        message.args !== undefined
+          ? showDebug(message.message, message.args)
+          : showDebug(message.message)
         break
       default:
       case 'info':
