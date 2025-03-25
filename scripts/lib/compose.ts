@@ -38,7 +38,6 @@ export async function getImagesFromComposeYaml(
 
   try {
     // Read the compose file
-    // const fileContents = await Deno.readTextFile(composeFile)
     const fileContents = await Deno.readTextFile(composeFile)
     const composeConfig = yaml.parse(fileContents) as ComposeConfig
     const serviceImages: ServiceImage[] = []

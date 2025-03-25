@@ -20,7 +20,7 @@ import {
   showUserAction,
   showWarning,
 } from './lib/logger.ts'
-import { EnvVars } from './lib/types.d.ts'
+import { EnvVars, RepoService } from './lib/types.d.ts'
 
 const config = Config.getInstance()
 await config.initialize()
@@ -54,46 +54,45 @@ export async function checkPrerequisites(): Promise<void> {
  * Clone a service repo into repo dir
  */
 async function setupRepo(
-  service: string,
-  repoUrl: string,
-  repoDir: string,
+  serviceName: string,
+  repoConfig: RepoService,
   {
-    sparseDir,
-    sparse = true,
     pull = false, // Pull latest changes from remote
-    checkFile,
     silent = false,
   }: {
-    sparseDir?: string | string[]
-    sparse?: boolean
     pull?: boolean
-    checkFile?: string
     silent?: boolean
   } = {},
 ): Promise<void> {
-  const dir = config.serviceRepoPath(service, repoDir)
-  if (sparseDir) {
-    sparse = true
+  const dir = config.getService(serviceName)?.repoDir
+  if (!dir) {
+    throw new Error(`Repo dir not found for ${serviceName}`)
+  }
+  if (repoConfig.sparseDir) {
+    repoConfig.sparse = true
   }
   if (DEBUG) {
     silent = false
   }
 
-  DEBUG && showDebug(`Cloning ${service} repo: ${repoUrl}${sparse ? ' [sparse]' : ''}`)
+  DEBUG &&
+    showDebug(
+      `Cloning ${serviceName} repo: ${repoConfig.url}${repoConfig.sparse ? ' [sparse]' : ''}`,
+    )
   if (!fs.existsSync(dir)) {
     await runCommand('git', {
       args: [
         '-C',
         escapePath(config.repoDir),
         'clone',
-        sparse && '--filter=blob:none',
-        sparse && '--no-checkout',
-        repoUrl,
-        repoDir,
+        repoConfig.sparse && '--filter=blob:none',
+        repoConfig.sparse && '--no-checkout',
+        repoConfig.url,
+        repoConfig.dir,
       ],
     })
 
-    if (sparse) {
+    if (repoConfig.sparse) {
       await runCommand('git', {
         args: [
           '-C',
@@ -103,8 +102,10 @@ async function setupRepo(
           '--cone',
         ],
       })
-      if (sparseDir) {
-        const sparseDirs = Array.isArray(sparseDir) ? sparseDir : [sparseDir]
+      if (repoConfig.sparseDir) {
+        const sparseDirs = Array.isArray(repoConfig.sparseDir)
+          ? repoConfig.sparseDir
+          : [repoConfig.sparseDir]
         await runCommand('git', {
           args: [
             '-C',
@@ -125,7 +126,7 @@ async function setupRepo(
     }
   } else {
     if (pull) {
-      !silent && showInfo(`${service} repo exists, pulling latest code...`)
+      !silent && showInfo(`${serviceName} repo exists, pulling latest code...`)
       await runCommand('git', {
         args: [
           '-C',
@@ -135,16 +136,17 @@ async function setupRepo(
       })
     }
     // Check if the required file exists in the repo
-    if (checkFile) {
-      const checkFilePath = path.join(dir, checkFile)
+    if (repoConfig.checkFile) {
+      const checkFilePath = path.join(dir, repoConfig.checkFile)
       if (!await fs.exists(checkFilePath)) {
-        const errMsg = `Required file ${checkFile} not found in ${service} directory: ${dir}`
+        const errMsg =
+          `Required file ${repoConfig.checkFile} not found in ${serviceName} directory: ${dir}`
         showWarning(errMsg)
         showUserAction(`Please check the repository structure and try again.`)
         throw new Error(errMsg)
       }
     }
-    !silent && showInfo(`✔️ ${service} repo is ready`)
+    !silent && showInfo(`✔️ ${serviceName} repo is ready`)
   }
 }
 
@@ -172,12 +174,13 @@ export async function setupRepos({
 
   // Setup all repos in parallel
   await Promise.all(
-    Object.entries(config.getReposConfig())
-      .map(([service, { url, dir, sparseDir, sparse, checkFile }]) => {
-        if (!all && !config.isEnabled(service)) {
+    config.getServicesWithRepos()
+      .map((service) => {
+        if (!all && !config.isEnabled(service.service)) {
           return false
         }
-        return setupRepo(service, url, dir, { sparseDir, sparse, pull, checkFile, silent })
+        return service.repoConfig &&
+          setupRepo(service.service, service.repoConfig, { pull, silent })
       })
       .filter(Boolean),
   )
@@ -192,7 +195,11 @@ export async function prepareSupabaseEnv(
 ): Promise<void> {
   // Check if the supabase repo directory exists
   // It contains the root docker-compose.yaml file to start supabase services
-  const supabaseRepoDir = config.serviceRepoPath('supabase')
+  const supabaseRepoDir = config.getService('supabase')?.repoDir
+  if (!supabaseRepoDir) {
+    showError('Supabase repo dir is misconfigured')
+    Deno.exit(1)
+  }
   if (!fs.existsSync(supabaseRepoDir)) {
     // Try to fix the issue by cloning all the repos
     !silent && showInfo(`Supabase repo not found: ${supabaseRepoDir}`)
@@ -563,7 +570,7 @@ export async function start(
       for (const [groupName, groupServices] of config.getServiceGroups()) {
         const enabledGroupServices = groupServices.filter((service) =>
           config.isEnabled(service) &&
-          config.getComposeServices().find(([s, _, autoRun]) => s === service && autoRun)
+          !config.getService(service)?.customStart
         )
         if (enabledGroupServices.length > 0) {
           showAction(`\nStarting ${groupName} services...`)

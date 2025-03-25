@@ -1,39 +1,78 @@
 import { path } from '../fs.ts'
-import { LLemonStackConfig } from './llemonstack.ts'
+import { RepoService, ServiceConfig } from '../types.d.ts'
 
-export class ServiceConfig {
-  private _name: string
+export class Service {
+  public name: string // Human readable name
+  public service: string // Service name
+  public description: string // Service description
+
   private _dir: string
-  private _enabled: boolean
+  private _config: ServiceConfig
+  private _enabled: boolean = false
   private _composeFile: string
+  private _repoDir: string | null = null
 
   constructor(
-    { name, dir, enabled, composeFile }: {
-      name: string
+    { config, dir, enabled, repoBaseDir }: {
+      config: ServiceConfig
       dir: string
-      enabled: boolean
-      composeFile: string
+      enabled?: boolean
+      repoBaseDir: string
     },
   ) {
-    this._name = name
-    this._enabled = enabled
+    this.name = config.name
+    this.service = config.service
+    this.description = config.description
+    this._enabled = enabled ?? false
+    this._config = config
     this._dir = dir
-    this._composeFile = path.join(this._dir, composeFile)
-  }
-
-  public async initialize(_llemonstackConfig: LLemonStackConfig): Promise<void> {
-    // this._dir = await getAbsoluteServiceDir(this._dir, { llemonstackConfig, name: this._name })
-    // TODO: each service should initialize..
-    // - repo dir
-    // - configure .env file
-    // - setup required volumes
+    this._composeFile = path.join(this._dir, config.compose_file)
+    this._repoDir = config.repo?.dir ? path.join(repoBaseDir, config.repo?.dir) : null
   }
 
   get composeFile(): string {
-    return path.join(this._dir, this._composeFile)
+    return this._composeFile
   }
 
-  isEnabled(): boolean {
+  get enabled(): boolean {
     return this._enabled
+  }
+
+  set enabled(enabled: boolean) {
+    this._enabled = enabled
+  }
+
+  get config(): ServiceConfig {
+    return this._config
+  }
+
+  get repoConfig(): RepoService | null {
+    return this._config.repo ?? null
+  }
+
+  get repoDir(): string | null {
+    return this._repoDir
+  }
+
+  get customStart(): boolean {
+    return this._config.custom_start ?? false
+  }
+
+  get serviceGroup(): string {
+    return this._config.service_group ?? ''
+  }
+
+  get volumes(): string[] {
+    return this._config.volumes ?? []
+  }
+
+  get volumesSeeds(): { source: string; destination: string; from_repo?: true }[] {
+    if (!this._config.volumes_seeds) {
+      return []
+    }
+    return this._config.volumes_seeds.map((seed) => {
+      // todo check for from_repo flag
+      return { ...seed, source: path.join(this._dir, seed.source) }
+    })
   }
 }

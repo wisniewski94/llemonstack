@@ -34,27 +34,27 @@ const DOCKER_CLEANUP_COMMANDS = [
 async function dockerComposeCleanup(
   projectName: string,
 ): Promise<void> {
-  const services = config.getComposeServices()
+  const services = config.getAvailableServices()
 
   // Make sure repos exist before running docker compose cleanup
   await setupRepos({ all: true })
 
   // Iterate through each compose file and run the down command individually
   // This catches any errors with compose files that extend a non-existent file.
-  for (const [service, composeFile] of services) {
+  for (const service of services) {
     try {
-      if (!composeFile || !fs.existsSync(composeFile)) {
-        showInfo(`Skip ${service} teardown, compose file not found: ${composeFile}`)
+      if (!service.composeFile || !fs.existsSync(service.composeFile)) {
+        showInfo(`Skip ${service} teardown, compose file not found: ${service.composeFile}`)
         continue
       }
       await runDockerComposeCommand('down', {
         projectName,
-        composeFile,
+        composeFile: service.composeFile,
         profiles: getProfilesArgs({ all: true }),
         args: ['--rmi', 'all', '--volumes', '--remove-orphans'],
       })
     } catch (error) {
-      showError(`Error downing ${composeFile}: ${error}`)
+      showError(`Error downing ${service.service}: ${error}`)
     }
   }
 }

@@ -18,7 +18,7 @@ export async function schema(projectName: string, action: string, service: strin
   }
 
   // Make sure it's a valid service
-  if (!config.getComposeService(service)) {
+  if (!config.getService(service)) {
     showWarning(`Unknown service name: ${service}`)
     if (!confirm(`Continue anyway?`)) {
       Deno.exit(1)

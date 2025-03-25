@@ -3,34 +3,28 @@ import projectTemplate from '../../../config/config.0.2.0.json' with { type: 'js
 import { loadEnv } from '../env.ts'
 import * as fs from '../fs.ts'
 import { failure, success, TryCatchResult } from '../try-catch.ts'
-import {
-  ComposeService,
-  OllamaProfile,
-  ProjectConfig,
-  RepoService,
-  RequiredVolume,
-} from '../types.d.ts'
+import { OllamaProfile, ProjectConfig, RequiredVolume, ServiceConfig } from '../types.d.ts'
 import { LLemonStackConfig } from './llemonstack.ts'
-import { ServiceConfig } from './service.ts'
-import {
-  ALL_COMPOSE_SERVICES,
-  REPO_SERVICES,
-  REQUIRED_VOLUMES,
-  SERVICE_GROUPS,
-} from './services.config.ts'
-
+import { Service } from './service.ts'
+import { REQUIRED_VOLUMES } from './services.config.ts'
 export class Config {
   private static instance: Config
+  private _debug: boolean = false
   private _llemonstack: LLemonStackConfig
   private _project: ProjectConfig = projectTemplate
-  private _services: Record<string, ServiceConfig> = {}
+  private _services: Record<string, Service> = {}
+  private _serviceConfigFile: string = 'llemonstack.yaml'
   private _env: Record<string, string> = {}
-  private _composeServices: ComposeService[] = [] // Cached compose services with absolute paths
+  private _requiredVolumes: RequiredVolume[] = []
   private _initializeResult: TryCatchResult<Config, Error> = new TryCatchResult<Config, Error>({
     data: this,
     error: new Error('Config not initialized'),
     success: false,
   })
+  private _serviceGroups: [string, string[]][] = [['databases', []], ['middleware', []], [
+    'apps',
+    [],
+  ]]
 
   // Base configuration
   readonly configDir: string
@@ -38,7 +32,11 @@ export class Config {
   readonly defaultProjectName: string = 'llemonstack'
 
   get DEBUG(): boolean {
-    return Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
+    return this._debug
+  }
+
+  set DEBUG(value: boolean) {
+    this._debug = value
   }
 
   get projectName(): string {
@@ -161,11 +159,21 @@ export class Config {
       result.error = readResult.error
     }
 
+    // Check if project config is valid
     if (!this.isValidProjectConfig()) {
       this.updateProjectConfig(projectTemplate)
       result.addMessage('info', 'Project config file is invalid, updating from template')
       updated = true
     }
+
+    // Load .env file
+    await this.loadEnv()
+
+    this.DEBUG = Deno.env.get('LLEMONSTACK_DEBUG')?.toLowerCase() === 'true'
+
+    // Load services from services Directory
+    const servicesResult = await this.loadServices()
+    result.messages.push(...servicesResult.messages)
 
     if (updated) {
       const saveResult = await this.saveConfig()
@@ -179,10 +187,7 @@ export class Config {
       }
     }
 
-    // Load .env file
-    await this.loadEnv()
-
-    result.addMessage('debug', 'INITIALIZING CONFIG: this should only appear once')
+    result.addMessage('debug', 'INITIALIZED CONFIG: this log message should only appear once')
 
     if (!result.success) {
       return failure(`Error loading project config file: ${this.configFile}`, result)
@@ -191,6 +196,79 @@ export class Config {
     // Cache the initialized result so scripts can process messages
     this._initializeResult = result
 
+    return result
+  }
+
+  /**
+   * Load services from services directory
+   * @returns {Promise<TryCatchResult<Record<string, Service>>>}
+   */
+  public async loadServices(): Promise<TryCatchResult<Record<string, Service>>> {
+    const result = new TryCatchResult<Record<string, Service>>({
+      data: {},
+      error: null,
+      success: true,
+    })
+
+    // Get list of services in services directory
+    const servicesDirResult = await fs.readDir(this.servicesDir)
+    if (servicesDirResult.error || !servicesDirResult.data) {
+      return failure<Record<string, Service>>(
+        'Error reading services directory',
+        {
+          data: null,
+          error: servicesDirResult.error || new Error('Empty directory'),
+          success: false,
+        },
+      )
+    }
+
+    // Load services from services directory
+    for await (const serviceDir of servicesDirResult.data) {
+      if (!serviceDir.isDirectory) {
+        continue
+      }
+      const yamlFilePath = fs.path.join(this.servicesDir, serviceDir.name, this._serviceConfigFile)
+      if (!(await fs.fileExists(yamlFilePath)).data) {
+        result.addMessage('debug', `Service config file not found: ${serviceDir.name}`)
+        continue
+      }
+      const yamlResult = await fs.readYaml<ServiceConfig>(
+        yamlFilePath,
+      )
+      if (!yamlResult.success || !yamlResult.data) {
+        result.addMessage('error', `Error reading service config file: ${serviceDir.name}`, {
+          error: yamlResult.error,
+        })
+        continue
+      }
+
+      const serviceConfig = yamlResult.data
+
+      if (serviceConfig.disabled) {
+        result.addMessage('debug', `Service ${serviceConfig.service} is disabled, skipping`)
+        continue
+      } else {
+        result.addMessage(
+          'debug',
+          `${serviceConfig.name} service config successfully loaded into ${serviceConfig.service_group} group`,
+        )
+      }
+      this._services[serviceConfig.service] = new Service({
+        config: serviceConfig,
+        dir: fs.path.join(this.servicesDir, serviceConfig.service),
+        enabled: this.isEnabled(serviceConfig.service),
+        repoBaseDir: this.repoDir,
+      })
+      // Add service to service group
+      if (!this._serviceGroups.find((group) => group[0] === serviceConfig.service_group)) {
+        this._serviceGroups.push([serviceConfig.service_group, [serviceConfig.service]])
+      } else {
+        this._serviceGroups.find((group) => group[0] === serviceConfig.service_group)?.[1].push(
+          serviceConfig.service,
+        )
+      }
+    }
     return result
   }
 
@@ -260,25 +338,24 @@ export class Config {
     return (value && value.trim().toLowerCase() === 'true') as boolean
   }
 
-  public getComposeServices(): ComposeService[] {
-    if (this._composeServices.length === 0) {
-      // Cache the compose services with absolute paths
-      return this._composeServices = ALL_COMPOSE_SERVICES.map(
-        (service) => {
-          service[1] = fs.path.join(this.servicesDir, service[1])
-          return service
-        },
-      )
-    }
-    return this._composeServices
+  public getServices(): Record<string, Service> {
+    return this._services
   }
 
-  public getComposeService(service: string): ComposeService | null {
-    return this.getComposeServices().find(([s]) => s === service) || null
+  public getAvailableServices(): Service[] {
+    return Object.values(this._services)
+  }
+
+  public getEnabledServices(): Service[] {
+    return this.getAvailableServices().filter((service) => this.isEnabled(service.service))
+  }
+
+  public getService(service: string): Service | null {
+    return this._services[service] || null
   }
 
   public getServiceGroups(): [string, string[]][] {
-    return SERVICE_GROUPS
+    return this._serviceGroups
   }
 
   /**
@@ -290,26 +367,26 @@ export class Config {
    * @returns {string[]}
    */
   public getComposeFiles({ all = false }: { all?: boolean } = {}): string[] {
-    return this.getComposeServices().map(
-      ([service, file]) => {
-        if (!all && !this.isEnabled(service)) {
-          return false
-        }
-        return file
+    return this.getAvailableServices().map(
+      (service) => {
+        return (!all && !this.isEnabled(service.service)) ? false : service.composeFile
       },
     )
       .filter((value, index, self) => value && self.indexOf(value) === index) as string[]
   }
 
   public getComposeFile(service: string): string | null {
-    return this.getComposeService(service)?.[1] || null
+    return this.getService(service)?.composeFile || null
   }
 
-  public getReposConfig(): Record<string, RepoService> {
-    return REPO_SERVICES
+  public getServicesWithRepos(): Service[] {
+    return Object.values(this._services).map((service) => {
+      return (service.repoConfig) ? service : false
+    }).filter(Boolean) as Service[]
   }
 
   public getRequiredVolumes(): RequiredVolume[] {
+    // TODO: iterate through enabled services to check service.volumes
     return REQUIRED_VOLUMES.map((volume) => {
       const seed = volume.seed?.map((seed) => {
         if (typeof seed.source === 'function') {
@@ -347,6 +424,7 @@ export class Config {
    * @param repoDir - Repo directory, can include subdirectories
    * @returns The path to the service's repo
    */
+  // TODO: Remove this once services are migrated to services directory
   public serviceRepoPath(service: string, repoDir?: string): string {
     // service is for future use if/when repos are migrated to services directory
     // repoDir could be a different name thant the service

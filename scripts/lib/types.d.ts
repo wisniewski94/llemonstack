@@ -3,7 +3,10 @@ import {
   RunCommandOutput as RunCommandOutputClass,
 } from './command.ts'
 import { Config } from './config/config.ts'
-interface ProjectConfig {
+
+export type { Service } from './config/service.ts'
+
+export interface ProjectConfig {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty
   version: string // Version of LLemonStack used to create the config
   projectName: string
@@ -19,9 +22,9 @@ interface ProjectConfig {
   }
 }
 
-type EnvVars = Record<string, string | boolean | number>
+export type EnvVars = Record<string, string | boolean | number>
 
-interface CommandOutput {
+export interface CommandOutput {
   stdout: string
   stderr: string
   code: number
@@ -29,11 +32,11 @@ interface CommandOutput {
   signal?: Deno.Signal | null
 }
 
-type RunCommandOutput = InstanceType<typeof RunCommandOutputClass>
+export type RunCommandOutput = InstanceType<typeof RunCommandOutputClass>
 
-type CommandError = InstanceType<typeof CommandErrorClass>
+export type CommandError = InstanceType<typeof CommandErrorClass>
 
-interface RunCommandOptions {
+export interface RunCommandOptions {
   args?: Array<string | false>
   silent?: boolean
   captureOutput?: boolean
@@ -42,22 +45,22 @@ interface RunCommandOptions {
   debug?: boolean
 }
 
-type OllamaProfile =
+export type OllamaProfile =
   | 'ollama-cpu'
   | 'ollama-gpu-amd'
   | 'ollama-gpu-nvidia'
   | 'ollama-host'
   | 'ollama-false'
 
-interface RepoService {
+export interface RepoService {
   url: string // URL of the repo
   dir: string // Name of repo dir to use in the repos folder
   sparseDir?: string | string[] // Directory to sparse clone into
-  sparse?: boolean // Whether to sparse clone
+  sparse: boolean // Whether to sparse clone
   checkFile?: string // File to check for existence to determine if repo is ready
 }
 
-interface ServiceImage {
+export interface ServiceImage {
   service: string
   containerName: string
   image: string
@@ -66,8 +69,26 @@ interface ServiceImage {
   imageName?: string // The name of the image without the version
 }
 
+export interface ServiceConfig {
+  service: string // The name of the service
+  name: string // Friendly name of the service to show to users
+  description: string // The description of the service
+  disabled: boolean // If true, service is not loaded
+  compose_file: string // The path to the docker-compose.yaml file
+  service_group: string // The group of services that the service belongs to
+  custom_start: boolean // Whether the service should start automatically
+  depends_on?: Record<string, { condition: string }> // The services that the service depends on
+  repo?: RepoService // The repo to use for the service
+  volumes?: string[] // The volumes to use for the service
+  volumes_seeds?: {
+    source: string
+    destination: string
+    from_repo?: true
+  }[]
+}
+
 // Define the type for the Docker Compose configuration
-interface ComposeConfig {
+export interface ComposeConfig {
   include?: string | string[] | { path: string }[]
   services?: {
     [key: string]: {
@@ -86,16 +107,16 @@ interface ComposeConfig {
   }
 }
 
-type ComposeService = [string, string, boolean]
+export type ComposeService = [string, string, boolean]
 
-type RequiredVolumeConfig = {
+export type RequiredVolumeConfig = {
   volume: string
   seed?: {
     source: string | ((config: Config) => string)
     destination: string | ((config: Config) => string)
   }[]
 }[]
-type RequiredVolume = {
+export type RequiredVolume = {
   volume: string
   seed?: {
     source: string

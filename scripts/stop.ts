@@ -12,8 +12,8 @@ import {
   runDockerCommand,
   runDockerComposeCommand,
 } from './lib/docker.ts'
-import { showAction, showError, showInfo } from './lib/logger.ts'
-import { ComposeService } from './lib/types.d.ts'
+import { colors, RowType, showAction, showError, showInfo, showTable } from './lib/logger.ts'
+import { Service } from './lib/types.d.ts'
 import { DEFAULT_PROJECT_NAME, prepareEnv, setupRepos } from './start.ts'
 
 const config = Config.getInstance()
@@ -42,14 +42,25 @@ async function removeAllNetworks(projectName: string): Promise<void> {
   }
 }
 
+/**
+ * Stop all services in parallel
+ * @param projectName - The name of the project
+ * @param services - The services names to stop
+ * @param all - Whether to stop all services
+ */
 async function stopServices(
   projectName: string,
-  composeServices: ComposeService[],
+  services: (Service | string)[],
   { all = false }: { all?: boolean } = {},
 ): Promise<void> {
+  // Get service names from Service objects
+  const serviceNames = services.map((_service) =>
+    typeof _service === 'object' ? _service.service : _service
+  )
+
   // Stop all services in parallel
-  await Promise.all(composeServices.map(async ([service]) => {
-    await stopService(projectName, service)
+  await Promise.all(serviceNames.map(async (serviceName) => {
+    await stopService(projectName, serviceName)
   }))
 
   // Return early if not stopping all services
@@ -113,27 +124,30 @@ export async function stopService(
 
 export async function stop(
   projectName: string,
-  { all = false, service }: { all?: boolean; service?: string } = {},
+  { all = false, service: serviceName }: { all?: boolean; service?: string } = {},
 ): Promise<void> {
   let stopAll = all
-  let composeService: ComposeService | undefined
-  if (service) {
+
+  const service = serviceName ? config.getService(serviceName) : undefined
+
+  if (serviceName && !service) {
     stopAll = false
-    composeService = service && config.getComposeService(service) || undefined
-    if (!composeService) {
-      showError(`Unknown service: ${service}`)
-      showAction('\nAvailable services:')
-      config.getComposeServices().forEach(([service]) => {
-        if (config.isEnabled(service)) {
-          showInfo(`- ${service}`)
+    if (!service) {
+      showError(`Unknown service: '${serviceName}'`)
+      showAction('\nAvailable services:\n')
+      const rows = config.getAvailableServices().map((_service) => {
+        if (_service && config.isEnabled(name)) {
+          return [colors.green(_service.service), _service.description]
         }
-      })
+        return false
+      }).filter(Boolean) as RowType[]
+      showTable(['Service', 'Description'], rows, 100)
       Deno.exit(1)
     }
   }
 
-  if (service) {
-    showAction(`Stopping service: ${service}...`)
+  if (serviceName) {
+    showAction(`Stopping service: ${serviceName}...`)
   } else if (stopAll) {
     showAction('Stopping all services...')
   } else {
@@ -149,12 +163,10 @@ export async function stop(
     showError('Unable to setup repos, docker compose down may fail', error)
   }
 
-  if (service) {
-    await stopService(projectName, service)
+  if (serviceName) {
+    await stopService(projectName, serviceName)
   } else {
-    const services = config.getComposeServices().filter(([service]) => {
-      return stopAll || config.isEnabled(service)
-    })
+    const services = stopAll ? config.getAvailableServices() : config.getEnabledServices()
     await stopServices(projectName, services, { all: stopAll })
   }
 
