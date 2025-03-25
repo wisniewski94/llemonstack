@@ -1,3 +1,8 @@
+version: 0.2.0 # Config file version
+
 service: clickhouse
+name: ClickHouse
+description: ClickHouse is a fast, scalable, and easy-to-use open-source analytics database
 
 compose_file: docker-compose.yaml
+service_group: databases

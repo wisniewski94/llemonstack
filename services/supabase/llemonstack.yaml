@@ -1,3 +1,31 @@
+version: 0.2.0 # Config file version
+
 service: supabase
+name: Supabase
+description: Supabase is an open-source Firebase alternative that provides a postgres database
 
 compose_file: docker-compose.yaml
+service_group: databases
+
+provides:
+  postgres: supabase-db # Name of the container
+
+repo:
+  url: https://github.com/supabase/supabase.git
+  dir: supabase
+  sparse: true
+  sparseDir: docker
+  checkFile: docker/docker-compose.yml
+
+volumes:
+  - supabase/functions
+  - supabase/db/data
+  - supabase/storage
+
+volumes_seeds:
+  - source: docker/volumes/functions/main
+    destination: supabase/functions/main
+    from_repo: true
+  - source: docker/volumes/functions/hello
+    destination: supabase/functions/hello
+    from_repo: true

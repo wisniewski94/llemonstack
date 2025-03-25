@@ -1,3 +1,19 @@
+version: 0.2.0 # Config file version
+
 service: zep
+name: Zep
+description: Zep is an open-source memory store for AI agent
 
 compose_file: docker-compose.yaml
+service_group: middleware
+auto_start: true
+
+# depends_on:
+#   postgres:
+#     condition: service_healthy
+
+repo:
+  url: https://github.com/getzep/zep.git
+  dir: zep
+  sparse: true
+  checkFile: docker-compose.ce.yaml

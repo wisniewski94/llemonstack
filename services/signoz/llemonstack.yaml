@@ -1,3 +1,20 @@
+version: 0.2.0 # Config file version
+disabled: true
+
 service: signoz
+name: Signoz
+description: Signoz is an open-source observability platform
 
 compose_file: docker-compose.yaml
+service_group: middleware
+
+# depends_on:
+#   postgres:
+#     condition: service_healthy
+
+repo:
+  url: https://github.com/SigNoz/signoz.git
+  dir: signoz
+  sparse: true
+  sparseDir: deploy
+  checkFile: docker-compose.yml

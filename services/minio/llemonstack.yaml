@@ -1,3 +1,8 @@
+version: 0.2.0 # Config file version
+
 service: minio
+name: Minio
+description: Minio is an open-source S3 compatible object storage server
 
 compose_file: docker-compose.yaml
+service_group: databases

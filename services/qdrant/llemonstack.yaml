@@ -1,3 +1,8 @@
+version: 0.2.0 # Config file version
+
 service: qdrant
+name: Qdrant
+description: Qdrant is a vector database
 
 compose_file: docker-compose.yaml
+service_group: databases

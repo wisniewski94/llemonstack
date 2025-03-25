@@ -1,3 +1,9 @@
+version: 0.2.0 # Config file version
+
 service: openwebui
+name: OpenWebUI
+description: OpenWebUI is a web-based UI for chatting with AI agents
 
 compose_file: docker-compose.yaml
+service_group: apps
+auto_start: true

@@ -1,3 +1,8 @@
+version: 0.2.0 # Config file version
+
 service: flowise
+name: Flowise
+description: Flowise is a visual programming tool for building AI workflows
 
 compose_file: docker-compose.yaml
+service_group: apps

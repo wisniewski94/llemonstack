@@ -1,0 +1,13 @@
+version: 0.2.0 # Config file version
+disabled: true # Don't load this service, it's not ready
+
+service: pgbackup
+name: PGBackup
+description: PGBackup is a tool for backing up PostgreSQL databases
+
+compose_file: docker-compose.yaml
+service_group: apps
+
+depends_on:
+  postgres:
+    condition: service_healthy

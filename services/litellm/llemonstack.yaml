@@ -1,41 +1,47 @@
+version: 0.2.0 # Config file version
+
 service: litellm
+name: Litellm
+description: Litellm is a proxy for monitoring LLMs & managing API keys
 
 compose_file: docker-compose.yaml
-
-# TODO: finish fleshing out this spec and implement
-install:
-  - action: generateEnv
-    params:
-      LITELLM_MASTER_KEY:
-        generator: secretKey
-        params: 32
-      LITELLM_UI_PASSWORD:
-        generator: secretKey
-        params: 16
-      LITELLM_SALT_KEY:
-        generator: random
-        params: [32, 'base64']
-      LITELLM_LOG_LEVEL: INFO
-      LITELLM_POSTGRES_USER: ''
-      LITELLM_POSTGRES_PASSWORD: ''
-      LITELLM_POSTGRES_SCHEMA: ''
-
-  # Array of actions to run when the service is initialized
-  - action: createPostgreSchema
-    params:
-      user: LITELLM_POSTGRES_USER
-      password: LITELLM_POSTGRES_PASSWORD
-      schema: LITELLM_POSTGRES_SCHEMA
-      pooler: true # Connect to the pooler service, include tenant ID in username
-
-uninstall:
-  - postgres_delete_schema:
-    schema: LITELLM_POSTGRES_SCHEMA
-
-# Get the version of litellm installed in the container
-version:
-  cmd: ['sh', '-c', 'litellm -v | grep -o "[0-9\.]\\+"']
+service_group: middleware
 
 depends_on:
   postgres:
     condition: service_healthy
+
+# actions:
+#   # TODO: finish fleshing out this spec and implement
+#   install:
+#     - action: generateEnv
+#       params:
+#         LITELLM_MASTER_KEY:
+#           generator: secretKey
+#           params: 32
+#         LITELLM_UI_PASSWORD:
+#           generator: secretKey
+#           params: 16
+#         LITELLM_SALT_KEY:
+#           generator: random
+#           params: [32, 'base64']
+#         LITELLM_LOG_LEVEL: INFO
+#         LITELLM_POSTGRES_USER: ''
+#         LITELLM_POSTGRES_PASSWORD: ''
+#         LITELLM_POSTGRES_SCHEMA: ''
+
+#     # Array of actions to run when the service is initialized
+#     - action: createPostgreSchema
+#       params:
+#         user: LITELLM_POSTGRES_USER
+#         password: LITELLM_POSTGRES_PASSWORD
+#         schema: LITELLM_POSTGRES_SCHEMA
+#         pooler: true # Connect to the pooler service, include tenant ID in username
+
+#   uninstall:
+#     - postgres_delete_schema:
+#       schema: LITELLM_POSTGRES_SCHEMA
+
+#   # Get the version of litellm installed in the container
+#   version:
+#     cmd: ['sh', '-c', 'litellm -v | grep -o "[0-9\.]\\+"']
