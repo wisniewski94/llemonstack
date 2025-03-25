@@ -1,7 +1,12 @@
 import { colors } from '@cliffy/ansi/colors'
+import { CellType, Column, RowType, Table } from '@cliffy/table'
 import { CommandError } from './command.ts'
-import { Config } from './config/config.ts'
 import type { LogMessage } from './types.d.ts'
+
+const DEFAULT_MAX_COLUMN_WIDTH = 50
+
+export { colors }
+export type { CellType, RowType }
 
 /**
  * Prompt the user to confirm an action
@@ -116,4 +121,53 @@ export function showLogMessages(
         break
     }
   })
+}
+
+function truncate(cell: string | CellType, maxColumnWidth: number = DEFAULT_MAX_COLUMN_WIDTH) {
+  const cellStr = String(cell)
+  const strNoColors = colors.stripAnsiCode(cellStr)
+  if (strNoColors.length > maxColumnWidth) {
+    // Get any ANSI escape sequences at the start of the string
+    // cspell:disable
+    const ansiRegex =
+      // deno-lint-ignore no-control-regex
+      /^(?:[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><])+/
+    // cspell:enable
+    const ansiMatch = cellStr.match(ansiRegex)
+    const ansiPrefix = ansiMatch ? ansiMatch[0] : ''
+    const ansiSuffix = ansiPrefix ? '\x1b[0m' : ''
+    if (ansiPrefix) {
+      return `${colors.gray('…')}${ansiPrefix}${
+        strNoColors.substring(strNoColors.length - (maxColumnWidth - 3))
+      }${ansiSuffix}`
+    }
+    return `${colors.gray('…')}${cellStr.substring(cellStr.length - (maxColumnWidth - 3))}`
+  }
+  return cell
+}
+
+export function showTable(
+  header: RowType,
+  rows: RowType[],
+  maxColumnWidth: number = DEFAULT_MAX_COLUMN_WIDTH,
+) {
+  // Push header onto rows to preserve column alignment for headers
+  rows.unshift(header.map((h) => colors.underline(h as string)))
+
+  // Truncate any column value longer than MAX_COLUMN_WIDTH
+  const truncatedRows = rows.map((row) => {
+    return row.map((cell) => {
+      return cell ? truncate(cell, maxColumnWidth) : ''
+    })
+  })
+
+  new Table()
+    // .header(header)
+    .body(truncatedRows)
+    .padding(2)
+    .indent(2)
+    .border(false)
+    .column(0, new Column().align('right'))
+    .column(3, new Column().align('right'))
+    .render()
 }

@@ -4,11 +4,18 @@
  */
 
 import { colors } from '@cliffy/ansi/colors'
-import { CellType, Column, Row, RowType, Table } from '@cliffy/table'
+import { Row, RowType } from '@cliffy/table'
 import { getImageFromCompose, getImagesFromComposeYaml } from './lib/compose.ts'
 import { Config } from './lib/config/config.ts'
 import { dockerRun, prepareDockerNetwork, runDockerCommand } from './lib/docker.ts'
-import { showAction, showError, showHeader, showInfo, showWarning } from './lib/logger.ts'
+import {
+  showAction,
+  showError,
+  showHeader,
+  showInfo,
+  showTable,
+  showWarning,
+} from './lib/logger.ts'
 import { ServiceImage } from './lib/types.d.ts'
 import { DEFAULT_PROJECT_NAME, prepareEnv } from './start.ts'
 
@@ -47,51 +54,6 @@ const SERVICES_WITH_APP_VERSION = {
   //   `console.log(require('/usr/local/lib/node_modules/app/package.json').version)`,
   // ],
 } as Record<string, string[]>
-
-function truncate(cell: string | CellType) {
-  const cellStr = String(cell)
-  const strNoColors = colors.stripAnsiCode(cellStr)
-  if (strNoColors.length > MAX_COLUMN_WIDTH) {
-    // Get any ANSI escape sequences at the start of the string
-    // cspell:disable
-    const ansiRegex =
-      // deno-lint-ignore no-control-regex
-      /^(?:[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><])+/
-    // cspell:enable
-    const ansiMatch = cellStr.match(ansiRegex)
-    const ansiPrefix = ansiMatch ? ansiMatch[0] : ''
-    const ansiSuffix = ansiPrefix ? '\x1b[0m' : ''
-    if (ansiPrefix) {
-      return `${colors.gray('…')}${ansiPrefix}${
-        strNoColors.substring(strNoColors.length - (MAX_COLUMN_WIDTH - 3))
-      }${ansiSuffix}`
-    }
-    return `${colors.gray('…')}${cellStr.substring(cellStr.length - (MAX_COLUMN_WIDTH - 3))}`
-  }
-  return cell
-}
-
-function showTable(header: RowType, rows: RowType[]) {
-  // Push header onto rows to preserve column alignment for headers
-  rows.unshift(header.map((h) => colors.underline(h as string)))
-
-  // Truncate any column value longer than MAX_COLUMN_WIDTH
-  const truncatedRows = rows.map((row) => {
-    return row.map((cell) => {
-      return cell ? truncate(cell) : ''
-    })
-  })
-
-  new Table()
-    // .header(header)
-    .body(truncatedRows)
-    .padding(2)
-    .indent(2)
-    .border(false)
-    .column(0, new Column().align('right'))
-    .column(3, new Column().align('right'))
-    .render()
-}
 
 /**
  * Returns the version of the service running in a container
@@ -302,20 +264,24 @@ export async function versions(projectName: string): Promise<void> {
     const imageVersionRows = await showImageVersions()
 
     if (imageVersionRows.length > 0) {
-      showTable([
-        'Service',
-        'Image Version',
-        'Container',
-        'Docker Image',
-        'Compose File',
-      ], imageVersionRows)
+      showTable(
+        [
+          'Service',
+          'Image Version',
+          'Container',
+          'Docker Image',
+          'Compose File',
+        ],
+        imageVersionRows,
+        MAX_COLUMN_WIDTH,
+      )
     }
 
     showHeader('Service App Versions')
     const appVersionRows = await appVersionsPromise
     if (appVersionRows.length > 0) {
       showInfo('Version of apps inside the container, if available.\n')
-      showTable(['Service', 'App Version', 'Docker Image'], appVersionRows)
+      showTable(['Service', 'App Version', 'Docker Image'], appVersionRows, MAX_COLUMN_WIDTH)
     } else {
       showInfo('No app versions found')
     }
