@@ -4,6 +4,7 @@
 
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
+import * as yaml from 'jsr:@std/yaml'
 import { tryCatch, tryCatchBoolean, TryCatchResult } from './try-catch.ts'
 
 // Re-export fs and path
@@ -52,6 +53,12 @@ export async function dirExists(path: string): Promise<TryCatchResult<boolean>> 
   }
 }
 
+export async function readDir(
+  dirPath: string,
+): Promise<TryCatchResult<AsyncIterable<Deno.DirEntry>>> {
+  return await tryCatch(Promise.resolve(Deno.readDir(dirPath)))
+}
+
 export function isInsideCwd(filePath: string): TryCatchResult<boolean> {
   const cwd = Deno.cwd()
   const relativePath = path.relative(cwd, filePath)
@@ -73,5 +80,11 @@ export async function saveJson(filePath: string, data: unknown): Promise<TryCatc
 export async function readJson<T>(filePath: string): Promise<TryCatchResult<T>> {
   return await tryCatch(
     Deno.readTextFile(filePath).then((contents) => JSON.parse(contents) as T),
+  )
+}
+
+export async function readYaml<T>(filePath: string): Promise<TryCatchResult<T>> {
+  return await tryCatch(
+    Deno.readTextFile(filePath).then((contents) => yaml.parse(contents) as T),
   )
 }
