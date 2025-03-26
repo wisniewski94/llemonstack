@@ -1,4 +1,4 @@
-import { Config } from './lib/config/config.ts'
+import { Config } from './lib/config.ts'
 import { confirm, showAction, showError, showInfo, showWarning } from './lib/logger.ts'
 import { createServiceSchema, removeServiceSchema } from './lib/postgres.ts'
 import { DEFAULT_PROJECT_NAME, isSupabaseStarted, startService } from './start.ts'

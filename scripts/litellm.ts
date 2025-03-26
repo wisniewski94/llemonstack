@@ -10,7 +10,7 @@
  * LOCAL_LLM_OPENAI_API_BASE_URL and LOCAL_LLM_OPENAI_HOST_PORT must be set in
  * .env file for OpenAI compatible models to be loaded.
  */
-import { Config } from './lib/config/config.ts'
+import { Config } from './lib/config.ts'
 
 const config = Config.getInstance()
 await config.initialize()

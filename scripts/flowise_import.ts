@@ -3,7 +3,7 @@
  * Import workflows and credentials from the import folder
  */
 
-import { Config } from './lib/config/config.ts'
+import { Config } from './lib/config.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
 import { fs, path } from './lib/fs.ts'
 import { confirm, showError, showInfo, showWarning } from './lib/logger.ts'

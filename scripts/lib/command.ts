@@ -1,4 +1,4 @@
-import { Config } from './config/config.ts'
+import { Config } from './config.ts'
 import { showDebug, showError, showInfo } from './logger.ts'
 import type { CommandOutput, RunCommandOptions } from './types.d.ts'
 

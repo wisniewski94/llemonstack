@@ -1,6 +1,6 @@
 import { assertEquals, assertExists, assertStrictEquals } from 'jsr:@std/assert'
 import { Stub, stub } from 'jsr:@std/testing/mock'
-import * as fs from '../fs.ts'
+import * as fs from './fs.ts'
 import { Config, config } from './config.ts'
 
 Deno.test('Config', async (t) => {

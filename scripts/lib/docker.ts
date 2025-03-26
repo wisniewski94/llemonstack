@@ -5,7 +5,7 @@
  */
 
 import { runCommand } from './command.ts'
-import { Config } from './config/config.ts'
+import { Config } from './config.ts'
 import type { EnvVars, RunCommandOutput } from './types.d.ts'
 
 const config = Config.getInstance()

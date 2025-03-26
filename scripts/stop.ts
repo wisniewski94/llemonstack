@@ -3,7 +3,7 @@
  * Stop the stack by downing docker containers and cleaning up networks.
  */
 
-import { Config } from './lib/config/config.ts'
+import { Config } from './lib/config.ts'
 import {
   dockerComposePs,
   type DockerComposePsResult,

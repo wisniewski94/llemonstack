@@ -5,7 +5,7 @@
 
 import { colors } from '@cliffy/ansi/colors'
 import { runCommand } from './lib/command.ts'
-import { Config } from './lib/config/config.ts'
+import { Config } from './lib/config.ts'
 import { isServiceRunning, prepareDockerNetwork, runDockerComposeCommand } from './lib/docker.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
 import { escapePath, fs, path } from './lib/fs.ts'

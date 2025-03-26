@@ -8,7 +8,7 @@
 
 import { Command, EnumType } from '@cliffy/command'
 import { CompletionsCommand } from '@cliffy/command/completions'
-import { Config } from './scripts/lib/config/config.ts'
+import { Config } from './scripts/lib/config.ts'
 import { showAction, showError, showInfo, showLogMessages } from './scripts/lib/logger.ts'
 import { DEFAULT_PROJECT_NAME, start } from './scripts/start.ts'
 

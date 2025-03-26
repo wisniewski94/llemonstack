@@ -6,7 +6,7 @@
 import { colors } from '@cliffy/ansi/colors'
 import { Row, RowType } from '@cliffy/table'
 import { getImageFromCompose, getImagesFromComposeYaml } from './lib/compose.ts'
-import { Config } from './lib/config/config.ts'
+import { Config } from './lib/config.ts'
 import { dockerRun, prepareDockerNetwork, runDockerCommand } from './lib/docker.ts'
 import {
   showAction,

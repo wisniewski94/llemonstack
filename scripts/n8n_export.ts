@@ -4,7 +4,7 @@
  */
 
 import { CommandError } from './lib/command.ts'
-import { Config } from './lib/config/config.ts'
+import { Config } from './lib/config.ts'
 import { dockerExec } from './lib/docker.ts'
 import { fs, path } from './lib/fs.ts'
 import { showAction, showError, showInfo, showWarning } from './lib/logger.ts'

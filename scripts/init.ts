@@ -3,7 +3,7 @@
  * Setup required env variables
  */
 import { Input, Secret, Select } from '@cliffy/prompt'
-import { Config } from './lib/config/config.ts'
+import { Config } from './lib/config.ts'
 import { runDockerCommand } from './lib/docker.ts'
 import { path } from './lib/fs.ts'
 import {

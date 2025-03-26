@@ -1,11 +1,11 @@
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
-import projectTemplate from '../../../config/config.0.2.0.json' with { type: 'json' }
-import packageJson from '../../../package.json' with { type: 'json' }
-import { loadEnv } from '../env.ts'
-import * as fs from '../fs.ts'
-import { Service } from '../service.ts'
-import { failure, success, TryCatchResult } from '../try-catch.ts'
-import { OllamaProfile, ProjectConfig, ServiceConfig } from '../types.d.ts'
+import projectTemplate from '../../config/config.0.2.0.json' with { type: 'json' }
+import packageJson from '../../package.json' with { type: 'json' }
+import { loadEnv } from './env.ts'
+import * as fs from './fs.ts'
+import { Service } from './service.ts'
+import { failure, success, TryCatchResult } from './try-catch.ts'
+import { OllamaProfile, ProjectConfig, ServiceConfig } from './types.d.ts'
 
 export class Config {
   private static instance: Config
@@ -121,7 +121,7 @@ export class Config {
   private constructor() {
     this._installDir = fs.path.join(
       fs.path.dirname(fs.path.fromFileUrl(import.meta.url)),
-      '../../../',
+      '../../',
     )
     this.configDir = fs.path.join(Deno.cwd(), this._configDirBase)
     this.configFile = fs.path.join(this.configDir, 'config.json')

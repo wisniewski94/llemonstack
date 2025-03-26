@@ -9,7 +9,7 @@
  * Optionally starts the stack.
  */
 import { clearConfigFile, clearEnvFile } from './init.ts'
-import { Config } from './lib/config/config.ts'
+import { Config } from './lib/config.ts'
 import { runDockerCommand, runDockerComposeCommand } from './lib/docker.ts'
 import { fs, path } from './lib/fs.ts'
 import {
