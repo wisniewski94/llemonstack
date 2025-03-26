@@ -13,3 +13,5 @@ provides:
 depends_on:
   postgres:
     condition: service_healthy
+
+app_version_cmd: ['n8n', '--version']

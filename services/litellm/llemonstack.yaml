@@ -16,6 +16,12 @@ depends_on:
   # langfuse:
   #   condition: service_healthy
 
+app_version_cmd: [
+  'sh',
+  '-c',
+  'litellm -v | grep -o "[0-9\.]\\+"',
+]
+
 # actions:
 #   # TODO: finish fleshing out this spec and implement
 #   install:

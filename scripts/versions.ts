@@ -16,45 +16,13 @@ import {
   showTable,
   showWarning,
 } from './lib/logger.ts'
-import { ServiceImage } from './lib/types.d.ts'
+import { Service, ServiceImage } from './lib/types.d.ts'
 import { DEFAULT_PROJECT_NAME, prepareEnv } from './start.ts'
 
 const config = Config.getInstance()
 await config.initialize()
 
 const MAX_COLUMN_WIDTH = 50
-
-/**
- * Services that support showing the software version
- * Creates a temporary container and runs the command to get the version.
- */
-// TODO: move to llemonstack.yaml files
-const SERVICES_WITH_APP_VERSION = {
-  // Get n8n by running `n8n --version` in the container
-  n8n: ['n8n', '--version'],
-  // Get flowise version from the package.json file
-  flowise: [
-    'sh',
-    '-c',
-    'flowise --version | grep -o "flowise/[0-9]\\+\.[0-9]\\+\.[0-9]\\+" | cut -d\'/\' -f2',
-  ],
-  litellm: [
-    'sh',
-    '-c',
-    'litellm -v | grep -o "[0-9\.]\\+"',
-  ],
-  langfuse: [
-    'node',
-    '-e',
-    `console.log(require('/app/package.json').version)`,
-  ],
-  // EXAMPLE: get version from package.json file
-  // serviceName: [
-  //   'node',
-  //   '-e',
-  //   `console.log(require('/usr/local/lib/node_modules/app/package.json').version)`,
-  // ],
-} as Record<string, string[]>
 
 /**
  * Returns the version of the service running in a container
@@ -101,27 +69,30 @@ async function getAppVersion(
   return serviceImage
 }
 
-async function getAppVersions(projectName: string): Promise<string[][]> {
+async function getAppVersions(projectName: string, services: Service[]): Promise<string[][]> {
   // Get enabled services and process them in parallel
   const results = await Promise.all(
-    Object.keys(SERVICES_WITH_APP_VERSION)
-      .filter((service) => config.isEnabled(service))
-      .map(async (service) => {
-        const composeFile = config.getComposeFile(service)
-        if (!composeFile) {
-          showWarning(`Compose file not found for ${service}`)
-          return { service, containerName: '', version: '', image: '' } as ServiceImage
-        }
-        const [entrypoint, ...args] = SERVICES_WITH_APP_VERSION[service]
-        const serviceImage = await getAppVersion(
-          projectName,
-          service,
-          composeFile,
-          entrypoint,
-          args,
-        )
-        return serviceImage
-      }),
+    services.map(async (service) => {
+      const composeFile = service.composeFile
+      if (!composeFile) {
+        showWarning(`Compose file not found for ${service}`)
+        return {
+          service: service.name,
+          containerName: '',
+          version: '',
+          image: '',
+        } as ServiceImage
+      }
+      const [entrypoint, ...args] = service.appVersionCmd || []
+      const serviceImage = await getAppVersion(
+        projectName,
+        service.service,
+        composeFile,
+        entrypoint,
+        args,
+      )
+      return serviceImage
+    }),
   )
   const rows = results.map((serviceImage) => [
     colors.yellow(serviceImage.service),
@@ -258,8 +229,10 @@ export async function versions(projectName: string): Promise<void> {
   await prepareDockerNetwork()
 
   try {
-    const appVersionsPromise = (Object.keys(SERVICES_WITH_APP_VERSION).length > 0)
-      ? getAppVersions(projectName)
+    const services = config.getEnabledServices().filter((service) => service.appVersionCmd)
+
+    const appVersionsPromise = services.length > 0
+      ? getAppVersions(projectName, services)
       : Promise.resolve([])
 
     const imageVersionRows = await showImageVersions()
@@ -280,6 +253,14 @@ export async function versions(projectName: string): Promise<void> {
 
     showHeader('Service App Versions')
     const appVersionRows = await appVersionsPromise
+
+    // Sort app version rows by service name (first column)
+    appVersionRows.sort((a, b) => {
+      const serviceA = colors.stripAnsiCode(a[0])
+      const serviceB = colors.stripAnsiCode(b[0])
+      return serviceA.localeCompare(serviceB)
+    })
+
     if (appVersionRows.length > 0) {
       showInfo('Version of apps inside the container, if available.\n')
       showTable(['Service', 'App Version', 'Docker Image'], appVersionRows, MAX_COLUMN_WIDTH)

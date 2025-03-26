@@ -20,3 +20,9 @@ depends_on:
     condition: service_healthy
   minio:
     condition: service_healthy
+
+app_version_cmd: [
+  'node',
+  '-e',
+  "console.log(require('/app/package.json').version)",
+]

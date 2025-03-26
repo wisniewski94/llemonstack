@@ -30,6 +30,10 @@ export class Service {
     this._repoDir = config.repo?.dir ? path.join(repoBaseDir, config.repo?.dir) : null
   }
 
+  public toString(): string {
+    return this.name
+  }
+
   get composeFile(): string {
     return this._composeFile
   }
@@ -74,6 +78,10 @@ export class Service {
 
   get volumesSeeds(): { source: string; destination: string; from_repo?: true }[] {
     return this._config.volumes_seeds ?? []
+  }
+
+  get appVersionCmd(): string[] | null {
+    return this._config.app_version_cmd ?? null
   }
 
   public loadEnv(envVars: Record<string, string>) {
