@@ -1,7 +1,7 @@
 import { assertEquals, assertExists, assertStrictEquals } from 'jsr:@std/assert'
 import { Stub, stub } from 'jsr:@std/testing/mock'
-import * as fs from './fs.ts'
 import { Config, config } from './config.ts'
+import * as fs from './fs.ts'
 
 Deno.test('Config', async (t) => {
   let saveStub: Stub
@@ -10,7 +10,7 @@ Deno.test('Config', async (t) => {
   await t.step('setup', () => {
     // Prevent tests from saving config files to disk
     // @ts-ignore - accessing private method for testing
-    saveStub = stub(Config.prototype, 'saveConfig', () => {
+    saveStub = stub(Config.prototype, 'save', () => {
       // console.log('saveStub called')
       return {
         data: true,
@@ -131,12 +131,12 @@ Deno.test('Config', async (t) => {
     assertEquals(result.error, null)
   })
 
-  await t.step('isValidProjectConfig validates project config correctly', () => {
+  await t.step('isValidConfig validates project config correctly', () => {
     // @ts-ignore - temporarily override for testing
     delete Config.instance
     const configInstance = Config.getInstance()
 
-    // Valid config should pass validation
+    // Valid config should include services from config.0.2.0.json
     const validConfig = {
       initialized: true,
       version: '0.2.0',
@@ -149,10 +149,28 @@ Deno.test('Config', async (t) => {
         import: 'import',
         volumes: 'volumes',
       },
+      services: {
+        n8n: { enabled: true },
+        flowise: { enabled: true },
+        openwebui: { enabled: true },
+        "browser-use": { enabled: true },
+        langfuse: { enabled: true },
+        litellm: { enabled: true },
+        qdrant: { enabled: true },
+        dozzle: { enabled: true },
+        ollama: { enabled: true, profiles: ["ollama-host"] },
+        minio: { enabled: "auto" },
+        redis: { enabled: "auto" },
+        supabase: { enabled: "auto" },
+        neo4j: { enabled: "auto" },
+        clickhouse: { enabled: "auto" },
+        zep: { enabled: false },
+        prometheus: { enabled: false }
+      }
     }
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      configInstance.isValidProjectConfig(validConfig),
+      configInstance.isValidConfig(validConfig),
       true,
       'Valid config should pass validation',
     )
@@ -163,7 +181,7 @@ Deno.test('Config', async (t) => {
     delete missingKeyConfig.initialized
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      configInstance.isValidProjectConfig(missingKeyConfig),
+      configInstance.isValidConfig(missingKeyConfig),
       false,
       'Config missing required key should fail validation',
     )
@@ -175,7 +193,7 @@ Deno.test('Config', async (t) => {
     }
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      configInstance.isValidProjectConfig(missingNestedKeyConfig),
+      configInstance.isValidConfig(missingNestedKeyConfig),
       false,
       'Config missing nested key should fail validation',
     )
@@ -183,7 +201,7 @@ Deno.test('Config', async (t) => {
     // Null config
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      configInstance.isValidProjectConfig(null),
+      configInstance.isValidConfig(null),
       false,
       'Null config should fail validation',
     )
@@ -195,20 +213,20 @@ Deno.test('Config', async (t) => {
     }
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      configInstance.isValidProjectConfig(invalidDirsConfig),
+      configInstance.isValidConfig(invalidDirsConfig),
       false,
       'Config with non-object dirs should fail validation',
     )
   })
 
-  await t.step('updateProjectConfig merges template with current config', () => {
+  await t.step('updateConfig merges template with current config', () => {
     // @ts-ignore - temporarily override for testing
     delete Config.instance
     const configInstance = Config.getInstance()
 
     // Set up an incomplete project config
     // @ts-ignore - accessing private property for testing
-    configInstance._project = {
+    configInstance._config = {
       initialized: '2025-00-00T00:00:00.000Z',
       version: '0.1.0',
       projectName: 'custom-project',
@@ -235,10 +253,10 @@ Deno.test('Config', async (t) => {
     }
 
     // @ts-ignore - accessing private method for testing
-    configInstance.updateProjectConfig(template)
+    configInstance.updateConfig(template)
 
     // @ts-ignore - accessing private property for testing
-    const updatedConfig = configInstance._project
+    const updatedConfig = configInstance._config
 
     // Original values should be preserved
     assertEquals(
