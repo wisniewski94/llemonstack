@@ -2,7 +2,6 @@ import {
   CommandError as CommandErrorClass,
   RunCommandOutput as RunCommandOutputClass,
 } from './command.ts'
-import { Config } from './config/config.ts'
 
 export type { Service } from './config/service.ts'
 
@@ -77,7 +76,6 @@ export interface ServiceConfig {
   compose_file: string // The path to the docker-compose.yaml file
   service_group: string // The group of services that the service belongs to
   custom_start: boolean // Whether the service should start automatically
-  depends_on?: Record<string, { condition: string }> // The services that the service depends on
   repo?: RepoService // The repo to use for the service
   volumes?: string[] // The volumes to use for the service
   volumes_seeds?: {
@@ -85,10 +83,12 @@ export interface ServiceConfig {
     destination: string
     from_repo?: true
   }[]
+  provides?: Record<string, string> // The services that the service provides
+  depends_on?: Record<string, { condition: string }> // The services that the service depends on
 }
 
 // Define the type for the Docker Compose configuration
-export interface ComposeConfig {
+export interface ComposeYaml {
   include?: string | string[] | { path: string }[]
   services?: {
     [key: string]: {
@@ -105,23 +105,6 @@ export interface ComposeConfig {
       container_name?: string
     }
   }
-}
-
-export type ComposeService = [string, string, boolean]
-
-export type RequiredVolumeConfig = {
-  volume: string
-  seed?: {
-    source: string | ((config: Config) => string)
-    destination: string | ((config: Config) => string)
-  }[]
-}[]
-export type RequiredVolume = {
-  volume: string
-  seed?: {
-    source: string
-    destination: string
-  }[]
 }
 
 //

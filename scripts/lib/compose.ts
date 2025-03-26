@@ -2,7 +2,7 @@ import * as yaml from 'jsr:@std/yaml'
 import { dockerEnv, replaceDockerComposeVars } from './docker.ts'
 import { path } from './fs.ts'
 import { showDebug, showWarning } from './logger.ts'
-import { ComposeConfig, ServiceImage } from './types.d.ts'
+import { ComposeYaml, ServiceImage } from './types.d.ts'
 
 export const COMPOSE_IMAGES_CACHE = {} as Record<string, ServiceImage[]>
 const ROOT_DIR = Deno.cwd()
@@ -39,7 +39,7 @@ export async function getImagesFromComposeYaml(
   try {
     // Read the compose file
     const fileContents = await Deno.readTextFile(composeFile)
-    const composeConfig = yaml.parse(fileContents) as ComposeConfig
+    const composeConfig = yaml.parse(fileContents) as ComposeYaml
     const serviceImages: ServiceImage[] = []
 
     // Check for include directive in the compose file
