@@ -290,6 +290,7 @@ export class Config {
         // TODO: uncomment this once configure script is implemented to auto migrate
         // enabled: this._config.services?.[serviceConfig.service]?.enabled || null,
         repoBaseDir: this.repoDir,
+        llemonstackConfig: this._config,
       }
 
       // Check if there's a custom service implementation in the service directory

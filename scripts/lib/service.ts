@@ -1,5 +1,5 @@
 import { path } from './fs.ts'
-import { RepoService, ServiceConfig } from './types.d.ts'
+import { RepoService, ServiceConfig, ServiceOptions } from './types.d.ts'
 
 export class Service {
   public name: string // Human readable name
@@ -9,16 +9,12 @@ export class Service {
   private _dir: string
   private _config: ServiceConfig
   private _enabled: boolean | null = null
-  private _composeFile: string
-  private _repoDir: string | null = null
+  protected _composeFile: string
+  protected _repoDir: string | null = null
+  protected _profiles: string[] = []
 
   constructor(
-    { config, dir, enabled, repoBaseDir }: {
-      config: ServiceConfig
-      dir: string
-      enabled?: boolean
-      repoBaseDir: string
-    },
+    { config, dir, enabled, repoBaseDir, llemonstackConfig }: ServiceOptions,
   ) {
     this.name = config.name
     this.service = config.service
@@ -28,6 +24,7 @@ export class Service {
     this._dir = dir
     this._composeFile = path.join(this._dir, config.compose_file)
     this._repoDir = config.repo?.dir ? path.join(repoBaseDir, config.repo?.dir) : null
+    this.setProfiles(llemonstackConfig.services[config.service]?.profiles || [])
   }
 
   public toString(): string {
@@ -97,6 +94,7 @@ export class Service {
    */
   getHost(_subService?: string): string {
     // TODO: get from the docker-compose.yaml file
+    // Add support for returning multiple hosts. These are all the hosts & ports exposed to localhost.
     // For now, this is just a placeholder for subclasses to override
     return ''
   }
@@ -108,6 +106,10 @@ export class Service {
    */
   getProfiles(): string[] {
     // Override in subclasses to return the profiles for the service
-    return []
+    return this._profiles
+  }
+
+  setProfiles(profiles: string[]) {
+    this._profiles = profiles
   }
 }

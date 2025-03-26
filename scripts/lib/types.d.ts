@@ -74,7 +74,9 @@ export interface ServiceImage {
   imageName?: string // The name of the image without the version
 }
 
-// llemonstack.yaml
+/**
+ * From service's llemonstack.yaml
+ */
 export interface ServiceConfig {
   service: string // The name of the service
   name: string // Friendly name of the service to show to users
@@ -93,6 +95,17 @@ export interface ServiceConfig {
   provides?: Record<string, string> // The services that the service provides
   depends_on?: Record<string, { condition: string }> // The services that the service depends on
   app_version_cmd?: string[] // The command to run to get the version of the service
+}
+
+/**
+ * Options for the Service class constructor
+ */
+export interface ServiceOptions {
+  config: ServiceConfig
+  dir: string
+  enabled?: boolean
+  repoBaseDir: string
+  llemonstackConfig: LLemonStackConfig
 }
 
 // Define the type for the Docker Compose configuration

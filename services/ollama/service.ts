@@ -1,18 +1,7 @@
 import { Service } from '../../scripts/lib/service.ts'
-import { OllamaProfile, ServiceConfig } from '../../scripts/lib/types.d.ts'
+import { OllamaProfile } from '../../scripts/lib/types.d.ts'
 
 export class OllamaService extends Service {
-  constructor(
-    { config, dir, enabled, repoBaseDir }: {
-      config: ServiceConfig
-      dir: string
-      enabled?: boolean
-      repoBaseDir: string
-    },
-  ) {
-    super({ config, dir, enabled, repoBaseDir })
-  }
-
   override get enabled(): boolean {
     return ['ollama-false', 'ollama-host'].includes(this.getProfiles()[0])
   }
