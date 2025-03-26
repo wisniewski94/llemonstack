@@ -458,6 +458,13 @@ export class Config {
         success: false,
       })
     }
+    // Update service enabled state and profiles in config before saving
+    this.getInstalledServices().forEach((service) => {
+      this._config.services[service.service] = {
+        enabled: service.enabled,
+        profiles: service.getProfiles(),
+      }
+    })
     return await fs.saveJson(this.configFile, this._config)
   }
 
