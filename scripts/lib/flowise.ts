@@ -2,17 +2,15 @@ import { Config } from './config.ts'
 import { path } from './fs.ts'
 import { showDebug, showError } from './logger.ts'
 
-const config = Config.getInstance()
-await config.initialize()
-
-const DEBUG = config.DEBUG
-
 /**
  * Get the Flowise API key from the config file
  *
  * @returns The Flowise API key or empty string if not found
  */
 export async function getFlowiseApiKey(): Promise<{ apiKey: string; keyName: string } | null> {
+  const config = Config.getInstance()
+  await config.initialize()
+
   const configPath = path.join(
     config.volumesDir,
     'flowise',
@@ -30,7 +28,7 @@ export async function getFlowiseApiKey(): Promise<{ apiKey: string; keyName: str
     }
   } catch (error) {
     if (error instanceof Deno.errors.NotFound) {
-      DEBUG && showDebug(`Flowise config file not found: ${configPath}`)
+      config.DEBUG && showDebug(`Flowise config file not found: ${configPath}`)
       return null
     }
     showError('Error reading Flowise API key:', error)

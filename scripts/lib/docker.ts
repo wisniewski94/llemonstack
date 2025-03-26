@@ -8,15 +8,14 @@ import { runCommand } from './command.ts'
 import { Config } from './config.ts'
 import type { EnvVars, RunCommandOutput } from './types.d.ts'
 
-const config = Config.getInstance()
-await config.initialize()
-
 /**
  * Gets required environment variables to always pass to docker commands
  *
  * @returns Record<string, string>
  */
-export function dockerEnv(): Record<string, string> {
+export async function dockerEnv(): Promise<Record<string, string>> {
+  const config = Config.getInstance()
+  await config.initialize()
   return {
     LLEMONSTACK_VOLUMES_PATH: config.volumesDir,
     LLEMONSTACK_SHARED_VOLUME_PATH: config.sharedDir,
@@ -91,6 +90,8 @@ export async function runDockerComposeCommand(
     autoLoadEnv?: boolean
   } = {},
 ): Promise<RunCommandOutput> {
+  const config = Config.getInstance()
+  await config.initialize()
   const composeFiles = Array.isArray(composeFile) ? composeFile : [composeFile]
   return await runCommand('docker', {
     args: [
@@ -106,7 +107,7 @@ export async function runDockerComposeCommand(
     silent,
     captureOutput,
     env: {
-      ...dockerEnv(),
+      ...(await dockerEnv()),
       ...env,
     },
     autoLoadEnv,
@@ -150,7 +151,7 @@ export async function runDockerCommand(
     silent,
     captureOutput,
     env: {
-      ...dockerEnv(),
+      ...(await dockerEnv()),
       ...env,
     },
     autoLoadEnv,
@@ -213,6 +214,8 @@ export async function isServiceRunning(
   service: string,
   { projectName, match = 'exact' }: { projectName?: string; match?: 'exact' | 'partial' },
 ) {
+  const config = Config.getInstance()
+  await config.initialize()
   const result = await dockerComposePs(
     projectName || config.projectName,
   ) as DockerComposePsResult
@@ -259,10 +262,11 @@ export async function dockerComposePs(
     : results.toJsonList() as DockerComposePsResult
 }
 
-export async function prepareDockerNetwork(
-  // TODO: get network from config
-  network = config.dockerNetworkName,
-): Promise<{ network: string; created: boolean }> {
+export async function prepareDockerNetwork(): Promise<{ network: string; created: boolean }> {
+  const config = Config.getInstance()
+  await config.initialize()
+  const network = config.dockerNetworkName
+
   const result = await runCommand('docker', {
     args: ['network', 'ls'],
     captureOutput: true,
@@ -303,6 +307,9 @@ export async function dockerExec(
     captureOutput?: boolean
   } = {},
 ): Promise<RunCommandOutput> {
+  const config = Config.getInstance()
+  await config.initialize()
+
   if (!composeFile) {
     composeFile = config.getComposeFile(service) || undefined
   }
@@ -347,6 +354,9 @@ export async function dockerRun(
     captureOutput?: boolean
   } = {},
 ): Promise<RunCommandOutput> {
+  const config = Config.getInstance()
+  await config.initialize()
+
   if (!composeFile) {
     composeFile = config.getComposeFile(service) || undefined
   }

@@ -33,7 +33,7 @@ export async function getImagesFromComposeYaml(
 
   // Expand any variables in the compose file path
   if (composeFile.includes('${')) {
-    composeFile = replaceDockerComposeVars(composeFile, dockerEnv())
+    composeFile = replaceDockerComposeVars(composeFile, await dockerEnv())
   }
 
   try {
