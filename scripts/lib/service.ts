@@ -81,6 +81,14 @@ export class Service {
     return this._config.app_version_cmd ?? null
   }
 
+  get dependencies(): string[] {
+    return Object.keys(this._config.depends_on || {}) ?? []
+  }
+
+  get provides(): string[] {
+    return Object.keys(this._config.provides || {}) ?? []
+  }
+
   public loadEnv(envVars: Record<string, string>) {
     // Override in subclasses to set environment variables for the service
     return envVars

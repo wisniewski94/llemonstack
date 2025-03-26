@@ -22,27 +22,39 @@ export async function configure(
   // The save config
   // Then comment out ENABLE_* env vars in .env
 
+  const dependencies = new Set<string>()
+
   // Prompt user for each group, starting with apps
   for (let i = groups.length - 1; i >= 0; i--) {
     const groupName = groups[i][0]
     const groupServices = groups[i][1]
     if (groupServices.length === 0) continue
 
-    const _groupResult = await Checkbox.prompt({
+    const groupResult = await Checkbox.prompt({
       message: `Select ${groupName} services to enable:`,
       options: groupServices.map((serviceName) => {
         const service = config.getService(serviceName)
         if (!service) {
           return null
         }
+        const required = service.provides.some((key) => dependencies.has(key))
         return {
-          name: `${service.name} - ${service.description}`,
+          name: `${service.name} - ${service.description} ${
+            required ? '[required by another service]' : ''
+          }`,
           value: service.service,
-          checked: service.enabled,
+          checked: service.enabled || required,
+          disabled: required,
         }
       }).filter(Boolean) as CheckboxOption<string>[],
     })
-    // console.log('groupResult:', _groupResult)
+    console.log('groupResult:', groupResult)
+    groupResult.forEach((service) => {
+      config.getService(service)?.dependencies.forEach((dependency) => {
+        dependencies.add(dependency)
+      })
+    })
+    console.log('dependencies:', dependencies)
   }
 
   // TODO: save the selected services to config
