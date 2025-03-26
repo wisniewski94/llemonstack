@@ -400,10 +400,8 @@ export function isInitialized(): boolean {
 
 async function outputServicesInfo({
   projectName,
-  ollamaProfile,
 }: {
   projectName: string
-  ollamaProfile: string
 }): Promise<void> {
   //
   // SERVICE DASHBOARDS
@@ -525,8 +523,9 @@ async function outputServicesInfo({
 
   // Show any user actions
   // Show user action if using host Ollama
-  if (ollamaProfile === 'ollama-host') {
-    const ollamaUrl = 'http://host.docker.internal:11434'
+  const ollamaService = config.getService('ollama')
+  if (ollamaService?.getProfiles()[0] === 'ollama-host') {
+    const ollamaUrl = `http://${config.getService('ollama')?.getHost()}`
     showService('Ollama', ollamaUrl)
     showUserAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
     showUserAction('  Start Ollama on your computer: `ollama serve`')
@@ -612,7 +611,6 @@ export async function start(
     if (!skipOutput) {
       await outputServicesInfo({
         projectName,
-        ollamaProfile: ollamaProfile || '',
       })
     }
   } catch (error) {
