@@ -28,6 +28,7 @@ const MAX_COLUMN_WIDTH = 50
  * Services that support showing the software version
  * Creates a temporary container and runs the command to get the version.
  */
+// TODO: move to llemonstack.yaml files
 const SERVICES_WITH_APP_VERSION = {
   // Get n8n by running `n8n --version` in the container
   n8n: ['n8n', '--version'],
@@ -134,7 +135,7 @@ async function showImageVersions(): Promise<RowType[]> {
   // Iterate through all compose files to get images
   // Process all compose files in parallel
   const composeResults = await Promise.all(
-    config.getComposeFiles().map(async (composeFile) => {
+    config.getComposeFiles({ all: true }).map(async (composeFile) => {
       let images: ServiceImage[] = []
       try {
         images = await getImagesFromComposeYaml(composeFile)
