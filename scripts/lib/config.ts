@@ -335,17 +335,24 @@ export class Config {
    * @returns True if the service is enabled, false otherwise
    */
   public isEnabled(service: string): boolean {
+    // TODO: move this to Service class
     const varName = `ENABLE_${service.toUpperCase().replace(/-/g, '_')}`
+    let value: string | boolean | undefined = Deno.env.get(varName)
+    // TODO: move ollama special case to a Service subclass for OllamaService
     // Handle ollama special case
     if (service === 'ollama') {
-      return !['ollama-false', 'ollama-host'].includes(this.getOllamaProfile())
+      value = !['ollama-false', 'ollama-host'].includes(this.getOllamaProfile())
     }
-    const value = Deno.env.get(varName)
     // If no env var is set, default to true
     if (value === undefined || value === null) {
-      return true
+      value = true
     }
-    return (value && value.trim().toLowerCase() === 'true') as boolean
+    value = (String(value).trim().toLowerCase() === 'true') as boolean
+    const _service = this.getService(service)
+    if (_service) {
+      _service.enabled = value
+    }
+    return value
   }
 
   public getServices(): Record<string, Service> {
