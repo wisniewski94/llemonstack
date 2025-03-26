@@ -2,9 +2,6 @@ import { Config } from './config.ts'
 import { showDebug, showError, showInfo } from './logger.ts'
 import type { CommandOutput, RunCommandOptions } from './types.d.ts'
 
-const config = Config.getInstance()
-await config.initialize()
-
 export class RunCommandOutput {
   private _output: CommandOutput
   constructor(output: CommandOutput) {
@@ -97,7 +94,7 @@ export async function runCommand(
     captureOutput = false,
     env = {},
     autoLoadEnv = true, // If true, load env from .env file
-    debug = config.DEBUG ?? false,
+    debug = Config.getInstance().DEBUG ?? false,
   }: RunCommandOptions = {},
 ): Promise<RunCommandOutput> {
   // If silent is true, pipe output so streamStdout receives output below
@@ -106,7 +103,7 @@ export async function runCommand(
 
   // Auto load env from .env file
   // For security, don't use all Deno.env values, only use .env file values
-  const envVars = !autoLoadEnv ? {} : config.env
+  const envVars = !autoLoadEnv ? {} : Config.getInstance().env
 
   let cmdCmd = cmd
   let cmdArgs = (args?.filter(Boolean) || []) as string[]
