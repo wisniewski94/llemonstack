@@ -6,3 +6,6 @@ description: Redis is an in-memory data structure store
 
 compose_file: docker-compose.yaml
 service_group: databases
+
+provides:
+  redis: redis # Name of the container

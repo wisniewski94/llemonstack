@@ -11,6 +11,15 @@ depends_on:
   postgres:
     condition: service_healthy
 
+provides:
+  litellm: litellm # Name of the container
+
+depends_on:
+  postgres:
+    condition: service_healthy
+  # langfuse:
+  #   condition: service_healthy
+
 # actions:
 #   # TODO: finish fleshing out this spec and implement
 #   install:

@@ -7,6 +7,9 @@ description: n8n is a workflow & AI automation platform
 compose_file: docker-compose.yaml
 service_group: apps
 
+provides:
+  n8n: n8n # Name of the container
+
 depends_on:
   postgres:
     condition: service_healthy

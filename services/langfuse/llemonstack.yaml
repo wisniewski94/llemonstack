@@ -7,3 +7,16 @@ description: Langfuse is an open-source platform for monitoring LLMs
 compose_file: docker-compose.yaml
 service_group: middleware
 auto_start: true
+
+provides:
+  langfuse: langfuse # Name of the container
+
+depends_on:
+  clickhouse:
+    condition: service_healthy
+  postgres:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  minio:
+    condition: service_healthy

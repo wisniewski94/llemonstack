@@ -11,3 +11,6 @@ service_group: apps
 depends_on:
   postgres:
     condition: service_healthy
+
+provides:
+  pgbackup: pgbackup # Name of the container

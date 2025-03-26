@@ -7,3 +7,6 @@ description: OpenWebUI is a web-based UI for chatting with AI agents
 compose_file: docker-compose.yaml
 service_group: apps
 auto_start: true
+
+provides:
+  openwebui: openwebui # Name of the container

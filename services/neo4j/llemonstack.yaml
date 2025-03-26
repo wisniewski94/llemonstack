@@ -7,6 +7,5 @@ description: Neo4j is a graph database
 compose_file: docker-compose.yaml
 service_group: databases
 
-depends_on:
-  postgres:
-    condition: service_healthy
+provides:
+  neo4j: neo4j # Name of the container

@@ -9,3 +9,6 @@ service_group: databases
 
 volumes:
   - minio
+
+provides:
+  minio: minio # Name of the container

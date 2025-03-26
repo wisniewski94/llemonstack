@@ -6,3 +6,6 @@ description: ClickHouse is a fast, scalable, and easy-to-use open-source analyti
 
 compose_file: docker-compose.yaml
 service_group: databases
+
+provides:
+  clickhouse: clickhouse # Name of the container

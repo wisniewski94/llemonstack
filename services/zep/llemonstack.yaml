@@ -8,12 +8,17 @@ compose_file: docker-compose.yaml
 service_group: middleware
 auto_start: true
 
-# depends_on:
-#   postgres:
-#     condition: service_healthy
-
 repo:
   url: https://github.com/getzep/zep.git
   dir: zep
   sparse: true
   checkFile: docker-compose.ce.yaml
+
+provides:
+  zep: zep # Name of the container
+
+depends_on:
+  postgres:
+    condition: service_healthy
+  neo4j:
+    condition: service_healthy

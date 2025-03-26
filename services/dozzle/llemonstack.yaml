@@ -6,3 +6,6 @@ description: A simple, easy-to-use log dashboard for Docker
 
 compose_file: docker-compose.yaml
 service_group: middleware
+
+provides:
+  dozzle: dozzle # Name of the container

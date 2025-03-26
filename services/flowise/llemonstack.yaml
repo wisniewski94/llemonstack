@@ -10,3 +10,10 @@ service_group: apps
 volumes:
   - flowise/config
   - flowise/uploads
+
+provides:
+  flowise: flowise # Name of the container
+
+depends_on:
+  postgres:
+    condition: service_healthy

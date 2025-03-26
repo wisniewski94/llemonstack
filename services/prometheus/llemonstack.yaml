@@ -6,3 +6,6 @@ description: Prometheus is an open-source anlaytics database
 
 compose_file: docker-compose.yaml
 service_group: databases
+
+provides:
+  prometheus: prometheus # Name of the container

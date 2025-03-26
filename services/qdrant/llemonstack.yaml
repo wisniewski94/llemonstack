@@ -6,3 +6,6 @@ description: Qdrant is a vector database
 
 compose_file: docker-compose.yaml
 service_group: databases
+
+provides:
+  qdrant: qdrant # Name of the container
