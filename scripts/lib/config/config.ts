@@ -1,20 +1,22 @@
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import projectTemplate from '../../../config/config.0.2.0.json' with { type: 'json' }
+import packageJson from '../../../package.json' with { type: 'json' }
 import { loadEnv } from '../env.ts'
 import * as fs from '../fs.ts'
+import { Service } from '../service.ts'
 import { failure, success, TryCatchResult } from '../try-catch.ts'
-import { OllamaProfile, ProjectConfig, RequiredVolume, ServiceConfig } from '../types.d.ts'
-import { LLemonStackConfig } from './llemonstack.ts'
-import { Service } from './service.ts'
+import { OllamaProfile, ProjectConfig, ServiceConfig } from '../types.d.ts'
+
 export class Config {
   private static instance: Config
   private _debug: boolean = false
-  private _llemonstack: LLemonStackConfig
+  private _installDir: string
+  private _llemonstackVersion: string = packageJson.version
+  private _configDirBase: string = '.llemonstack'
   private _project: ProjectConfig = projectTemplate
   private _services: Record<string, Service> = {}
   private _serviceConfigFile: string = 'llemonstack.yaml'
   private _env: Record<string, string> = {}
-  private _requiredVolumes: RequiredVolume[] = []
   private _initializeResult: TryCatchResult<Config, Error> = new TryCatchResult<Config, Error>({
     data: this,
     error: new Error('Config not initialized'),
@@ -48,7 +50,7 @@ export class Config {
   }
 
   get installDir(): string {
-    return this._llemonstack.installDir
+    return this._installDir
   }
 
   get dockerNetworkName(): string {
@@ -63,7 +65,7 @@ export class Config {
     if (this._project.dirs.services) {
       return fs.path.resolve(Deno.cwd(), this._project.dirs.services)
     }
-    return fs.path.join(this._llemonstack.installDir, 'services')
+    return fs.path.join(this.installDir, 'services')
   }
 
   get importDir(): string {
@@ -92,11 +94,11 @@ export class Config {
 
   // Returns the LLemonStack version for the current project
   get version(): string {
-    return this._project.version || this._llemonstack.version
+    return this._project.version || this._llemonstackVersion
   }
 
   get installVersion(): string {
-    return this._llemonstack.version
+    return this._llemonstackVersion
   }
 
   /**
@@ -117,8 +119,11 @@ export class Config {
   }
 
   private constructor() {
-    this._llemonstack = new LLemonStackConfig()
-    this.configDir = fs.path.join(Deno.cwd(), this._llemonstack.configDirBase)
+    this._installDir = fs.path.join(
+      fs.path.dirname(fs.path.fromFileUrl(import.meta.url)),
+      '../../../',
+    )
+    this.configDir = fs.path.join(Deno.cwd(), this._configDirBase)
     this.configFile = fs.path.join(this.configDir, 'config.json')
     this.DEBUG = `${Deno.env.get('LLEMONSTACK_DEBUG')} ${Deno.env.get('DEBUG')}`.toLowerCase()
       .includes('true')

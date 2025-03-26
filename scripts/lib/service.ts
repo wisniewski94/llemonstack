@@ -1,5 +1,5 @@
-import { path } from '../fs.ts'
-import { RepoService, ServiceConfig } from '../types.d.ts'
+import { path } from './fs.ts'
+import { RepoService, ServiceConfig } from './types.d.ts'
 
 export class Service {
   public name: string // Human readable name
@@ -8,7 +8,7 @@ export class Service {
 
   private _dir: string
   private _config: ServiceConfig
-  private _enabled: boolean = false
+  private _enabled: boolean | null = null
   private _composeFile: string
   private _repoDir: string | null = null
 
@@ -35,7 +35,7 @@ export class Service {
   }
 
   get enabled(): boolean {
-    return this._enabled
+    return this._enabled === true
   }
 
   set enabled(enabled: boolean) {

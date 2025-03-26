@@ -3,7 +3,7 @@ import {
   RunCommandOutput as RunCommandOutputClass,
 } from './command.ts'
 
-export type { Service } from './config/service.ts'
+export type { Service } from './service.ts'
 
 export interface ProjectConfig {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty
