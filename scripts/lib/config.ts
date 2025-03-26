@@ -5,7 +5,7 @@ import { loadEnv } from './env.ts'
 import * as fs from './fs.ts'
 import { Service } from './service.ts'
 import { failure, success, TryCatchResult } from './try-catch.ts'
-import { OllamaProfile, ProjectConfig, ServiceConfig } from './types.d.ts'
+import { ProjectConfig, ServiceConfig } from './types.d.ts'
 
 export class Config {
   private static instance: Config
@@ -264,12 +264,7 @@ export class Config {
           `${serviceConfig.name} service config successfully loaded into ${serviceConfig.service_group} group`,
         )
       }
-      this._services[serviceConfig.service] = new Service({
-        config: serviceConfig,
-        dir: fs.path.join(this.servicesDir, serviceConfig.service),
-        enabled: this.isEnabled(serviceConfig.service),
-        repoBaseDir: this.repoDir,
-      })
+
       // Add service to service group
       if (!this._serviceGroups.find((group) => group[0] === serviceConfig.service_group)) {
         this._serviceGroups.push([serviceConfig.service_group, [serviceConfig.service]])
@@ -278,7 +273,49 @@ export class Config {
           serviceConfig.service,
         )
       }
+
+      // Create Service constructor options
+      const serviceOptions = {
+        config: serviceConfig,
+        dir: fs.path.join(this.servicesDir, serviceConfig.service),
+        // enabled: null, // Uncomment this once enabled services are loaded from config.json
+        repoBaseDir: this.repoDir,
+      }
+
+      // Check if there's a custom service implementation in the service directory
+      const serviceImplPath = fs.path.join(this.servicesDir, serviceDir.name, 'service.ts')
+      const serviceImplExists = (await fs.fileExists(serviceImplPath)).data
+
+      if (serviceImplExists) {
+        try {
+          // Dynamically import the service implementation
+          const serviceModule = await import(`file://${serviceImplPath}`)
+          const ServiceClass = Object.values(serviceModule)[0] as typeof Service
+
+          if (ServiceClass && typeof ServiceClass === 'function') {
+            this._services[serviceConfig.service] = new ServiceClass(serviceOptions)
+
+            result.addMessage(
+              'debug',
+              `Using custom service implementation for ${serviceConfig.service}`,
+            )
+            continue // Skip the default Service instantiation below
+          }
+        } catch (error) {
+          result.addMessage(
+            'error',
+            `Error loading custom service implementation for ${serviceConfig.service}`,
+            {
+              error,
+            },
+          )
+        }
+      }
+
+      // Load the default Service class if no custom implementation exists
+      this._services[serviceConfig.service] = new Service(serviceOptions)
     }
+
     return result
   }
 
@@ -289,13 +326,20 @@ export class Config {
       expand?: boolean
     } = {},
   ): Promise<Record<string, string>> {
+    // Load .env file
     const env = await loadEnv({ envPath, reload, expand })
-    // Set OLLAMA_HOST
-    // TODO: remove this once scripts are migrated to use Config
-    env.OLLAMA_HOST = this.getOllamaHost()
-    Deno.env.set('OLLAMA_HOST', this._env.OLLAMA_HOST)
-    this.setEnv(env) // Update env cache
-    return env
+
+    // Allow services to modify the env vars as needed
+    for (const service of Object.values(this._services)) {
+      if (service.enabled) {
+        service.loadEnv(env)
+      }
+    }
+
+    // Update this._env cache with immutable proxy
+    this.setEnv(env)
+
+    return this._env
   }
 
   /**
@@ -335,24 +379,7 @@ export class Config {
    * @returns True if the service is enabled, false otherwise
    */
   public isEnabled(service: string): boolean {
-    // TODO: move this to Service class
-    const varName = `ENABLE_${service.toUpperCase().replace(/-/g, '_')}`
-    let value: string | boolean | undefined = Deno.env.get(varName)
-    // TODO: move ollama special case to a Service subclass for OllamaService
-    // Handle ollama special case
-    if (service === 'ollama') {
-      value = !['ollama-false', 'ollama-host'].includes(this.getOllamaProfile())
-    }
-    // If no env var is set, default to true
-    if (value === undefined || value === null) {
-      value = true
-    }
-    value = (String(value).trim().toLowerCase() === 'true') as boolean
-    const _service = this.getService(service)
-    if (_service) {
-      _service.enabled = value
-    }
-    return value
+    return this.getService(service)?.enabled || false
   }
 
   public getServices(): Record<string, Service> {
@@ -413,33 +440,6 @@ export class Config {
       }
     })
     return services
-  }
-
-  // HACK: need a better way of handling Ollama profiles and host settings
-  public getOllamaProfile(): OllamaProfile {
-    return `ollama-${Deno.env.get('ENABLE_OLLAMA')?.trim() || 'false'}` as OllamaProfile
-  }
-
-  // HACK: need a better way of handling Ollama profiles and host settings
-  public getOllamaHost(): string {
-    // Use the OLLAMA_HOST env var if it is set, otherwise check Ollama profile settings
-    const host = Deno.env.get('OLLAMA_HOST') || (this.getOllamaProfile() === 'ollama-host')
-      ? 'host.docker.internal:11434'
-      : 'ollama:11434'
-    return host
-  }
-
-  /**
-   * Get the path to a service's repo or a specific directory in the service's repo
-   * @param service - The service to get the path to
-   * @param repoDir - Repo directory, can include subdirectories
-   * @returns The path to the service's repo
-   */
-  // TODO: Remove this once services are migrated to services directory
-  public serviceRepoPath(service: string, repoDir?: string): string {
-    // service is for future use if/when repos are migrated to services directory
-    // repoDir could be a different name thant the service
-    return fs.escapePath(fs.path.join(this.repoDir, (repoDir || service).toLowerCase()))
   }
 
   /**

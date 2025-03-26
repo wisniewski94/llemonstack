@@ -331,11 +331,6 @@ export function getProfilesArgs({
   return profilesList.map((profile) => ['--profile', profile]).flat()
 }
 
-export const getOllamaProfile = config.getOllamaProfile
-console.log(`Ollama profile: ${getOllamaProfile()}`)
-
-export const getOllamaHost = config.getOllamaHost
-
 /**
  * Check if supabase was started by any of the services that depend on it
  * @param projectName
@@ -591,13 +586,14 @@ export async function start(
     }
 
     // Special handling for Ollama
-    const ollamaProfile = getOllamaProfile()
+    const ollamaService = config.getService('ollama')
+    const ollamaProfile = ollamaService?.getProfiles()[0]
     if (ollamaProfile !== 'ollama-false' && !service || service === 'ollama') {
       showAction(`\nStarting Ollama...`)
       if (ollamaProfile === 'ollama-host') {
         showInfo('Using host Ollama, no need to start ollama service')
       } else {
-        await startService(projectName, 'ollama', { profiles: [ollamaProfile] })
+        await startService(projectName, 'ollama', { profiles: [ollamaProfile || ''] })
       }
     }
 
@@ -610,7 +606,7 @@ export async function start(
     if (!skipOutput) {
       await outputServicesInfo({
         projectName,
-        ollamaProfile,
+        ollamaProfile: ollamaProfile || '',
       })
     }
   } catch (error) {

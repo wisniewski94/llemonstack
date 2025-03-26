@@ -23,7 +23,7 @@ export class Service {
     this.name = config.name
     this.service = config.service
     this.description = config.description
-    this._enabled = enabled ?? false
+    this._enabled = enabled ?? null
     this._config = config
     this._dir = dir
     this._composeFile = path.join(this._dir, config.compose_file)
@@ -35,7 +35,13 @@ export class Service {
   }
 
   get enabled(): boolean {
-    return this._enabled === true
+    if (this._enabled !== null) {
+      return this._enabled
+    }
+    const varName = `ENABLE_${this.service.toUpperCase().replace(/-/g, '_')}`
+    const enabled = Deno.env.get(varName)?.trim().toLowerCase() === 'true'
+    this._enabled = enabled
+    return this._enabled
   }
 
   set enabled(enabled: boolean) {
@@ -68,5 +74,32 @@ export class Service {
 
   get volumesSeeds(): { source: string; destination: string; from_repo?: true }[] {
     return this._config.volumes_seeds ?? []
+  }
+
+  public loadEnv(envVars: Record<string, string>) {
+    // Override in subclasses to set environment variables for the service
+    return envVars
+  }
+
+  /**
+   * Get the host and port for the service
+   *
+   * @param {string} [_subService] - Optional sub-service to get the host for
+   * @returns The container DNS host name and port, e.g. 'ollama:11434'
+   */
+  getHost(_subService?: string): string {
+    // TODO: get from the docker-compose.yaml file
+    // For now, this is just a placeholder for subclasses to override
+    return ''
+  }
+
+  /**
+   * Get Docker Compose profiles for the service
+   *
+   * @returns Array of profiles, e.g. ['ollama-cpu']
+   */
+  getProfiles(): string[] {
+    // Override in subclasses to return the profiles for the service
+    return []
   }
 }
