@@ -460,6 +460,8 @@ export class Config {
     return await fs.saveJson(this.configFile, this._config)
   }
 
+  public isOutdatedConfig(): boolean {
+    return this._config.version !== this._llemonstackVersion
   }
 
   //

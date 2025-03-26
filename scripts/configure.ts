@@ -12,11 +12,15 @@ await config.initialize()
 
 export async function configure(
   projectName: string,
-  { skipStart = false }: { skipStart?: boolean } = {},
 ): Promise<void> {
   const groups = config.getServiceGroups()
 
   showWarning('THIS IS WIP and does not yet save the selected services.')
+
+  // TODO: loop through all config.env keys to get list of ENABLE_* env vars
+  // Then set enabled for each service
+  // The save config
+  // Then comment out ENABLE_* env vars in .env
 
   // Prompt user for each group, starting with apps
   for (let i = groups.length - 1; i >= 0; i--) {
@@ -49,6 +53,5 @@ export async function configure(
 if (import.meta.main) {
   await configure(
     Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME,
-    { skipStart: Deno.args.includes('--skip-start') },
   )
 }

@@ -546,6 +546,12 @@ export async function start(
   projectName: string,
   { service, skipOutput = false }: { service?: string; skipOutput?: boolean } = {},
 ): Promise<void> {
+  // Check if config is old format and re-run configure script if needed
+  // if (config.isOutdatedConfig()) {
+  //   showWarning('Config is outdated, re-running configure script...')
+  //   await configure(projectName)
+  // }
+
   if (service && !config.isEnabled(service)) {
     showWarning(`${service} is not enabled`)
     showInfo(
