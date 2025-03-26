@@ -152,7 +152,7 @@ services:
       start_period: 30s
 
     volumes:
-      - ${LLEMONSTACK_VOLUMES_PATH:-../volumes}/flowise:/root/.flowise
+      - ${LLEMONSTACK_VOLUMES_PATH:-./volumes}/flowise:/root/.flowise
 
     # Set FLOWISE_START_MODE to "worker" to run in queue mode
     entrypoint: /bin/sh -c "sleep 3; flowise ${FLOWISE_START_MODE:-start}"
