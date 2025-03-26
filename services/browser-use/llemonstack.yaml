@@ -12,3 +12,8 @@ repo:
   dir: browser-use-web-ui
   sparse: false
   checkFile: docker-compose.yml
+
+volumes:
+  - browser-use/output
+  - browser-use/chrome_data
+  - browser-use/gradio_tmp

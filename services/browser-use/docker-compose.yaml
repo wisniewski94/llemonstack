@@ -17,6 +17,13 @@ services:
     labels:
       dev.dozzle.group: Browser Use
     platform: ${TARGETPLATFORM:-linux/amd64}
+
+    volumes:
+      - ${LLEMONSTACK_VOLUMES_PATH:-./volumes}/browser-use/output:/app/tmp
+      - ${LLEMONSTACK_VOLUMES_PATH:-./volumes}/browser-use/gradio_tmp:/tmp/gradio
+      - ${LLEMONSTACK_VOLUMES_PATH:-./volumes}/browser-use/chrome_data:/app/data/chrome_data
+      - /tmp/.X11-unix:/tmp/.X11-unix # From source docker-compose.yml in repo
+
     environment:
       # BROWSER_USE_* specific environment variables
       - CHROME_PERSISTENT_SESSION=${BROWSER_USE_CHROME_PERSISTENT_SESSION:-true}
