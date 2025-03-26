@@ -106,6 +106,11 @@ container logs in Docker Desktop.
 
 **Someday / low priority:**
 
+- [ ] Add browser-use-bridge to broswer-use container to use in n8n
+      https://github.com/draphonix/browser-n8n-local
+      https://www.npmjs.com/package/n8n-nodes-browser-use
+      Provides an API for n8n to connect to control browser-use
+
 - [ ] Remove all container_name from docker-compose.yml to allow for multiple stacks to run at the
       same time
 - [ ] During init, set a unique base port and then set all exposed (host) ports to an offset. This
