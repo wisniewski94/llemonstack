@@ -32,6 +32,14 @@ services:
       - GOOGLE_API_KEY=${BROWSER_USE_GOOGLE_API_KEY:-}
       - DEEPSEEK_API_KEY=${BROWSER_USE_DEEPSEEK_API_KEY:-}
 
+      - OPENAI_ENDPOINT=${BROWSER_USE_OPENAI_ENDPOINT:-https://api.openai.com/v1}
+      - ANTHROPIC_ENDPOINT=${BROWSER_USE_ANTHROPIC_ENDPOINT:-https://api.anthropic.com}
+      - DEEPSEEK_ENDPOINT=${BROWSER_USE_DEEPSEEK_ENDPOINT:-https://api.deepseek.com}
+      - MOONSHOT_ENDPOINT=${BROWSER_USE_MOONSHOT_ENDPOINT:-https://api.moonshot.cn/v1}
+      - ALIBABA_ENDPOINT=${BROWSER_USE_ALIBABA_ENDPOINT:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      - OLLAMA_ENDPOINT=${BROWSER_USE_OLLAMA_ENDPOINT:-http://localhost:11434}
+      - MISTRAL_ENDPOINT=${BROWSER_USE_MISTRAL_ENDPOINT:-https://api.mistral.ai/v1}
+
       - BROWSER_USE_LOGGING_LEVEL=${BROWSER_USE_LOGGING_LEVEL:-info}
       - ANONYMIZED_TELEMETRY=false
       # See additional configuration in the extended docker compose file
