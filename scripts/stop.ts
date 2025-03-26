@@ -135,7 +135,7 @@ export async function stop(
     if (!service) {
       showError(`Unknown service: '${serviceName}'`)
       showAction('\nAvailable services:\n')
-      const rows = config.getAvailableServices().map((_service) => {
+      const rows = config.getInstalledServices().map((_service) => {
         if (_service && config.isEnabled(name)) {
           return [colors.green(_service.service), _service.description]
         }
@@ -166,7 +166,7 @@ export async function stop(
   if (serviceName) {
     await stopService(projectName, serviceName)
   } else {
-    const services = stopAll ? config.getAvailableServices() : config.getEnabledServices()
+    const services = stopAll ? config.getInstalledServices() : config.getEnabledServices()
     await stopServices(projectName, services, { all: stopAll })
   }
 

@@ -386,12 +386,12 @@ export class Config {
     return this._services
   }
 
-  public getAvailableServices(): Service[] {
+  public getInstalledServices(): Service[] {
     return Object.values(this._services)
   }
 
   public getEnabledServices(): Service[] {
-    return this.getAvailableServices().filter((service) => this.isEnabled(service.service))
+    return this.getInstalledServices().filter((service) => this.isEnabled(service.service))
   }
 
   public getService(service: string): Service | null {
@@ -411,7 +411,7 @@ export class Config {
    * @returns {string[]}
    */
   public getComposeFiles({ all = false }: { all?: boolean } = {}): string[] {
-    return this.getAvailableServices().map(
+    return this.getInstalledServices().map(
       (service) => {
         return (!all && !this.isEnabled(service.service)) ? false : service.composeFile
       },
@@ -431,7 +431,7 @@ export class Config {
 
   public getServicesWithRequiredVolumes(): Service[] {
     const services: Service[] = []
-    this.getAvailableServices().forEach((service) => {
+    this.getInstalledServices().forEach((service) => {
       if (
         (service.volumes.length > 0 || service.volumesSeeds.length > 0) &&
         this.isEnabled(service.service)
