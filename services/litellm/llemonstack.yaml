@@ -7,10 +7,6 @@ description: Litellm is a proxy for monitoring LLMs & managing API keys
 compose_file: docker-compose.yaml
 service_group: middleware
 
-depends_on:
-  postgres:
-    condition: service_healthy
-
 provides:
   litellm: litellm # Name of the container
 
