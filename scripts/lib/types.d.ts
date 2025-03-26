@@ -5,7 +5,7 @@ import {
 
 export type { Service } from './service.ts'
 
-export interface ProjectConfig {
+export interface LLemonStackConfig {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty
   version: string // Version of LLemonStack used to create the config
   projectName: string
@@ -18,6 +18,12 @@ export interface ProjectConfig {
     shared: string
     volumes: string
     services?: string
+  }
+  services: {
+    [key: string]: {
+      enabled: boolean | 'auto'
+      profiles?: string[]
+    }
   }
 }
 

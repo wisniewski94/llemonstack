@@ -1,11 +1,11 @@
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
-import projectTemplate from '../../config/config.0.2.0.json' with { type: 'json' }
+import configTemplate from '../../config/config.0.2.0.json' with { type: 'json' }
 import packageJson from '../../package.json' with { type: 'json' }
 import { loadEnv } from './env.ts'
 import * as fs from './fs.ts'
 import { Service } from './service.ts'
 import { failure, success, TryCatchResult } from './try-catch.ts'
-import { ProjectConfig, ServiceConfig } from './types.d.ts'
+import { LLemonStackConfig, ServiceConfig } from './types.d.ts'
 
 export class Config {
   private static instance: Config
@@ -13,7 +13,8 @@ export class Config {
   private _installDir: string
   private _llemonstackVersion: string = packageJson.version
   private _configDirBase: string = '.llemonstack'
-  private _project: ProjectConfig = projectTemplate
+  private _configTemplate: LLemonStackConfig = configTemplate as LLemonStackConfig
+  private _config: LLemonStackConfig = this._configTemplate
   private _services: Record<string, Service> = {}
   private _serviceConfigFile: string = 'llemonstack.yaml'
   private _env: Record<string, string> = {}
@@ -32,6 +33,21 @@ export class Config {
   readonly configFile: string
   readonly defaultProjectName: string = 'llemonstack'
 
+  private constructor() {
+    this._installDir = fs.path.join(
+      fs.path.dirname(fs.path.fromFileUrl(import.meta.url)),
+      '../../',
+    )
+    this.configDir = fs.path.join(Deno.cwd(), this._configDirBase)
+    this.configFile = fs.path.join(this.configDir, 'config.json')
+    this.DEBUG = `${Deno.env.get('LLEMONSTACK_DEBUG')} ${Deno.env.get('DEBUG')}`.toLowerCase()
+      .includes('true')
+  }
+
+  //
+  // Public Properties
+  //
+
   get DEBUG(): boolean {
     return this._debug
   }
@@ -41,12 +57,12 @@ export class Config {
   }
 
   get projectName(): string {
-    return this._env.LLEMONSTACK_PROJECT_NAME || this._project.projectName ||
+    return this._env.LLEMONSTACK_PROJECT_NAME || this._config.projectName ||
       this.defaultProjectName
   }
 
   get envFile(): string {
-    return fs.path.resolve(Deno.cwd(), this._project.envFile)
+    return fs.path.resolve(Deno.cwd(), this._config.envFile)
   }
 
   get installDir(): string {
@@ -58,34 +74,34 @@ export class Config {
   }
 
   get repoDir(): string {
-    return fs.path.resolve(Deno.cwd(), this._project.dirs.repos)
+    return fs.path.resolve(Deno.cwd(), this._config.dirs.repos)
   }
 
   get servicesDir(): string {
-    if (this._project.dirs.services) {
-      return fs.path.resolve(Deno.cwd(), this._project.dirs.services)
+    if (this._config.dirs.services) {
+      return fs.path.resolve(Deno.cwd(), this._config.dirs.services)
     }
     return fs.path.join(this.installDir, 'services')
   }
 
   get importDir(): string {
-    return fs.path.resolve(Deno.cwd(), this._project.dirs.import)
+    return fs.path.resolve(Deno.cwd(), this._config.dirs.import)
   }
 
   get sharedDir(): string {
-    return fs.path.resolve(Deno.cwd(), this._project.dirs.shared)
+    return fs.path.resolve(Deno.cwd(), this._config.dirs.shared)
   }
 
   get volumesDir(): string {
-    return fs.path.resolve(Deno.cwd(), this._project.dirs.volumes)
+    return fs.path.resolve(Deno.cwd(), this._config.dirs.volumes)
   }
 
-  get project(): ProjectConfig {
-    return this._project
+  get project(): LLemonStackConfig {
+    return this._config
   }
 
   get projectInitialized(): boolean {
-    return !!this._project.initialized.trim()
+    return !!this._config.initialized.trim()
   }
 
   get env(): Record<string, string> {
@@ -94,7 +110,7 @@ export class Config {
 
   // Returns the LLemonStack version for the current project
   get version(): string {
-    return this._project.version || this._llemonstackVersion
+    return this._config.version || this._llemonstackVersion
   }
 
   get installVersion(): string {
@@ -118,16 +134,9 @@ export class Config {
     }
   }
 
-  private constructor() {
-    this._installDir = fs.path.join(
-      fs.path.dirname(fs.path.fromFileUrl(import.meta.url)),
-      '../../',
-    )
-    this.configDir = fs.path.join(Deno.cwd(), this._configDirBase)
-    this.configFile = fs.path.join(this.configDir, 'config.json')
-    this.DEBUG = `${Deno.env.get('LLEMONSTACK_DEBUG')} ${Deno.env.get('DEBUG')}`.toLowerCase()
-      .includes('true')
-  }
+  //
+  // Public Methods
+  //
 
   public static getInstance(): Config {
     if (!Config.instance) {
@@ -152,13 +161,13 @@ export class Config {
     let updated = false // Track if the project config was updated and needs to be saved
 
     // Load project config file
-    const readResult = await fs.readJson<ProjectConfig>(this.configFile)
+    const readResult = await fs.readJson<LLemonStackConfig>(this.configFile)
 
     if (readResult.data) {
-      this._project = readResult.data
+      this._config = readResult.data
     } else if (readResult.error instanceof Deno.errors.NotFound) {
       // File doesn't exist, populate with a template
-      this._project = projectTemplate
+      this._config = this._configTemplate
       result.addMessage('info', 'Project config file not found, creating from template')
       updated = true
     } else {
@@ -166,8 +175,8 @@ export class Config {
     }
 
     // Check if project config is valid
-    if (!this.isValidProjectConfig()) {
-      this.updateProjectConfig(projectTemplate)
+    if (!this.isValidConfig()) {
+      this.updateConfig(this._configTemplate)
       result.addMessage('info', 'Project config file is invalid, updating from template')
       updated = true
     }
@@ -186,7 +195,7 @@ export class Config {
     result.messages.push(...servicesResult.messages)
 
     if (updated) {
-      const saveResult = await this.saveConfig()
+      const saveResult = await this.save()
       if (!saveResult.success) {
         result.error = saveResult.error
         result.addMessage(
@@ -278,7 +287,8 @@ export class Config {
       const serviceOptions = {
         config: serviceConfig,
         dir: fs.path.join(this.servicesDir, serviceConfig.service),
-        // enabled: null, // Uncomment this once enabled services are loaded from config.json
+        // TODO: uncomment this once configure script is implemented to auto migrate
+        // enabled: this._config.services?.[serviceConfig.service]?.enabled || null,
         repoBaseDir: this.repoDir,
       }
 
@@ -357,20 +367,11 @@ export class Config {
     if (updateEnv && this._env[envKey]) {
       this.updateEnv(envKey, name)
     }
-    this._project.projectName = name
+    this._config.projectName = name
     if (save) {
-      return await this.saveConfig()
+      return await this.save()
     }
     return success<boolean>(true)
-  }
-
-  private updateEnv(key: string, value: string) {
-    // Clone env object
-    const env = { ...this._env }
-    env[key] = value
-    Deno.env.set(key, value)
-    this._env = env
-    return this._env
   }
 
   /**
@@ -446,7 +447,7 @@ export class Config {
    * Save the project config to the config file
    * @returns {Promise<TryCatchResult<boolean>>}
    */
-  private async saveConfig(): Promise<TryCatchResult<boolean>> {
+  public async save(): Promise<TryCatchResult<boolean>> {
     if (!fs.isInsideCwd(this.configFile).data) {
       return new TryCatchResult<boolean, Error>({
         data: false,
@@ -456,8 +457,14 @@ export class Config {
         success: false,
       })
     }
-    return await fs.saveJson(this.configFile, this._project)
+    return await fs.saveJson(this.configFile, this._config)
   }
+
+  }
+
+  //
+  // Private Methods
+  //
 
   /**
    * Create an immutable proxy of the env object
@@ -479,11 +486,20 @@ export class Config {
     return this._env
   }
 
+  private updateEnv(key: string, value: string) {
+    // Clone env object
+    const env = { ...this._env }
+    env[key] = value
+    Deno.env.set(key, value)
+    this._env = env
+    return this._env
+  }
+
   /**
    * Check if the project config is valid
    * @returns {boolean}
    */
-  private isValidProjectConfig(config: ProjectConfig = this._project): boolean {
+  private isValidConfig(config: LLemonStackConfig = this._config): boolean {
     if (!config) {
       return false
     }
@@ -495,7 +511,7 @@ export class Config {
       'projectName',
       'envFile',
       'dirs',
-      // 'services',
+      'services',
     ] as const
     for (const key of requiredKeys) {
       if (!(key in config)) {
@@ -503,8 +519,8 @@ export class Config {
       }
 
       // For object properties, check if they have the expected structure
-      const templateValue = projectTemplate[key as keyof typeof projectTemplate]
-      const projectValue = config[key as keyof ProjectConfig]
+      const templateValue = this._configTemplate[key as keyof typeof this._configTemplate]
+      const projectValue = config[key as keyof LLemonStackConfig]
 
       if (
         typeof templateValue === 'object' &&
@@ -537,21 +553,21 @@ export class Config {
    * Merge the template with the current project config to ensure all keys are present
    * @param template - The template to merge with the current project config
    */
-  private updateProjectConfig(template: ProjectConfig = projectTemplate): void {
-    if (!this._project) {
-      this._project = { ...template }
+  private updateConfig(template: LLemonStackConfig = this._configTemplate): void {
+    if (!this._config) {
+      this._config = { ...template }
       return
     }
 
     const merged = deepMerge(
       template as unknown as Record<string, unknown>,
-      { ...this._project } as unknown as Record<string, unknown>,
-    ) as unknown as ProjectConfig
+      { ...this._config } as unknown as Record<string, unknown>,
+    ) as unknown as LLemonStackConfig
 
     // Set version to template version
     merged.version = template.version
 
-    this._project = merged
+    this._config = merged
   }
 }
 
