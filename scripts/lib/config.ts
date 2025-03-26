@@ -278,11 +278,12 @@ export class Config {
       if (!this._serviceGroups.find((group) => group[0] === serviceConfig.service_group)) {
         this._serviceGroups.push([serviceConfig.service_group, [serviceConfig.service]])
       } else {
-        this._serviceGroups.find((group) => group[0] === serviceConfig.service_group)?.[1].push(
-          serviceConfig.service,
-        )
+        const group = this._serviceGroups.find((group) => group[0] === serviceConfig.service_group)
+          ?.[1]
+        if (group && !group.includes(serviceConfig.service)) {
+          group.push(serviceConfig.service)
+        }
       }
-
       // Create Service constructor options
       const serviceOptions = {
         config: serviceConfig,
