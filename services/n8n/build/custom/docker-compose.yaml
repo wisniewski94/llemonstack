@@ -103,6 +103,9 @@ services:
       - NODE_FUNCTION_ALLOW_BUILTIN=* # Allow built-in nodes to be imported in n8n code nodes
       # - N8N_CUSTOM_EXTENSIONS # Path to a custom n8n extension
 
+      # Enable community packages to be used as nodes for AI Agents
+      - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
+
       # Langfuse configuration
       # - LANGFUSE_PUBLIC_KEY=pk-lf-... # langfuse public key
       # - LANGFUSE_SECRET_KEY=sk-lf-... # langfuse secret key
