@@ -1,3 +1,4 @@
+import { Config } from './config.ts'
 import { dockerCompose } from './docker.ts'
 import { path } from './fs.ts'
 import { failure, success, TryCatchResult } from './try-catch.ts'
@@ -24,13 +25,12 @@ export class Service {
   protected _profiles: string[] = []
 
   constructor(
-    { config, dir, enabled, repoBaseDir, llemonstackConfig }: ServiceOptions,
+    { config, dir, repoBaseDir, llemonstackConfig }: ServiceOptions,
   ) {
     this.name = config.name
     this.service = config.service
     this.description = config.description
     this._projectName = llemonstackConfig.projectName
-    this._enabled = enabled ?? null
     this._config = config
     this._dir = dir
     this._composeFile = path.join(this._dir, config.compose_file)
@@ -45,20 +45,6 @@ export class Service {
 
   public get composeFile(): string {
     return this._composeFile
-  }
-
-  public get enabled(): boolean {
-    if (this._enabled !== null) {
-      return this._enabled
-    }
-    // Env vars override the config file settings
-    const env = Deno.env.get(`ENABLE_${this.service.toUpperCase().replace(/-/g, '_')}`)
-    this._enabled = env?.trim().toLowerCase() === 'true' || this._configEnabled
-    return this._enabled
-  }
-
-  public set enabled(enabled: boolean) {
-    this._enabled = enabled
   }
 
   public get config(): ServiceConfig {
@@ -97,9 +83,38 @@ export class Service {
     return Object.keys(this._config.provides || {}) ?? []
   }
 
+  //
+  // Public Methods
+  //
+
   public loadEnv(envVars: Record<string, string>) {
     // Override in subclasses to set environment variables for the service
     return envVars
+  }
+
+  /**
+   * Get or set the enabled status of the service
+   *
+   * Used a single method instead of get/set to make a more compact API.
+   * Allows for ```config.getService('n8n')?.enabled(false)```
+   *
+   * @param value - Optional boolean value to set the enabled status
+   * @returns The enabled status of the service
+   */
+  public enabled(value?: boolean): boolean {
+    if (value !== undefined) {
+      this._enabled = value
+      return this._enabled
+    }
+    // Check if enabled has been set yet
+    if (this._enabled !== null) {
+      return this._enabled
+    }
+    // Check Deno env vars for ENABLED_<service>
+    // Otherwise, use the initial config file setting
+    const env = Config.getInstance().env[`ENABLE_${this.service.toUpperCase().replace(/-/g, '_')}`]
+    this._enabled = env?.trim().toLowerCase() === 'true' || this._configEnabled
+    return this._enabled
   }
 
   /**

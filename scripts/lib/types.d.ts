@@ -103,7 +103,6 @@ export interface ServiceConfig {
 export interface ServiceOptions {
   config: ServiceConfig
   dir: string
-  enabled?: boolean
   repoBaseDir: string
   llemonstackConfig: LLemonStackConfig
 }

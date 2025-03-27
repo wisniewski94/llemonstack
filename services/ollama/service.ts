@@ -6,13 +6,25 @@ import { success, TryCatchResult } from '../../scripts/lib/try-catch.ts'
 import { EnvVars, ServiceActionOptions } from '../../scripts/lib/types.d.ts'
 
 export class OllamaService extends Service {
-  override get enabled(): boolean {
+  /**
+   * Get or set the enabled status of Ollama service
+   *
+   * @param value - Optional boolean value to set the enabled status
+   * @returns The enabled status of the service
+   */
+  override enabled(value?: boolean): boolean {
+    if (value !== undefined) {
+      this._enabled = value
+      return this._enabled
+    }
+    // Check if enabled has been set yet
+    if (this._enabled !== null) {
+      return this._enabled
+    }
+    // Set enabled to true if ENABLE_OLLAMA is not false
     const env = Config.getInstance().env['ENABLE_OLLAMA'].trim().toLowerCase()
-    return !(env === 'false') || !!this._enabled
-  }
-
-  override set enabled(enabled: boolean) {
-    this._enabled = enabled
+    this._enabled = !(env === 'false') || this._configEnabled
+    return this._enabled
   }
 
   /**

@@ -291,8 +291,6 @@ export class Config {
       const serviceOptions = {
         config: serviceConfig,
         dir: fs.path.join(this.servicesDir, serviceConfig.service),
-        // TODO: uncomment this once configure script is implemented to auto migrate
-        // enabled: this._config.services?.[serviceConfig.service]?.enabled || null,
         repoBaseDir: this.repoDir,
         llemonstackConfig: this._config,
       }
@@ -392,7 +390,7 @@ export class Config {
    * @returns True if the service is enabled, false otherwise
    */
   public isEnabled(service: string): boolean {
-    return this.getService(service)?.enabled || false
+    return this.getService(service)?.enabled() || false
   }
 
   public getServices(): Record<string, Service> {
@@ -472,7 +470,7 @@ export class Config {
     // Update service enabled state and profiles in config before saving
     this.getInstalledServices().forEach((service) => {
       this._config.services[service.service] = {
-        enabled: service.enabled,
+        enabled: service.enabled(),
         profiles: service.getProfiles(),
       }
     })

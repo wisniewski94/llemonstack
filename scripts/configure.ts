@@ -99,7 +99,7 @@ export async function configure(
         }
       } else {
         // console.log('disabling service', service.service)
-        service.enabled = false
+        service.enabled(false)
       }
     }
   }
