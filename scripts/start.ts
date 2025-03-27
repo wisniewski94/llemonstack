@@ -14,7 +14,6 @@ import {
   Row,
   RowType,
   showAction,
-  showCredentials,
   showDebug,
   showError,
   showHeader,
@@ -465,142 +464,26 @@ function outputServicesInfo({
   projectName: string
   hideCredentials?: boolean
 }): void {
-  // TODO: migrate to auto config once outputs are verified
-  // const services = config.getEnabledServices()
-  // showServicesInfo(services, 'host.*', { hideCredentials })
-  // showServicesInfo(services, 'internal.*', { hideCredentials })
+  const services = config.getEnabledServices()
 
-  //
-  // SERVICE DASHBOARDS
-  //
   showHeader('Service Dashboards')
   showInfo('Access the dashboards in a browser on your host machine.\n')
 
-  config.isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
-  if (config.isEnabled('flowise')) {
-    showService('Flowise', 'http://localhost:3001')
-    showCredentials({
-      'Username': Deno.env.get('FLOWISE_USERNAME'),
-      'Password': Deno.env.get('FLOWISE_PASSWORD'),
-    })
-  }
-  config.isEnabled('openwebui') && showService('Open WebUI', 'http://localhost:8080')
-  if (config.isEnabled('browser-use')) {
-    showService('Browser-Use', 'http://localhost:7788/')
-    showService(
-      'Browser-Use VNC',
-      'http://0.0.0.0:6080/vnc.html?host=0.0.0.0&port=6080',
-    )
-    showCredentials({
-      'Password': Deno.env.get('BROWSER_USE_VNC_PASSWORD'),
-    })
-  }
-  if (config.isEnabled('supabase')) {
-    showService('Supabase', `http://localhost:8000`)
-    showCredentials({
-      'Username': Deno.env.get('SUPABASE_DASHBOARD_USERNAME'),
-      'Password': Deno.env.get('SUPABASE_DASHBOARD_PASSWORD'),
-    })
-  }
-  if (config.isEnabled('litellm')) {
-    showService('LiteLLM', 'http://localhost:3004/ui/')
-    showCredentials({
-      'Username': Deno.env.get('LITELLM_UI_USERNAME'),
-      'Password': Deno.env.get('LITELLM_UI_PASSWORD'),
-    })
-  }
-  if (config.isEnabled('langfuse')) {
-    showService('Langfuse', 'http://localhost:3005/')
-    showCredentials({
-      'Username': Deno.env.get('LANGFUSE_INIT_USER_EMAIL'),
-      'Password': Deno.env.get('LANGFUSE_INIT_USER_PASSWORD'),
-    })
-  }
-  if (config.isEnabled('neo4j')) {
-    showService('Neo4j', 'http://localhost:7474/browser/')
-    showCredentials({
-      'Username': Deno.env.get('NEO4J_USER'),
-      'Password': Deno.env.get('NEO4J_PASSWORD'),
-    })
-  }
-  config.isEnabled('qdrant') && showService('Qdrant', 'http://localhost:6333/dashboard')
-  if (config.isEnabled('minio')) {
-    showService('Minio', 'http://localhost:9091/')
-    showCredentials({
-      'Username': 'minio',
-      'Password': Deno.env.get('MINIO_ROOT_PASSWORD'),
-    })
-  }
-  config.isEnabled('dozzle') && showService('Dozzle', 'http://localhost:8081/')
+  showServicesInfo(services, 'host.*', { hideCredentials })
 
-  //
-  // API ENDPOINTS
-  //
   showHeader('API Endpoints')
   showInfo('For connecting services within the stack, use the following endpoints.')
   showInfo('i.e. for n8n credentials, postgres connections, API requests, etc.\n')
 
-  if (config.isEnabled('supabase')) {
-    showService('Supabase Postgres DB Host', 'db')
-    showCredentials({
-      'Username': 'postgres',
-      'Password': Deno.env.get('POSTGRES_PASSWORD'),
-    })
-    showService('Supabase Postgres Pooler', 'supavisor')
-    showCredentials({
-      'Username': `postgres.${projectName}`,
-      'Password': Deno.env.get('POSTGRES_PASSWORD'),
-    })
-    showInfo('Use the pooler for postgres connections whenever possible.')
-    showInfo(
-      `PSQL Connection URL: postgres://postgres.${projectName}:${
-        Deno.env.get('POSTGRES_PASSWORD')
-      }@supavisor:5432/postgres`,
-    )
-    console.log('')
-    showService('Supabase API', 'http://kong:8000')
-    showService(
-      'Supabase Edge Functions',
-      'http://kong:8000/functions/v1/[function]',
-    )
-  }
-  config.isEnabled('n8n') && showService('n8n', 'http://n8n:5678')
+  showServicesInfo(services, 'internal.*', { hideCredentials })
 
-  if (config.isEnabled('flowise')) {
-    const hosts = config.getService('flowise')?.getHosts('internal.*')
-    hosts?.forEach((host) => {
-      showService(host.name || 'Flowise', host.url)
-      showCredentials!(host.credentials || {})
-    })
-    // showService('Flowise', 'http://flowise:3000')
-    // const flowiseApi = await getFlowiseApiKey()
-    // showCredentials({
-    //   [flowiseApi?.keyName || 'API Key']: flowiseApi?.apiKey || '',
-    // })
-  }
-  if (config.isEnabled('litellm')) {
-    showService('LiteLLM', 'http://litellm:4000')
-    showCredentials({
-      'API Key': Deno.env.get('LITELLM_MASTER_KEY'),
-    })
-  }
-  if (config.isEnabled('zep')) {
-    showService('Zep', 'http://zep:8000')
-    showService('Zep Graphiti', 'http://graphiti:8003')
-  }
-  config.isEnabled('neo4j') && showService('Neo4j', 'bolt://neo4j:7687')
-  config.isEnabled('qdrant') && showService('Qdrant', 'http://qdrant:6333')
-  config.isEnabled('redis') && showService('Redis', 'http://redis:6379')
-  config.isEnabled('clickhouse') && showService('Clickhouse', 'http://clickhouse:8123')
-  config.isEnabled('langfuse') && showService('Langfuse', 'http://langfuse:3000')
-  config.isEnabled('minio') && showService('Minio', 'http://minio:9000/')
-
+  // TODO: migrate additional ollama info to service subclass
   // Show any user actions
   // Show user action if using host Ollama
   const ollamaService = config.getService('ollama')
   if (ollamaService?.getProfiles()[0] === 'ollama-host') {
     const ollamaUrl = config.getService('ollama')?.getHost()?.url || ''
-    showService('Ollama', ollamaUrl)
+    // showService('Ollama', ollamaUrl)
     showUserAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
     showUserAction('  Start Ollama on your computer: `ollama serve`')
     if (config.isEnabled('n8n')) {

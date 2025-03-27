@@ -13,5 +13,5 @@ provides:
 exposes:
   host:
     dozzle:
-      name: Dozzle (Logs)
+      name: Dozzle
       url: http://localhost:8081
