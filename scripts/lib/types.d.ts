@@ -95,6 +95,25 @@ export interface ServiceConfig {
   provides?: Record<string, string> // The services that the service provides
   depends_on?: Record<string, { condition: string }> // The services that the service depends on
   app_version_cmd?: string[] // The command to run to get the version of the service
+  exposes?: ExposeHostConfig
+}
+
+export interface ExposeHostConfig {
+  host?: {
+    // Can be a url string, array of urls, or an object or array of objects with url and credentials
+    dashboard?: ExposeHost
+    api?: ExposeHost
+  }
+  internal?: {
+    api?: ExposeHost
+  }
+}
+
+export type ExposeHostOptions = string | string[] | ExposeHost | ExposeHost[]
+
+export type ExposeHost = {
+  url: string
+  credentials?: Record<string, string>
 }
 
 /**

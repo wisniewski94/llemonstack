@@ -1,9 +1,12 @@
 import { Config } from './config.ts'
-import { dockerCompose } from './docker.ts'
+import { dockerCompose, expandEnvVars } from './docker.ts'
 import { path } from './fs.ts'
 import { failure, success, TryCatchResult } from './try-catch.ts'
 import {
   EnvVars,
+  ExposeHost,
+  ExposeHostConfig,
+  ExposeHostOptions,
   RepoService,
   ServiceActionOptions,
   ServiceConfig,
@@ -118,16 +121,70 @@ export class Service {
   }
 
   /**
-   * Get the host and port for the service
+   * Get the first host matching the context
    *
-   * @param {string} [_subService] - Optional sub-service to get the host for
+   * @param {string} context - Dot object path for exposes in the service llemonstack.yaml config
    * @returns The container DNS host name and port, e.g. 'ollama:11434'
    */
-  public getHost(_subService?: string): string {
-    // TODO: get from the docker-compose.yaml file
-    // Add support for returning multiple hosts. These are all the hosts & ports exposed to localhost.
-    // For now, this is just a placeholder for subclasses to override
-    return ''
+  public getHost(context?: string): ExposeHost {
+    return this.getHosts(context)[0]
+  }
+
+  /**
+   * Get all hosts matching the context
+   *
+   * @param {string} context - Dot object path for exposes in the service llemonstack.yaml config
+   * @returns The container DNS host name and port, e.g. 'ollama:11434'
+   */
+  public getHosts(context?: string): ExposeHost[] {
+    if (!context) {
+      context = 'host.dashboard'
+    }
+
+    // Get the hosts from the service configuration
+    if (!this._config?.exposes) {
+      return []
+    }
+
+    // Parse the context path (e.g., 'host.dashboard' or 'internal.api')
+    const [scope, type] = context.split('.') as [
+      keyof ExposeHostConfig,
+      keyof ExposeHostConfig['host' | 'internal'],
+    ]
+    if (!scope || !type || !this._config.exposes?.[scope]) {
+      return []
+    }
+
+    const exposeConfig = this._config.exposes[scope][type] as ExposeHostOptions
+    if (!exposeConfig) {
+      return []
+    }
+
+    let hosts: ExposeHost[] = []
+
+    // Handle different formats of expose configuration
+    if (typeof exposeConfig === 'string') {
+      return [{ url: exposeConfig }]
+    } else if (Array.isArray(exposeConfig)) {
+      hosts = exposeConfig.map((item: string | ExposeHost): ExposeHost => {
+        if (typeof item === 'string') {
+          return { url: item }
+        }
+        return item
+      })
+    } else {
+      hosts = [exposeConfig]
+    }
+
+    const env = Config.getInstance().env
+    hosts.forEach((host) => {
+      if (host.credentials) {
+        Object.entries(host.credentials).forEach(([key, value]) => {
+          host.credentials![key] = expandEnvVars(String(value), env)
+        })
+      }
+    })
+    return hosts
   }
 
   /**

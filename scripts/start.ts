@@ -530,7 +530,7 @@ async function outputServicesInfo({
   // Show user action if using host Ollama
   const ollamaService = config.getService('ollama')
   if (ollamaService?.getProfiles()[0] === 'ollama-host') {
-    const ollamaUrl = `http://${config.getService('ollama')?.getHost()}`
+    const ollamaUrl = config.getService('ollama')?.getHost()?.url || ''
     showService('Ollama', ollamaUrl)
     showUserAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
     showUserAction('  Start Ollama on your computer: `ollama serve`')

@@ -15,3 +15,10 @@ depends_on:
     condition: service_healthy
 
 app_version_cmd: ['n8n', '--version']
+
+exposes:
+  host:
+    dashboard: http://localhost:5678
+  internal: # Host name for the stack
+    api:
+      url: http://n8n:5678/api/v1/

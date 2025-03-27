@@ -23,3 +23,15 @@ app_version_cmd: [
   '-c',
   "flowise --version | grep -o \"flowise/[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+\" | cut -d'/' -f2",
 ]
+
+exposes:
+  host:
+    dashboard:
+      url: 'http://localhost:3001'
+      credentials:
+        username: ${FLOWISE_USERNAME}
+        password: ${FLOWISE_PASSWORD}
+  internal: # Internal to the stack, not exposed to the host
+    api:
+      url: http://n8n:5678/api/v1/
+      API Key: ${FLOWISE_API_KEY}

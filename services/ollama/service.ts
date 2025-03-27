@@ -3,7 +3,7 @@ import { Config } from '../../scripts/lib/config.ts'
 import { showHeader, showInfo, showWarning } from '../../scripts/lib/logger.ts'
 import { Service } from '../../scripts/lib/service.ts'
 import { success, TryCatchResult } from '../../scripts/lib/try-catch.ts'
-import { EnvVars, ServiceActionOptions } from '../../scripts/lib/types.d.ts'
+import { EnvVars, ExposeHost, ServiceActionOptions } from '../../scripts/lib/types.d.ts'
 
 export class OllamaService extends Service {
   /**
@@ -31,15 +31,17 @@ export class OllamaService extends Service {
    * Get the Ollama host based on the current profile
    * @returns The Ollama host URL
    */
-  override getHost(): string {
+  override getHosts(_context: string): ExposeHost[] {
     // Use the OLLAMA_HOST env var if set, otherwise check Ollama profile settings
-    return Config.getInstance().env['OLLAMA_HOST'] || (this.getProfiles()[0] === 'ollama-host')
-      ? 'host.docker.internal:11434'
-      : 'ollama:11434'
+    const host =
+      Config.getInstance().env['OLLAMA_HOST'] || (this.getProfiles()[0] === 'ollama-host')
+        ? 'host.docker.internal:11434'
+        : 'ollama:11434'
+    return [{ url: host }]
   }
 
   override loadEnv(envVars: Record<string, string>) {
-    envVars.OLLAMA_HOST = this.getHost()
+    envVars.OLLAMA_HOST = this.getHost()?.url
     return envVars
   }
 
@@ -57,7 +59,7 @@ export class OllamaService extends Service {
   ): Promise<TryCatchResult<boolean>> {
     if (this.getProfiles().includes('ollama-host')) {
       const results = success<boolean>(true)
-      results.addMessage('info', 'Skipping Ollama service start, using host bridge instead')
+      results.addMessage('info', 'Skipping Ollama service start, using host bridge')
       return results
     }
     return await super.start({ envVars, silent })
