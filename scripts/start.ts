@@ -458,10 +458,8 @@ function showServicesInfo(
 }
 
 function outputServicesInfo({
-  projectName,
   hideCredentials = false,
 }: {
-  projectName: string
   hideCredentials?: boolean
 }): void {
   const services = config.getEnabledServices()
@@ -568,7 +566,6 @@ export async function start(
 
     if (!skipOutput) {
       await outputServicesInfo({
-        projectName,
         hideCredentials,
       })
     }

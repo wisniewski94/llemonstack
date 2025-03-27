@@ -13,6 +13,11 @@ services:
       dockerfile: ${BROWSER_USE_DOCKERFILE:-${DOCKERFILE_ARCH:-${DOCKERFILE:-Dockerfile}}}
       args:
         TARGETPLATFORM: ${TARGETPLATFORM:-linux/amd64}
+    # TODO: add the project name prefix to container_name to avoid conflicts
+    # when running multiple instances of the stack on the same machine.
+    # Docker doesn't allow unsetting container_name, so we'll need to use a
+    # custom label to identify the project name, prefix variable, or ditch
+    # extending the service and copy everything over to this file.
     container_name: browser-use-webui
     labels:
       dev.dozzle.group: Browser Use
