@@ -413,6 +413,10 @@ async function outputServicesInfo({
   //
   showHeader('Service Dashboards')
   showInfo('Access the dashboards in a browser on your host machine.\n')
+
+  // console.log('n8n: ', config.getService('n8n')?.getHost('host.dashboard'))
+  // console.log('flowise: ', config.getService('flowise')?.getHost('host.dashboard'))
+
   config.isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
   if (config.isEnabled('flowise')) {
     showService('Flowise', 'http://localhost:3001')

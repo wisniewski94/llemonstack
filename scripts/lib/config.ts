@@ -345,7 +345,7 @@ export class Config {
     // Allow services to modify the env vars as needed
     for (const service of this.getEnabledServices()) {
       // Use a proxy to intercept env var changes and update Deno.env
-      service.loadEnv(
+      await service.loadEnv(
         new Proxy(env, {
           set: (target, prop, value) => {
             target[prop as string] = value
@@ -353,6 +353,7 @@ export class Config {
             return true
           },
         }),
+        this, // Pass config instance to prevent circular await config.getInstance()dependencies
       )
     }
 

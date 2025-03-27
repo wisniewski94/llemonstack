@@ -7,9 +7,13 @@ import { showDebug, showError } from './logger.ts'
  *
  * @returns The Flowise API key or empty string if not found
  */
-export async function getFlowiseApiKey(): Promise<{ apiKey: string; keyName: string } | null> {
-  const config = Config.getInstance()
-  await config.initialize()
+export async function getFlowiseApiKey(
+  config?: Config,
+): Promise<{ apiKey: string; keyName: string } | null> {
+  if (!config) {
+    config = Config.getInstance()
+    await config.initialize()
+  }
 
   const configPath = path.join(
     config.volumesDir,

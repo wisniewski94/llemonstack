@@ -16,7 +16,7 @@ container logs in Docker Desktop.
 
 **Code:**
 
-- [ ] Create Flowise service subclass to set FLOWISE_API_KEY env var
+- [x] Create Flowise service subclass to set FLOWISE_API_KEY env var
 
 - [x] Move ALL_COMPOSE_SERVICES to Config
 

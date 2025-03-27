@@ -90,7 +90,11 @@ export class Service {
   // Public Methods
   //
 
-  public loadEnv(envVars: Record<string, string>) {
+  // deno-lint-ignore require-await
+  public async loadEnv(
+    envVars: Record<string, string>,
+    config?: Config,
+  ): Promise<Record<string, string>> {
     // Override in subclasses to set environment variables for the service
     return envVars
   }
