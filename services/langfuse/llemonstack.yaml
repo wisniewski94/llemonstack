@@ -6,7 +6,6 @@ description: LLM observability platform
 
 compose_file: docker-compose.yaml
 service_group: middleware
-auto_start: true
 
 provides:
   langfuse: langfuse # Name of the container

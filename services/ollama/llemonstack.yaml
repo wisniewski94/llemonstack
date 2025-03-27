@@ -7,7 +7,5 @@ description: LLM server for running models locally
 compose_file: docker-compose.yaml
 service_group: apps
 
-custom_start: true # Requires custom start script
-
 provides:
   ollama: ollama # Name of the container

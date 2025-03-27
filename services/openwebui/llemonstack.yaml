@@ -6,7 +6,6 @@ description: Web-based UI for chatting with local & remote AI agents
 
 compose_file: docker-compose.yaml
 service_group: apps
-auto_start: true
 
 provides:
   openwebui: openwebui # Name of the container

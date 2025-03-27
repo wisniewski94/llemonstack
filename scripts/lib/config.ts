@@ -194,6 +194,9 @@ export class Config {
     const servicesResult = await this.loadServices()
     result.messages.push(...servicesResult.messages)
 
+    // Load enabled services env, skipping .env file
+    await this.loadEnv({ envPath: null })
+
     if (updated) {
       const saveResult = await this.save()
       if (!saveResult.success) {
@@ -333,23 +336,30 @@ export class Config {
 
   public async loadEnv(
     { envPath = this.envFile, reload = false, expand = true }: {
-      envPath?: string
+      envPath?: string | null
       reload?: boolean
       expand?: boolean
     } = {},
   ): Promise<Record<string, string>> {
-    // Load .env file
-    const env = await loadEnv({ envPath, reload, expand })
+    // Load .env file or use a clone of the current env vars
+    const env = (!envPath) ? { ...this._env } : await loadEnv({ envPath, reload, expand })
 
     // Allow services to modify the env vars as needed
-    for (const service of Object.values(this._services)) {
-      if (service.enabled) {
-        service.loadEnv(env)
-      }
+    for (const service of this.getEnabledServices()) {
+      // Use a proxy to intercept env var changes and update Deno.env
+      service.loadEnv(
+        new Proxy(env, {
+          set: (target, prop, value) => {
+            target[prop as string] = value
+            Deno.env.set(prop as string, value)
+            return true
+          },
+        }),
+      )
     }
 
     // Update this._env cache with immutable proxy
-    this.setEnv(env)
+    this._setEnv(env)
 
     return this._env
   }
@@ -367,7 +377,7 @@ export class Config {
   ): Promise<TryCatchResult<boolean>> {
     const envKey = 'LLEMONSTACK_PROJECT_NAME'
     if (updateEnv && this._env[envKey]) {
-      this.updateEnv(envKey, name)
+      this.setEnvKey(envKey, name)
     }
     this._config.projectName = name
     if (save) {
@@ -473,6 +483,14 @@ export class Config {
     return this._config.version !== this._llemonstackVersion
   }
 
+  public setEnvKey(key: string, value: string) {
+    const env = { ...this._env } // Clone the env object to remove immutability
+    env[key] = value
+    Deno.env.set(key, value)
+    this._env = env
+    return this._env
+  }
+
   //
   // Private Methods
   //
@@ -481,7 +499,7 @@ export class Config {
    * Create an immutable proxy of the env object
    * @returns {Proxy<Record<string, string>>}
    */
-  private setEnv<T extends Record<string, string>>(obj: T): Record<string, string> {
+  private _setEnv<T extends Record<string, string>>(obj: T): Record<string, string> {
     this._env = new Proxy(obj, {
       set(_target, property, _value) {
         throw new Error(
@@ -494,15 +512,6 @@ export class Config {
         )
       },
     })
-    return this._env
-  }
-
-  private updateEnv(key: string, value: string) {
-    // Clone env object
-    const env = { ...this._env }
-    env[key] = value
-    Deno.env.set(key, value)
-    this._env = env
     return this._env
   }
 

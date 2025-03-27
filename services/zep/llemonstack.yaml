@@ -6,7 +6,6 @@ description: Memory store for AI agents
 
 compose_file: docker-compose.yaml
 service_group: middleware
-auto_start: true
 
 repo:
   url: https://github.com/getzep/zep.git
