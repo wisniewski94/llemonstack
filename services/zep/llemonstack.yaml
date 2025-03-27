@@ -2,7 +2,7 @@ version: 0.2.0 # Config file version
 
 service: zep
 name: Zep
-description: Zep is an open-source memory store for AI agent
+description: Memory store for AI agents
 
 compose_file: docker-compose.yaml
 service_group: middleware

@@ -2,7 +2,7 @@ version: 0.2.0 # Config file version
 
 service: redis
 name: Redis
-description: Redis is an in-memory data structure store
+description: Fast in-memory data store, often used as a cache
 
 compose_file: docker-compose.yaml
 service_group: databases

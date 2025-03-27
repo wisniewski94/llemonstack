@@ -2,7 +2,7 @@ version: 0.2.0 # Config file version
 
 service: browser-use
 name: Browser Use
-description: Full browser automation from simple prompts
+description: LLM browser automation from simple prompts
 
 compose_file: docker-compose.yaml
 service_group: apps

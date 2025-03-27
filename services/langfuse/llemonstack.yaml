@@ -2,7 +2,7 @@ version: 0.2.0 # Config file version
 
 service: langfuse
 name: Langfuse
-description: Langfuse is an open-source platform for monitoring LLMs
+description: LLM observability platform
 
 compose_file: docker-compose.yaml
 service_group: middleware

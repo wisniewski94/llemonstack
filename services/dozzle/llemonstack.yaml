@@ -2,7 +2,7 @@ version: 0.2.0 # Config file version
 
 service: dozzle
 name: Dozzle
-description: A simple, easy-to-use log dashboard for Docker
+description: Log dashboard for Docker containers
 
 compose_file: docker-compose.yaml
 service_group: middleware

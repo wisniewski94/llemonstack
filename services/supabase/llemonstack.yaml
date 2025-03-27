@@ -2,7 +2,7 @@ version: 0.2.0 # Config file version
 
 service: supabase
 name: Supabase
-description: Supabase is an open-source Firebase alternative that provides a postgres database
+description: Open-source Firebase alternative, provides a postgres database
 
 compose_file: docker-compose.yaml
 service_group: databases

@@ -1,8 +1,8 @@
 version: 0.2.0 # Config file version
 
 service: litellm
-name: Litellm
-description: Litellm is a proxy for monitoring LLMs & managing API keys
+name: LiteLLM
+description: LLM proxy for monitoring LLM calls & managing API keys
 
 compose_file: docker-compose.yaml
 service_group: middleware

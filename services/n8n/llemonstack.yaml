@@ -2,7 +2,7 @@ version: 0.2.0 # Config file version
 
 service: n8n
 name: n8n
-description: n8n is a workflow & AI automation platform
+description: Workflow & AI automation platform
 
 compose_file: docker-compose.yaml
 service_group: apps

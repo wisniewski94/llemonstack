@@ -2,7 +2,7 @@ version: 0.2.0 # Config file version
 
 service: ollama
 name: Ollama
-description: Ollama is open-source LLM server for running models locally
+description: LLM server for running models locally
 
 compose_file: docker-compose.yaml
 service_group: apps

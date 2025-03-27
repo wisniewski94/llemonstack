@@ -2,7 +2,7 @@ version: 0.2.0 # Config file version
 
 service: neo4j
 name: Neo4j
-description: Neo4j is a graph database
+description: Graph database
 
 compose_file: docker-compose.yaml
 service_group: databases
