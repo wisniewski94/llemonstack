@@ -5,7 +5,7 @@ name: Qdrant
 description: Vector store
 
 compose_file: docker-compose.yaml
-service_group: databases
+service_group: middleware
 
 provides:
   qdrant: qdrant # Name of the container
