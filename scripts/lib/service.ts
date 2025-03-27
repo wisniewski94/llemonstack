@@ -147,18 +147,28 @@ export class Service {
     // Get all hosts matching the context
     const data = searchObjectPaths<ExposeHost>(this._config.exposes, context)
 
+    const env = Config.getInstance().env
     // Map each host to an ExposeHost object
     return data.map((item) => {
       const host = {
+        _key: item.key,
         name: item.data.name || (item.key.split('.').pop() ?? ''),
         url: typeof item.data === 'string' ? item.data : item.data.url,
+        info: item.data.info,
       } as ExposeHost
+
+      if (host.url.includes('${')) {
+        host.url = expandEnvVars(host.url, env)
+      }
+      if (host?.info?.includes('${')) {
+        host.info = expandEnvVars(host.info, env)
+      }
 
       // Expand credentials from env vars
       if (item.data.credentials) {
         host.credentials = {}
         Object.entries(item.data.credentials).forEach(([key, value]) => {
-          host.credentials![key] = expandEnvVars(String(value), Config.getInstance().env)
+          host.credentials![key] = expandEnvVars(String(value), env)
         })
       }
 

@@ -27,11 +27,14 @@ app_version_cmd: [
 exposes:
   host:
     dashboard:
+      name: Flowise
       url: 'http://localhost:3001'
       credentials:
-        username: ${FLOWISE_USERNAME}
-        password: ${FLOWISE_PASSWORD}
+        Username: ${FLOWISE_USERNAME}
+        Password: ${FLOWISE_PASSWORD}
   internal: # Internal to the stack, not exposed to the host
     api:
-      url: http://n8n:5678/api/v1/
-      API Key: ${FLOWISE_API_KEY}
+      name: Flowise API
+      url: http://flowise:3000/api/v1/
+      credentials:
+        API Key: ${FLOWISE_API_KEY}

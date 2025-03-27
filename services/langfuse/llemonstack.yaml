@@ -25,3 +25,16 @@ app_version_cmd: [
   '-e',
   "console.log(require('/app/package.json').version)",
 ]
+
+exposes:
+  host:
+    langfuse:
+      name: Langfuse
+      url: http://localhost:3005
+      credentials:
+        Username: ${LANGFUSE_INIT_USER_EMAIL}
+        Password: ${LANGFUSE_INIT_USER_PASSWORD}
+  internal:
+    langfuse:
+      name: Langfuse
+      url: http://langfuse:3000

@@ -9,3 +9,9 @@ service_group: databases
 
 provides:
   prometheus: prometheus # Name of the container
+
+exposes:
+  host:
+    prometheus:
+      name: Prometheus
+      url: http://localhost:9090

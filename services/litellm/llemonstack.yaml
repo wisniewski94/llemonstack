@@ -22,6 +22,21 @@ app_version_cmd: [
   'litellm -v | grep -o "[0-9\.]\\+"',
 ]
 
+exposes:
+  host:
+    litellm:
+      name: LiteLLM
+      url: http://localhost:3004/ui/
+      credentials:
+        Username: ${LITELLM_UI_USERNAME}
+        Password: ${LITELLM_UI_PASSWORD}
+  internal:
+    litellm:
+      name: LiteLLM
+      url: http://litellm:4000
+      credentials:
+        API Key: ${LITELLM_MASTER_KEY}
+
 # actions:
 #   # TODO: finish fleshing out this spec and implement
 #   install:

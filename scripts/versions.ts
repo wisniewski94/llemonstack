@@ -4,7 +4,7 @@
  */
 
 import { colors } from '@cliffy/ansi/colors'
-import { Row, RowType } from '@cliffy/table'
+import { Column, Row, RowType } from '@cliffy/table'
 import { getImageFromCompose, getImagesFromComposeYaml } from './lib/compose.ts'
 import { Config } from './lib/config.ts'
 import { dockerRun, prepareDockerNetwork, runDockerCommand } from './lib/docker.ts'
@@ -23,6 +23,23 @@ const config = Config.getInstance()
 await config.initialize()
 
 const MAX_COLUMN_WIDTH = 50
+
+/**
+ * Wrapper around showTable to align columns
+ * @param header
+ * @param rows
+ * @param options
+ */
+function showVersionsTable(
+  header: RowType,
+  rows: RowType[],
+  options: { maxColumnWidth?: number },
+): void {
+  const table = showTable(header, rows, { ...options, render: false })
+  table.column(0, new Column().align('right'))
+  table.column(3, new Column().align('right'))
+  table.render()
+}
 
 /**
  * Returns the version of the service running in a container
@@ -238,7 +255,7 @@ export async function versions(projectName: string): Promise<void> {
     const imageVersionRows = await showImageVersions()
 
     if (imageVersionRows.length > 0) {
-      showTable(
+      showVersionsTable(
         [
           'Service',
           'Image Version',
@@ -247,7 +264,7 @@ export async function versions(projectName: string): Promise<void> {
           'Compose File',
         ],
         imageVersionRows,
-        MAX_COLUMN_WIDTH,
+        { maxColumnWidth: MAX_COLUMN_WIDTH },
       )
     }
 
@@ -263,7 +280,9 @@ export async function versions(projectName: string): Promise<void> {
 
     if (appVersionRows.length > 0) {
       showInfo('Version of apps inside the container, if available.\n')
-      showTable(['Service', 'App Version', 'Docker Image'], appVersionRows, MAX_COLUMN_WIDTH)
+      showVersionsTable(['Service', 'App Version', 'Docker Image'], appVersionRows, {
+        maxColumnWidth: MAX_COLUMN_WIDTH,
+      })
     } else {
       showInfo('No app versions found')
     }

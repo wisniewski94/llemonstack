@@ -342,6 +342,8 @@ export class Config {
     // Load .env file or use a clone of the current env vars
     const env = (!envPath) ? { ...this._env } : await loadEnv({ envPath, reload, expand })
 
+    env.LLEMONSTACK_PROJECT_NAME = this.projectName
+
     // Allow services to modify the env vars as needed
     for (const service of this.getEnabledServices()) {
       // Use a proxy to intercept env var changes and update Deno.env

@@ -29,3 +29,34 @@ volumes_seeds:
   - source: docker/volumes/functions/hello
     destination: supabase/functions/hello
     from_repo: true
+
+exposes:
+  host:
+    supabase:
+      name: Supabase
+      url: http://localhost:8080
+      credentials:
+        Username: ${SUPABASE_DASHBOARD_USERNAME}
+        Password: ${SUPABASE_DASHBOARD_PASSWORD}
+  internal:
+    supabase:
+      name: Supabase DB (Postgres)
+      url: db:5432
+      info: |
+        Use the supavisor pooler for postgres connections whenever possible
+        psql URL: postgres://postgres.${LLEMONSTACK_PROJECT_NAME}:${POSTGRES_PASSWORD}@supavisor:5432/postgres
+      credentials:
+        Username: postgres
+        Password: ${POSTGRES_PASSWORD}
+    supavisor:
+      name: Supabase Postgres Pooler
+      url: supavisor:5432
+      credentials:
+        Username: postgres.${LLEMONSTACK_PROJECT_NAME}
+        Password: ${POSTGRES_PASSWORD}
+    api:
+      name: Supabase API
+      url: http://kong:8000/
+    kong:
+      name: Supabase Edge Functions
+      url: http://kong:8000/functions/v1/[function]

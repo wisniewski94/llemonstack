@@ -9,3 +9,13 @@ service_group: apps
 
 provides:
   ollama: ollama # Name of the container
+
+exposes:
+  host:
+    ollama:
+      name: Ollama
+      url: http://localhost:11434
+  internal:
+    ollama:
+      name: Ollama
+      url: ${OLLAMA_HOST:-http://host.docker.internal:11434}

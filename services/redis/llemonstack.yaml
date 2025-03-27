@@ -9,3 +9,11 @@ service_group: databases
 
 provides:
   redis: redis # Name of the container
+
+exposes:
+  internal:
+    redis:
+      name: Redis
+      url: http://redis:6379
+      credentials:
+        Password: ${REDIS_PASSWORD}

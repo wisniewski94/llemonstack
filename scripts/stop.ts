@@ -141,7 +141,7 @@ export async function stop(
         }
         return false
       }).filter(Boolean) as RowType[]
-      showTable(['Service', 'Description'], rows, 100)
+      showTable(['Service', 'Description'], rows, { maxColumnWidth: 100 })
       Deno.exit(1)
     }
   }

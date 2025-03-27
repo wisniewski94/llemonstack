@@ -18,7 +18,10 @@ app_version_cmd: ['n8n', '--version']
 
 exposes:
   host:
-    dashboard: http://localhost:5678
+    dashboard:
+      name: n8n
+      url: http://localhost:5678
   internal: # Host name for the stack
     api:
+      name: n8n API
       url: http://n8n:5678/api/v1/

@@ -9,3 +9,9 @@ service_group: databases
 
 provides:
   clickhouse: clickhouse # Name of the container
+
+exposes:
+  internal:
+    clickhouse:
+      name: ClickHouse
+      url: http://clickhouse:8123

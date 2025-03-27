@@ -9,3 +9,13 @@ service_group: middleware
 
 provides:
   qdrant: qdrant # Name of the container
+
+exposes:
+  host:
+    qdrant:
+      name: Qdrant
+      url: http://localhost:6333/dashboard
+  internal:
+    qdrant:
+      name: Qdrant API
+      url: http://qdrant:6333

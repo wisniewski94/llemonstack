@@ -35,8 +35,8 @@ export class OllamaService extends Service {
     // Use the OLLAMA_HOST env var if set, otherwise check Ollama profile settings
     const host =
       Config.getInstance().env['OLLAMA_HOST'] || (this.getProfiles()[0] === 'ollama-host')
-        ? 'host.docker.internal:11434'
-        : 'ollama:11434'
+        ? 'http://host.docker.internal:11434'
+        : 'http://ollama:11434'
     return [{ url: host }]
   }
 

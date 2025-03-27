@@ -114,8 +114,10 @@ export type ExposeHostOptions = string | string[] | ExposeHost | ExposeHost[]
 
 export type ExposeHost = {
   name?: string // The name of the host to show in the output
+  _key?: string // The object path to the host in the service's llemonstack.yaml config
   url: string
   credentials?: Record<string, string> // Arbitrary key value pairs to pass to showCredentials
+  info?: string // Additional info to show in the output
 }
 
 /**

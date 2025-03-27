@@ -9,3 +9,16 @@ service_group: databases
 
 provides:
   neo4j: neo4j # Name of the container
+
+exposes:
+  host:
+    neo4j:
+      name: Neo4j
+      url: http://localhost:7474
+      credentials:
+        Username: ${NEO4J_USER}
+        Password: ${NEO4J_PASSWORD}
+  internal:
+    neo4j:
+      name: Neo4j API
+      url: bolt://neo4j:7687

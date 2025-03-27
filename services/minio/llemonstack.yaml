@@ -12,3 +12,16 @@ volumes:
 
 provides:
   minio: minio # Name of the container
+
+exposes:
+  host:
+    minio:
+      name: Minio
+      url: http://localhost:9091/
+      credentials:
+        Username: minio
+        Password: ${MINIO_ROOT_PASSWORD}
+  internal:
+    minio:
+      name: Minio
+      url: http://minio:9000

@@ -9,3 +9,9 @@ service_group: middleware
 
 provides:
   dozzle: dozzle # Name of the container
+
+exposes:
+  host:
+    dozzle:
+      name: Dozzle (Logs)
+      url: http://localhost:8081

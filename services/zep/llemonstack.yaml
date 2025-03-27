@@ -21,3 +21,12 @@ depends_on:
     condition: service_healthy
   neo4j:
     condition: service_healthy
+
+exposes:
+  internal:
+    zep:
+      name: Zep API
+      url: http://zep:8000
+    graphiti:
+      name: Zep Graphiti
+      url: http://graphiti:8003
