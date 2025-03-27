@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Stop the stack by downing docker containers and cleaning up networks.
  */
@@ -14,7 +13,7 @@ import {
 } from './lib/docker.ts'
 import { colors, RowType, showAction, showError, showInfo, showTable } from './lib/logger.ts'
 import { Service } from './lib/types.d.ts'
-import { DEFAULT_PROJECT_NAME, prepareEnv, setupRepos } from './start.ts'
+import { prepareEnv, setupRepos } from './start.ts'
 
 const config = Config.getInstance()
 await config.initialize()
@@ -186,12 +185,4 @@ export async function stop(
   } else {
     showAction('Enabled services stopped')
   }
-}
-
-// Run script if this file is executed directly
-if (import.meta.main) {
-  stop(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, {
-    all: Deno.args.includes('--all'),
-    service: Deno.args.find((arg) => !arg.startsWith('--')),
-  })
 }

@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Update to the latest sources & images
  *
@@ -7,7 +6,7 @@
 import { Config } from './lib/config.ts'
 import { runDockerComposeCommand } from './lib/docker.ts'
 import { confirm, showAction, showError, showInfo } from './lib/logger.ts'
-import { DEFAULT_PROJECT_NAME, prepareEnv, setupRepos } from './start.ts'
+import { prepareEnv, setupRepos } from './start.ts'
 import { stop } from './stop.ts'
 import { versions } from './versions.ts'
 
@@ -109,12 +108,4 @@ export async function update(
     showError(error)
     Deno.exit(1)
   }
-}
-
-// Run script if this file is executed directly
-if (import.meta.main) {
-  update(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, {
-    skipPrompt: Deno.args.includes('-f'),
-    skipStop: Deno.args.includes('--skip-stop') || Deno.args.includes('-s'),
-  })
 }

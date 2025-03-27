@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-net
 /**
  * This script is used to add models to LiteLLM.
  *
@@ -218,8 +217,4 @@ export async function loadModels() {
     api_base: LOCAL_LLM_OPENAI_API_BASE_URL,
     models: liteLLMModels,
   })
-}
-
-if (import.meta.main) {
-  await loadModels()
 }

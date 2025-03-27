@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Reset the stack to a clean state
  *
@@ -20,7 +19,7 @@ import {
   showUserAction,
   showWarning,
 } from './lib/logger.ts'
-import { DEFAULT_PROJECT_NAME, getProfilesArgs, prepareEnv, setupRepos } from './start.ts'
+import { getProfilesArgs, prepareEnv, setupRepos } from './start.ts'
 import { update } from './update.ts'
 
 const config = Config.getInstance()
@@ -190,12 +189,4 @@ export async function reset(
   showAction('\nReset successfully completed!')
 
   showUserAction('Run `llmn init` to reinitialize the stack')
-}
-
-// Run script if this file is executed directly
-if (import.meta.main) {
-  reset(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, {
-    skipPrompt: Deno.args.includes('-f'),
-    skipCache: Deno.args.includes('--skip-cache'),
-  })
 }

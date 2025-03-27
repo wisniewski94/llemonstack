@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Show the versions of the services that support it
  */
@@ -17,7 +16,7 @@ import {
   showWarning,
 } from './lib/logger.ts'
 import { Service, ServiceImage } from './lib/types.d.ts'
-import { DEFAULT_PROJECT_NAME, prepareEnv } from './start.ts'
+import { prepareEnv } from './start.ts'
 
 const config = Config.getInstance()
 await config.initialize()
@@ -291,9 +290,4 @@ export async function versions(projectName: string): Promise<void> {
     showError(error)
     Deno.exit(1)
   }
-}
-
-// Run script if this file is executed directly
-if (import.meta.main) {
-  versions(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

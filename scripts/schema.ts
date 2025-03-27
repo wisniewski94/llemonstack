@@ -1,7 +1,7 @@
 import { Config } from './lib/config.ts'
 import { confirm, showAction, showError, showInfo, showWarning } from './lib/logger.ts'
 import { createServiceSchema, removeServiceSchema } from './lib/postgres.ts'
-import { DEFAULT_PROJECT_NAME, isSupabaseStarted, startService } from './start.ts'
+import { isSupabaseStarted, startService } from './start.ts'
 import { stopService } from './stop.ts'
 
 const config = Config.getInstance()
@@ -68,11 +68,4 @@ export async function schema(projectName: string, action: string, service: strin
       await stopService(projectName, 'supabase')
     }
   }
-}
-
-// Run script if this file is executed directly
-if (import.meta.main) {
-  const action = Deno.args[0]
-  const service = Deno.args[1]
-  schema(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, action, service)
 }

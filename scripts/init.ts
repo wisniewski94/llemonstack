@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Setup required env variables
  */
@@ -28,7 +27,6 @@ import { createServiceSchema, isPostgresConnectionValid } from './lib/postgres.t
 import { reset } from './reset.ts'
 import {
   checkPrerequisites,
-  DEFAULT_PROJECT_NAME,
   isInitialized,
   isSupabaseStarted,
   prepareEnv,
@@ -516,7 +514,7 @@ export async function init(
     while (!uniqueName) {
       projectName = await Input.prompt({
         message: 'What is the project name?',
-        default: Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME,
+        default: Deno.env.get('LLEMONSTACK_PROJECT_NAME') || Config.defaultProjectName,
         hint: 'Used by docker, only letters, numbers, hyphens and underscores',
         transform: (value?: string) => value?.toLowerCase(),
         validate: projectNameValidator,
@@ -616,9 +614,4 @@ export async function init(
     showError(error)
     Deno.exit(1)
   }
-}
-
-// Run script if this file is executed directly
-if (import.meta.main) {
-  init(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

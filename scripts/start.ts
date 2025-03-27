@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Start docker services
  */
@@ -28,15 +27,6 @@ import { EnvVars, ExposeHost, RepoService, Service } from './lib/types.d.ts'
 
 const config = Config.getInstance()
 await config.initialize()
-
-/*******************************************************************************
- * CONFIG
- *******************************************************************************/
-
-// Project name for docker compose
-// TODO: replace all references to DEFAULT_PROJECT_NAME with config.defaultProjectName
-// Then remove the config.initialize() call above
-export const DEFAULT_PROJECT_NAME = config.defaultProjectName
 
 // Enable extra debug logging
 const DEBUG = config.DEBUG
@@ -220,9 +210,6 @@ export async function prepareSupabaseEnv(
 
 /**
  * Create volumes dirs required by docker-compose.yaml files
- *
- * Uses LLEMONSTACK_VOLUMES_DIR env var to determine the path to the
- * base volumes directory.
  *
  * If the volumes directory does not exist, it will be created.
  *
@@ -573,13 +560,4 @@ export async function start(
     showError(error)
     Deno.exit(1)
   }
-}
-
-// Run script if this file is executed directly
-if (import.meta.main) {
-  // Check if script was called with a service argument
-  const service = Deno.args.find((arg) => !arg.startsWith('--'))
-  await start(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, {
-    service,
-  })
 }

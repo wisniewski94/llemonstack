@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Import workflows and credentials from the import folder
  */
@@ -8,7 +7,7 @@ import { Config } from './lib/config.ts'
 import { dockerExec } from './lib/docker.ts'
 import { fs, path } from './lib/fs.ts'
 import { confirm, showAction, showError, showInfo, showWarning } from './lib/logger.ts'
-import { DEFAULT_PROJECT_NAME, prepareEnv } from './start.ts'
+import { prepareEnv } from './start.ts'
 
 const config = Config.getInstance()
 await config.initialize()
@@ -183,12 +182,4 @@ export async function runImport(
 ): Promise<void> {
   await prepareEnv({ silent: false })
   await importToN8n(projectName, { skipPrompt, archiveAfterImport: archive })
-}
-
-// Run script if this file is executed directly
-if (import.meta.main) {
-  runImport(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME, {
-    skipPrompt: Deno.args.includes('-f'),
-    archive: Deno.args.includes('--skip-archive'),
-  })
 }

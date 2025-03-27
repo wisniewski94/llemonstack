@@ -1,5 +1,3 @@
-#!/usr/bin/env -S deno run --allow-env --allow-run --allow-read
-
 /**
  * Health check script for LLemonStack services
  *
@@ -7,7 +5,6 @@
  */
 
 import { dockerComposePs, type DockerComposePsResult } from './lib/docker.ts'
-import { DEFAULT_PROJECT_NAME } from './start.ts'
 
 /**
  * Check the health status of all running containers
@@ -30,9 +27,4 @@ export async function checkHealth(projectName: string) {
     console.error(`Error checking container health: ${error}`)
     throw error
   }
-}
-
-// Run script if this file is executed directly
-if (import.meta.main) {
-  await checkHealth(Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME)
 }

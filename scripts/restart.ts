@@ -1,9 +1,8 @@
-#!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Stop and restart the services
  */
 import { showError } from './lib/logger.ts'
-import { DEFAULT_PROJECT_NAME, start } from './start.ts' // Adjust the path as necessary
+import { start } from './start.ts' // Adjust the path as necessary
 import { stop } from './stop.ts' // Adjust the path as necessary
 
 export async function restart(
@@ -17,13 +16,4 @@ export async function restart(
     showError(error)
     Deno.exit(1)
   }
-}
-
-// Run script if this file is executed directly
-if (import.meta.main) {
-  const service = Deno.args.find((arg) => !arg.startsWith('--'))
-  restart(
-    Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME,
-    { service, skipOutput: !!service },
-  )
 }

@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run --allow-env --allow-read --allow-run --allow-write
 /**
  * Configure the services
  */
@@ -111,11 +110,4 @@ export async function configure(
   } else {
     showInfo('Configuration saved successfully.')
   }
-}
-
-// Run script if this file is executed directly
-if (import.meta.main) {
-  await configure(
-    Deno.env.get('LLEMONSTACK_PROJECT_NAME') || DEFAULT_PROJECT_NAME,
-  )
 }
