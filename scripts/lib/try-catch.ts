@@ -162,9 +162,12 @@ export function failure<T, E extends Error = Error>(
     result.data = data
   }
   if (result.error) {
+    // Preserve the original error and add a message
     result.addMessage('error', result.error.message, { error: result.error })
+  } else {
+    // Create a new error with the original error
+    result.error = new TryCatchError(newMessage, undefined) as E
   }
-  result.error = new TryCatchError(newMessage, result.error || undefined) as E
   return result as TryCatchResult<T, E>
 }
 
