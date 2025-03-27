@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "projectName": "llemonstack",
   "envFile": ".env",
+  "debug": false,
   "dirs": {
     "config": ".llemonstack",
     "repos": ".llemonstack/repos",
@@ -11,10 +12,21 @@
     "volumes": "volumes"
   },
   "services": {
-    "n8n": {
-      "dir": "services/n8n",
-      "enabled": true,
-      "composeFile": "docker-compose.yaml"
-    }
+    "n8n": { "enabled": true },
+    "flowise": { "enabled": true },
+    "openwebui": { "enabled": true },
+    "browser-use": { "enabled": true },
+    "langfuse": { "enabled": true },
+    "litellm": { "enabled": true },
+    "qdrant": { "enabled": true },
+    "dozzle": { "enabled": true },
+    "ollama": { "enabled": true, "profiles": ["ollama-host"] },
+    "minio": { "enabled": true },
+    "redis": { "enabled": true },
+    "supabase": { "enabled": true },
+    "neo4j": { "enabled": true },
+    "clickhouse": { "enabled": true },
+    "zep": { "enabled": false },
+    "prometheus": { "enabled": false }
   }
 }

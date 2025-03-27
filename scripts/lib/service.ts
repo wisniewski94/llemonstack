@@ -1,5 +1,6 @@
 import { path } from './fs.ts'
-import { RepoService, ServiceConfig, ServiceOptions } from './types.d.ts'
+import { success, TryCatchResult } from './try-catch.ts'
+import { RepoService, ServiceActionOptions, ServiceConfig, ServiceOptions } from './types.d.ts'
 
 export class Service {
   public name: string // Human readable name
@@ -8,7 +9,8 @@ export class Service {
 
   private _dir: string
   private _config: ServiceConfig
-  private _enabled: boolean | null = null
+  private _configEnabled: boolean
+  protected _enabled: boolean | null = null
   protected _composeFile: string
   protected _repoDir: string | null = null
   protected _profiles: string[] = []
@@ -24,6 +26,7 @@ export class Service {
     this._dir = dir
     this._composeFile = path.join(this._dir, config.compose_file)
     this._repoDir = config.repo?.dir ? path.join(repoBaseDir, config.repo?.dir) : null
+    this._configEnabled = llemonstackConfig.services[config.service]?.enabled
     this.setProfiles(llemonstackConfig.services[config.service]?.profiles || [])
   }
 
@@ -31,61 +34,61 @@ export class Service {
     return this.name
   }
 
-  get composeFile(): string {
+  public get composeFile(): string {
     return this._composeFile
   }
 
-  get enabled(): boolean {
+  public get enabled(): boolean {
     if (this._enabled !== null) {
       return this._enabled
     }
-    const varName = `ENABLE_${this.service.toUpperCase().replace(/-/g, '_')}`
-    const enabled = Deno.env.get(varName)?.trim().toLowerCase() === 'true'
-    this._enabled = enabled
+    // Env vars override the config file settings
+    const env = Deno.env.get(`ENABLE_${this.service.toUpperCase().replace(/-/g, '_')}`)
+    this._enabled = env?.trim().toLowerCase() === 'true' || this._configEnabled || false
     return this._enabled
   }
 
-  set enabled(enabled: boolean) {
+  public set enabled(enabled: boolean) {
     this._enabled = enabled
   }
 
-  get config(): ServiceConfig {
+  public get config(): ServiceConfig {
     return this._config
   }
 
-  get repoConfig(): RepoService | null {
+  public get repoConfig(): RepoService | null {
     return this._config.repo ?? null
   }
 
-  get repoDir(): string | null {
+  public get repoDir(): string | null {
     return this._repoDir
   }
 
-  get customStart(): boolean {
+  public get customStart(): boolean {
     return this._config.custom_start ?? false
   }
 
-  get serviceGroup(): string {
+  public get serviceGroup(): string {
     return this._config.service_group ?? ''
   }
 
-  get volumes(): string[] {
+  public get volumes(): string[] {
     return this._config.volumes ?? []
   }
 
-  get volumesSeeds(): { source: string; destination: string; from_repo?: true }[] {
+  public get volumesSeeds(): { source: string; destination: string; from_repo?: true }[] {
     return this._config.volumes_seeds ?? []
   }
 
-  get appVersionCmd(): string[] | null {
+  public get appVersionCmd(): string[] | null {
     return this._config.app_version_cmd ?? null
   }
 
-  get dependencies(): string[] {
+  public get dependencies(): string[] {
     return Object.keys(this._config.depends_on || {}) ?? []
   }
 
-  get provides(): string[] {
+  public get provides(): string[] {
     return Object.keys(this._config.provides || {}) ?? []
   }
 
@@ -100,7 +103,7 @@ export class Service {
    * @param {string} [_subService] - Optional sub-service to get the host for
    * @returns The container DNS host name and port, e.g. 'ollama:11434'
    */
-  getHost(_subService?: string): string {
+  public getHost(_subService?: string): string {
     // TODO: get from the docker-compose.yaml file
     // Add support for returning multiple hosts. These are all the hosts & ports exposed to localhost.
     // For now, this is just a placeholder for subclasses to override
@@ -112,12 +115,25 @@ export class Service {
    *
    * @returns Array of profiles, e.g. ['ollama-cpu']
    */
-  getProfiles(): string[] {
+  public getProfiles(): string[] {
     // Override in subclasses to return the profiles for the service
     return this._profiles
   }
 
-  setProfiles(profiles: string[]) {
+  public setProfiles(profiles: string[]) {
     this._profiles = profiles
+  }
+
+  /**
+   * Configure the service
+   * @param {boolean} [silent] - Whether to run the configuration in silent or interactive mode
+   * @returns {TryCatchResult<boolean>} - The result of the configuration
+   */
+  // deno-lint-ignore require-await
+  public async configure(
+    // deno-lint-ignore no-unused-vars
+    { silent = false, config }: ServiceActionOptions,
+  ): Promise<TryCatchResult<boolean>> {
+    return success<boolean>(true)
   }
 }

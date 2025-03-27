@@ -2,7 +2,7 @@ import {
   CommandError as CommandErrorClass,
   RunCommandOutput as RunCommandOutputClass,
 } from './command.ts'
-
+import { Config } from './config.ts'
 export type { Service } from './service.ts'
 
 export interface LLemonStackConfig {
@@ -21,7 +21,7 @@ export interface LLemonStackConfig {
   }
   services: {
     [key: string]: {
-      enabled: boolean | 'auto'
+      enabled: boolean
       profiles?: string[]
     }
   }
@@ -106,6 +106,11 @@ export interface ServiceOptions {
   enabled?: boolean
   repoBaseDir: string
   llemonstackConfig: LLemonStackConfig
+}
+
+export interface ServiceActionOptions {
+  silent?: boolean
+  config: Config
 }
 
 // Define the type for the Docker Compose configuration
