@@ -3,13 +3,16 @@
  * Start docker services
  */
 
-import { colors } from '@cliffy/ansi/colors'
 import { runCommand } from './lib/command.ts'
 import { Config } from './lib/config.ts'
 import { isServiceRunning, prepareDockerNetwork } from './lib/docker.ts'
-import { getFlowiseApiKey } from './lib/flowise.ts'
 import { escapePath, fs, path } from './lib/fs.ts'
 import {
+  Cell,
+  colors,
+  Column,
+  Row,
+  RowType,
   showAction,
   showCredentials,
   showDebug,
@@ -18,10 +21,11 @@ import {
   showInfo,
   showLogMessages,
   showService,
+  showTable,
   showUserAction,
   showWarning,
 } from './lib/logger.ts'
-import { EnvVars, RepoService } from './lib/types.d.ts'
+import { EnvVars, ExposeHost, RepoService, Service } from './lib/types.d.ts'
 
 const config = Config.getInstance()
 await config.initialize()
@@ -342,9 +346,11 @@ export async function isSupabaseStarted(projectName: string): Promise<boolean> {
   return await isServiceRunning('supabase', { projectName, match: 'partial' })
 }
 
+// TODO: update API and all references to startService
 export async function startService(
-  projectName: string,
+  _projectName: string,
   serviceName: string,
+  // deno-lint-ignore no-unused-vars
   { envVars = {}, profiles, createNetwork = true }: {
     envVars?: EnvVars
     profiles?: string[]
@@ -403,22 +409,72 @@ export function isInitialized(): boolean {
   return config.projectInitialized
 }
 
-async function outputServicesInfo({
+function showServicesInfo(
+  services: Service[],
+  hostContext: string,
+  { hideCredentials = false }: { hideCredentials?: boolean } = {},
+) {
+  // Sort services by name
+  services.sort((a, b) => a.name.localeCompare(b.name))
+  const rows: RowType[] = []
+  services.forEach((service) => {
+    const hosts = service.getHosts(hostContext)
+    hosts?.forEach((host: ExposeHost) => {
+      const name = ['api', 'dashboard'].includes((host.name || '').trim().toLowerCase())
+        ? `${service.name} ${host.name}`
+        : host.name || service.name
+
+      let numCredentials = 0
+      const credentials = host.credentials
+        ? Object.entries(host.credentials).map(([k, v]) => {
+          numCredentials++
+          return `${colors.gray(k)}: ${colors.brightBlue(hideCredentials ? '********' : v)}`
+        }).join('\n')
+        : ''
+
+      rows.push(
+        Row.from([
+          colors.green(name),
+          colors.yellow(host.url),
+          colors.gray(numCredentials > 0 ? service.service : ''),
+          new Cell(credentials),
+        ]),
+      )
+      if (host.info) {
+        rows.push([
+          undefined,
+          new Cell(colors.gray(host.info || '')).colSpan(3).align('left'),
+        ])
+      }
+    })
+  })
+  const table = showTable(['Service', 'URL', '', 'Credentials'], rows, {
+    maxColumnWidth: 0,
+    render: false,
+  })
+  table
+    .column(0, new Column().align('right'))
+    .column(2, new Column().align('right'))
+    .render()
+}
+
+function outputServicesInfo({
   projectName,
+  hideCredentials = false,
 }: {
   projectName: string
-}): Promise<void> {
+  hideCredentials?: boolean
+}): void {
+  // TODO: migrate to auto config once outputs are verified
+  // const services = config.getEnabledServices()
+  // showServicesInfo(services, 'host.*', { hideCredentials })
+  // showServicesInfo(services, 'internal.*', { hideCredentials })
+
   //
   // SERVICE DASHBOARDS
   //
   showHeader('Service Dashboards')
   showInfo('Access the dashboards in a browser on your host machine.\n')
-
-  // console.log('n8n: ', config.getService('n8n')?.getHost('host.dashboard'))
-  // console.log('n8n hosts: ', config.getService('n8n')?.getHosts('host.*'))
-  // console.log('flowise: ', config.getService('flowise')?.getHost('host.dashboard'))
-  // console.log('flowise hosts: ', config.getService('flowise')?.getHosts('host.*'))
-  // console.log('langfuse hosts: ', config.getService('langfuse')?.getHosts('host.*'))
 
   config.isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
   if (config.isEnabled('flowise')) {
@@ -509,12 +565,18 @@ async function outputServicesInfo({
     )
   }
   config.isEnabled('n8n') && showService('n8n', 'http://n8n:5678')
+
   if (config.isEnabled('flowise')) {
-    showService('Flowise', 'http://flowise:3000')
-    const flowiseApi = await getFlowiseApiKey()
-    showCredentials({
-      [flowiseApi?.keyName || 'API Key']: flowiseApi?.apiKey || '',
+    const hosts = config.getService('flowise')?.getHosts('internal.*')
+    hosts?.forEach((host) => {
+      showService(host.name || 'Flowise', host.url)
+      showCredentials!(host.credentials || {})
     })
+    // showService('Flowise', 'http://flowise:3000')
+    // const flowiseApi = await getFlowiseApiKey()
+    // showCredentials({
+    //   [flowiseApi?.keyName || 'API Key']: flowiseApi?.apiKey || '',
+    // })
   }
   if (config.isEnabled('litellm')) {
     showService('LiteLLM', 'http://litellm:4000')
@@ -555,7 +617,11 @@ async function outputServicesInfo({
 
 export async function start(
   projectName: string,
-  { service, skipOutput = false }: { service?: string; skipOutput?: boolean } = {},
+  { service, skipOutput = false, hideCredentials = true }: {
+    service?: string
+    skipOutput?: boolean
+    hideCredentials?: boolean
+  } = {},
 ): Promise<void> {
   // Check if config is old format and re-run configure script if needed
   // if (config.isOutdatedConfig()) {
@@ -620,6 +686,7 @@ export async function start(
     if (!skipOutput) {
       await outputServicesInfo({
         projectName,
+        hideCredentials,
       })
     }
   } catch (error) {

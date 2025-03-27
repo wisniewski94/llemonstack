@@ -217,6 +217,25 @@ export function showTable(
     table = table.chars(borderChars as Border)
   }
 
+  // See https://cliffy.io/docs@v1.0.0-rc.7/table/options#border
+  // borderChars: {
+  //   'top': '─',
+  //   'topMid': '─',
+  //   'topLeft': '┌',
+  //   'topRight': '┐',
+  //   'bottom': '─',
+  //   'bottomMid': '─',
+  //   'bottomLeft': '└',
+  //   'bottomRight': '┘',
+  //   'left': '│',
+  //   'leftMid': '├',
+  //   'mid': '─',
+  //   'midMid': '─',
+  //   'right': '│',
+  //   'rightMid': '┤',
+  //   'middle': '─',
+  // },
+
   if (render) {
     if (tableColor) {
       console.log(tableColor(table.toString()))

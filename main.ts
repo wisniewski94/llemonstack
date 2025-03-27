@@ -69,9 +69,14 @@ main
   .command('start')
   .description('Start the LLemonStack services')
   .arguments('[service:string]')
+  .option('-n, --nokeys', 'Hide credentials', { default: false })
   .action(async (options, service?: string) => {
     const { start } = await import('./scripts/start.ts')
-    await start(options.project, { service, skipOutput: !!service })
+    await start(options.project, {
+      service,
+      skipOutput: !!service,
+      hideCredentials: options.nokeys,
+    })
   })
 
 // Stop the LLemonStack services
