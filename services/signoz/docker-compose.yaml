@@ -13,15 +13,17 @@ networks:
     name: ${LLEMONSTACK_NETWORK_NAME}
     external: true
 
+# TODO: test to make sure named volumes are not needed, they'll be reused by docker between projects
+# and potentially cause conflicts
 volumes:
   alertmanager:
-    name: signoz-alertmanager
+    # name: signoz-alertmanager
   clickhouse:
-    name: signoz-clickhouse
+    # name: signoz-clickhouse
   sqlite:
-    name: signoz-sqlite
+    # name: signoz-sqlite
   zookeeper-1:
-    name: signoz-zookeeper-1
+    # name: signoz-zookeeper-1
 
 x-common: &common
   restart: unless-stopped
