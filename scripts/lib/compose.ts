@@ -1,5 +1,5 @@
 import * as yaml from 'jsr:@std/yaml'
-import { dockerEnv, replaceDockerComposeVars } from './docker.ts'
+import { dockerEnv, expandEnvVars } from './docker.ts'
 import { path } from './fs.ts'
 import { showDebug, showWarning } from './logger.ts'
 import { ComposeYaml, ServiceImage } from './types.d.ts'
@@ -33,7 +33,7 @@ export async function getImagesFromComposeYaml(
 
   // Expand any variables in the compose file path
   if (composeFile.includes('${')) {
-    composeFile = replaceDockerComposeVars(composeFile, await dockerEnv())
+    composeFile = expandEnvVars(composeFile, await dockerEnv())
   }
 
   try {
