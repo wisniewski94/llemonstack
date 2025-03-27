@@ -1,14 +1,14 @@
 import { Select } from '@cliffy/prompt'
+import { Config } from '../../scripts/lib/config.ts'
 import { showHeader, showInfo, showWarning } from '../../scripts/lib/logger.ts'
 import { Service } from '../../scripts/lib/service.ts'
-import { TryCatchResult } from '../../scripts/lib/try-catch.ts'
-import { ServiceActionOptions } from '../../scripts/lib/types.d.ts'
+import { success, TryCatchResult } from '../../scripts/lib/try-catch.ts'
+import { EnvVars, ServiceActionOptions } from '../../scripts/lib/types.d.ts'
 
 export class OllamaService extends Service {
   override get enabled(): boolean {
-    // If the profile is ollama-host, then the service is disabled and
-    // will not try to start the docker container.
-    return (this.getProfiles()[0] === 'ollama-host') ? false : !!this._enabled
+    const env = Config.getInstance().env['ENABLE_OLLAMA'].trim().toLowerCase()
+    return !(env === 'false') || !!this._enabled
   }
 
   override set enabled(enabled: boolean) {
@@ -20,26 +20,35 @@ export class OllamaService extends Service {
    * @returns The Ollama host URL
    */
   override getHost(): string {
-    // Use the OLLAMA_HOST env var if it is set, otherwise check Ollama profile settings
-    const host = Deno.env.get('OLLAMA_HOST') || (this.getProfiles()[0] === 'ollama-host')
+    // Use the OLLAMA_HOST env var if set, otherwise check Ollama profile settings
+    return Config.getInstance().env['OLLAMA_HOST'] || (this.getProfiles()[0] === 'ollama-host')
       ? 'host.docker.internal:11434'
       : 'ollama:11434'
-    return host
   }
-
-  /**
-   * Get the current Ollama profile
-   * @returns The profile
-   */
-  // override getProfiles(): OllamaProfile[] {
-  //   // TODO: pass the updated profile to Config to save it
-  //   return [`ollama-${Deno.env.get('ENABLE_OLLAMA')?.trim() || 'false'}`] as OllamaProfile[]
-  // }
 
   override loadEnv(envVars: Record<string, string>) {
     envVars.OLLAMA_HOST = this.getHost()
-    Deno.env.set('OLLAMA_HOST', envVars.OLLAMA_HOST)
     return envVars
+  }
+
+  /**
+   * Start the service
+   * @param {EnvVars} [envVars] - Environment variables to pass to the service
+   * @param {boolean} [silent] - Whether to run the command in silent mode
+   * @returns {TryCatchResult<boolean>} - The result of the command
+   */
+  override async start(
+    { envVars = {}, silent = false }: {
+      envVars?: EnvVars
+      silent?: boolean
+    } = {},
+  ): Promise<TryCatchResult<boolean>> {
+    if (this.getProfiles().includes('ollama-host')) {
+      const results = success<boolean>(true)
+      results.addMessage('info', 'Skipping Ollama service start, using host bridge instead')
+      return results
+    }
+    return await super.start({ envVars, silent })
   }
 
   /**

@@ -3,6 +3,7 @@ import {
   RunCommandOutput as RunCommandOutputClass,
 } from './command.ts'
 import { Config } from './config.ts'
+export type { DockerComposeOptions, DockerComposePsResult } from './docker.ts'
 export type { Service } from './service.ts'
 
 export interface LLemonStackConfig {
@@ -84,7 +85,6 @@ export interface ServiceConfig {
   disabled: boolean // If true, service is not loaded
   compose_file: string // The path to the docker-compose.yaml file
   service_group: string // The group of services that the service belongs to
-  custom_start: boolean // Whether the service should start automatically
   repo?: RepoService // The repo to use for the service
   volumes?: string[] // The volumes to use for the service
   volumes_seeds?: {

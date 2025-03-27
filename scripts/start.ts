@@ -6,7 +6,7 @@
 import { colors } from '@cliffy/ansi/colors'
 import { runCommand } from './lib/command.ts'
 import { Config } from './lib/config.ts'
-import { isServiceRunning, prepareDockerNetwork, runDockerComposeCommand } from './lib/docker.ts'
+import { isServiceRunning, prepareDockerNetwork } from './lib/docker.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
 import { escapePath, fs, path } from './lib/fs.ts'
 import {
@@ -16,6 +16,7 @@ import {
   showError,
   showHeader,
   showInfo,
+  showLogMessages,
   showService,
   showUserAction,
   showWarning,
@@ -30,6 +31,8 @@ await config.initialize()
  *******************************************************************************/
 
 // Project name for docker compose
+// TODO: replace all references to DEFAULT_PROJECT_NAME with config.defaultProjectName
+// Then remove the config.initialize() call above
 export const DEFAULT_PROJECT_NAME = config.defaultProjectName
 
 // Enable extra debug logging
@@ -341,7 +344,7 @@ export async function isSupabaseStarted(projectName: string): Promise<boolean> {
 
 export async function startService(
   projectName: string,
-  service: string,
+  serviceName: string,
   { envVars = {}, profiles, createNetwork = true }: {
     envVars?: EnvVars
     profiles?: string[]
@@ -352,19 +355,21 @@ export async function startService(
     await prepareDockerNetwork()
   }
 
-  const composeFile = config.getComposeFile(service)
+  const service = config.getService(serviceName)
+  if (!service) {
+    throw new Error(`Invalid service name, unable to start: ${serviceName}`)
+  }
+
+  const composeFile = service?.composeFile
   if (!composeFile) {
     throw new Error(`Docker compose file not found for ${service}: ${composeFile}`)
   }
-  await runDockerComposeCommand('up', {
-    projectName,
-    composeFile,
-    profiles,
-    ansi: 'never',
-    args: ['-d'],
-    env: envVars,
-    silent: false,
-  })
+
+  const result = await service.start({ envVars, silent: false })
+  if (!result.success) {
+    showError(result.error)
+  }
+  showLogMessages(result.messages)
 }
 
 /**
@@ -579,10 +584,7 @@ export async function start(
     } else {
       // Start all services by service group
       for (const [groupName, groupServices] of config.getServiceGroups()) {
-        const enabledGroupServices = groupServices.filter((service) =>
-          config.isEnabled(service) &&
-          !config.getService(service)?.customStart
-        )
+        const enabledGroupServices = groupServices.filter((service) => config.isEnabled(service))
         if (enabledGroupServices.length > 0) {
           showAction(`\nStarting ${groupName} services...`)
           await startServices(projectName, enabledGroupServices)

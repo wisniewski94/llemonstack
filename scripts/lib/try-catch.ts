@@ -24,6 +24,7 @@ export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
     this.data = result.data
     this._error = result.error
     this.success = result.success
+    this.messages = result.messages || []
   }
 
   set error(error: E | null) {
@@ -91,12 +92,14 @@ export type Success<T> = {
   data: T
   error: null
   success: true
+  messages?: LogMessage[]
 }
 
 export type Failure<E, T> = {
   data: null | T
   error: E
   success: false
+  messages?: LogMessage[]
 }
 
 export type TryCatchResultBase<T, E = Error> = Success<T> | Failure<E, T>
@@ -105,6 +108,7 @@ interface ITryCatchResult<T, E> {
   data: T | null
   error: E | null
   success: boolean
+  messages?: LogMessage[]
 }
 
 /**
@@ -148,13 +152,20 @@ export async function tryCatchBoolean<E = Error>(
  */
 export function failure<T, E extends Error = Error>(
   newMessage: string,
-  result: TryCatchResult<T, E> | Failure<E, T>,
+  result: TryCatchResult<unknown, E> | Failure<E, T>,
+  data?: T,
 ): TryCatchResult<T, E> {
   if (!(result instanceof TryCatchResult)) {
-    result = TryCatchResult.from(result)
+    result = TryCatchResult.from<T, E>(result)
+  }
+  if (data) {
+    result.data = data
+  }
+  if (result.error) {
+    result.addMessage('error', result.error.message, { error: result.error })
   }
   result.error = new TryCatchError(newMessage, result.error || undefined) as E
-  return result
+  return result as TryCatchResult<T, E>
 }
 
 /**
@@ -164,6 +175,11 @@ export function failure<T, E extends Error = Error>(
  */
 export function success<T>(
   data: T,
+  infoMessage?: string,
 ): TryCatchResult<T, Error> {
-  return new TryCatchResult<T, Error>({ data, error: null, success: true })
+  const results = new TryCatchResult<T, Error>({ data, error: null, success: true })
+  if (infoMessage) {
+    results.addMessage('info', infoMessage)
+  }
+  return results
 }

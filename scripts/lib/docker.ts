@@ -6,16 +6,44 @@
 
 import { runCommand } from './command.ts'
 import { Config } from './config.ts'
+import { tryCatch, TryCatchResult } from './try-catch.ts'
 import type { EnvVars, RunCommandOutput } from './types.d.ts'
+
+export type DockerComposeOptions = {
+  composeFile?: string | string[]
+  projectName?: string
+  profiles?: string[]
+  ansi?: 'auto' | 'never' | 'always'
+  args?: Array<string | false>
+  silent?: boolean
+  captureOutput?: boolean
+  env?: EnvVars
+  autoLoadEnv?: boolean
+}
+
+export type DockerComposePsResult = Array<{
+  ID?: string
+  Name?: string
+  Health?: string
+  Status?: string
+  Image?: string
+  Service?: string
+  Project?: string
+  RunningFor?: string
+  Size?: string
+  State?: string
+}>
 
 /**
  * Gets required environment variables to always pass to docker commands
  *
  * @returns Record<string, string>
  */
-export async function dockerEnv(): Promise<Record<string, string>> {
-  const config = Config.getInstance()
-  await config.initialize()
+export async function dockerEnv(config?: Config): Promise<Record<string, string>> {
+  if (!config) {
+    config = Config.getInstance()
+    await config.initialize()
+  }
   return {
     LLEMONSTACK_VOLUMES_PATH: config.volumesDir,
     LLEMONSTACK_SHARED_VOLUME_PATH: config.sharedDir,
@@ -59,6 +87,22 @@ export async function removeDockerNetwork(
  * This is a wrapper around runCommand that injects dockerEnv vars.
  *
  * @param cmd - The docker compose to run: up, down, etc.
+ * @param args {DockerComposeOptions} - The options for the command
+ * @returns {TryCatchResult<RunCommandOutput>} The output of the command
+ */
+export async function dockerCompose(
+  cmd: string, // Docker compose command: up, down, etc.
+  options: DockerComposeOptions = {},
+): Promise<TryCatchResult<RunCommandOutput>> {
+  return await tryCatch(runDockerComposeCommand(cmd, options))
+}
+
+/**
+ * Run a docker compose command and return the output
+ *
+ * This is a wrapper around runCommand that injects dockerEnv vars.
+ *
+ * @param cmd - The docker compose to run: up, down, etc.
  * @param args - The arguments to pass to the command
  * @param silent - If true, don't show any output
  * @param captureOutput - If true, capture the output
@@ -70,7 +114,7 @@ export async function runDockerComposeCommand(
   cmd: string, // Docker compose command: up, down, etc.
   {
     composeFile,
-    projectName,
+    projectName = Config.getInstance().projectName,
     profiles,
     ansi = 'auto',
     args, // Additional args to pass after the docker command
@@ -78,32 +122,20 @@ export async function runDockerComposeCommand(
     captureOutput = false,
     env = {},
     autoLoadEnv = true, // If true, load env from .env file
-  }: {
-    composeFile?: string | string[]
-    projectName?: string
-    profiles?: string[]
-    ansi?: 'auto' | 'never' | 'always'
-    args?: Array<string | false>
-    silent?: boolean
-    captureOutput?: boolean
-    env?: EnvVars
-    autoLoadEnv?: boolean
-  } = {},
+  }: DockerComposeOptions = {},
 ): Promise<RunCommandOutput> {
-  const config = Config.getInstance()
-  await config.initialize()
   const composeFiles = Array.isArray(composeFile) ? composeFile : [composeFile]
   return await runCommand('docker', {
     args: [
       'compose',
       ...(ansi ? ['--ansi', ansi] : []),
       '-p',
-      projectName || config.projectName,
+      projectName,
       ...(composeFiles.map((file) => file ? ['-f', file] : []).flat()),
-      ...(profiles || []),
+      ...(profiles ? profiles.map((profile) => ['--profile', profile]) : []).flat(),
       cmd,
       ...(args || []),
-    ],
+    ].filter(Boolean),
     silent,
     captureOutput,
     env: {
@@ -214,28 +246,13 @@ export async function isServiceRunning(
   service: string,
   { projectName, match = 'exact' }: { projectName?: string; match?: 'exact' | 'partial' },
 ) {
-  const config = Config.getInstance()
-  await config.initialize()
   const result = await dockerComposePs(
-    projectName || config.projectName,
+    projectName || Config.getInstance().projectName,
   ) as DockerComposePsResult
   return result.some((c) =>
     match === 'exact' ? c.Name === service : c.Name?.toLowerCase().includes(service.toLowerCase())
   )
 }
-
-export type DockerComposePsResult = Array<{
-  ID?: string
-  Name?: string
-  Health?: string
-  Status?: string
-  Image?: string
-  Service?: string
-  Project?: string
-  RunningFor?: string
-  Size?: string
-  State?: string
-}>
 
 export async function dockerComposePs(
   projectName: string,
@@ -262,11 +279,9 @@ export async function dockerComposePs(
     : results.toJsonList() as DockerComposePsResult
 }
 
-export async function prepareDockerNetwork(): Promise<{ network: string; created: boolean }> {
-  const config = Config.getInstance()
-  await config.initialize()
-  const network = config.dockerNetworkName
-
+export async function prepareDockerNetwork(
+  network = Config.getInstance().dockerNetworkName,
+): Promise<{ network: string; created: boolean }> {
   const result = await runCommand('docker', {
     args: ['network', 'ls'],
     captureOutput: true,
@@ -307,10 +322,9 @@ export async function dockerExec(
     captureOutput?: boolean
   } = {},
 ): Promise<RunCommandOutput> {
-  const config = Config.getInstance()
-  await config.initialize()
-
   if (!composeFile) {
+    const config = Config.getInstance()
+    await config.initialize()
     composeFile = config.getComposeFile(service) || undefined
   }
   if (!composeFile) {
@@ -354,10 +368,9 @@ export async function dockerRun(
     captureOutput?: boolean
   } = {},
 ): Promise<RunCommandOutput> {
-  const config = Config.getInstance()
-  await config.initialize()
-
   if (!composeFile) {
+    const config = Config.getInstance()
+    await config.initialize()
     composeFile = config.getComposeFile(service) || undefined
   }
   if (!composeFile) {

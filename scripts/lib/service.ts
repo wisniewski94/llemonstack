@@ -1,15 +1,23 @@
+import { dockerCompose } from './docker.ts'
 import { path } from './fs.ts'
-import { success, TryCatchResult } from './try-catch.ts'
-import { RepoService, ServiceActionOptions, ServiceConfig, ServiceOptions } from './types.d.ts'
+import { failure, success, TryCatchResult } from './try-catch.ts'
+import {
+  EnvVars,
+  RepoService,
+  ServiceActionOptions,
+  ServiceConfig,
+  ServiceOptions,
+} from './types.d.ts'
 
 export class Service {
   public name: string // Human readable name
   public service: string // Service name
   public description: string // Service description
 
-  private _dir: string
-  private _config: ServiceConfig
-  private _configEnabled: boolean
+  protected _dir: string
+  protected _config: ServiceConfig
+  protected _configEnabled: boolean
+  protected _projectName: string
   protected _enabled: boolean | null = null
   protected _composeFile: string
   protected _repoDir: string | null = null
@@ -21,6 +29,7 @@ export class Service {
     this.name = config.name
     this.service = config.service
     this.description = config.description
+    this._projectName = llemonstackConfig.projectName
     this._enabled = enabled ?? null
     this._config = config
     this._dir = dir
@@ -44,7 +53,7 @@ export class Service {
     }
     // Env vars override the config file settings
     const env = Deno.env.get(`ENABLE_${this.service.toUpperCase().replace(/-/g, '_')}`)
-    this._enabled = env?.trim().toLowerCase() === 'true' || this._configEnabled || false
+    this._enabled = env?.trim().toLowerCase() === 'true' || this._configEnabled
     return this._enabled
   }
 
@@ -62,10 +71,6 @@ export class Service {
 
   public get repoDir(): string | null {
     return this._repoDir
-  }
-
-  public get customStart(): boolean {
-    return this._config.custom_start ?? false
   }
 
   public get serviceGroup(): string {
@@ -122,6 +127,39 @@ export class Service {
 
   public setProfiles(profiles: string[]) {
     this._profiles = profiles
+  }
+
+  //
+  // Service Actions
+  // These methods are called by the CLI and can be overridden by subclasses.
+  //
+
+  /**
+   * Start the service
+   * @param {EnvVars} [envVars] - Environment variables to pass to the service
+   * @param {boolean} [silent] - Whether to run the command in silent mode
+   * @returns {TryCatchResult<boolean>} - The result of the command
+   */
+  public async start(
+    { envVars = {}, silent = false }: {
+      envVars?: EnvVars
+      silent?: boolean
+    } = {},
+  ): Promise<TryCatchResult<boolean>> {
+    const results = await dockerCompose('up', {
+      projectName: this._projectName,
+      composeFile: this.composeFile,
+      profiles: this.getProfiles(),
+      ansi: 'never',
+      args: ['-d'],
+      env: envVars,
+      silent,
+      captureOutput: false,
+    })
+    if (results.success) {
+      return success<boolean>(true, `${this.name} started successfully!`)
+    }
+    return failure<boolean>(`Failed to start service: ${this.name}`, results, false)
   }
 
   /**
