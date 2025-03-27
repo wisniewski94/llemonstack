@@ -100,20 +100,22 @@ export interface ServiceConfig {
 
 export interface ExposeHostConfig {
   host?: {
-    // Can be a url string, array of urls, or an object or array of objects with url and credentials
     dashboard?: ExposeHost
     api?: ExposeHost
+    [key: string]: ExposeHost | undefined
   }
   internal?: {
     api?: ExposeHost
+    [key: string]: ExposeHost | undefined
   }
 }
 
 export type ExposeHostOptions = string | string[] | ExposeHost | ExposeHost[]
 
 export type ExposeHost = {
+  name?: string // The name of the host to show in the output
   url: string
-  credentials?: Record<string, string>
+  credentials?: Record<string, string> // Arbitrary key value pairs to pass to showCredentials
 }
 
 /**

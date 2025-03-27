@@ -415,7 +415,10 @@ async function outputServicesInfo({
   showInfo('Access the dashboards in a browser on your host machine.\n')
 
   // console.log('n8n: ', config.getService('n8n')?.getHost('host.dashboard'))
+  // console.log('n8n hosts: ', config.getService('n8n')?.getHosts('host.*'))
   // console.log('flowise: ', config.getService('flowise')?.getHost('host.dashboard'))
+  // console.log('flowise hosts: ', config.getService('flowise')?.getHosts('host.*'))
+  // console.log('langfuse hosts: ', config.getService('langfuse')?.getHosts('host.*'))
 
   config.isEnabled('n8n') && showService('n8n', 'http://localhost:5678')
   if (config.isEnabled('flowise')) {

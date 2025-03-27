@@ -1,12 +1,11 @@
 import { Config } from './config.ts'
 import { dockerCompose, expandEnvVars } from './docker.ts'
 import { path } from './fs.ts'
+import { searchObjectPaths } from './search-object.ts'
 import { failure, success, TryCatchResult } from './try-catch.ts'
 import {
   EnvVars,
   ExposeHost,
-  ExposeHostConfig,
-  ExposeHostOptions,
   RepoService,
   ServiceActionOptions,
   ServiceConfig,
@@ -93,7 +92,7 @@ export class Service {
   // deno-lint-ignore require-await
   public async loadEnv(
     envVars: Record<string, string>,
-    config?: Config,
+    _config?: Config,
   ): Promise<Record<string, string>> {
     // Override in subclasses to set environment variables for the service
     return envVars
@@ -142,53 +141,29 @@ export class Service {
    */
   public getHosts(context?: string): ExposeHost[] {
     if (!context) {
-      context = 'host.dashboard'
+      context = 'host.*'
     }
 
-    // Get the hosts from the service configuration
-    if (!this._config?.exposes) {
-      return []
-    }
+    // Get all hosts matching the context
+    const data = searchObjectPaths<ExposeHost>(this._config.exposes, context)
 
-    // Parse the context path (e.g., 'host.dashboard' or 'internal.api')
-    const [scope, type] = context.split('.') as [
-      keyof ExposeHostConfig,
-      keyof ExposeHostConfig['host' | 'internal'],
-    ]
-    if (!scope || !type || !this._config.exposes?.[scope]) {
-      return []
-    }
+    // Map each host to an ExposeHost object
+    return data.map((item) => {
+      const host = {
+        name: item.data.name || (item.key.split('.').pop() ?? ''),
+        url: typeof item.data === 'string' ? item.data : item.data.url,
+      } as ExposeHost
 
-    const exposeConfig = this._config.exposes[scope][type] as ExposeHostOptions
-    if (!exposeConfig) {
-      return []
-    }
-
-    let hosts: ExposeHost[] = []
-
-    // Handle different formats of expose configuration
-    if (typeof exposeConfig === 'string') {
-      return [{ url: exposeConfig }]
-    } else if (Array.isArray(exposeConfig)) {
-      hosts = exposeConfig.map((item: string | ExposeHost): ExposeHost => {
-        if (typeof item === 'string') {
-          return { url: item }
-        }
-        return item
-      })
-    } else {
-      hosts = [exposeConfig]
-    }
-
-    const env = Config.getInstance().env
-    hosts.forEach((host) => {
-      if (host.credentials) {
-        Object.entries(host.credentials).forEach(([key, value]) => {
-          host.credentials![key] = expandEnvVars(String(value), env)
+      // Expand credentials from env vars
+      if (item.data.credentials) {
+        host.credentials = {}
+        Object.entries(item.data.credentials).forEach(([key, value]) => {
+          host.credentials![key] = expandEnvVars(String(value), Config.getInstance().env)
         })
       }
+
+      return host
     })
-    return hosts
   }
 
   /**
