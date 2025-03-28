@@ -514,7 +514,7 @@ export async function init(
     while (!uniqueName) {
       projectName = await Input.prompt({
         message: 'What is the project name?',
-        default: Deno.env.get('LLEMONSTACK_PROJECT_NAME') || Config.defaultProjectName,
+        default: Config.defaultProjectName,
         hint: 'Used by docker, only letters, numbers, hyphens and underscores',
         transform: (value?: string) => value?.toLowerCase(),
         validate: projectNameValidator,

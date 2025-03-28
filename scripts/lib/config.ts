@@ -241,13 +241,24 @@ export class Config {
       }
     }
 
-    // TODO: flesh this out
-    // Check if project name is in sync with env var
-    // if (this.projectName !== this.env.LLEMONSTACK_PROJECT_NAME) {
-    //   result.addMessage('warning', 'Project name is out of sync with env var')
-    //   result.addMessage('warning', `config.json: ${this.projectName}`)
-    //   result.addMessage('warning', `env: ${this.env.LLEMONSTACK_PROJECT_NAME}`)
-    // }
+    // Check if LLEMONSTACK_PROJECT_NAME env var is out of sync with project name in config.json
+    // The name in config.json take precedence. LLemonStack automatically sets LLEMONSTACK_PROJECT_NAME
+    // in the in memory env object for docker-compose.yaml files to use. User should remove
+    // LLEMONSTACK_PROJECT_NAME in .env file to avoid confusion and potential conflicts with any
+    // services incorrectly access LLEMONSTACK_PROJECT_NAME from Deno.env instead of config.env.
+    const _projectName = Deno.env.get('LLEMONSTACK_PROJECT_NAME')
+    if (_projectName && this.projectName !== _projectName) {
+      result.addMessage(
+        'warning',
+        'Project name is out of sync in config.json and env var: LLEMONSTACK_PROJECT_NAME',
+      )
+      result.addMessage('warning', `config.json: "${this.projectName}"`)
+      result.addMessage('warning', `env: "${_projectName}"`)
+      result.addMessage(
+        'info',
+        'Using project name from config.json. Please manually update your .env file and remove LLEMONSTACK_PROJECT_NAME env var.',
+      )
+    }
 
     // Load services from services Directory
     const servicesResult = await this.loadServices()
@@ -400,9 +411,6 @@ export class Config {
   ): Promise<Record<string, string>> {
     // Load .env file or use a clone of the current env vars
     const env = (!envPath) ? { ...this._env } : await loadEnv({ envPath, reload, expand })
-
-    // TODO: convert to tryCatch to pass messages back to caller?
-    // TODO: add check to ensure this.projectName and this.env.LLEMONSTACK_PROJECT_NAME are in sync before updating
 
     // Populate project name from config for services & docker to use
     env.LLEMONSTACK_PROJECT_NAME = this.projectName

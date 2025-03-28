@@ -1,8 +1,13 @@
-import { assertEquals, assertExists, assertInstanceOf, assertStrictEquals } from 'jsr:@std/assert'
+import {
+  assertEquals,
+  assertExists,
+  assertInstanceOf,
+  assertNotEquals,
+  assertStrictEquals,
+} from 'jsr:@std/assert'
 import { Stub, stub } from 'jsr:@std/testing/mock'
 import { Config, config } from './config.ts'
 import * as fs from './fs.ts'
-import { showLogMessages } from './logger.ts'
 
 Deno.test('Config', async (t) => {
   let saveStub: Stub
@@ -81,7 +86,7 @@ Deno.test('Config', async (t) => {
   })
 })
 
-Deno.test('Config initialization -templates', async (t) => {
+Deno.test('Config initialization - templates', async (t) => {
   let saveStub: Stub
 
   // Set up the stub before all tests
@@ -326,7 +331,68 @@ Deno.test('Config initialization -templates', async (t) => {
   })
 })
 
-// TODO: stub out loadEnv or create test .env files
+Deno.test('Config project name out of sync', async (t) => {
+  let saveStub: Stub
+
+  await t.step('setup', () => {
+    // Prevent tests from saving config files to disk
+    // @ts-ignore - accessing private method for testConfig
+    saveStub = stub(Config.prototype, 'save', () => {
+      return {
+        data: true,
+        error: null,
+        success: true,
+      }
+    })
+  })
+
+  await t.step(
+    'set LLEMONSTACK_PROJECT_NAME env var to different value than config.json',
+    async () => {
+      Deno.env.set('LLEMONSTACK_PROJECT_NAME', 'test-project')
+      // @ts-ignore - temporarily override for testing
+      delete Config.instance
+      const instance1 = Config.getInstance()
+      const result = await instance1.initialize()
+      assertEquals(result.success, true)
+      assertEquals(result.error, null)
+      assertEquals(instance1.projectName, Config.defaultProjectName)
+      // Check if the warning message about project name being out of sync is present
+      const warningMessage = result.messages.find(
+        (msg) =>
+          msg.level === 'warning' &&
+          msg.message.includes(
+            'Project name is out of sync in config.json and env var: LLEMONSTACK_PROJECT_NAME',
+          ),
+      )
+
+      assertNotEquals(
+        warningMessage,
+        undefined,
+        'Should have warning message about project name being out of sync',
+      )
+
+      // Check for the info message about using the config.json name
+      const infoMessage = result.messages.find(
+        (msg) =>
+          msg.level === 'info' &&
+          msg.message.includes('Using project name from config.json'),
+      )
+
+      assertNotEquals(
+        infoMessage,
+        undefined,
+        'Should have info message about using project name from config.json',
+      )
+    },
+  )
+
+  // Clean up after all tests
+  await t.step('teardown', () => {
+    saveStub.restore()
+  })
+})
+
 Deno.test.ignore('Config ENV vars', async (t) => {
   let saveStub: Stub
 
