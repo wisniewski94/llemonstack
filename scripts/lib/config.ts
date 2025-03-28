@@ -4,7 +4,7 @@ import packageJson from '../../package.json' with { type: 'json' }
 import { loadEnv } from './env.ts'
 import * as fs from './fs.ts'
 import { Service } from './service.ts'
-import { failure, success, TryCatchResult } from './try-catch.ts'
+import { failure, success, tryCatch, TryCatchResult } from './try-catch.ts'
 import { LLemonStackConfig, ServiceConfig } from './types.d.ts'
 import { isTruthy } from './utils.ts'
 
@@ -437,6 +437,34 @@ export class Config {
   }
 
   /**
+   * Update the .env file with the given env vars
+   * @param envVars - The env vars to update the .env file with
+   * @param {Object} options - Options object
+   * @param {boolean} options.reload - Reload the env vars from the .env file into Deno.env
+   * @param {boolean} options.expand - Expand the env vars
+   * @returns {Promise<TryCatchResult<Record<string, string>>>}
+   */
+  public async updateEnvFile(
+    envVars: Record<string, string>,
+    { reload = true, expand = true }: {
+      reload?: boolean
+      expand?: boolean
+    } = {},
+  ): Promise<TryCatchResult<Record<string, string>>> {
+    const updateResult = await fs.updateEnv(this.envFile, envVars)
+
+    if (!updateResult.success) {
+      return failure<Record<string, string>>(
+        `Unable to update env file: ${this.envFile}`,
+        updateResult,
+      )
+    }
+
+    // TODO: test this to make sure it returning properly
+    return (await tryCatch(this.loadEnv({ reload, expand }))).unshiftMessages(updateResult.messages)
+  }
+
+  /**
    * Set the project name
    * @param name - The new project name
    * @param {Object} options - Options object
@@ -645,10 +673,10 @@ export class Config {
    * Merge the template with the current project config to ensure all keys are present
    * @param template - The template to merge with the current project config
    */
-  private updateConfig(template: LLemonStackConfig = this._configTemplate): void {
+  private updateConfig(template: LLemonStackConfig = this._configTemplate): LLemonStackConfig {
     if (!this._config) {
       this._config = { ...template }
-      return
+      return this._config
     }
 
     const merged = deepMerge(
@@ -659,7 +687,12 @@ export class Config {
     // Set version to template version
     merged.version = template.version
 
+    if (!merged.initialized) {
+      merged.initialized = new Date().toISOString()
+    }
+
     this._config = merged
+    return this._config
   }
 }
 

@@ -25,7 +25,7 @@ import { load as loadDotEnv } from 'jsr:@std/dotenv'
  *
  * @param {Object} options - The options for loading the .env file
  * @param {string} options.envPath - The path to the .env file
- * @param {boolean} options.reload - Whether to reload the .env file
+ * @param {boolean} options.reload - Whether to reload the .env file into Deno.env
  * @param {boolean} options.expand - Whether to expand values in the .env file
  * @returns {Promise<Record<string, string>>} The environment variables
  */
