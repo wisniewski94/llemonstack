@@ -541,6 +541,7 @@ export async function init(
     const result = await CONFIG.setProjectName(projectName)
     if (!result.success) {
       showError(result.error)
+      Deno.exit(1)
     }
 
     // Generate random security keys

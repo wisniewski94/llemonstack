@@ -6,13 +6,24 @@ import * as fs from './fs.ts'
 import { Service } from './service.ts'
 import { failure, success, TryCatchResult } from './try-catch.ts'
 import { LLemonStackConfig, ServiceConfig } from './types.d.ts'
+import { isTruthy } from './utils.ts'
 
 export class Config {
+  // Static properties: Config.*
+  static readonly defaultProjectName: string = 'llemonstack'
+  static readonly defaultConfigFilePath: string = '.llemonstack/config.json'
+  static readonly llemonstackVersion: string = packageJson.version
   private static instance: Config
-  private _debug: boolean = false
-  private _installDir: string
-  private _llemonstackVersion: string = packageJson.version
-  private _configDirBase: string = '.llemonstack'
+
+  public static getInstance(): Config {
+    if (!Config.instance) {
+      Config.instance = new Config()
+    }
+    return Config.instance
+  }
+
+  // Instance properties: this.*
+  protected _debug: boolean = false
   private _configTemplate: LLemonStackConfig = configTemplate as LLemonStackConfig
   private _config: LLemonStackConfig = this._configTemplate
   private _services: Record<string, Service> = {}
@@ -23,25 +34,34 @@ export class Config {
     error: new Error('Config not initialized'),
     success: false,
   })
-  private _serviceGroups: [string, string[]][] = [['databases', []], ['middleware', []], [
-    'apps',
-    [],
-  ]]
+
+  private _serviceGroups: [string, string[]][] = [
+    ['databases', []],
+    ['middleware', []],
+    ['apps', []],
+  ]
 
   // Base configuration
-  readonly configDir: string
-  readonly configFile: string
-  readonly defaultProjectName: string = 'llemonstack'
+  protected _configDir: string = ''
+  protected _configFile: string = ''
+
+  readonly installDir = fs.path.join(
+    fs.path.dirname(fs.path.fromFileUrl(import.meta.url)),
+    '../../',
+  )
 
   private constructor() {
-    this._installDir = fs.path.join(
-      fs.path.dirname(fs.path.fromFileUrl(import.meta.url)),
-      '../../',
-    )
-    this.configDir = fs.path.join(Deno.cwd(), this._configDirBase)
-    this.configFile = fs.path.join(this.configDir, 'config.json')
-    this.DEBUG = `${Deno.env.get('LLEMONSTACK_DEBUG')} ${Deno.env.get('DEBUG')}`.toLowerCase()
-      .includes('true')
+    // Set the default config file path
+    this.setConfigFile(Config.defaultConfigFilePath)
+  }
+
+  /**
+   * Set the config dir and config file path to absolute path
+   * @param configFile - The path to the config file
+   */
+  protected setConfigFile(configFile: string) {
+    this._configFile = fs.path.resolve(Deno.cwd(), configFile)
+    this._configDir = fs.path.dirname(this._configFile)
   }
 
   //
@@ -56,17 +76,25 @@ export class Config {
     this._debug = value
   }
 
+  /**
+   * Get the project name from config.json, env, or default
+   * @returns {string}
+   */
   get projectName(): string {
-    return this._env.LLEMONSTACK_PROJECT_NAME || this._config.projectName ||
-      this.defaultProjectName
+    return this._config.projectName || this.env.LLEMONSTACK_PROJECT_NAME ||
+      Config.defaultProjectName
+  }
+
+  get configFile(): string {
+    return this._configFile
+  }
+
+  get configDir(): string {
+    return this._configDir
   }
 
   get envFile(): string {
     return fs.path.resolve(Deno.cwd(), this._config.envFile)
-  }
-
-  get installDir(): string {
-    return this._installDir
   }
 
   get dockerNetworkName(): string {
@@ -100,6 +128,7 @@ export class Config {
     return this._config
   }
 
+  // Check if config.json has been initialized by init script
   get projectInitialized(): boolean {
     return !!this._config.initialized.trim()
   }
@@ -110,11 +139,7 @@ export class Config {
 
   // Returns the LLemonStack version for the current project
   get version(): string {
-    return this._config.version || this._llemonstackVersion
-  }
-
-  get installVersion(): string {
-    return this._llemonstackVersion
+    return this._config.version || Config.llemonstackVersion
   }
 
   /**
@@ -138,25 +163,36 @@ export class Config {
   // Public Methods
   //
 
-  public static getInstance(): Config {
-    if (!Config.instance) {
-      Config.instance = new Config()
-    }
-    return Config.instance
-  }
-
   /**
    * Initialize the config
    *
    * It should be called at the start of any CLI script.
    * @returns {Promise<Config>}
    */
-  public async initialize(): Promise<TryCatchResult<Config, Error>> {
+  public async initialize(
+    configFile?: string,
+    { debug, init = false }: {
+      debug?: boolean
+      init?: boolean // If false, return error if config file is invalid
+    } = {},
+  ): Promise<TryCatchResult<Config, Error>> {
+    if (debug) {
+      // Only update if debug was explicitly set to true
+      this.DEBUG = debug
+    }
+
     if (this._initializeResult.success) {
       return this._initializeResult
     }
 
+    // Create a result object to add messages to
     const result = new TryCatchResult<Config, Error>({ data: this, error: null, success: true })
+
+    result.addMessage('debug', 'INITIALIZING CONFIG: this log message should only appear once')
+
+    if (configFile) {
+      this.setConfigFile(configFile)
+    }
 
     let updated = false // Track if the project config was updated and needs to be saved
 
@@ -166,7 +202,13 @@ export class Config {
     if (readResult.data) {
       this._config = readResult.data
     } else if (readResult.error instanceof Deno.errors.NotFound) {
-      // File doesn't exist, populate with a template
+      // Return error if not initializing from template
+      if (!init) {
+        // Preserve the NotFound error
+        result.error = readResult.error
+        return failure(`Config file not found: ${this.configFile}`, result)
+      }
+      // Populate config from the template
       this._config = this._configTemplate
       result.addMessage('info', 'Project config file not found, creating from template')
       updated = true
@@ -176,6 +218,10 @@ export class Config {
 
     // Check if project config is valid
     if (!this.isValidConfig()) {
+      // Return error if not initializing from template
+      if (!init) {
+        return failure(`Project config file is invalid: ${this.configFile}`, result)
+      }
       this.updateConfig(this._configTemplate)
       result.addMessage('info', 'Project config file is invalid, updating from template')
       updated = true
@@ -186,9 +232,22 @@ export class Config {
 
     // Update DEBUG flag from env vars if not already enabled
     if (!this.DEBUG) {
-      this.DEBUG = `${this._env.LLEMONSTACK_DEBUG} ${this._env.DEBUG}`.toLowerCase()
-        .includes('true')
+      if (isTruthy(this.env.LLEMONSTACK_DEBUG)) {
+        this.DEBUG = true
+        result.addMessage('debug', 'DEBUG enabled in LLEMONSTACK_DEBUG env var')
+      } else if (isTruthy(this.env.DEBUG)) {
+        this.DEBUG = true
+        result.addMessage('debug', 'DEBUG enabled in DEBUG env var')
+      }
     }
+
+    // TODO: flesh this out
+    // Check if project name is in sync with env var
+    // if (this.projectName !== this.env.LLEMONSTACK_PROJECT_NAME) {
+    //   result.addMessage('warning', 'Project name is out of sync with env var')
+    //   result.addMessage('warning', `config.json: ${this.projectName}`)
+    //   result.addMessage('warning', `env: ${this.env.LLEMONSTACK_PROJECT_NAME}`)
+    // }
 
     // Load services from services Directory
     const servicesResult = await this.loadServices()
@@ -209,7 +268,7 @@ export class Config {
       }
     }
 
-    result.addMessage('debug', 'INITIALIZED CONFIG: this log message should only appear once')
+    result.addMessage('debug', 'CONFIG INITIALIZED')
 
     if (!result.success) {
       return failure(`Error loading project config file: ${this.configFile}`, result)
@@ -342,6 +401,10 @@ export class Config {
     // Load .env file or use a clone of the current env vars
     const env = (!envPath) ? { ...this._env } : await loadEnv({ envPath, reload, expand })
 
+    // TODO: convert to tryCatch to pass messages back to caller?
+    // TODO: add check to ensure this.projectName and this.env.LLEMONSTACK_PROJECT_NAME are in sync before updating
+
+    // Populate project name from config for services & docker to use
     env.LLEMONSTACK_PROJECT_NAME = this.projectName
 
     // Allow services to modify the env vars as needed
@@ -481,7 +544,7 @@ export class Config {
   }
 
   public isOutdatedConfig(): boolean {
-    return this._config.version !== this._llemonstackVersion
+    return this._config.version !== Config.llemonstackVersion
   }
 
   public setEnvKey(key: string, value: string) {
