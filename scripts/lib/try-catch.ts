@@ -51,6 +51,30 @@ export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
     return this
   }
 
+  addMessages(...messages: LogMessage[] | LogMessage[][]): TryCatchResult<T, E> {
+    this.messages.push(...messages.flat())
+    return this
+  }
+
+  /**
+   * Push messages to the beginning of the message array
+   *
+   * Useful for adding previous messages to the front of a final tryCatch call.
+   * @param messages - The messages to push
+   * @returns this instance for chaining
+   *
+   * @example
+   * result.unshiftMessages(otherResult.messages, anotherResult.messages)
+   *
+   * @example
+   * return await tryCatch(this.loadEnv({ reload, expand }))
+   *   .unshiftMessages(previousResult.messages, anotherResult.messages)
+   */
+  unshiftMessages(...messages: LogMessage[] | LogMessage[][]): TryCatchResult<T, E> {
+    this.messages.unshift(...messages.flat())
+    return this
+  }
+
   /**
    * Creates a TryCatchResultWithLog from a standard TryCatchResult
    * @param result - The TryCatchResult to convert
