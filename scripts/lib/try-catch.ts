@@ -164,6 +164,7 @@ export function failure<T, E extends Error = Error>(
   if (result.error) {
     // Preserve the original error and add a message
     result.addMessage('error', result.error.message, { error: result.error })
+    result.addMessage('error', newMessage)
   } else {
     // Create a new error with the original error
     result.error = new TryCatchError(newMessage, undefined) as E
