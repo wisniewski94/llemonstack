@@ -43,7 +43,7 @@ export async function dirExists(path: string): Promise<TryCatchResult<boolean>> 
       return new TryCatchResult<boolean>({ data: true, error: null, success: true })
     } else {
       return new TryCatchResult<boolean>({
-        data: false,
+        data: true,
         error: new Error(`Path exists but is not a directory: ${path}`),
         success: false,
       })
