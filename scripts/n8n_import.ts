@@ -91,7 +91,7 @@ async function prepareCredentialsImport(): Promise<void> {
 }
 
 async function importToN8n(
-  projectName: string,
+  config: Config,
   { skipPrompt = false, archiveAfterImport = true }: {
     skipPrompt?: boolean
     archiveAfterImport?: boolean
@@ -174,12 +174,12 @@ async function importToN8n(
 }
 
 export async function runImport(
-  projectName: string,
+  config: Config,
   { skipPrompt = false, archive = true }: {
     skipPrompt?: boolean
     archive?: boolean
   } = {},
 ): Promise<void> {
   await prepareEnv({ silent: false })
-  await importToN8n(projectName, { skipPrompt, archiveAfterImport: archive })
+  await importToN8n(config, { skipPrompt, archiveAfterImport: archive })
 }

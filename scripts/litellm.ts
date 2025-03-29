@@ -11,8 +11,8 @@
  */
 import { Config } from './lib/config.ts'
 
-const config = Config.getInstance()
-await config.initialize()
+// const config = Config.getInstance()
+// await config.initialize()
 
 type LiteLLMModelList = Array<{
   id: string
@@ -187,7 +187,7 @@ async function addModelToLiteLLM(
   return result
 }
 
-export async function loadModels() {
+export async function loadModels(config: Config) {
   // Load environment variables from .env file
   const env = config.env
 

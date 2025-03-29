@@ -122,7 +122,7 @@ export async function stopService(
 }
 
 export async function stop(
-  projectName: string,
+  config: Config
   { all = false, service: serviceName }: { all?: boolean; service?: string } = {},
 ): Promise<void> {
   let stopAll = all
@@ -134,7 +134,7 @@ export async function stop(
     if (!service) {
       showError(`Unknown service: '${serviceName}'`)
       showAction('\nAvailable services:\n')
-      const rows = config.getInstalledServices().map((_service) => {
+      const rows = config.getAllServices().map((_service) => {
         if (_service && config.isEnabled(name)) {
           return [colors.green(_service.service), _service.description]
         }
@@ -163,15 +163,15 @@ export async function stop(
   }
 
   if (serviceName) {
-    await stopService(projectName, serviceName)
+    await stopService(config.projectName, serviceName)
   } else {
-    const services = stopAll ? config.getInstalledServices() : config.getEnabledServices()
-    await stopServices(projectName, services, { all: stopAll })
+    const services = stopAll ? config.getAllServices() : config.getEnabledServices()
+    await stopServices(config.projectName, services, { all: stopAll })
   }
 
   showAction('Cleaning up networks...')
   if (stopAll) {
-    await removeAllNetworks(projectName)
+    await removeAllNetworks(config.projectName)
   }
   await runDockerCommand('network', {
     args: ['prune', '-f'],

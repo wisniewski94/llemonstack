@@ -25,11 +25,11 @@ import {
 } from './lib/logger.ts'
 import { EnvVars, ExposeHost, RepoService, Service } from './lib/types.d.ts'
 
-const config = Config.getInstance()
-await config.initialize()
+// const config = Config.getInstance()
+// await config.initialize()
 
 // Enable extra debug logging
-const DEBUG = config.DEBUG
+// const DEBUG = config.DEBUG
 
 /*******************************************************************************
  * FUNCTIONS
@@ -152,19 +152,20 @@ async function setupRepo(
  * @param all - Setup all repos
  */
 export async function setupRepos({
+  config,
   pull = false,
   all = false,
   silent = false,
 }: {
+  config: Config
   pull?: boolean
   all?: boolean
   silent?: boolean
-} = {}): Promise<void> {
   // Ensure repos directory exists
   try {
-    await fs.ensureDir(config.repoDir)
+    await fs.ensureDir(config.reposDir)
   } catch (error) {
-    showError(`Unable to create repos dir: ${config.repoDir}`, error)
+    showError(`Unable to create repos dir: ${config.reposDir}`, error)
     Deno.exit(1)
   }
 
@@ -445,11 +446,17 @@ function showServicesInfo(
 }
 
 function outputServicesInfo({
+  config,
   hideCredentials = false,
 }: {
+  config: Config
   hideCredentials?: boolean
 }): void {
   const services = config.getEnabledServices()
+  if (!services.size) {
+    showWarning('No services are enabled')
+    return
+  }
 
   showHeader('Service Dashboards')
   showInfo('Access the dashboards in a browser on your host machine.\n')
@@ -484,7 +491,7 @@ function outputServicesInfo({
 }
 
 export async function start(
-  projectName: string,
+  config: Config,
   { service, skipOutput = false, hideCredentials = true }: {
     service?: string
     skipOutput?: boolean

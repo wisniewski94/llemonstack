@@ -34,9 +34,6 @@ import {
   startService,
 } from './start.ts' // Adjust the path as necessary
 
-const CONFIG = Config.getInstance()
-await CONFIG.initialize()
-
 // Env var key names we care about
 type EnvVarsKeys = keyof {
   LLEMONSTACK_PROJECT_NAME: string
@@ -166,27 +163,27 @@ async function createConfigFile(): Promise<void> {
 
 export async function clearConfigFile(): Promise<void> {
   try {
-    await Deno.stat(CONFIG.configFile)
-    await Deno.remove(CONFIG.configFile)
+    await Deno.stat(config.configFile)
+    await Deno.remove(config.configFile)
   } catch (_error) {
     // File doesn't exist, do nothing
   }
 }
 
-async function createEnvFile(): Promise<void> {
-  if (await envFileExists()) {
+async function createEnvFile(config: Config): Promise<void> {
+  if (await envFileExists(config)) {
     throw new Error('Environment file already exists')
   }
   try {
-    await Deno.copyFile(path.join(CONFIG.installDir, '.env.example'), CONFIG.envFile)
+    await Deno.copyFile(path.join(config.installDir, '.env.example'), config.envFile)
   } catch (error) {
     throw new Error(`Failed to create .env file: ${error}`)
   }
 }
 
-export async function clearEnvFile(): Promise<void> {
-  if (await envFileExists()) {
-    await Deno.remove(CONFIG.envFile)
+export async function clearEnvFile(config: Config): Promise<void> {
+  if (await envFileExists(config)) {
+    await Deno.remove(config.envFile)
   }
 }
 
@@ -370,7 +367,7 @@ async function startSupabase(
  * Create postgres schemas for all services that use postgres
  * @returns The updated environment variables
  */
-async function createServiceSchemas(): Promise<Record<AllEnvVarKeys, string>> {
+async function createServiceSchemas(config: Config): Promise<Record<AllEnvVarKeys, string>> {
   const dbPassword = Deno.env.get('POSTGRES_PASSWORD') ?? ''
   if (!dbPassword) {
     showError('POSTGRES_PASSWORD is not set in .env file, unable to create postgres schemas')
@@ -394,7 +391,15 @@ async function createServiceSchemas(): Promise<Record<AllEnvVarKeys, string>> {
   }
   // Save db vars to .env file
   // Replace any password that equals POSTGRES_PASSWORD with ${POSTGRES_PASSWORD} placeholder
-  return await updateEnvFile(replacePostgresPasswords(dbVars, dbPassword))
+  const results = await config.updateEnvFile(replacePostgresPasswords(dbVars, dbPassword), {
+    reload: true,
+    expand: false,
+  })
+  if (!results.success) {
+    showError(results.error)
+    Deno.exit(1)
+  }
+  return results.data ?? {}
 }
 
 /**
@@ -420,7 +425,7 @@ async function isExistingProject(projectName: string): Promise<boolean> {
 }
 
 export async function init(
-  projectName: string,
+  config: Config,
 ): Promise<void> {
   try {
     showAction('Checking prerequisites...')
@@ -439,7 +444,7 @@ export async function init(
 
   try {
     if (isInitialized()) {
-      showWarning(`Project already initialized: ${projectName}`)
+      showWarning(`Project already initialized: ${config.projectName}`)
       const resetOption: string = await Select.prompt({
         message: 'How do you want to proceed?',
         options: [
@@ -468,41 +473,41 @@ export async function init(
       if (resetOption === 'hard-reset') {
         if (confirm('Are you sure you want to delete all data and start over?')) {
           showAction('Resetting project...')
-          await reset(projectName, { skipPrompt: true, skipCache: true })
-          await clearEnvFile()
-          await clearConfigFile()
+          await reset(config.projectName, { skipPrompt: true, skipCache: true })
+          await clearEnvFile(config)
+          await clearConfigFile(config)
         } else {
           showInfo('OK, exiting...')
           Deno.exit(1)
         }
       } else if (resetOption === 'config-reset') {
         showInfo('Replacing .env file with a fresh copy from .env.example')
-        await clearEnvFile()
-        await clearConfigFile()
+        await clearEnvFile(config)
+        await clearConfigFile(config)
       } else if (resetOption === 'reinitialize') {
         showInfo('Using existing config data from .env file')
-        await clearConfigFile()
+        await clearConfigFile(config)
       }
     }
 
     showHeader('Initializing project...')
 
-    if (await envFileExists()) {
+    if (await envFileExists(config)) {
       showInfo('.env file already exists')
       if (confirm('Do you want to delete .env and start fresh?', false)) {
-        await clearEnvFile()
-        await createEnvFile()
+        await clearEnvFile(config)
+        await createEnvFile(config)
         showInfo('.env recreated from .env.example')
       } else {
         showInfo('OK, using existing .env file')
       }
     } else {
       showInfo('.env does not exist, copying from .env.example')
-      await createEnvFile()
+      await createEnvFile(config)
     }
 
     // Create a copy of env vars to modify
-    let envVars = { ...CONFIG.env }
+    let envVars = { ...config.env }
 
     showInfo('.env file is ready to configure')
 
@@ -511,6 +516,7 @@ export async function init(
     showInfo('Repositories ready\n\n')
 
     let uniqueName = false
+    let projectName = ''
     while (!uniqueName) {
       projectName = await Input.prompt({
         message: 'What is the project name?',
@@ -537,8 +543,7 @@ export async function init(
       }
     }
 
-    envVars.LLEMONSTACK_PROJECT_NAME = projectName
-    const result = await CONFIG.setProjectName(projectName)
+    const result = await config.setProjectName(projectName)
     if (!result.success) {
       showError(result.error)
       Deno.exit(1)
@@ -584,11 +589,24 @@ export async function init(
     showInfo('If running in Docker, you can choose to run it on the CPU (slow) or a GPU (fast).')
     showInfo("GPU options require a compatible GPU on the host... because it's not magic.\n")
 
-    const ollamaProfile = await configOllama()
+    // TODO: call configure on ollama service class
+    const ollamaService = config.getService('ollama')
+    if (ollamaService) {
+      await ollamaService.configure({ silent: false, config })
+    }
+    // const ollamaProfile = await configOllama()
+
+    // Run the config at this point?
+    await configure()
+
     envVars.ENABLE_OLLAMA = ollamaProfile
 
     // Checkpoint, save env vars to .env file
-    envVars = await updateEnvFile(envVars)
+    // TODO: move to config
+    const _result = await config.updateEnvFile(envVars, {
+      reload: true,
+      expand: false, // Preserve KEY=${POSTGRES_PASSWORD} format during the init process
+    })
 
     // Setup supabase env
     await prepareEnv()
@@ -596,7 +614,7 @@ export async function init(
     showAction('\nSetting up postgres schemas...')
     showInfo('This will create a postgres user and schema for each service that supports schemas.')
     await startSupabase(projectName, envVars)
-    await createServiceSchemas()
+    await createServiceSchemas(config)
     showInfo('Postgres schemas successfully created')
 
     showAction('\nProject successfully initialized!\n')

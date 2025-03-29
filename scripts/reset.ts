@@ -91,12 +91,12 @@ async function cleanDir(dir: string): Promise<void> {
 }
 
 export async function reset(
-  projectName: string,
+  config: Config,
   { skipPrompt = false, skipCache = false }: { skipPrompt?: boolean; skipCache?: boolean } = {},
 ): Promise<void> {
   if (!skipPrompt) {
     showWarning(
-      `WARNING: This will delete ALL data for your '${projectName}' stack.`,
+      `WARNING: This will delete ALL data for your '${config.projectName}' stack.`,
     )
     showInfo(
       '\nThis script deletes all docker images, volumes, and networks.\n' +
@@ -114,7 +114,7 @@ export async function reset(
 
   // Get the latest code for repos
   showAction('\nStopping services and cleaning up docker images...')
-  await dockerComposeCleanup(projectName)
+  await dockerComposeCleanup(config.projectName)
 
   if (!skipCache) {
     if (skipPrompt || confirm('Do you want to clean the docker cache?', false)) {
@@ -133,7 +133,7 @@ export async function reset(
   }
 
   showAction('\nCleaning up repos directory...')
-  await cleanDir(config.repoDir)
+  await cleanDir(config.reposDir)
 
   showAction('\nCleaning up shared folder...')
   if (!skipPrompt) {
@@ -161,13 +161,13 @@ export async function reset(
     showInfo(
       'Updating the stack will only update services enabled in your .env file.',
     )
-    await update(projectName, { skipStop: true, skipPrompt: true })
+    await update(config, { skipStop: true, skipPrompt: true })
   } else {
     showInfo('Skipping stack update')
   }
 
-  await clearEnvFile()
-  await clearConfigFile()
+  await clearEnvFile(config)
+  await clearConfigFile(config)
   showInfo('Environment and config files reset')
 
   const volumesDir = config.volumesDir

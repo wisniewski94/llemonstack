@@ -66,7 +66,7 @@ async function pullImages(projectName: string): Promise<void> {
 }
 
 export async function update(
-  projectName: string,
+  config: Config,
   {
     skipStop = false,
     skipPrompt = false,
@@ -88,20 +88,20 @@ export async function update(
     await prepareEnv({ silent: false })
 
     if (!skipStop) {
-      await stop(projectName, { all: true })
+      await stop(config, { all: true })
     }
 
     // Get the latest code for repos
     showAction('Update code repos...')
-    await setupRepos({ pull: true })
+    await setupRepos({ config, pull: true })
 
     // Pull latest images
     showAction('Pulling latest docker images...')
-    await pullImages(projectName)
+    await pullImages(config.projectName)
 
     // Show the software versions for images that support it
     showAction('\n------ VERSIONS ------')
-    await versions(projectName)
+    await versions(config)
 
     showAction('Update successfully completed!')
   } catch (error) {

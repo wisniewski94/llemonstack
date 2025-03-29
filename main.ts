@@ -87,7 +87,7 @@ main
   .action(async (options) => {
     const config = await initConfig(options)
     const { configure } = await import('./scripts/configure.ts')
-    await configure(config.projectName)
+    await configure(config)
   })
 
 // Initialize the LLemonStack environment
@@ -97,7 +97,7 @@ main
   .action(async (options) => {
     const config = await initConfig(options)
     const { init } = await import('./scripts/init.ts')
-    await init(config.projectName)
+    await init(config)
   })
 
 // Start the LLemonStack services
@@ -109,9 +109,10 @@ main
   .action(async (options, service?: string) => {
     const config = await initConfig(options)
     const { start } = await import('./scripts/start.ts')
-    await start(config.projectName, {
+    await start(config, {
       service,
       skipOutput: !!service,
+      // cspell:disable-next-line
       hideCredentials: options.nokeys,
     })
   })
@@ -125,7 +126,7 @@ main
   .action(async (options, service?: string) => {
     const config = await initConfig(options)
     const { stop } = await import('./scripts/stop.ts')
-    await stop(config.projectName, { all: options.all, service })
+    await stop(config, { all: options.all, service })
   })
 
 // Restart the LLemonStack services
@@ -136,7 +137,7 @@ main
   .action(async (options, service?: string) => {
     const config = await initConfig(options)
     const { restart } = await import('./scripts/restart.ts')
-    await restart(config.projectName, { service, skipOutput: !!service })
+    await restart(config, { service, skipOutput: !!service })
   })
 
 // Reset the LLemonStack environment
@@ -146,7 +147,7 @@ main
   .action(async (options) => {
     const config = await initConfig(options)
     const { reset } = await import('./scripts/reset.ts')
-    await reset(config.projectName)
+    await reset(config)
   })
 
 // Update the LLemonStack services
@@ -156,7 +157,7 @@ main
   .action(async (options) => {
     const config = await initConfig(options)
     const { update } = await import('./scripts/update.ts')
-    await update(config.projectName)
+    await update(config)
   })
 
 // Show all versions of all services in the stack
@@ -166,7 +167,7 @@ main
   .action(async (options) => {
     const config = await initConfig(options)
     const { versions } = await import('./scripts/versions.ts')
-    await versions(config.projectName)
+    await versions(config)
   })
 
 // Import data into services that support it
@@ -188,13 +189,13 @@ main
     if (!options.skipStart) {
       showAction('Starting the stack to import data...')
       const { start } = await import('./scripts/start.ts')
-      await start(config.projectName, { skipOutput: true })
+      await start(config, { skipOutput: true })
     }
     for (const svc of services) {
       const service = svc[0]
       showAction(`Importing ${service} data...`)
       const { runImport } = await import(`./scripts/${service}_import.ts`)
-      await runImport(config.projectName, {
+      await runImport(config, {
         skipPrompt: options.skipPrompt,
         archive: options.archive,
       })
@@ -217,7 +218,7 @@ main
     for (const svc of services) {
       const service = svc[0]
       const { runExport } = await import(`./scripts/${service}_export.ts`)
-      await runExport(config.projectName)
+      await runExport(config)
     }
   })
 
@@ -237,7 +238,7 @@ main.command('schema')
   .action(async (options, action: string, service: string) => {
     const config = await initConfig(options)
     const { schema } = await import('./scripts/schema.ts')
-    await schema(config.projectName, action, service)
+    await schema(config, action, service)
   })
 
 // LiteLLM management commands
@@ -250,10 +251,10 @@ main.command('litellm')
     'llmn litellm seed',
   )
   .action(async (options, action: string) => {
-    const _config = await initConfig(options)
+    const config = await initConfig(options)
     if (action === 'seed') {
       const { loadModels } = await import('./scripts/litellm.ts')
-      await loadModels()
+      await loadModels(config)
     }
   })
 

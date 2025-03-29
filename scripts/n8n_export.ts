@@ -8,8 +8,8 @@ import { dockerExec } from './lib/docker.ts'
 import { fs, path } from './lib/fs.ts'
 import { showAction, showError, showInfo, showWarning } from './lib/logger.ts'
 
-const config = Config.getInstance()
-await config.initialize()
+// const config = Config.getInstance()
+// await config.initialize()
 
 // Relative path of backup dir in shared dir
 const BACKUP_DIR_N8N = 'backups/n8n'
@@ -58,16 +58,21 @@ async function prepareBackupDir(): Promise<BackupDirs> {
   return dirs
 }
 
-async function runExportCommands(projectName: string): Promise<void> {
+async function runExportCommands(config: Config): Promise<void> {
   for (const serviceCommand of SERVICES_EXPORT_COMMANDS) {
-    const composeFile = config.getComposeFile(serviceCommand.service)
+    const service = config.getService(serviceCommand.service)
+    if (!service) {
+      showWarning(`Service ${serviceCommand.service} not found, skipping`)
+      continue
+    }
+    const composeFile = service.composeFile
     if (!composeFile) {
-      config.isEnabled(serviceCommand.service) &&
+      service.enabled() &&
         showWarning(`Compose file not found for ${serviceCommand.service}, skipping`)
       continue
     }
     try {
-      await dockerExec(projectName, serviceCommand.service, serviceCommand.cmd, {
+      await dockerExec(config.projectName, serviceCommand.service, serviceCommand.cmd, {
         args: serviceCommand.args,
         composeFile,
         captureOutput: true,
@@ -83,13 +88,13 @@ async function runExportCommands(projectName: string): Promise<void> {
     }
   }
 }
-export async function runExport(projectName: string): Promise<void> {
+export async function runExport(config: Config): Promise<void> {
   showAction(`Preparing export folders in ./shared...`)
   const dirs = await prepareBackupDir()
   showInfo(`Export dirs:\n  ${dirs.map((d) => d[1]).join('\n  ')}`)
   showAction(`Exporting n8n workflows and credentials...`)
   try {
-    await runExportCommands(projectName)
+    await runExportCommands(config)
     showInfo(`Export complete`)
   } catch (error) {
     showError(`Error exporting n8n workflows and credentials`, error)

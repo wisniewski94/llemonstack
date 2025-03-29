@@ -4,10 +4,10 @@ import { createServiceSchema, removeServiceSchema } from './lib/postgres.ts'
 import { isSupabaseStarted, startService } from './start.ts'
 import { stopService } from './stop.ts'
 
-const config = Config.getInstance()
-await config.initialize()
+// const config = Config.getInstance()
+// await config.initialize()
 
-export async function schema(projectName: string, action: string, service: string) {
+export async function schema(config: Config, action: string, service: string) {
   if (action !== 'create' && action !== 'remove') {
     showError('First argument must be either "create" or "remove"')
     Deno.exit(1)
@@ -30,15 +30,15 @@ export async function schema(projectName: string, action: string, service: strin
   // Track whether we started supabase and need to stop it at the end
   let supabaseStarted = false
 
-  if (!await isSupabaseStarted(projectName)) {
+  if (!await isSupabaseStarted(config.projectName)) {
     if (confirm(`Supabase is not running. Shall we start it?`, true)) {
-      await startService(projectName, 'supabase')
+      await startService(config.projectName, 'supabase')
       supabaseStarted = true
     }
     // Wait a few seconds for supabase to fully initialize
     showAction('Waiting for Supabase to initialize...')
     await new Promise((resolve) => setTimeout(resolve, 3000))
-    if (!await isSupabaseStarted(projectName)) {
+    if (!await isSupabaseStarted(config.projectName)) {
       showError('Supabase failed to start, unable to create schema')
       Deno.exit(1)
     }
@@ -65,7 +65,7 @@ export async function schema(projectName: string, action: string, service: strin
 
   if (supabaseStarted) {
     if (confirm(`Supabase was started for this operation. Shall we stop it?`)) {
-      await stopService(projectName, 'supabase')
+      await stopService(config.projectName, 'supabase')
     }
   }
 }

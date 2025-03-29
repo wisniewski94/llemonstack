@@ -233,8 +233,8 @@ async function showImageVersions(): Promise<RowType[]> {
   return allRows
 }
 
-export async function versions(projectName: string): Promise<void> {
-  showAction(`Getting versions for ${projectName}...`)
+export async function versions(config: Config): Promise<void> {
+  showAction(`Getting versions for ${config.projectName}...`)
   showInfo(
     'Versions shown may differ from running containers.\n' +
       'Restart the stack to ensure the versions are correct.',
@@ -248,7 +248,7 @@ export async function versions(projectName: string): Promise<void> {
     const services = config.getEnabledServices().filter((service) => service.appVersionCmd)
 
     const appVersionsPromise = services.length > 0
-      ? getAppVersions(projectName, services)
+      ? getAppVersions(config.projectName, services)
       : Promise.resolve([])
 
     const imageVersionRows = await showImageVersions()

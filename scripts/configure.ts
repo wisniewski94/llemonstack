@@ -21,15 +21,13 @@ import { DEFAULT_PROJECT_NAME } from './start.ts' // Adjust the path as necessar
 // }
 
 export async function configure(
-  projectName: string,
+  config: Config, // An initialized config instance
 ): Promise<void> {
-  const config = Config.getInstance()
-  await config.initialize()
   const groups = config.getServiceGroups()
 
   showWarning('THIS IS WIP and does not yet save the selected services.')
 
-  showAction(`Configuring services for ${projectName}...`)
+  showAction(`Configuring services for ${config.projectName}...`)
   // TODO: loop through all config.env keys to get list of ENABLE_* env vars
   // Then set enabled for each service
   // The save config
