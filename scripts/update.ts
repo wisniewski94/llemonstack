@@ -3,7 +3,7 @@
  *
  * Pulls and builds the latest changes for docker images.
  */
-import { Config } from './lib/config.ts'
+import { Config } from './lib/core/config/config.ts'
 import { runDockerComposeCommand } from './lib/docker.ts'
 import { confirm, showAction, showError, showInfo } from './lib/logger.ts'
 import { prepareEnv, setupRepos } from './start.ts'

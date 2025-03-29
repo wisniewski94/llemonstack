@@ -1,4 +1,4 @@
-import { Config } from '../../scripts/lib/config.ts'
+import { Config } from '../../scripts/lib/core/config/config.ts'
 import { Service } from '../../scripts/lib/core/services/service.ts'
 import { getFlowiseApiKey } from '../../scripts/lib/flowise.ts'
 

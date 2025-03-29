@@ -1,14 +1,19 @@
+import { IServiceOptions, LLemonStackConfig, ServiceConfig } from '@/types'
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
-import configTemplate from '../../config/config.0.2.0.json' with { type: 'json' }
-import packageJson from '../../package.json' with { type: 'json' }
-import { Service, Services } from './core/services/index.ts'
-import { loadEnv } from './env.ts'
-import * as fs from './fs.ts'
-import { failure, success, tryCatch, TryCatchResult } from './try-catch.ts'
-import { IServiceOptions, LLemonStackConfig, ServiceConfig } from './types.d.ts'
-import { isTruthy } from './utils/compare.ts'
+import configTemplate from '../../../../config/config.0.2.0.json' with { type: 'json' }
+import packageJson from '../../../../package.json' with { type: 'json' }
+import { loadEnv } from '../../env.ts'
+import * as fs from '../../fs.ts'
+import { failure, success, tryCatch, TryCatchResult } from '../../try-catch.ts'
+import { isTruthy } from '../../utils/compare.ts'
+import { Service, Services } from '../services/index.ts'
 
 const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
+// Absolute path to root of install dir
+const INSTALL_DIR = fs.path.join(
+  fs.path.dirname(fs.path.fromFileUrl(import.meta.url)),
+  '../../../../',
+)
 
 export class Config {
   //
@@ -56,10 +61,7 @@ export class Config {
   protected _configDir: string = ''
   protected _configFile: string = ''
 
-  readonly installDir = fs.path.join(
-    fs.path.dirname(fs.path.fromFileUrl(import.meta.url)),
-    '../../',
-  )
+  readonly installDir = INSTALL_DIR
 
   private constructor() {
     // Set the default config file path

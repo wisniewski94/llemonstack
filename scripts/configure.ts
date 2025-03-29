@@ -2,7 +2,7 @@
  * Configure the services
  */
 import { Checkbox, CheckboxOption } from '@cliffy/prompt'
-import { Config } from './lib/config.ts'
+import { Config } from './lib/core/config/config.ts'
 import { showAction, showError, showInfo, showLogMessages, showWarning } from './lib/logger.ts'
 import { DEFAULT_PROJECT_NAME } from './start.ts' // Adjust the path as necessary
 

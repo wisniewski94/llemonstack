@@ -2,7 +2,7 @@ import {
   CommandError as CommandErrorClass,
   RunCommandOutput as RunCommandOutputClass,
 } from './command.ts'
-import { Config } from './config.ts'
+import { Config } from './core/config/config.ts'
 
 export type { Service } from './core/services/service.ts'
 export type { Services } from './core/services/services.ts'

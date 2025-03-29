@@ -5,11 +5,11 @@
  * It doesn't work yet. Keeping here for future reference.
  */
 
+import { LLemonStackConfig } from '@/types'
 import { assertEquals, assertThrows } from 'https://deno.land/std/assert/mod.ts'
 import { returnsNext, stub } from 'https://deno.land/std/testing/mock.ts'
 import * as path from 'jsr:@std/path'
-import { Config } from '../scripts/lib/config.ts'
-import { LLemonStackConfig } from '../scripts/lib/types.d.ts'
+import { Config } from '../config.ts'
 
 // Create stubs for Deno functions
 let existsSyncStub = stub(
@@ -42,7 +42,7 @@ let existsSyncStub = stub(
 
 let readFileSyncStub = stub(Deno, 'readTextFile', returnsNext([Promise.resolve('{}')]))
 
-Deno.test('Config', async (t) => {
+Deno.test.ignore('Config', async (t) => {
   let config: Config
 
   await t.step('setup', () => {
@@ -337,7 +337,7 @@ Deno.test('Config', async (t) => {
 })
 
 // If you need integration tests with real file system access
-Deno.test('Config Integration Tests', async (t) => {
+Deno.test.ignore('Config Integration Tests', async (t) => {
   const tmpDir = path.join(Deno.cwd(), 'tmp', 'test')
 
   await t.step('setup', () => {

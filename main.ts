@@ -8,7 +8,7 @@
 
 import { Command, EnumType } from '@cliffy/command'
 import { CompletionsCommand } from '@cliffy/command/completions'
-import { Config } from './scripts/lib/config.ts'
+import { Config } from './scripts/lib/core/config/config.ts'
 import {
   showAction,
   showDebug,

@@ -3,7 +3,7 @@
  */
 
 import { runCommand } from './lib/command.ts'
-import { Config } from './lib/config.ts'
+import { Config } from './lib/core/config/config.ts'
 import { isServiceRunning, prepareDockerNetwork } from './lib/docker.ts'
 import { escapePath, fs, path } from './lib/fs.ts'
 import {

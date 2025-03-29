@@ -1,4 +1,3 @@
-import { Config } from '../../config.ts'
 import { dockerCompose, expandEnvVars } from '../../docker.ts'
 import { path } from '../../fs.ts'
 import { searchObjectPaths } from '../../search-object.ts'
@@ -13,6 +12,7 @@ import {
   ServiceState,
 } from '../../types.d.ts'
 import { ObservableStruct } from '../../utils/observable.ts'
+import { Config } from '../config/config.ts'
 
 /**
  * Service
