@@ -288,8 +288,7 @@ export class Service {
    */
   // deno-lint-ignore require-await
   public async configure(
-    // deno-lint-ignore no-unused-vars
-    { silent = false, config }: ServiceActionOptions,
+    { silent: _silent, config: _config }: ServiceActionOptions,
   ): Promise<TryCatchResult<boolean>> {
     return success<boolean>(true)
   }

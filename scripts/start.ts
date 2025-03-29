@@ -337,8 +337,7 @@ export async function isSupabaseStarted(projectName: string): Promise<boolean> {
 export async function startService(
   _projectName: string,
   serviceName: string,
-  // deno-lint-ignore no-unused-vars
-  { envVars = {}, profiles, createNetwork = true }: {
+  { envVars = {}, profiles: _profiles, createNetwork = true }: {
     envVars?: EnvVars
     profiles?: string[]
     createNetwork?: boolean
