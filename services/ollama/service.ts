@@ -73,7 +73,7 @@ export class OllamaService extends Service {
   override async configure(
     { silent = false, config }: ServiceActionOptions,
   ): Promise<TryCatchResult<boolean>> {
-    const gpuDisabled = config.os === 'macOS'
+    const gpuDisabled = config.host.isMac()
 
     // Default to host when silent is true
     let ollamaProfile = 'host'

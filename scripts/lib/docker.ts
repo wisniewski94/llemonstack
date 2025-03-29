@@ -7,6 +7,7 @@
 import type { EnvVars, RunCommandOutput } from '@/types'
 import { runCommand } from './command.ts'
 import { Config } from './core/config/config.ts'
+import Host from './core/config/host.ts'
 import { tryCatch, TryCatchResult } from './try-catch.ts'
 
 export type DockerComposeOptions = {
@@ -191,13 +192,19 @@ export async function runDockerCommand(
 }
 
 function getDockerTargetPlatform(): string {
-  // Map Deno OS to Docker OS
-  // const os = Deno.build.os
-  // const dockerOs = os === 'windows' ? 'windows' : 'linux'
-  const dockerOs = 'linux'
+  // TODO: remove these old code comments
+  // // Map Deno OS to Docker OS
+  // // const os = Deno.build.os
+  // // const dockerOs = os === 'windows' ? 'windows' : 'linux'
+  // const dockerOs = 'linux'
 
-  // Map Deno arch to Docker arch
-  const dockerArch = Deno.build.arch === 'aarch64' ? 'arm64' : 'amd64'
+  // // Map Deno arch to Docker arch
+  // const dockerArch = Deno.build.arch === 'aarch64' ? 'arm64' : 'amd64'
+
+  const host = Host.getInstance()
+
+  const dockerOs = host.isWindows() ? 'windows' : 'linux'
+  const dockerArch = host.isArm64() ? 'arm64' : 'amd64'
 
   // Return in Docker format: os/arch
   return `${dockerOs}/${dockerArch}`
@@ -238,7 +245,7 @@ function getDockerTargetPlatform(): string {
  * @returns {string} Dockerfile.arm64 or empty string
  */
 function getDockerfileArch(): string {
-  const arch = Deno.build.arch === 'aarch64' ? 'arm64' : ''
+  const arch = Host.getInstance().arch === 'arm64' ? 'arm64' : ''
   return arch ? `Dockerfile.${arch}` : ''
 }
 
@@ -325,7 +332,7 @@ export async function dockerExec(
   if (!composeFile) {
     const config = Config.getInstance()
     await config.initialize()
-    composeFile = config.getComposeFile(service) || undefined
+    composeFile = config.getServiceByName(service)?.composeFile || undefined
   }
   if (!composeFile) {
     throw new Error(`Compose file not found for ${service}`)
@@ -371,7 +378,7 @@ export async function dockerRun(
   if (!composeFile) {
     const config = Config.getInstance()
     await config.initialize()
-    composeFile = config.getComposeFile(service) || undefined
+    composeFile = config.getServiceByName(service)?.composeFile || undefined
   }
   if (!composeFile) {
     throw new Error(`Compose file not found for ${service}`)

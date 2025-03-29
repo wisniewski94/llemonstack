@@ -7,6 +7,7 @@ import * as fs from '../../fs.ts'
 import { failure, success, tryCatch, TryCatchResult } from '../../try-catch.ts'
 import { isTruthy } from '../../utils/compare.ts'
 import { Service, Services } from '../services/index.ts'
+import Host from './host.ts'
 
 const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
 // Absolute path to root of install dir
@@ -35,6 +36,8 @@ export class Config {
   //
   // Instance Properties: this.*
   //
+
+  private _host: Host = Host.getInstance()
 
   protected _debug: boolean = false
   private _configTemplate: LLemonStackConfig = configTemplate as LLemonStackConfig
@@ -159,17 +162,12 @@ export class Config {
    * Get the host platform
    * @returns macOS | Linux | Windows | other
    */
-  get os(): string {
-    switch (Deno.build.os) {
-      case 'darwin':
-        return 'macOS'
-      case 'windows':
-        return 'Windows'
-      case 'linux':
-        return 'Linux'
-      default:
-        return 'other'
+  get host(): Host {
+    if (this._host) {
+      return this._host
     }
+    this._host = new Host()
+    return this._host
   }
 
   //
