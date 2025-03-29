@@ -51,10 +51,12 @@ export class Service {
   constructor(
     { serviceConfig, serviceDir, config, configSettings }: IServiceOptions,
   ) {
-    this._id = serviceConfig.id ?? this.id
     this._name = serviceConfig.name
     this._service = serviceConfig.service
     this._description = serviceConfig.description
+
+    // Set id to 'namespace/service' if not set in llemonstack.yaml
+    this._id = serviceConfig.id ?? `${this.namespace}/${this._service}`
 
     this._stackConfig = config // TODO: check for circular reference issues
     this._config = Object.freeze({ ...serviceConfig })
@@ -77,7 +79,7 @@ export class Service {
   }
 
   public get id(): string {
-    return this._id || `${this.namespace}/${this._service}`
+    return this._id
   }
 
   public get name(): string {
