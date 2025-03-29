@@ -161,6 +161,7 @@ export async function setupRepos({
   pull?: boolean
   all?: boolean
   silent?: boolean
+}): Promise<void> {
   // Ensure repos directory exists
   try {
     await fs.ensureDir(config.reposDir)
@@ -186,7 +187,7 @@ export async function setupRepos({
  * Copy .env and docker/config.supabase.env contents to .env in the supabase repo
  */
 export async function prepareSupabaseEnv(
-  { silent = false }: { silent?: boolean } = {},
+  { config, silent = false }: { config: Config; silent?: boolean },
 ): Promise<void> {
   // Check if the supabase repo directory exists
   // It contains the root docker-compose.yaml file to start supabase services
@@ -199,7 +200,7 @@ export async function prepareSupabaseEnv(
     // Try to fix the issue by cloning all the repos
     !silent && showInfo(`Supabase repo not found: ${supabaseRepoDir}`)
     !silent && showInfo('Attempting to repair the repos...')
-    await setupRepos({ all: true, silent })
+    await setupRepos({ config, all: true, silent })
     if (!fs.existsSync(supabaseRepoDir)) {
       showError('Supabase repo still not found, unable to continue')
       Deno.exit(1)
@@ -214,7 +215,11 @@ export async function prepareSupabaseEnv(
  *
  * If the volumes directory exists, but is not a directory, an error will be thrown.
  */
-async function createRequiredVolumes({ silent = false }: { silent?: boolean } = {}): Promise<void> {
+async function createRequiredVolumes(
+  { config, silent = false }: { config: Config; silent?: boolean },
+): Promise<void> {
+  const DEBUG = config.DEBUG
+
   if (DEBUG) {
     silent = false
   }
@@ -289,7 +294,9 @@ async function createRequiredVolumes({ silent = false }: { silent?: boolean } = 
  * Call this function before running any other scripts
  */
 // TODO: move to config
-export async function prepareEnv({ silent = false }: { silent?: boolean } = {}): Promise<void> {
+export async function prepareEnv(
+  { config, silent = false }: { config: Config; silent?: boolean },
+): Promise<void> {
   !silent && showInfo('Preparing environment...')
 
   if (!fs.existsSync(config.envFile)) {
@@ -301,10 +308,10 @@ export async function prepareEnv({ silent = false }: { silent?: boolean } = {}):
   }
 
   // Prepare the custom supabase .env file needed for the supabase docker-compose.yaml file
-  await prepareSupabaseEnv({ silent })
+  await prepareSupabaseEnv({ config, silent })
 
   // Create volumes dirs required by docker-compose.yaml files
-  await createRequiredVolumes({ silent })
+  await createRequiredVolumes({ config, silent })
 
   !silent && showInfo('✔️ Supabase environment successfully setup')
 }
@@ -397,7 +404,7 @@ export function isInitialized(): boolean {
 }
 
 function showServicesInfo(
-  services: Service[],
+  services: Services,
   hostContext: string,
   { hideCredentials = false }: { hideCredentials?: boolean } = {},
 ) {
@@ -521,21 +528,21 @@ export async function start(
     showAction('Checking prerequisites...')
     await checkPrerequisites()
     showAction('Setting up repositories...')
-    await setupRepos()
+    await setupRepos({ config })
     showAction('Setting up environment...')
     await prepareEnv({ silent: false })
 
     // Start services
     if (service) {
       // Start a single service
-      await startService(projectName, service)
+      await startService(config.projectName, service)
     } else {
       // Start all services by service group
       for (const [groupName, groupServices] of config.getServiceGroups()) {
         const enabledGroupServices = groupServices.filter((service) => config.isEnabled(service))
         if (enabledGroupServices.length > 0) {
           showAction(`\nStarting ${groupName} services...`)
-          await startServices(projectName, enabledGroupServices)
+          await startServices(config.projectName, enabledGroupServices)
         }
       }
     }
@@ -548,7 +555,7 @@ export async function start(
       if (ollamaProfile === 'ollama-host') {
         showInfo('Using host Ollama, no need to start ollama service')
       } else {
-        await startService(projectName, 'ollama', { profiles: [ollamaProfile || ''] })
+        await startService(config.projectName, 'ollama', { profiles: [ollamaProfile || ''] })
       }
     }
 
@@ -560,6 +567,7 @@ export async function start(
 
     if (!skipOutput) {
       await outputServicesInfo({
+        config,
         hideCredentials,
       })
     }
