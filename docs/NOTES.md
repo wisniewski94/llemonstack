@@ -16,13 +16,34 @@ container logs in Docker Desktop.
 
 **Code:**
 
+In Progress..
+
+- [ ] Use Deno.env a the basic global config manager and Config for the complicated stack config
+
+  - [ ] Add LLEMONSTACK_LOG_LEVEL check to logger
+
+- [ ] Adding state observability to Service class for config or other services to monitor changes
+- [ ] Migrating config.\_services to a Map<service.id, Service>
+- [ ] Migrating all scripts to accept { config } param instead of projectName
+- [ ] Move everything to src/commands and src/lib
+
+- !!!! left off in init script updating env files. needs testing
+
+  - [ ] Test to make sure error messages get returned properly
+
+- [ ] Use Map<Service> instead of Record<Service>?
+
+- [ ] Replace all references to Deno.env.get with config.env to ensure correct values are used
+- [ ] Add check in config.initialize to check if this.env.LLEMONSTACK_PROJECT_NAME and projectName are out of sync
+- [ ] Finish the new config script
+- [ ] Finish porting the start script output to llemonstack configs
+- [ ] Move enabled services from env vars to config.json
+
 - [x] Create Flowise service subclass to set FLOWISE_API_KEY env var
 
 - [x] Move ALL_COMPOSE_SERVICES to Config
 
   - [x] Load from yaml''s from services/ dir then cache in config.json
-
-- [ ] Move enabled services from env vars to config.json
 
 - [x] Create helper function in logger lib for outputting TryCatchResult messages
 
@@ -30,11 +51,8 @@ container logs in Docker Desktop.
 
 - [ ] Replace fs.existsSync with Deno.stat
 
-- [ ] Create service lib
-
-  - [ ] Load & parse service llemonstack.yaml
-  - [ ] Helper functions for version, schema, etc.
-
+- [x] Create service lib
+  - [x] Load & parse service llemonstack.yaml
 - [x] Refactor to use Config lib
 - [x] Add tryCatch to libs
 
@@ -108,6 +126,8 @@ container logs in Docker Desktop.
 
 **Someday / low priority:**
 
+- [ ] Create preconfigured styles for showTable
+
 - [ ] Add browser-use-bridge to broswer-use container to use in n8n
       https://github.com/draphonix/browser-n8n-local
       https://www.npmjs.com/package/n8n-nodes-browser-use
@@ -162,6 +182,44 @@ container logs in Docker Desktop.
 - https://thinktank.ottomator.ai/c/local-ai/18
 
 <br />
+
+## Notes on New Services Architecture
+
+The goal is to make it incredibly simple to add new services to the stack that...
+
+- safely reuse existing services (like supabase/postgres) without clobbering other services
+- auto configure ports to avoid conflicts on the host
+- auto manage dependency services (database etc)
+- intuitively mount host folders to persist data, edit code, etc.
+
+### General Service Actions Flow
+
+1. Install - service is downloaded into services dir similar to npm install
+2. Configure - interactive prompts to let user choose service options
+3. Start - allow service level overriding of auto functions
+
+- loadEnv - called before anything else, this is where the service can configure env vars based on the stack & service config
+- start - allow for custom overriding of the start function for more complicated use cases
+- post start - output relevant info to console like urls, credentials, etc.
+
+4. Uninstall - remove the service directory and unregister the service from the project
+
+The heart of it all is in loadEnv and how vars are expanded in the service docker-compose.yaml.
+This allows for templates to be used that are auto configured per project and host machine.
+
+The current challenge is how to handle dependency graphs in loadEnv. Services that depend on other
+services need to be loaded after the dependency is already loaded and configured. The safest/easiest
+want to handle this is probably in the llemonstack.yaml exposes key. API endpoints and credentials
+can be exposed to the entire stack to allow each service to auto configure.
+
+Out of scope: version specific dependencies. If a service needs a specific version of postgres (or whatever) than it will need to start a separate instance of it.
+
+Right now, multiple services with the same container names can not be used in the same stack.
+Short term, there will just be canonical service names and then if a service needs to start a separte
+clone, it needs to manage it in it's own docker-compose.yaml. Eventually, contaier names should be
+removed from the docker compose files or switched to variables for core services. Then let docker auto
+assign names to avoid conflicts. But this leads to potential issues with starting many clones of the
+same service if the start script is rerun before stopping.
 
 ## MacOS Silicon Setup
 
