@@ -2,7 +2,8 @@
  * Stop the stack by downing docker containers and cleaning up networks.
  */
 
-import { Config } from './lib/core/config/config.ts'
+import { Config, ServicesMap } from '@/core'
+import { ServicesMapType, ServiceType } from '@/types'
 import {
   dockerComposePs,
   type DockerComposePsResult,
