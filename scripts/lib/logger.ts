@@ -1,7 +1,7 @@
+import type { LogMessage } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Border, Cell, CellType, Column, Row, RowType, Table } from '@cliffy/table'
 import { CommandError } from './command.ts'
-import type { LogMessage } from './types.d.ts'
 
 const DEFAULT_MAX_COLUMN_WIDTH = 50
 
@@ -99,6 +99,8 @@ export function showInfo(message: string): void {
   console.log(`${colors.gray(message)}`)
 }
 
+// TODO: check LLEMONSTACK_LOG_LEVEL env var to determine what level of messages to show
+// Use Deno.env a the basic global config manager and Config for the complicated stack config
 export function showLogMessages(
   messages: LogMessage[],
   { debug = false }: { debug?: boolean } = {},

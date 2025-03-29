@@ -4,7 +4,7 @@
  * Inspired by https://gist.github.com/t3dotgg/a486c4ae66d32bf17c09c73609dacc5b
  */
 
-import type { LogMessage } from './types.d.ts'
+import type { LogMessage } from '@/types'
 
 /**
  * TryCatchResult class

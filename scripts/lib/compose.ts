@@ -1,8 +1,8 @@
+import { ComposeYaml, ServiceImage } from '@/types'
 import * as yaml from 'jsr:@std/yaml'
 import { dockerEnv, expandEnvVars } from './docker.ts'
 import { path } from './fs.ts'
 import { showDebug, showWarning } from './logger.ts'
-import { ComposeYaml, ServiceImage } from './types.d.ts'
 
 export const COMPOSE_IMAGES_CACHE = {} as Record<string, ServiceImage[]>
 const ROOT_DIR = Deno.cwd()

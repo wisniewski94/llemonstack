@@ -2,6 +2,7 @@
  * Show the versions of the services that support it
  */
 
+import { IServiceImage, Service } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Column, Row, RowType } from '@cliffy/table'
 import { getImageFromCompose, getImagesFromComposeYaml } from './lib/compose.ts'
@@ -15,7 +16,6 @@ import {
   showTable,
   showWarning,
 } from './lib/logger.ts'
-import { Service, ServiceImage } from './lib/types.d.ts'
 import { prepareEnv } from './start.ts'
 
 const config = Config.getInstance()
@@ -51,8 +51,8 @@ async function getAppVersion(
   composeFile: string, // Compose file
   entrypoint: string, // Entrypoint
   cmdArgs: string[], //
-): Promise<ServiceImage> {
-  let serviceImage: ServiceImage
+): Promise<IServiceImage> {
+  let serviceImage: IServiceImage
   try {
     const tmp = await getImageFromCompose(composeFile, service)
     if (!tmp) {
@@ -97,7 +97,7 @@ async function getAppVersions(projectName: string, services: Service[]): Promise
           containerName: '',
           version: '',
           image: '',
-        } as ServiceImage
+        } as IServiceImage
       }
       const [entrypoint, ...args] = service.appVersionCmd || []
       const serviceImage = await getAppVersion(
@@ -123,7 +123,7 @@ async function showImageVersions(): Promise<RowType[]> {
   // Process all compose files in parallel
   const composeResults = await Promise.all(
     config.getComposeFiles({ all: true }).map(async (composeFile) => {
-      let images: ServiceImage[] = []
+      let images: IServiceImage[] = []
       try {
         images = await getImagesFromComposeYaml(composeFile)
         return { composeFile, images, error: null }

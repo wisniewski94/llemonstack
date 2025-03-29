@@ -2,6 +2,7 @@
  * Start docker services
  */
 
+import { EnvVars, ExposeHost, IRepoConfig, Services } from '@/types'
 import { runCommand } from './lib/command.ts'
 import { Config } from './lib/core/config/config.ts'
 import { isServiceRunning, prepareDockerNetwork } from './lib/docker.ts'
@@ -23,7 +24,6 @@ import {
   showUserAction,
   showWarning,
 } from './lib/logger.ts'
-import { EnvVars, ExposeHost, RepoService, Service } from './lib/types.d.ts'
 
 // const config = Config.getInstance()
 // await config.initialize()
@@ -51,7 +51,7 @@ export async function checkPrerequisites(): Promise<void> {
  */
 async function setupRepo(
   serviceName: string,
-  repoConfig: RepoService,
+  repoConfig: IRepoConfig,
   {
     pull = false, // Pull latest changes from remote
     silent = false,

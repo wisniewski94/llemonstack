@@ -12,7 +12,7 @@ import {
   runDockerComposeCommand,
 } from './lib/docker.ts'
 import { colors, RowType, showAction, showError, showInfo, showTable } from './lib/logger.ts'
-import { Service } from './lib/types.d.ts'
+import { Service } from '@/types'
 import { prepareEnv, setupRepos } from './start.ts'
 
 const config = Config.getInstance()

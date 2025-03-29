@@ -4,10 +4,10 @@
  * TODO: move all docker related functions here
  */
 
+import type { EnvVars, RunCommandOutput } from '@/types'
 import { runCommand } from './command.ts'
 import { Config } from './core/config/config.ts'
 import { tryCatch, TryCatchResult } from './try-catch.ts'
-import type { EnvVars, RunCommandOutput } from './types.d.ts'
 
 export type DockerComposeOptions = {
   composeFile?: string | string[]

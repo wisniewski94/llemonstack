@@ -1,6 +1,6 @@
+import { LogMessage } from '@/types'
 import { assertEquals } from 'jsr:@std/assert'
 import { TryCatchResult } from './try-catch.ts'
-import { LogMessage } from './types.d.ts'
 
 Deno.test('TryCatchResult - constructor initialization', () => {
   const result = new TryCatchResult({

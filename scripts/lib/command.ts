@@ -1,6 +1,6 @@
+import type { CommandOutput, RunCommandOptions } from '@/types'
 import { Config } from './core/config/config.ts'
 import { showDebug, showError, showInfo } from './logger.ts'
-import type { CommandOutput, RunCommandOptions } from './types.d.ts'
 
 export class RunCommandOutput {
   private _output: CommandOutput

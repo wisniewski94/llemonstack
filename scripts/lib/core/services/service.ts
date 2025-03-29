@@ -1,7 +1,3 @@
-import { dockerCompose, expandEnvVars } from '../../docker.ts'
-import { path } from '../../fs.ts'
-import { searchObjectPaths } from '../../search-object.ts'
-import { failure, success, TryCatchResult } from '../../try-catch.ts'
 import {
   EnvVars,
   ExposeHost,
@@ -10,7 +6,11 @@ import {
   ServiceActionOptions,
   ServiceConfig,
   ServiceState,
-} from '../../types.d.ts'
+} from '@/types'
+import { dockerCompose, expandEnvVars } from '../../docker.ts'
+import { path } from '../../fs.ts'
+import { searchObjectPaths } from '../../search-object.ts'
+import { failure, success, TryCatchResult } from '../../try-catch.ts'
 import { ObservableStruct } from '../../utils/observable.ts'
 import { Config } from '../config/config.ts'
 
