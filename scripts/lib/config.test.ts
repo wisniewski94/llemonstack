@@ -40,7 +40,7 @@ Deno.test('Config', async (t) => {
     const configInstance = Config.getInstance()
 
     const expectedRepoDir = fs.path.join(configInstance.configDir, 'repos')
-    assertEquals(configInstance.repoDir, expectedRepoDir)
+    assertEquals(configInstance.reposDir, expectedRepoDir)
 
     const expectedServicesDir = fs.path.join(configInstance.installDir, 'services')
     assertEquals(configInstance.servicesDir, expectedServicesDir)
@@ -123,7 +123,7 @@ Deno.test('Config initialization - templates', async (t) => {
     // Check that the messages array contains the expected message about creating from template
 
     assertExists(result.messages)
-    console.log('result.messages', result.messages)
+
     const hasErrorMessage = result.messages.some((msg) =>
       msg.message.includes('file not found') && msg.level === 'error'
     )

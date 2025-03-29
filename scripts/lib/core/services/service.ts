@@ -6,8 +6,8 @@ import { failure, success, TryCatchResult } from '../../try-catch.ts'
 import {
   EnvVars,
   ExposeHost,
+  IRepoConfig,
   IServiceOptions,
-  RepoService,
   ServiceActionOptions,
   ServiceConfig,
   ServiceState,
@@ -100,7 +100,7 @@ export class Service {
     return this._config
   }
 
-  public get repoConfig(): RepoService | null {
+  public get repoConfig(): IRepoConfig | null {
     return this._config.repo ?? null
   }
 
@@ -108,6 +108,10 @@ export class Service {
     return this._config.repo?.dir
       ? path.join(this._stackConfig.reposDir, this._config.repo?.dir)
       : null
+  }
+
+  public get repoBaseDir(): string {
+    return this._stackConfig.reposDir
   }
 
   public get serviceGroup(): string {

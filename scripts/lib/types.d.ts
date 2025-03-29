@@ -3,8 +3,10 @@ import {
   RunCommandOutput as RunCommandOutputClass,
 } from './command.ts'
 import { Config } from './config.ts'
+
+export type { Service } from './core/services/service.ts'
+export type { Services } from './core/services/services.ts'
 export type { DockerComposeOptions, DockerComposePsResult } from './docker.ts'
-export type { Service } from './service.ts'
 
 export interface LLemonStackConfig {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty
@@ -21,11 +23,13 @@ export interface LLemonStackConfig {
     services?: string
   }
   services: {
-    [key: string]: {
-      enabled: boolean
-      profiles?: string[]
-    }
+    [key: string]: IServiceConfigState
   }
+}
+
+export interface IServiceConfigState {
+  enabled: boolean
+  profiles?: string[]
 }
 
 export type EnvVars = Record<string, string | boolean | number>
@@ -58,7 +62,7 @@ export type OllamaProfile =
   | 'ollama-host'
   | 'ollama-false'
 
-export interface RepoService {
+export interface IRepoConfig {
   url: string // URL of the repo
   dir: string // Name of repo dir to use in the repos folder
   sparseDir?: string | string[] // Directory to sparse clone into
@@ -66,7 +70,7 @@ export interface RepoService {
   checkFile?: string // File to check for existence to determine if repo is ready
 }
 
-export interface ServiceImage {
+export interface IServiceImage {
   service: string
   containerName: string
   image: string
@@ -79,13 +83,14 @@ export interface ServiceImage {
  * From service's llemonstack.yaml
  */
 export interface ServiceConfig {
+  id?: string // The ID of the service
   service: string // The name of the service
   name: string // Friendly name of the service to show to users
   description: string // The description of the service
   disabled: boolean // If true, service is not loaded
   compose_file: string // The path to the docker-compose.yaml file
   service_group: string // The group of services that the service belongs to
-  repo?: RepoService // The repo to use for the service
+  repo?: IRepoConfig // The repo to use for the service
   volumes?: string[] // The volumes to use for the service
   volumes_seeds?: {
     source: string
@@ -96,6 +101,13 @@ export interface ServiceConfig {
   depends_on?: Record<string, { condition: string }> // The services that the service depends on
   app_version_cmd?: string[] // The command to run to get the version of the service
   exposes?: ExposeHostConfig
+}
+
+export interface ServiceState {
+  enabled: boolean
+  started: boolean
+  healthy: boolean
+  status: 'installed' | 'starting' | 'started' | 'stopped' | 'error'
 }
 
 export interface ExposeHostConfig {
@@ -123,13 +135,14 @@ export type ExposeHost = {
 /**
  * Options for the Service class constructor
  */
-export interface ServiceOptions {
-  config: ServiceConfig
-  dir: string
-  repoBaseDir: string
-  llemonstackConfig: LLemonStackConfig
+export interface IServiceOptions {
+  serviceConfig: ServiceConfig
+  serviceDir: string
+  config: Config // Instance of initialized Config class
+  configSettings: IServiceConfigState // Settings from the service entry in config.json
 }
 
+// TODO: globally rename interfaces to use I prefix
 export interface ServiceActionOptions {
   silent?: boolean
   config: Config

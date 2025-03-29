@@ -1,15 +1,20 @@
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import configTemplate from '../../config/config.0.2.0.json' with { type: 'json' }
 import packageJson from '../../package.json' with { type: 'json' }
+import { Service, Services } from './core/services/index.ts'
 import { loadEnv } from './env.ts'
 import * as fs from './fs.ts'
-import { Service } from './service.ts'
 import { failure, success, tryCatch, TryCatchResult } from './try-catch.ts'
-import { LLemonStackConfig, ServiceConfig } from './types.d.ts'
+import { IServiceOptions, LLemonStackConfig, ServiceConfig } from './types.d.ts'
 import { isTruthy } from './utils/compare.ts'
 
+const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
+
 export class Config {
-  // Static properties: Config.*
+  //
+  // Static Properties: Config.*
+  //
+
   static readonly defaultProjectName: string = 'llemonstack'
   static readonly defaultConfigFilePath: string = '.llemonstack/config.json'
   static readonly llemonstackVersion: string = packageJson.version
@@ -22,12 +27,17 @@ export class Config {
     return Config.instance
   }
 
-  // Instance properties: this.*
+  //
+  // Instance Properties: this.*
+  //
+
   protected _debug: boolean = false
   private _configTemplate: LLemonStackConfig = configTemplate as LLemonStackConfig
   private _config: LLemonStackConfig = this._configTemplate
-  private _services: Record<string, Service> = {}
-  private _serviceConfigFile: string = 'llemonstack.yaml'
+
+  private _services: Services = new Services()
+  private _servicesNameLookup: Map<string, string> = new Map() // service.name to serve.id
+
   private _env: Record<string, string> = {}
   private _initializeResult: TryCatchResult<Config, Error> = new TryCatchResult<Config, Error>({
     data: this,
@@ -35,6 +45,7 @@ export class Config {
     success: false,
   })
 
+  // TODO: move to a Services map
   private _serviceGroups: [string, string[]][] = [
     ['databases', []],
     ['middleware', []],
@@ -101,7 +112,7 @@ export class Config {
     return `${this.projectName}_network`
   }
 
-  get repoDir(): string {
+  get reposDir(): string {
     return fs.path.resolve(Deno.cwd(), this._config.dirs.repos)
   }
 
@@ -320,7 +331,7 @@ export class Config {
       if (!serviceDir.isDirectory) {
         continue
       }
-      const yamlFilePath = fs.path.join(this.servicesDir, serviceDir.name, this._serviceConfigFile)
+      const yamlFilePath = fs.path.join(this.servicesDir, serviceDir.name, SERVICE_CONFIG_FILE_NAME)
       if (!(await fs.fileExists(yamlFilePath)).data) {
         result.addMessage('debug', `Service config file not found: ${serviceDir.name}`)
         continue
@@ -358,11 +369,11 @@ export class Config {
         }
       }
       // Create Service constructor options
-      const serviceOptions = {
-        config: serviceConfig,
-        dir: fs.path.join(this.servicesDir, serviceConfig.service),
-        repoBaseDir: this.repoDir,
-        llemonstackConfig: this._config,
+      const serviceOptions: IServiceOptions = {
+        serviceConfig,
+        serviceDir: fs.path.join(this.servicesDir, serviceConfig.service),
+        config: this,
+        configSettings: this._config.services[serviceConfig.service] || {},
       }
 
       // Check if there's a custom service implementation in the service directory
@@ -376,7 +387,8 @@ export class Config {
           const ServiceClass = Object.values(serviceModule)[0] as typeof Service
 
           if (ServiceClass && typeof ServiceClass === 'function') {
-            this._services[serviceConfig.service] = new ServiceClass(serviceOptions)
+            const service = new ServiceClass(serviceOptions)
+            this.registerService(service)
 
             result.addMessage(
               'debug',
@@ -396,10 +408,16 @@ export class Config {
       }
 
       // Load the default Service class if no custom implementation exists
-      this._services[serviceConfig.service] = new Service(serviceOptions)
+      const service = new Service(serviceOptions)
+      this.registerService(service)
     }
 
     return result
+  }
+
+  protected registerService(service: Service) {
+    this._services.set(service.id, service)
+    this._servicesNameLookup.set(service.name, service.id)
   }
 
   public async loadEnv(
@@ -416,7 +434,7 @@ export class Config {
     env.LLEMONSTACK_PROJECT_NAME = this.projectName
 
     // Allow services to modify the env vars as needed
-    for (const service of this.getEnabledServices()) {
+    for (const [_, service] of this.getEnabledServices()) {
       // Use a proxy to intercept env var changes and update Deno.env
       await service.loadEnv(
         new Proxy(env, {
@@ -491,24 +509,28 @@ export class Config {
    * @param service - The service name
    * @returns True if the service is enabled, false otherwise
    */
+  // TODO: replace most references to this with service.enabled()
   public isEnabled(service: string): boolean {
     return this.getService(service)?.enabled() || false
   }
 
-  public getServices(): Record<string, Service> {
+  public getAllServices(): Services {
     return this._services
   }
 
-  public getInstalledServices(): Service[] {
-    return Object.values(this._services)
+  public getEnabledServices(): Services {
+    // TODO: add cache if this is called a lot
+    return this._services.getEnabled()
   }
 
-  public getEnabledServices(): Service[] {
-    return this.getInstalledServices().filter((service) => this.isEnabled(service.service))
-  }
-
+  /**
+   * Get a service by service identifier
+   * @param {string} service - The service key in llemonstack.yaml, or service.id
+   * @returns {Service | null} The service or null if not found
+   */
   public getService(service: string): Service | null {
-    return this._services[service] || null
+    const serviceId = service.includes('/') ? service : this._servicesNameLookup.get(service)
+    return serviceId ? this._services.get(serviceId) || null : null
   }
 
   public getServiceGroups(): [string, string[]][] {
@@ -524,36 +546,30 @@ export class Config {
    * @returns {string[]}
    */
   public getComposeFiles({ all = false }: { all?: boolean } = {}): string[] {
-    return this.getInstalledServices().map(
-      (service) => {
-        return (!all && !this.isEnabled(service.service)) ? false : service.composeFile
-      },
-    )
-      .filter((value, index, self) => value && self.indexOf(value) === index) as string[]
+    return Array.from(this._services.values())
+      .map((service) => {
+        return (!all && !service.enabled()) ? false : service.composeFile
+      })
+      .filter((value: string | false, index: number, self: (string | false)[]) =>
+        value && self.indexOf(value) === index
+      ) as string[]
   }
 
-  public getComposeFile(service: string): string | null {
-    return this.getService(service)?.composeFile || null
-  }
-
-  public getServicesWithRepos(): Service[] {
-    return Object.values(this._services).map((service) => {
-      return (service.repoConfig) ? service : false
-    }).filter(Boolean) as Service[]
-  }
-
-  public getServicesWithRequiredVolumes(): Service[] {
-    const services: Service[] = []
-    this.getInstalledServices().forEach((service) => {
-      if (
-        (service.volumes.length > 0 || service.volumesSeeds.length > 0) &&
-        this.isEnabled(service.service)
-      ) {
-        services.push(service)
-      }
-    })
-    return services
-  }
+  /**
+   * Get the dependencies of a service
+   *
+   * Returns TryCatchError if service has dependencies that are not loaded.
+   *
+   * @param service - The service to get the dependencies of
+   * @returns {Promise<TryCatchResult<Service[]>>}
+   */
+  // public async getDependencies(service: string | Service): TryCatchResult<Services> {
+  //   const _service = (service instanceof Service) ? service : this.getService(service)
+  //   if (!_service) {
+  //     return success<Service[]>([])
+  //   }
+  //   return success<Service[]>(_service.depends_on.map((dependency) => this.getService(dependency)))
+  // }
 
   /**
    * Save the project config to the config file
@@ -570,7 +586,7 @@ export class Config {
       })
     }
     // Update service enabled state and profiles in config before saving
-    this.getInstalledServices().forEach((service) => {
+    this.getAllServices().forEach((service) => {
       this._config.services[service.service] = {
         enabled: service.enabled(),
         profiles: service.getProfiles(),
