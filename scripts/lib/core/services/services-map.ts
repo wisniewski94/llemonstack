@@ -13,11 +13,19 @@ export class ServicesMap extends Map<string, Service> {
    *
    * @param {Service} service - The service to add
    * @param {ServicesMap} servicesMap - The services map to add the service to
-   * @returns {ServicesMap} The services map
+   * @param {boolean} force - Whether to force add the service even if it already exists
+   * @returns {boolean} Whether the service was successfully added
    */
-  public static addService(service: Service, servicesMap: ServicesMap) {
+  public static addService(
+    service: Service,
+    servicesMap: ServicesMap,
+    { force = false }: { force?: boolean } = {},
+  ): boolean {
+    if (!force && servicesMap.has(service.id)) {
+      return false
+    }
     servicesMap.set(service.id, service)
-    return servicesMap
+    return true
   }
 
   /**
@@ -26,9 +34,8 @@ export class ServicesMap extends Map<string, Service> {
    * @param {Service} service - The service to add
    * @returns {ServicesMap} The services map
    */
-  public addService(service: Service) {
-    ServicesMap.addService(service, this)
-    return this
+  public addService(service: Service, { force = false }: { force?: boolean } = {}): boolean {
+    return ServicesMap.addService(service, this, { force })
   }
 
   /**
@@ -60,7 +67,7 @@ export class ServicesMap extends Map<string, Service> {
    * @returns {ServicesMap} - A new ServicesMap instance with only enabled services
    */
   public getEnabled(): ServicesMap {
-    return this.filter((service) => service.enabled())
+    return this.filter((service) => service.isEnabled())
   }
 
   /**

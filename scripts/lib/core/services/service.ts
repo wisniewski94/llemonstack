@@ -3,9 +3,9 @@ import {
   ExposeHost,
   IRepoConfig,
   IServiceOptions,
+  IServiceState,
   ServiceActionOptions,
   ServiceConfig,
-  ServiceState,
 } from '@/types'
 import { dockerCompose, expandEnvVars } from '../../docker.ts'
 import { path } from '../../fs.ts'
@@ -27,10 +27,11 @@ export class Service {
   protected _name: string // Human readable name
   protected _description: string // Service description
 
-  protected _state: ObservableStruct<ServiceState> = new ObservableStruct<ServiceState>({
+  protected _state: ObservableStruct<IServiceState> = new ObservableStruct<IServiceState>({
     enabled: false,
     started: false,
     healthy: false,
+    ready: false,
     status: 'installed',
   })
 
@@ -173,6 +174,16 @@ export class Service {
     return envVars
   }
 
+  // TODO: add prepareEnv method here
+  // After prepareEnv is called, service should update it's isReady state
+  // Then other services can wait for their dependencies to be ready before starting
+  // deno-lint-ignore require-await
+  public async prepareEnv(): Promise<boolean> {
+    this._state.set('ready', true)
+    // Override in subclasses to prepare the service environment
+    return true // return isReady state
+  }
+
   /**
    * Get or set the enabled status of the service
    *
@@ -294,9 +305,22 @@ export class Service {
       captureOutput: false,
     })
     if (results.success) {
-      return success<boolean>(true, `${this.name} started successfully!`)
+      return success<boolean>(true, `${this.name} successfully started!`)
     }
     return failure<boolean>(`Failed to start service: ${this.name}`, results, false)
+  }
+
+  public async stopService(): Promise<TryCatchResult<boolean>> {
+    const results = await dockerCompose('down', {
+      composeFile: this.composeFile,
+      projectName: this._configInstance.projectName,
+      silent: true,
+      captureOutput: true,
+    })
+    if (results.success) {
+      return success<boolean>(true, `${this.name} successfully stopped!`)
+    }
+    return failure<boolean>(`Failed to stop service: ${this.name}`, results, false)
   }
 
   /**
