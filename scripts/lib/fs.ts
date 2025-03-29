@@ -56,7 +56,7 @@ export async function dirExists(path: string): Promise<TryCatchResult<boolean>> 
 export async function readDir(
   dirPath: string,
 ): Promise<TryCatchResult<AsyncIterable<Deno.DirEntry>>> {
-  return await tryCatch(Promise.resolve(Deno.readDir(dirPath)))
+  return await tryCatch(Deno.readDir(dirPath))
 }
 
 export async function readTextFile(

@@ -141,10 +141,10 @@ interface ITryCatchResult<T, E> {
  * @returns A TryCatchResult object with the result of the promise
  */
 export async function tryCatch<T, E = Error>(
-  promise: Promise<T>,
+  promise: Promise<T> | T,
 ): Promise<TryCatchResult<T, E>> {
   try {
-    const data = await promise
+    const data = await (promise instanceof Promise ? promise : Promise.resolve(promise))
     return new TryCatchResult<T, E>({ data, error: null, success: true })
   } catch (error) {
     return new TryCatchResult<T, E>({ data: null, error: error as E, success: false })
