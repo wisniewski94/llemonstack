@@ -10,10 +10,8 @@ import {
   getDockerNetworks,
   removeDockerNetwork,
   runDockerCommand,
-  runDockerComposeCommand,
 } from './lib/docker.ts'
 import { colors, RowType, showAction, showError, showInfo, showTable } from './lib/logger.ts'
-import { Service } from '@/types'
 import { prepareEnv, setupRepos } from './start.ts'
 
 const config = Config.getInstance()
@@ -128,7 +126,7 @@ export async function stop(
 ): Promise<void> {
   let stopAll = all
 
-  const service = serviceName ? config.getService(serviceName) : undefined
+  const service = serviceName ? config.getServiceByName(serviceName) : undefined
 
   if (serviceName && !service) {
     stopAll = false

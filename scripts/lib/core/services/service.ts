@@ -35,7 +35,8 @@ export class Service {
   })
 
   // Reference back to the active config object
-  protected _stackConfig: Config
+  // This is here so services don't need to get the global config instance
+  protected _configInstance: Config
 
   protected _dir: string
   protected _enabledInConfig: boolean
@@ -58,12 +59,12 @@ export class Service {
     // Set id to 'namespace/service' if not set in llemonstack.yaml
     this._id = serviceConfig.id ?? `${this.namespace}/${this._service}`
 
-    this._stackConfig = config // TODO: check for circular reference issues
+    this._configInstance = config // TODO: check for circular reference issues
     this._config = Object.freeze({ ...serviceConfig })
     this._dir = serviceDir
     this._composeFile = path.join(this._dir, serviceConfig.compose_file)
 
-    // TODO: double check if this is the best way to handle this? now that _stackConfig is being saved
+    // TODO: double check if this is the best way to handle this? now that _configInstance is being saved
 
     // Configure with settings from the service entry in config.json
     this._enabledInConfig = configSettings.enabled
@@ -104,12 +105,12 @@ export class Service {
 
   public get repoDir(): string | null {
     return this._config.repo?.dir
-      ? path.join(this._stackConfig.reposDir, this._config.repo?.dir)
+      ? path.join(this._configInstance.reposDir, this._config.repo?.dir)
       : null
   }
 
   public get repoBaseDir(): string {
-    return this._stackConfig.reposDir
+    return this._configInstance.reposDir
   }
 
   public get serviceGroup(): string {
@@ -166,7 +167,7 @@ export class Service {
   // deno-lint-ignore require-await
   public async loadEnv(
     envVars: Record<string, string>,
-    _config?: Config,
+    { config: _config }: { config: Config },
   ): Promise<Record<string, string>> {
     // Override in subclasses to set environment variables for the service
     return envVars
@@ -176,7 +177,7 @@ export class Service {
    * Get or set the enabled status of the service
    *
    * Used a single method instead of get/set to make a more compact API.
-   * Allows for ```config.getService('n8n')?.enabled(false)```
+   * Allows for ```config.getServiceByName('n8n')?.enabled(false)```
    *
    * @param value - Optional boolean value to set the enabled status
    * @returns The enabled status of the service
@@ -283,7 +284,7 @@ export class Service {
     } = {},
   ): Promise<TryCatchResult<boolean>> {
     const results = await dockerCompose('up', {
-      projectName: this._stackConfig.projectName,
+      projectName: this._configInstance.projectName,
       composeFile: this.composeFile,
       profiles: this.getProfiles(),
       ansi: 'never',

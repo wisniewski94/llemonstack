@@ -6,7 +6,7 @@ import { loadEnv } from '../../env.ts'
 import * as fs from '../../fs.ts'
 import { failure, success, tryCatch, TryCatchResult } from '../../try-catch.ts'
 import { isTruthy } from '../../utils/compare.ts'
-import { Service, Services } from '../services/index.ts'
+import { Service, ServicesMap } from '../services/index.ts'
 import Host from './host.ts'
 
 const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
@@ -43,7 +43,7 @@ export class Config {
   private _configTemplate: LLemonStackConfig = configTemplate as LLemonStackConfig
   private _config: LLemonStackConfig = this._configTemplate
 
-  private _services: Services = new Services()
+  private _services: ServicesMap = new ServicesMap()
   private _servicesNameLookup: Map<string, string> = new Map() // service.name to serve.id
 
   private _env: Record<string, string> = {}
@@ -53,7 +53,7 @@ export class Config {
     success: false,
   })
 
-  // TODO: move to a Services map
+  // TODO: move to a ServicesMap map
   private _serviceGroups: [string, string[]][] = [
     ['databases', []],
     ['middleware', []],
@@ -276,6 +276,8 @@ export class Config {
     result.messages.push(...servicesResult.messages)
 
     // Load enabled services env, skipping .env file
+    // TODO: replace with prepareEnv to call all services prepareEnv methods
+    // Calling loadEnv twice in initialize() is a hack
     await this.loadEnv({ envPath: null })
 
     if (updated) {
@@ -415,13 +417,35 @@ export class Config {
     return result
   }
 
-  protected registerService(service: Service) {
-    this._services.set(service.id, service)
-    this._servicesNameLookup.set(service.name, service.id)
+  /**
+   * Register a new service with the config
+   * @param {Service} service - The service to register
+   */
+  public registerService(service: Service): boolean {
+    const added = this._services.addService(service)
+    if (added) {
+      this._servicesNameLookup.set(service.name, service.id)
+    }
+    // TODO: log warning if service is not added
+    return added
   }
 
+  /**
+   * Load the env vars for the project and all enabled services
+   *
+   * Loads into this.env
+   * @param {Object} options - Options object
+   * @param {string} options.envPath - The path to the .env file, set to null to skip loading the .env file
+   * @param {boolean} options.reload - Reload the env vars from the .env file into Deno.env
+   * @param {boolean} options.expand - Expand the env vars
+   * @returns {Promise<Record<string, string>>}
+   */
   public async loadEnv(
-    { envPath = this.envFile, reload = false, expand = true }: {
+    {
+      envPath = this.envFile, // Set to null to skip loading the .env file
+      reload = false,
+      expand = true,
+    }: {
       envPath?: string | null
       reload?: boolean
       expand?: boolean
@@ -433,18 +457,26 @@ export class Config {
     // Populate project name from config for services & docker to use
     env.LLEMONSTACK_PROJECT_NAME = this.projectName
 
+    // TODO: populate global env vars like DEBUG, LOG_LEVEL, etc. ???
+
+    // Call loadEnv on all enabled services
     // Allow services to modify the env vars as needed
+    // TODO: load Services env by service group, this will allow services that depend on
+    // lower level services to discover the env settings if needed?
     for (const [_, service] of this.getEnabledServices()) {
       // Use a proxy to intercept env var changes and update Deno.env
       await service.loadEnv(
         new Proxy(env, {
           set: (target, prop, value) => {
             target[prop as string] = value
+            // TODO: think through wether Deno.env should be set or not.
+            // This could cause issues with services stomping on each other's env vars.
+            // But maybe that's a good thing?
             Deno.env.set(prop as string, value)
             return true
           },
         }),
-        this, // Pass config instance to prevent circular await config.getInstance()dependencies
+        { config: this }, // Pass config instance to prevent circular await config.getInstance()dependencies
       )
     }
 
@@ -505,19 +537,22 @@ export class Config {
   }
 
   /**
-   * Check if a service is enabled in project config
-   * @param service - The service name
-   * @returns True if the service is enabled, false otherwise
+   * Check if a service is enabled
+   *
+   * Returns null if service is not found.
+   *
+   * @param serviceName - The service name
+   * @returns True or false if service exists, otherwise null
    */
   public isEnabled(serviceName: string): boolean | null {
     return this.getServiceByName(serviceName)?.isEnabled() || null
   }
 
-  public getAllServices(): Services {
+  public getAllServices(): ServicesMap {
     return this._services
   }
 
-  public getEnabledServices(): Services {
+  public getEnabledServices(): ServicesMap {
     // TODO: add cache if this is called a lot
     return this._services.getEnabled()
   }
@@ -527,9 +562,29 @@ export class Config {
    * @param {string} service - The service key in llemonstack.yaml, or service.id
    * @returns {Service | null} The service or null if not found
    */
-  public getService(service: string): Service | null {
-    const serviceId = service.includes('/') ? service : this._servicesNameLookup.get(service)
+  public getServiceByName(serviceName: string): Service | null {
+    const serviceId = serviceName.includes('/')
+      ? serviceName
+      : this._servicesNameLookup.get(serviceName)
     return serviceId ? this._services.get(serviceId) || null : null
+  }
+
+  /**
+   * Get a service by service identifier
+   * @param {string} service - The service key in llemonstack.yaml, or service.id
+   * @returns {Service | null} The service or null if not found
+   */
+  public getServicesByNames(serviceNames: string[]): ServicesMap {
+    const services = new ServicesMap()
+    serviceNames.forEach((serviceName) => {
+      const service = this.getServiceByName(serviceName)
+      if (service) {
+        services.addService(service)
+      } else {
+        // TODO: log warning
+      }
+    })
+    return services
   }
 
   public getServiceGroups(): [string, string[]][] {
@@ -563,11 +618,11 @@ export class Config {
    * @returns {Promise<TryCatchResult<Service[]>>}
    */
   // public async getDependencies(service: string | Service): TryCatchResult<Services> {
-  //   const _service = (service instanceof Service) ? service : this.getService(service)
+  //   const _service = (service instanceof Service) ? service : this.getServiceByName(service)
   //   if (!_service) {
   //     return success<Service[]>([])
   //   }
-  //   return success<Service[]>(_service.depends_on.map((dependency) => this.getService(dependency)))
+  //   return success<Service[]>(_service.depends_on.map((dependency) => this.getServiceByName(dependency)))
   // }
 
   /**

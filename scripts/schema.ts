@@ -18,7 +18,7 @@ export async function schema(config: Config, action: string, service: string) {
   }
 
   // Make sure it's a valid service
-  if (!config.getService(service)) {
+  if (!config.getServiceByName(service)) {
     showWarning(`Unknown service name: ${service}`)
     if (!confirm(`Continue anyway?`)) {
       Deno.exit(1)

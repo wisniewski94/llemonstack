@@ -60,7 +60,7 @@ async function setupRepo(
     silent?: boolean
   } = {},
 ): Promise<void> {
-  const dir = config.getService(serviceName)?.repoDir
+  const dir = config.getServiceByName(serviceName)?.repoDir
   if (!dir) {
     throw new Error(`Repo dir not found for ${serviceName}`)
   }
@@ -171,15 +171,13 @@ export async function setupRepos({
 
   // Setup all repos in parallel
   await Promise.all(
-    config.getServicesWithRepos()
-      .map((service) => {
-        if (!all && !config.isEnabled(service.service)) {
-          return false
-        }
-        return service.repoConfig &&
-          setupRepo(service.service, service.repoConfig, { pull, silent })
-      })
-      .filter(Boolean),
+    // TODO: finish converting this
+    // Get all services that have a repoConfig
+    config.getAllServices().filterMap<typeof setupRepo>((service) => {
+      return (!service.repoConfig || (!all && !service.isEnabled()))
+        ? false
+        : () => setupRepo(service, { pull, silent })
+    }),
   )
   !silent && showInfo(`${all ? 'All repositories' : 'Repositories'} are ready`)
 }
@@ -192,7 +190,7 @@ export async function prepareSupabaseEnv(
 ): Promise<void> {
   // Check if the supabase repo directory exists
   // It contains the root docker-compose.yaml file to start supabase services
-  const supabaseRepoDir = config.getService('supabase')?.repoDir
+  const supabaseRepoDir = config.getServiceByName('supabase')?.repoDir
   if (!supabaseRepoDir) {
     showError('Supabase repo dir is misconfigured')
     Deno.exit(1)
@@ -230,9 +228,12 @@ async function createRequiredVolumes({ silent = false }: { silent?: boolean } = 
     return path.relative(Deno.cwd(), pathStr)
   }
 
-  const services = config.getServicesWithRequiredVolumes()
+  // Get all enabled services that have volumes or seeds
+  const services = config.getEnabledServices().filter((service) => {
+    return (service.volumes.length > 0 || service.volumesSeeds.length > 0)
+  })
 
-  for (const service of services) {
+  for (const [_, service] of services) {
     // Create any required volume dirs
     for (const volume of service.volumes) {
       const volumePath = path.join(config.volumesDir, volume)
@@ -347,7 +348,7 @@ export async function startService(
     await prepareDockerNetwork()
   }
 
-  const service = config.getService(serviceName)
+  const service = config.getServiceByName(serviceName)
   if (!service) {
     throw new Error(`Invalid service name, unable to start: ${serviceName}`)
   }
@@ -401,7 +402,7 @@ function showServicesInfo(
   { hideCredentials = false }: { hideCredentials?: boolean } = {},
 ) {
   // Sort services by name
-  services.sort((a, b) => a.name.localeCompare(b.name))
+  services.toArray().sort((a, b) => a.name.localeCompare(b.name))
   const rows: RowType[] = []
   services.forEach((service) => {
     const hosts = service.getHosts(hostContext)
@@ -471,9 +472,9 @@ function outputServicesInfo({
   // TODO: migrate additional ollama info to service subclass
   // Show any user actions
   // Show user action if using host Ollama
-  const ollamaService = config.getService('ollama')
+  const ollamaService = config.getServiceByName('ollama')
   if (ollamaService?.getProfiles()[0] === 'ollama-host') {
-    const ollamaUrl = config.getService('ollama')?.getHost()?.url || ''
+    const ollamaUrl = config.getServiceByName('ollama')?.getHost()?.url || ''
     // showService('Ollama', ollamaUrl)
     showUserAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
     showUserAction('  Start Ollama on your computer: `ollama serve`')
@@ -540,7 +541,7 @@ export async function start(
     }
 
     // Special handling for Ollama
-    const ollamaService = config.getService('ollama')
+    const ollamaService = config.getServiceByName('ollama')
     const ollamaProfile = ollamaService?.getProfiles()[0]
     if (ollamaProfile !== 'ollama-false' && !service || service === 'ollama') {
       showAction(`\nStarting Ollama...`)

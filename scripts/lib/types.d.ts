@@ -102,10 +102,11 @@ export interface ServiceConfig {
   exposes?: ExposeHostConfig
 }
 
-export interface ServiceState {
+export interface IServiceState {
   enabled: boolean
   started: boolean
   healthy: boolean
+  ready: boolean
   status: 'installed' | 'starting' | 'started' | 'stopped' | 'error'
 }
 
@@ -144,7 +145,7 @@ export interface IServiceOptions {
 // TODO: globally rename interfaces to use I prefix
 export interface ServiceActionOptions {
   silent?: boolean
-  config: Config
+  // config: Config // Removed since service already has a reference to the config instance
 }
 
 // Define the type for the Docker Compose configuration

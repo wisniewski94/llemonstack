@@ -33,7 +33,7 @@ const DOCKER_CLEANUP_COMMANDS = [
 async function dockerComposeCleanup(
   projectName: string,
 ): Promise<void> {
-  const services = config.getInstalledServices()
+  const services = config.getAllServices()
 
   // Make sure repos exist before running docker compose cleanup
   await setupRepos({ all: true })

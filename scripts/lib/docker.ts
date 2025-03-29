@@ -49,7 +49,7 @@ export async function dockerEnv(config?: Config): Promise<Record<string, string>
     LLEMONSTACK_VOLUMES_PATH: config.volumesDir,
     LLEMONSTACK_SHARED_VOLUME_PATH: config.sharedDir,
     LLEMONSTACK_IMPORT_VOLUME_PATH: config.importDir,
-    LLEMONSTACK_REPOS_PATH: config.repoDir,
+    LLEMONSTACK_REPOS_PATH: config.reposDir,
     LLEMONSTACK_NETWORK_NAME: config.dockerNetworkName,
     TARGETPLATFORM: getDockerTargetPlatform(), // Docker platform for building images
     DOCKERFILE_ARCH: getDockerfileArch(), // Dockerfile.arm64 if on Mac Silicon or aarch64 platform
