@@ -5,7 +5,32 @@ import { Service } from './service.ts'
  *
  * Extends Map to provide additional functionality for filtering and returning data.
  */
-export class Services extends Map<string, Service> {
+export class ServicesMap extends Map<string, Service> {
+  /**
+   * Add a service to the services map
+   *
+   * Provides a consistent API for what key is used in ServicesMap.
+   *
+   * @param {Service} service - The service to add
+   * @param {ServicesMap} servicesMap - The services map to add the service to
+   * @returns {ServicesMap} The services map
+   */
+  public static addService(service: Service, servicesMap: ServicesMap) {
+    servicesMap.set(service.id, service)
+    return servicesMap
+  }
+
+  /**
+   * Add a service to the this services map instance
+   *
+   * @param {Service} service - The service to add
+   * @returns {ServicesMap} The services map
+   */
+  public addService(service: Service) {
+    ServicesMap.addService(service, this)
+    return this
+  }
+
   /**
    * Get all services in this map as an array
    *
@@ -32,9 +57,9 @@ export class Services extends Map<string, Service> {
   /**
    * Get enabled services in this map
    *
-   * @returns {Services} - A new Services instance with only enabled services
+   * @returns {ServicesMap} - A new ServicesMap instance with only enabled services
    */
-  public getEnabled(): Services {
+  public getEnabled(): ServicesMap {
     return this.filter((service) => service.enabled())
   }
 
@@ -65,8 +90,8 @@ export class Services extends Map<string, Service> {
    * @param filter - The function to filter by
    * @returns A new Services instance with only the services that match the function
    */
-  public filter(filter: (service: Service) => boolean): Services {
-    return new Services([...this.entries()].filter(([_, service]) => filter(service)))
+  public filter(filter: (service: Service) => boolean): ServicesMap {
+    return new ServicesMap([...this.entries()].filter(([_, service]) => filter(service)))
   }
 
   /**
@@ -75,8 +100,8 @@ export class Services extends Map<string, Service> {
    * @param methodName - The name of the method to filter by
    * @returns A new Services instance with only the services that match the method name
    */
-  public filterBy<K extends keyof Service>(methodName: K): Services {
-    return new Services(
+  public filterBy<K extends keyof Service>(methodName: K): ServicesMap {
+    return new ServicesMap(
       [...this.entries()].filter(([_, service]) => {
         const method = service[methodName]
         if (typeof method === 'function') {
@@ -86,5 +111,15 @@ export class Services extends Map<string, Service> {
         return service[methodName]
       }),
     )
+  }
+
+  /**
+   * Get missing services from a list of service names
+   *
+   * @param {string[]} serviceNames - The list of service names to check
+   * @returns {string[]} - The list of missing service names
+   */
+  public missingServices(serviceNames: string[]): string[] {
+    return serviceNames.filter((serviceName) => !this.has(serviceName))
   }
 }
