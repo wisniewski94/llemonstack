@@ -11,19 +11,18 @@ export class OllamaService extends Service {
    * @param value - Optional boolean value to set the enabled status
    * @returns The enabled status of the service
    */
-  override enabled(value?: boolean): boolean {
-    if (value !== undefined) {
-      this._enabled = value
-      return this._enabled
-    }
-    // Check if enabled has been set yet
-    if (this._enabled !== null) {
-      return this._enabled
+  override isEnabled(): boolean {
+    // Skip the env check if already enabled
+    let enabled = this._state.get('enabled')
+    if (enabled) {
+      return true
     }
     // Set enabled to true if ENABLE_OLLAMA is not false
+    // Otherwise default to the enabled setting in the project config file
     const env = Config.getInstance().env['ENABLE_OLLAMA'].trim().toLowerCase()
-    this._enabled = !(env === 'false') || this._configEnabled
-    return this._enabled
+    enabled = !(env === 'false') || this._enabledInConfig
+    this._state.set('enabled', enabled)
+    return enabled
   }
 
   /**

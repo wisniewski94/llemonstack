@@ -509,9 +509,8 @@ export class Config {
    * @param service - The service name
    * @returns True if the service is enabled, false otherwise
    */
-  // TODO: replace most references to this with service.enabled()
-  public isEnabled(service: string): boolean {
-    return this.getService(service)?.enabled() || false
+  public isEnabled(serviceName: string): boolean | null {
+    return this.getServiceByName(serviceName)?.isEnabled() || null
   }
 
   public getAllServices(): Services {
@@ -548,7 +547,7 @@ export class Config {
   public getComposeFiles({ all = false }: { all?: boolean } = {}): string[] {
     return Array.from(this._services.values())
       .map((service) => {
-        return (!all && !service.enabled()) ? false : service.composeFile
+        return (!all && !service.isEnabled()) ? false : service.composeFile
       })
       .filter((value: string | false, index: number, self: (string | false)[]) =>
         value && self.indexOf(value) === index
@@ -588,7 +587,7 @@ export class Config {
     // Update service enabled state and profiles in config before saving
     this.getAllServices().forEach((service) => {
       this._config.services[service.service] = {
-        enabled: service.enabled(),
+        enabled: service.isEnabled(),
         profiles: service.getProfiles(),
       }
     })

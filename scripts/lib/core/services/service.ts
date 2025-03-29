@@ -38,7 +38,7 @@ export class Service {
   protected _stackConfig: Config
 
   protected _dir: string
-  protected _configEnabled: boolean
+  protected _enabledInConfig: boolean
 
   protected _composeFile: string
   protected _profiles: string[] = []
@@ -66,16 +66,12 @@ export class Service {
     // TODO: double check if this is the best way to handle this? now that _stackConfig is being saved
 
     // Configure with settings from the service entry in config.json
-    this._configEnabled = configSettings.enabled
+    this._enabledInConfig = configSettings.enabled
     this.setProfiles(configSettings.profiles || [])
   }
 
   public toString(): string {
     return this.name
-  }
-
-  public get state(): ObservableStruct<ServiceState> {
-    return this._state
   }
 
   public get id(): string {
@@ -144,6 +140,29 @@ export class Service {
   // Public Methods
   //
 
+  /**
+   * Get the state for a key in the service state object
+   *
+   * @param {keyof IServiceState} key - The key to get
+   * @returns The value of the key
+   */
+  public getState(key: keyof IServiceState): IServiceState[keyof IServiceState] {
+    return this._state.get(key)
+  }
+
+  /**
+   * Set the state for a key in the service state object
+   *
+   * @param {keyof IServiceState} key - The key to set
+   * @param {boolean} value - The value to set
+   * @returns {boolean} Whether or not the state was set, could return false if value was invalid
+   */
+  public setState(key: keyof IServiceState, value: boolean): boolean {
+    this._state.set(key, value)
+    return true // Whether or not the state was set
+  }
+
+  // TODO: rename this to prepareEnv ??? loadEnv gets confusing as to when it's called
   // deno-lint-ignore require-await
   public async loadEnv(
     envVars: Record<string, string>,
@@ -162,23 +181,21 @@ export class Service {
    * @param value - Optional boolean value to set the enabled status
    * @returns The enabled status of the service
    */
-  // TODO: split into two methods: isEnabled() and setState('enabled', value)
-  public enabled(value?: boolean): boolean {
-    // Set the enabled state if value is provided
-    if (value !== undefined) {
-      this.state.set('enabled', value)
-      return value
+  public isEnabled(): boolean {
+    if (this._state.get('enabled')) {
+      return true
     }
-    // Check if enabled has been set yet
-    if (this.state.get('enabled') !== null) {
-      return this.state.get('enabled')
-    }
+
     // Check Deno env vars for ENABLED_<service>
-    // Otherwise, use the initial config file setting
-    // TODO: remove check to ENABLE_<service> once config script is working properly
-    const env = Config.getInstance().env[`ENABLE_${this.service.toUpperCase().replace(/-/g, '_')}`]
-    this.state.set('enabled', env?.trim().toLowerCase() === 'true' || this._configEnabled)
-    return this.state.get('enabled')
+    // TODO: remove this check once config script is working properly and
+    // everything migrated to config.json
+    const env = this._configInstance.env[`ENABLE_${this.service.toUpperCase().replace(/-/g, '_')}`]
+    const enabled = env?.trim().toLowerCase() === 'true' || this._enabledInConfig
+
+    // TODO: log a deprecation warning if env var check is used
+
+    this._state.set('enabled', enabled)
+    return enabled
   }
 
   /**
