@@ -6,7 +6,7 @@ import * as fs from './fs.ts'
 import { Service } from './service.ts'
 import { failure, success, tryCatch, TryCatchResult } from './try-catch.ts'
 import { LLemonStackConfig, ServiceConfig } from './types.d.ts'
-import { isTruthy } from './utils.ts'
+import { isTruthy } from './utils/compare.ts'
 
 export class Config {
   // Static properties: Config.*

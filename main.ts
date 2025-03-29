@@ -16,7 +16,7 @@ import {
   showInfo,
   showLogMessages,
 } from './scripts/lib/logger.ts'
-import { isTruthy } from './scripts/lib/utils.ts'
+import { isTruthy } from './scripts/lib/utils/compare.ts'
 /**
  * Initialize the LLemonStack config
  *
