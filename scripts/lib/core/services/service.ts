@@ -330,7 +330,7 @@ export class Service {
    */
   // deno-lint-ignore require-await
   public async configure(
-    { silent: _silent, config: _config }: ServiceActionOptions,
+    { silent: _silent }: ServiceActionOptions,
   ): Promise<TryCatchResult<boolean>> {
     return success<boolean>(true)
   }
