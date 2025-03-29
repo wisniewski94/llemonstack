@@ -1,48 +1,95 @@
-import { Config } from './config.ts'
-import { dockerCompose, expandEnvVars } from './docker.ts'
-import { path } from './fs.ts'
-import { searchObjectPaths } from './search-object.ts'
-import { failure, success, TryCatchResult } from './try-catch.ts'
+import { Config } from '../../config.ts'
+import { dockerCompose, expandEnvVars } from '../../docker.ts'
+import { path } from '../../fs.ts'
+import { searchObjectPaths } from '../../search-object.ts'
+import { failure, success, TryCatchResult } from '../../try-catch.ts'
 import {
   EnvVars,
   ExposeHost,
+  IServiceOptions,
   RepoService,
   ServiceActionOptions,
   ServiceConfig,
-  ServiceOptions,
-} from './types.d.ts'
+  ServiceState,
+} from '../../types.d.ts'
+import { ObservableStruct } from '../../utils/observable.ts'
 
+/**
+ * Service
+ *
+ * Represents a service in the LLemonStack configuration.
+ * Extends ObservableStruct to provide a state object that can be observed for changes.
+ */
 export class Service {
-  public name: string // Human readable name
-  public service: string // Service name
-  public description: string // Service description
+  protected namespace: string = 'llemonstack'
+  protected _id: string // namespace/service
+  protected _service: string // service name in llemonstack.yaml
+  protected _name: string // Human readable name
+  protected _description: string // Service description
+
+  protected _state: ObservableStruct<ServiceState> = new ObservableStruct<ServiceState>({
+    enabled: false,
+    started: false,
+    healthy: false,
+    status: 'installed',
+  })
+
+  // Reference back to the active config object
+  protected _stackConfig: Config
 
   protected _dir: string
-  protected _config: ServiceConfig
   protected _configEnabled: boolean
-  protected _projectName: string
-  protected _enabled: boolean | null = null
+
   protected _composeFile: string
-  protected _repoDir: string | null = null
   protected _profiles: string[] = []
+  // protected _dependencies: Map<Service.id, Service>
+
+  // Service's llemonstack.yaml config, once loaded it's frozen to prevent
+  // accidental changes that are not saved
+  readonly _config: ServiceConfig
 
   constructor(
-    { config, dir, repoBaseDir, llemonstackConfig }: ServiceOptions,
+    { serviceConfig, serviceDir, config, configSettings }: IServiceOptions,
   ) {
-    this.name = config.name
-    this.service = config.service
-    this.description = config.description
-    this._projectName = llemonstackConfig.projectName
-    this._config = config
-    this._dir = dir
-    this._composeFile = path.join(this._dir, config.compose_file)
-    this._repoDir = config.repo?.dir ? path.join(repoBaseDir, config.repo?.dir) : null
-    this._configEnabled = llemonstackConfig.services[config.service]?.enabled
-    this.setProfiles(llemonstackConfig.services[config.service]?.profiles || [])
+    this._id = serviceConfig.id ?? this.id
+    this._name = serviceConfig.name
+    this._service = serviceConfig.service
+    this._description = serviceConfig.description
+
+    this._stackConfig = config // TODO: check for circular reference issues
+    this._config = Object.freeze({ ...serviceConfig })
+    this._dir = serviceDir
+    this._composeFile = path.join(this._dir, serviceConfig.compose_file)
+
+    // TODO: double check if this is the best way to handle this? now that _stackConfig is being saved
+
+    // Configure with settings from the service entry in config.json
+    this._configEnabled = configSettings.enabled
+    this.setProfiles(configSettings.profiles || [])
   }
 
   public toString(): string {
     return this.name
+  }
+
+  public get state(): ObservableStruct<ServiceState> {
+    return this._state
+  }
+
+  public get id(): string {
+    return this._id || `${this.namespace}/${this._service}`
+  }
+
+  public get name(): string {
+    return this._name || this._service || this.id
+  }
+
+  public get description(): string {
+    return this._description || ''
+  }
+
+  public get service(): string {
+    return this._service
   }
 
   public get composeFile(): string {
@@ -58,7 +105,9 @@ export class Service {
   }
 
   public get repoDir(): string | null {
-    return this._repoDir
+    return this._config.repo?.dir
+      ? path.join(this._stackConfig.reposDir, this._config.repo?.dir)
+      : null
   }
 
   public get serviceGroup(): string {
@@ -77,7 +126,7 @@ export class Service {
     return this._config.app_version_cmd ?? null
   }
 
-  public get dependencies(): string[] {
+  public get depends_on(): string[] {
     return Object.keys(this._config.depends_on || {}) ?? []
   }
 
@@ -107,20 +156,23 @@ export class Service {
    * @param value - Optional boolean value to set the enabled status
    * @returns The enabled status of the service
    */
+  // TODO: split into two methods: isEnabled() and setState('enabled', value)
   public enabled(value?: boolean): boolean {
+    // Set the enabled state if value is provided
     if (value !== undefined) {
-      this._enabled = value
-      return this._enabled
+      this.state.set('enabled', value)
+      return value
     }
     // Check if enabled has been set yet
-    if (this._enabled !== null) {
-      return this._enabled
+    if (this.state.get('enabled') !== null) {
+      return this.state.get('enabled')
     }
     // Check Deno env vars for ENABLED_<service>
     // Otherwise, use the initial config file setting
+    // TODO: remove check to ENABLE_<service> once config script is working properly
     const env = Config.getInstance().env[`ENABLE_${this.service.toUpperCase().replace(/-/g, '_')}`]
-    this._enabled = env?.trim().toLowerCase() === 'true' || this._configEnabled
-    return this._enabled
+    this.state.set('enabled', env?.trim().toLowerCase() === 'true' || this._configEnabled)
+    return this.state.get('enabled')
   }
 
   /**
@@ -208,7 +260,7 @@ export class Service {
     } = {},
   ): Promise<TryCatchResult<boolean>> {
     const results = await dockerCompose('up', {
-      projectName: this._projectName,
+      projectName: this._stackConfig.projectName,
       composeFile: this.composeFile,
       profiles: this.getProfiles(),
       ansi: 'never',

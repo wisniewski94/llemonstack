@@ -1,7 +1,7 @@
 import { Select } from '@cliffy/prompt'
 import { Config } from '../../scripts/lib/config.ts'
+import { Service } from '../../scripts/lib/core/services/service.ts'
 import { showHeader, showInfo, showWarning } from '../../scripts/lib/logger.ts'
-import { Service } from '../../scripts/lib/service.ts'
 import { success, TryCatchResult } from '../../scripts/lib/try-catch.ts'
 import { EnvVars, ExposeHost, ServiceActionOptions } from '../../scripts/lib/types.d.ts'
 
