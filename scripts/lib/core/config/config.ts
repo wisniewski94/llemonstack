@@ -44,8 +44,9 @@ export class Config {
   private _config: LLemonStackConfig = this._configTemplate
 
   private _services: ServicesMap = new ServicesMap()
-  private _servicesNameLookup: Map<string, string> = new Map() // service.name to serve.id
 
+  // Caches
+  private _servicesLookup: Map<string, string> = new Map() // Maps service.service to serve.id
   private _env: Record<string, string> = {}
   private _initializeResult: TryCatchResult<Config, Error> = new TryCatchResult<Config, Error>({
     data: this,
@@ -424,7 +425,7 @@ export class Config {
   public registerService(service: Service): boolean {
     const added = this._services.addService(service)
     if (added) {
-      this._servicesNameLookup.set(service.name, service.id)
+      this._servicesLookup.set(service.service, service.id)
     }
     // TODO: log warning if service is not added
     return added
@@ -565,7 +566,7 @@ export class Config {
   public getServiceByName(serviceName: string): Service | null {
     const serviceId = serviceName.includes('/')
       ? serviceName
-      : this._servicesNameLookup.get(serviceName)
+      : this._servicesLookup.get(serviceName)
     return serviceId ? this._services.get(serviceId) || null : null
   }
 
