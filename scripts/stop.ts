@@ -2,16 +2,16 @@
  * Stop the stack by downing docker containers and cleaning up networks.
  */
 
-import { Config, ServicesMap } from '@/core'
-import { ServicesMapType, ServiceType } from '@/types'
+import { Config, ServicesMap } from '@/core/index.ts'
 import {
   dockerComposePs,
   type DockerComposePsResult,
   getDockerNetworks,
   removeDockerNetwork,
   runDockerCommand,
-} from './lib/docker.ts'
-import { colors, RowType, showAction, showError, showInfo, showTable } from './lib/logger.ts'
+} from '@/lib/docker.ts'
+import { colors, RowType, showAction, showError, showInfo, showTable } from '@/lib/logger.ts'
+import { ServicesMapType, ServiceType } from '@/types'
 import { prepareEnv, setupRepos } from './start.ts'
 
 const config = Config.getInstance()

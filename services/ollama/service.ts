@@ -1,4 +1,4 @@
-import { Config, Service } from '@/core'
+import { Service } from '@/core/services/index.ts'
 import { EnvVars, ExposeHost, IServiceActionOptions } from '@/types'
 import { Select } from '@cliffy/prompt'
 import { showHeader, showInfo, showWarning } from '../../scripts/lib/logger.ts'

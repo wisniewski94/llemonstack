@@ -1,10 +1,10 @@
-import { Config, ServicesMapType } from '@/core'
+import { Config, ServicesMapType } from '@/core/index.ts'
 import {
   CommandError as CommandErrorClass,
   RunCommandOutput as RunCommandOutputClass,
 } from './command.ts'
 
-export type { ServicesMapType, ServiceType } from '@/core'
+export type { ServicesMapType, ServiceType } from '@/core/index.ts'
 export type { DockerComposeOptions, DockerComposePsResult } from './docker.ts'
 
 export interface LLemonStackConfig {

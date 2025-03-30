@@ -2,12 +2,9 @@
  * Show the versions of the services that support it
  */
 
-import { IServiceImage, ServicesMapType, ServiceType } from '@/types'
-import { colors } from '@cliffy/ansi/colors'
-import { Column, Row, RowType } from '@cliffy/table'
-import { getImageFromCompose, getImagesFromComposeYaml } from './lib/compose.ts'
-import { Config } from './lib/core/config/config.ts'
-import { dockerRun, prepareDockerNetwork, runDockerCommand } from './lib/docker.ts'
+import { Config } from '@/core/config/config.ts'
+import { getImageFromCompose, getImagesFromComposeYaml } from '@/lib/compose.ts'
+import { dockerRun, prepareDockerNetwork, runDockerCommand } from '@/lib/docker.ts'
 import {
   showAction,
   showError,
@@ -15,7 +12,10 @@ import {
   showInfo,
   showTable,
   showWarning,
-} from './lib/logger.ts'
+} from '@/lib/logger.ts'
+import { IServiceImage, ServicesMapType, ServiceType } from '@/types'
+import { colors } from '@cliffy/ansi/colors'
+import { Column, Row, RowType } from '@cliffy/table'
 import { prepareEnv } from './start.ts'
 
 const MAX_COLUMN_WIDTH = 50
