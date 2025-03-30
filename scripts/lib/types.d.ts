@@ -67,7 +67,7 @@ export interface IRepoConfig {
   dir: string // Name of repo dir to use in the repos folder
   sparseDir?: string | string[] // Directory to sparse clone into
   sparse: boolean // Whether to sparse clone
-  checkFile?: string // File to check for existence to determine if repo is ready
+  checkFile?: string | string[] // File to check for existence to determine if repo is ready
 }
 
 export interface IServiceImage {

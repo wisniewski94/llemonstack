@@ -159,21 +159,25 @@ export async function setupServiceRepo(
 
     // Check if the required file exists in the repo
     if (repoConfig.checkFile) {
-      const checkFilePath = path.join(repoDir, repoConfig.checkFile)
+      const checkFiles = Array.isArray(repoConfig.checkFile)
+        ? repoConfig.checkFile
+        : [repoConfig.checkFile]
 
-      const fileResults = await fileExists(checkFilePath)
-
-      if (fileResults.success) {
-        results.addMessage('debug', `Repo check: required file found: ${repoConfig.checkFile}`)
-      } else {
-        const errMsg =
-          `Required file ${repoConfig.checkFile} not found in ${service.name} directory: ${repoDir}`
-
-        results.addMessage('error', errMsg, { error: fileResults.error })
-        // TODO: add new log type for user actions
-        results.addMessage('warning', `Please check the repository structure and try again.`)
-
-        return failure<boolean>(errMsg, results, false)
+      for (const checkFile of checkFiles) {
+        if (
+          !(await checkRepoFile({
+            repoDir,
+            checkFile,
+            service,
+            results,
+          }))
+        ) {
+          return failure<boolean>(
+            `Required repo file not found for ${service.name}: ${checkFile}`,
+            results,
+            false,
+          )
+        }
       }
     }
 
@@ -181,4 +185,38 @@ export async function setupServiceRepo(
   }
 
   return results
+}
+
+async function checkRepoFile({
+  repoDir,
+  checkFile,
+  service,
+  results,
+}: {
+  repoDir: string
+  checkFile: string
+  service: Service
+  results: TryCatchResult<boolean>
+}): Promise<boolean> {
+  const checkFilePath = path.join(repoDir, checkFile)
+
+  const fileResults = await fileExists(checkFilePath)
+
+  if (!fileResults.success) {
+    const errMsg = `Required repo file not found for ${service.name}: ${checkFile}`
+
+    results.addMessage('error', errMsg, { error: fileResults.error })
+
+    // TODO: add new log type for user actions
+    results.addMessage('warning', `Please check the repository structure and try again.`)
+
+    return false
+  }
+
+  results.addMessage(
+    'debug',
+    `Repo check: required file found for ${service.name}: ${checkFile}`,
+  )
+
+  return true
 }
