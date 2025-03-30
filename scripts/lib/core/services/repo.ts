@@ -1,7 +1,7 @@
-import { runCommand } from './lib/command.ts'
-import { Service } from './lib/core/services/service.ts'
-import { escapePath, fs, path } from './lib/fs.ts'
-import { showDebug, showInfo, showUserAction, showWarning } from './lib/logger.ts'
+import { runCommand } from '@/lib/command.ts'
+import { Service } from '@/lib/core/services/service.ts'
+import { escapePath, fs, path } from '@/lib/fs.ts'
+import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 
 /**
  * Clone or pull a repo
@@ -22,19 +22,22 @@ export async function setupServiceRepo(
     pull?: boolean
     silent?: boolean
   },
-): Promise<void> {
+): Promise<TryCatchResult<boolean>> {
+  const results = success<boolean>(true)
+
   if (!service.repoDir) {
-    throw new Error(`Repo dir not set for ${service.name}`)
+    return failure<boolean>(`Repo dir not set for ${service.name}`, results, false)
   }
   if (!service.repoConfig?.url) {
-    throw new Error(`Repo URL not set for ${service.name}`)
+    return failure<boolean>(`Repo URL not set for ${service.name}`, results, false)
   }
 
   const repoDir = service.repoDir
   const repoConfig = service.repoConfig || {}
   const sparse = repoConfig.sparse || repoConfig.sparseDir
 
-  !silent && showDebug(
+  results.addMessage(
+    'info',
     `Cloning ${service.name} repo: ${repoConfig.url}${repoConfig.sparse ? ' [sparse]' : ''}`,
   )
 
@@ -45,8 +48,8 @@ export async function setupServiceRepo(
         '-C',
         escapePath(repoDir),
         'clone',
-        sparse && '--filter=blob:none',
-        sparse && '--no-checkout',
+        sparse ? '--filter=blob:none' : false,
+        sparse ? '--no-checkout' : false,
         repoConfig.url,
         repoConfig.dir,
       ],
@@ -72,7 +75,7 @@ export async function setupServiceRepo(
             repoDir,
             'sparse-checkout',
             'set',
-            ...[repoConfig.sparseDirs].flat(),
+            ...[repoConfig.sparseDir].flat(),
           ],
         })
       }
@@ -90,7 +93,7 @@ export async function setupServiceRepo(
 
     // Pull latest changes from remote if pull is true
     if (pull) {
-      !silent && showInfo(`${service.name} repo exists, pulling latest code...`)
+      results.addMessage('info', `${service.name} repo exists, pulling latest code...`)
       await runCommand('git', {
         args: [
           '-C',
@@ -106,11 +109,13 @@ export async function setupServiceRepo(
       if (!await fs.exists(checkFilePath)) {
         const errMsg =
           `Required file ${repoConfig.checkFile} not found in ${service.name} directory: ${repoDir}`
-        !silent && showWarning(errMsg)
-        !silent && showUserAction(`Please check the repository structure and try again.`)
-        throw new Error(errMsg)
+        results.addMessage('warning', errMsg)
+        results.addMessage('warning', `Please check the repository structure and try again.`)
+        return failure<boolean>(errMsg, results, false)
       }
     }
-    !silent && showInfo(`✔️ ${service.name} repo is ready`)
+    results.addMessage('info', `✔️ ${service.name} repo is ready`)
   }
+
+  return results
 }

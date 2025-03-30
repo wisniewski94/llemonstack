@@ -1,3 +1,4 @@
+import { setupServiceRepo } from '@/core/services/repo.ts'
 import {
   EnvVars,
   ExposeHost,
@@ -6,6 +7,7 @@ import {
   IServiceOptions,
   IServiceState,
   ServiceConfig,
+  ServiceStatusType,
 } from '@/types'
 import { dockerCompose, expandEnvVars } from '../../docker.ts'
 import { path } from '../../fs.ts'
@@ -13,7 +15,6 @@ import { searchObjectPaths } from '../../search-object.ts'
 import { failure, success, TryCatchResult } from '../../try-catch.ts'
 import { ObservableStruct } from '../../utils/observable.ts'
 import { Config } from '../config/config.ts'
-
 /**
  * Service
  *
@@ -154,6 +155,8 @@ export class Service {
   /**
    * Get the state for a key in the service state object
    *
+   * If no key is specified, the status is returned.
+   *
    * @param {keyof IServiceState} key - The key to get
    * @returns The value of the key
    */
@@ -181,17 +184,6 @@ export class Service {
   ): Promise<Record<string, string>> {
     // Override in subclasses to set environment variables for the service
     return envVars
-  }
-
-  // TODO: add prepareEnv method here
-  // After prepareEnv is called, service should update it's isReady state
-  // Then other services can wait for their dependencies to be ready before starting
-  // deno-lint-ignore require-await
-  public async prepareEnv(): Promise<TryCatchResult<boolean>> {
-    this._state.set('ready', true)
-    console.log(`${this.name} is ready in prepareEnv`)
-    // Override in subclasses to prepare the service environment
-    return success<boolean>(true)
   }
 
   /**
@@ -285,6 +277,42 @@ export class Service {
 
   public setProfiles(profiles: string[]) {
     this._profiles = profiles
+  }
+
+  /**
+   * Prepare the service environment
+   *
+   * @returns {TryCatchResult<boolean>} - The result of the preparation
+   */
+  // deno-lint-ignore require-await
+  public async prepareEnv(): Promise<TryCatchResult<boolean>> {
+    const results = success<boolean>(true)
+
+    // TODO: check if service needs a repo cloned or volumes created
+    await this.prepareRepo()
+    await this.prepareVolumes()
+
+    this._state.set('ready', true)
+    results.addMessage('info', `Service ${this.name} environment prepared, ready to start`)
+    return results
+  }
+
+  public async prepareRepo(
+    { pull = false }: { pull?: boolean } = {},
+  ): Promise<TryCatchResult<boolean>> {
+    const results = success<boolean>(true)
+
+    // If no repo config, skip
+    if (!this.repoConfig) {
+      return results
+    }
+
+    const repoResults = await setupServiceRepo(this, {
+      pull,
+      silent: true,
+    })
+
+    return results
   }
 
   //
