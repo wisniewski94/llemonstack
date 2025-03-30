@@ -20,7 +20,9 @@
     "@/types": "./scripts/lib/types.d.ts",
     "@/core/": "./scripts/lib/core/",
     "@/services/": "./services/",
-    "@/lib/": "./scripts/lib/" // TODO: move core out of lib
+    "@/lib/": "./scripts/lib/", // TODO: move core out of lib
+    "@/config/templates/": "./config/",
+    "@packageJson": "./package.json"
   },
   "fmt": {
     "useTabs": false,

@@ -1,12 +1,12 @@
+import configTemplate from '@/config/templates/config.0.2.0.json' with { type: 'json' }
 import { Service, ServicesMap } from '@/core/services/index.ts'
 import { loadEnv, updateEnv } from '@/lib/env.ts'
 import * as fs from '@/lib/fs.ts'
 import { failure, success, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
 import { isTruthy } from '@/lib/utils/compare.ts'
 import { IServiceOptions, IServicesGroups, LLemonStackConfig, ServiceConfig } from '@/types'
+import packageJson from '@packageJson' with { type: 'json' }
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
-import configTemplate from '../../../../config/config.0.2.0.json' with { type: 'json' }
-import packageJson from '../../../../package.json' with { type: 'json' }
 import Host from './host.ts'
 
 const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
@@ -517,7 +517,10 @@ export class Config {
     }
 
     // TODO: test this to make sure it returning properly
-    return (await tryCatch(this.loadEnv({ reload, expand }))).unshiftMessages(updateResult.messages)
+    // Reload the env vars and add prepend messages
+    return (
+      await tryCatch(this.loadEnv({ reload, expand }))
+    ).unshiftMessages(updateResult.messages)
   }
 
   /**
