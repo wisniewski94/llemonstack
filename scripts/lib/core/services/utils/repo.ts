@@ -1,6 +1,6 @@
 import { tryCatchRunCommand } from '@/lib/command.ts'
 import { Service } from '@/lib/core/services/service.ts'
-import { dirExists, escapePath, fileExists, path } from '@/lib/fs.ts'
+import { dirExists, ensureDir, escapePath, fileExists, path } from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 import type { RunCommandOptions } from '@/types'
 
@@ -50,10 +50,12 @@ export async function setupServiceRepo(
     pull = false, // Pull latest changes from remote
     silent = false,
     captureOutput = false,
+    createBaseDir = false,
   }: {
     pull?: boolean
     silent?: boolean
     captureOutput?: boolean
+    createBaseDir?: boolean
   },
 ): Promise<TryCatchResult<boolean>> {
   const results = success<boolean>(true)
@@ -80,17 +82,36 @@ export async function setupServiceRepo(
 
   // If repo does not exist, clone it
   if (!repoDirResults.data) {
+    const repoBaseDir = path.dirname(repoDir)
+
+    // Make sure repo base dir exists
+    if (createBaseDir) {
+      // Create repo base dir if it doesn't exist, but only if it's inside cwd
+      const ensureDirResults = await ensureDir(repoBaseDir, { allowOutsideCwd: false })
+      if (!ensureDirResults.success) {
+        results.error = ensureDirResults.error
+        return failure<boolean>(`Error creating repo base dir: ${repoBaseDir}`, results, false)
+      }
+    } else {
+      // Check if repo base dir exists and return failure if it doesn't
+      const repoBaseDirResults = await dirExists(repoBaseDir)
+      if (!repoBaseDirResults.success || !repoBaseDirResults.data) {
+        results.error = repoBaseDirResults.error
+        return failure<boolean>(`Repos dir does not exist: ${repoBaseDir}`, results, false)
+      }
+    }
+
     // Dir does not exist, clone it and checkout sparse dirs if sparseDir config is set
     results.addMessage(
       'debug',
       `Cloning ${service.name} repo: ${repoConfig.url}${repoConfig.sparse ? ' [sparse]' : ''}`,
     )
 
-    // Clone repo
+    // Clone repo into base dir
     await runGit(results, {
       args: [
         '-C',
-        escapePath(repoDir),
+        escapePath(repoBaseDir),
         'clone',
         sparse ? '--filter=blob:none' : false,
         sparse ? '--no-checkout' : false,
@@ -187,6 +208,13 @@ export async function setupServiceRepo(
   return results
 }
 
+/**
+ * Check if a file exists in the repo
+ *
+ * @param {string} repoDir - The directory of the repo
+ * @param {string} checkFile - The file to check for
+ * @param {Service} service - The service to check for
+ */
 async function checkRepoFile({
   repoDir,
   checkFile,

@@ -315,6 +315,7 @@ export class Service {
     return await setupServiceRepo(this, {
       pull,
       silent: true,
+      createBaseDir: false, // Base dir is ensured in config
     })
   }
 

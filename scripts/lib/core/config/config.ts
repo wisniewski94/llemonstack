@@ -1,12 +1,12 @@
+import { Service, ServicesMap } from '@/core/services/index.ts'
+import * as fs from '@/lib/fs.ts'
+import { failure, success, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
+import { isTruthy } from '@/lib/utils/compare.ts'
 import { IServiceGroups, IServiceOptions, LLemonStackConfig, ServiceConfig } from '@/types'
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import configTemplate from '../../../../config/config.0.2.0.json' with { type: 'json' }
 import packageJson from '../../../../package.json' with { type: 'json' }
 import { loadEnv } from '../../env.ts'
-import * as fs from '../../fs.ts'
-import { failure, success, tryCatch, TryCatchResult } from '../../try-catch.ts'
-import { isTruthy } from '../../utils/compare.ts'
-import { Service, ServicesMap } from '../services/index.ts'
 import Host from './host.ts'
 
 const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
@@ -361,7 +361,7 @@ export class Config {
       } else {
         result.addMessage(
           'debug',
-          `${serviceConfig.name} service config successfully loaded into ${serviceConfig.service_group} group`,
+          `${serviceConfig.name} loaded into ${serviceConfig.service_group} group`,
         )
       }
 
@@ -677,20 +677,34 @@ export class Config {
    */
   public async prepareEnv(
     { all = false }: { all?: boolean } = {},
-  ): Promise<TryCatchResult<(boolean | null)[]>> {
-    // Calling loadEnv twice in initialize() is a hack
+  ): Promise<TryCatchResult<boolean>> {
+    const results = success<boolean>(true)
+
+    // Make sure required base dirs exist
+    results.collect(
+      await Promise.all(
+        Object.values(this._config.dirs).map((dir) =>
+          fs.ensureDir(dir, { allowOutsideCwd: false })
+        ),
+      ),
+    )
+
+    if (!results.success) {
+      results.addMessage('error', 'Failed to ensure required dirs exist')
+      return results
+    }
+
     const services = all ? this.getAllServices() : this.getEnabledServices()
 
     // Run all service prepareEnv methods in parallel
-    const results = await Promise.all(
-      services.map<Promise<TryCatchResult<boolean>>>((service) => service.prepareEnv()),
+    results.collect(
+      await Promise.all(
+        services.map((service) => service.prepareEnv()),
+      ),
     )
 
-    // Collect the results into a single TryCatchResult
-    const collectedResults = TryCatchResult.collect<boolean>(results)
-
     // Return the results, results.success will be true if all services are ready
-    return collectedResults
+    return results
   }
 
   //
