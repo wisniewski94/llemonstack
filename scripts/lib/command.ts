@@ -1,6 +1,7 @@
+import { Config } from '@/core/config/config.ts'
+import { showDebug, showError, showInfo } from '@/lib/logger.ts'
+import { tryCatch, type TryCatchResult } from '@/lib/try-catch.ts'
 import type { CommandOutput, RunCommandOptions } from '@/types'
-import { Config } from './core/config/config.ts'
-import { showDebug, showError, showInfo } from './logger.ts'
 
 export class RunCommandOutput {
   private _output: CommandOutput
@@ -21,6 +22,9 @@ export class RunCommandOutput {
   }
   get signal(): Deno.Signal | null | undefined {
     return this._output.signal
+  }
+  get cmd(): string {
+    return this._output.cmd
   }
   toString(): string {
     return this._output.stdout
@@ -73,6 +77,19 @@ export class CommandError extends Error {
     str += this.stderr ? `\nError:${this.stderr}` : ''
     return str
   }
+}
+
+/**
+ * Wraps runCommand in a TryCatchResult
+ * @param cmd - The command to run
+ * @param options - The options for the command
+ * @returns {TryCatchResult<RunCommandOutput, CommandError>} The result of the command
+ */
+export function tryCatchRunCommand(
+  cmd: string,
+  options: RunCommandOptions = {},
+): Promise<TryCatchResult<RunCommandOutput, CommandError>> {
+  return tryCatch<RunCommandOutput, CommandError>(runCommand(cmd, options))
 }
 
 /**
@@ -155,6 +172,8 @@ export async function runCommand(
         return `"${escapedArg}"`
       }).join(' '),
     ].filter(Boolean).join(' ')
+
+    // TODO: replace with proper logger
     showDebug(
       `Running command: ${fullCmd}\n` +
         `  > ${bashFullCmd}`,
@@ -179,6 +198,7 @@ export async function runCommand(
   } catch (error) {
     const message = `Unable to run '${cmdCmd}'`
     if (debug) {
+      // TODO: replace with proper logger
       showError(message, error)
       if (error instanceof Deno.errors.NotFound) {
         showInfo(
@@ -256,5 +276,6 @@ export async function runCommand(
     code: status.code,
     success: status.success,
     signal: status.signal,
+    cmd: fullCmd,
   })
 }
