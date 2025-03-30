@@ -250,26 +250,23 @@ export class Service {
    *
    * @example
    * ```ts
-   * // Get all the
-   * const hosts = service.getEndpoints('host.*')
-   * console.log(hosts)
+   * // Get all the endpoints exposed to the host
+   * const endpoints = service.getEndpoints('host.*')
+   * console.log(endpoints)
    * ```
    *
    * @param {string} context - Dot object path for exposes in the service llemonstack.yaml config
    * @returns The container DNS host name and port, e.g. 'ollama:11434'
    */
-  public getEndpoints(context?: string): ExposeHost[] {
-    if (!context) {
-      context = 'host.*'
-    }
-
-    // Get all hosts matching the context
+  // TODO: move to helper lib
+  public getEndpoints(context: string = 'host.*'): ExposeHost[] {
+    // Search the service config exposes sections
     const data = searchObjectPaths<ExposeHost>(this._config.exposes, context)
 
     const env = this._configInstance.env
 
-    // Map each host to an ExposeHost object
-    return data.map((item) => {
+    // Map each host to an ExposeHost object with expanded env vars
+    const endpoints = data.map((item) => {
       const host = {
         _key: item.key,
         name: item.data.name || (item.key.split('.').pop() ?? ''),
@@ -277,6 +274,7 @@ export class Service {
         info: item.data.info,
       } as ExposeHost
 
+      // Expand env vars in the url and info
       if (host.url.includes('${')) {
         host.url = expandEnvVars(host.url, env)
       }
@@ -294,6 +292,8 @@ export class Service {
 
       return host
     })
+
+    return endpoints
   }
 
   /**
