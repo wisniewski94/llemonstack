@@ -1,4 +1,4 @@
-import { tryCatchRunCommand } from '@/lib/command.ts'
+import { tryRunCommand } from '@/lib/command.ts'
 import { Service } from '@/lib/core/services/service.ts'
 import { dirExists, ensureDir, escapePath, fileExists, path } from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
@@ -16,7 +16,7 @@ async function runGit(
   results: TryCatchResult<boolean>,
   { args, silent, captureOutput = false }: RunCommandOptions,
 ): Promise<TryCatchResult<boolean>> {
-  const gitResults = await tryCatchRunCommand('git', {
+  const gitResults = await tryRunCommand('git', {
     args,
     silent,
     captureOutput,

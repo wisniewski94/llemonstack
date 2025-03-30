@@ -85,7 +85,7 @@ export class CommandError extends Error {
  * @param options - The options for the command
  * @returns {TryCatchResult<RunCommandOutput, CommandError>} The result of the command
  */
-export function tryCatchRunCommand(
+export function tryRunCommand(
   cmd: string,
   options: RunCommandOptions = {},
 ): Promise<TryCatchResult<RunCommandOutput, CommandError>> {
