@@ -52,30 +52,6 @@ export class OllamaService extends Service {
     return envVars
   }
 
-  // TODO: remove this after done testing
-  override async prepareEnv(): Promise<TryCatchResult<boolean>> {
-    this._state.set('ready', true)
-    // Sleep for 3 seconds to ensure Ollama is ready
-
-    console.time(`Waiting for ${this.name}`)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.time(`Waiting for ${this.name}`)
-    // console.time(`${this.name} should now be ready after waiting`)
-
-    console.log(`${this.name} is ready in prepareEnv`)
-
-    // return failure<boolean>(
-    //   'Failed to wait for ollama',
-    //   TryCatchResult.from<boolean, Error>({
-    //     data: false,
-    //     error: new Error('Failed to wait for ollama'),
-    //     success: false,
-    //   }),
-    // )
-    // Override in subclasses to prepare the service environment
-    return success<boolean>(true)
-  }
-
   /**
    * Start the service
    * @param {EnvVars} [envVars] - Environment variables to pass to the service

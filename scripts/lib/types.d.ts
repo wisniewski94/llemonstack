@@ -103,12 +103,22 @@ export interface ServiceConfig {
 }
 
 export interface IServiceState {
-  enabled: boolean
-  started: boolean
-  healthy: boolean
-  ready: boolean
-  status: 'installed' | 'ready' | 'starting' | 'started' | 'stopped' | 'error'
+  enabled: boolean | null
+  started: boolean | null
+  healthy: boolean | null
+  ready: boolean | null
+  // TODO: add other states like error message
 }
+
+export type ServiceStatusType =
+  | 'disabled'
+  | 'loaded'
+  | 'ready'
+  | 'starting'
+  | 'started:healthy' // Running and healthy
+  | 'started:unhealthy' // Running but health check is failing
+  | 'stopped'
+  | 'error' // Error during start or stop
 
 export interface IServiceGroups {
   [key: string]: ServicesMapType

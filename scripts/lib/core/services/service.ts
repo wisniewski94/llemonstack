@@ -1,4 +1,10 @@
+import { Config } from '@/core/config/config.ts'
 import { setupServiceRepo } from '@/core/services/repo.ts'
+import { dockerCompose, expandEnvVars } from '@/lib/docker.ts'
+import { fs, path } from '@/lib/fs.ts'
+import { searchObjectPaths } from '@/lib/search-object.ts'
+import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
+import { ObservableStruct } from '@/lib/utils/observable.ts'
 import {
   EnvVars,
   ExposeHost,
@@ -9,12 +15,7 @@ import {
   ServiceConfig,
   ServiceStatusType,
 } from '@/types'
-import { dockerCompose, expandEnvVars } from '../../docker.ts'
-import { path } from '../../fs.ts'
-import { searchObjectPaths } from '../../search-object.ts'
-import { failure, success, TryCatchResult } from '../../try-catch.ts'
-import { ObservableStruct } from '../../utils/observable.ts'
-import { Config } from '../config/config.ts'
+
 /**
  * Service
  *
@@ -33,7 +34,6 @@ export class Service {
     started: false,
     healthy: false,
     ready: false,
-    status: 'installed',
   })
 
   // Reference back to the active config object
@@ -176,6 +176,26 @@ export class Service {
     return true // Whether or not the state was set
   }
 
+  public getStatus(): ServiceStatusType {
+    if (!this.isEnabled()) {
+      return 'disabled'
+    }
+    if (this._state.get('started')) {
+      if (this._state.get('healthy')) {
+        return 'started:healthy'
+      } else {
+        return 'started:unhealthy'
+      }
+    }
+    if (this._state.get('ready')) {
+      return 'ready'
+    }
+    // TODO: add other states
+    // Default status: 'loaded'
+    // Service is enabled but prepareEnv has not yet successfully completed
+    return 'loaded'
+  }
+
   // TODO: rename this to prepareEnv ??? loadEnv gets confusing as to when it's called
   // deno-lint-ignore require-await
   public async loadEnv(
@@ -284,13 +304,17 @@ export class Service {
    *
    * @returns {TryCatchResult<boolean>} - The result of the preparation
    */
-  // deno-lint-ignore require-await
   public async prepareEnv(): Promise<TryCatchResult<boolean>> {
     const results = success<boolean>(true)
 
-    // TODO: check if service needs a repo cloned or volumes created
-    await this.prepareRepo()
-    await this.prepareVolumes()
+    results.collect([
+      await this.prepareRepo(),
+      await this.prepareVolumes(),
+    ])
+
+    if (!results.success) {
+      return failure<boolean>(`Failed to prepare service environment: ${this.name}`, results, false)
+    }
 
     this._state.set('ready', true)
     results.addMessage('info', `Service ${this.name} environment prepared, ready to start`)
@@ -300,17 +324,91 @@ export class Service {
   public async prepareRepo(
     { pull = false }: { pull?: boolean } = {},
   ): Promise<TryCatchResult<boolean>> {
-    const results = success<boolean>(true)
-
     // If no repo config, skip
     if (!this.repoConfig) {
-      return results
+      return success<boolean>(true)
     }
 
-    const repoResults = await setupServiceRepo(this, {
+    return await setupServiceRepo(this, {
       pull,
       silent: true,
     })
+  }
+
+  protected async prepareVolumes(): Promise<TryCatchResult<boolean>> {
+    const results = success<boolean>(true)
+
+    const volumesPath = this._configInstance.volumesDir
+
+    results.addMessage('info', 'Checking for required volumes...')
+    results.addMessage('debug', `Volumes base path: ${volumesPath}`)
+
+    const getRelativePath = (pathStr: string): string => {
+      return path.relative(Deno.cwd(), pathStr)
+    }
+
+    // Get all enabled services that have volumes or seeds
+    if (this.volumes.length === 0 || this.volumesSeeds.length === 0) {
+      return results
+    }
+
+    results.addMessage('info', `Creating required volumes for ${this.name}...`)
+
+    // Create any required volume dirs
+    for (const volume of this.volumes) {
+      const volumePath = path.join(volumesPath, volume)
+      try {
+        const fileInfo = await Deno.stat(volumePath)
+        if (fileInfo.isDirectory) {
+          results.addMessage('debug', `✔️ ${volume}`)
+        } else {
+          return failure<boolean>(`Volume is not a directory: ${volumePath}`, results, false)
+        }
+      } catch (error) {
+        if (error instanceof Deno.errors.NotFound) {
+          await Deno.mkdir(volumePath, { recursive: true })
+          results.addMessage('info', `Created missing volume dir: ${volumePath}`)
+        } else {
+          results.error = error as Error
+          return failure<boolean>(`Error creating volume dir: ${volumePath}`, results, false)
+        }
+      }
+    }
+
+    // Copy any seed directories if needed
+    for (const seed of this.volumesSeeds) {
+      const seedPath = path.join(this._configInstance.volumesDir, seed.destination)
+      try {
+        // Check if seedPath already exists before copying
+        const seedPathExists = await fs.exists(seedPath)
+        if (seedPathExists) {
+          results.addMessage('debug', `Volume seed already exists: ${getRelativePath(seedPath)}`)
+          continue
+        }
+        let seedSource = seed.source
+        if (seed.from_repo && this.repoDir) {
+          seedSource = path.join(this.repoDir, seed.source)
+        } else {
+          return failure<boolean>(
+            `Volume seed requires repo to exist: ${seed.source}`,
+            results,
+            false,
+          )
+        }
+        await fs.copy(seedSource, seedPath, { overwrite: false })
+        results.addMessage(
+          'info',
+          `Copied ${getRelativePath(seedSource)} to ${getRelativePath(seedPath)}`,
+        )
+      } catch (error) {
+        results.error = error as Error
+        return failure<boolean>(
+          `Error copying seed: ${getRelativePath(seed.source)} to ${getRelativePath(seedPath)}`,
+          results,
+          false,
+        )
+      }
+    }
 
     return results
   }

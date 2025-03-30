@@ -134,6 +134,23 @@ export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
     this.messages.unshift(...messages.flat())
     return this
   }
+
+  /**
+   * Collects additional TryCatchResults by adding their messages and errors
+   *
+   * Preserves the original results data.
+   *
+   * @param results - The list of TryCatchResults to collect
+   * @returns A new TryCatchResult with the data set to null and the success set to true
+   */
+  collect(results: TryCatchResult<T, E>[]): TryCatchResult<T, E> {
+    results.forEach((r) => {
+      this.addMessages(r.messages)
+      this.addErrors(r.errors)
+    })
+    this.success = this.errors.length === 0
+    return this
+  }
 }
 
 /**
