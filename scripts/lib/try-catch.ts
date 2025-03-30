@@ -15,25 +15,85 @@ import type { LogMessage } from '@/types'
  * @template E - The type of the error
  */
 export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
+  /**
+   * Creates a TryCatchResultWithLog from a standard TryCatchResult
+   * @param result - The TryCatchResult to convert
+   * @returns A new TryCatchResultWithLog instance
+   */
+  static from<T, E = Error>(result: TryCatchResultBase<T, E>): TryCatchResult<T, E> {
+    return new TryCatchResult<T, E>(result)
+  }
+
+  /**
+   * Collects a list of TryCatchResults with combined messages and errors
+   *
+   * Useful for collecting results from multiple tryCatch calls. Typically from a Promise.all call.
+   *
+   * // TODO: verify this example is correct
+   * @example
+   * ```ts
+   * const results = await Promise.all(services.tryCatchMap<boolean>((service) => service.prepareEnv()))
+   * const collectedResults = TryCatchResult.collect<boolean>(results)
+   * ```
+   *
+   * The data of the returned TryCatchResult is an array of the data from the TryCatchResults in the list.
+   * The success of the returned TryCatchResult is true if all TryCatchResults in the list are successful.
+   * The messages of the returned TryCatchResult are all the messages from the TryCatchResults in the list.
+   * The errors of the returned TryCatchResult are all the errors from the TryCatchResults in the list.
+   * The error of the returned TryCatchResult is the first error found from the TryCatchResults in the list.
+   *
+   * @param results - The list of TryCatchResults to collect
+   * @returns A new TryCatchResult with the data set to null and the success set to true
+   */
+  // TODO: write tests for this
+  static collect<T, E = Error>(results: TryCatchResult<T, E>[]): TryCatchResult<(T | null)[], E> {
+    const result = new TryCatchResult<(T | null)[], E>({ data: [], error: null, success: true })
+    results.forEach((r) => {
+      result.addMessages(r.messages)
+      result.addErrors(r.errors)
+      if (!Array.isArray(result.data)) {
+        result.data = []
+      }
+      result.data.push(r.data)
+    })
+    result.success = result.errors.length === 0
+    return result
+  }
+
   data: T | null
-  _error: E | null
   success: boolean
   messages: LogMessage[] = []
 
+  private _errors: E[] = []
+
   constructor(result: TryCatchResultBase<T, E>) {
     this.data = result.data
-    this._error = result.error
+    this.error = result.error
     this.success = result.success
     this.messages = result.messages || []
   }
 
   set error(error: E | null) {
-    this._error = error
+    error && this._errors.push(error)
     this.success = !error
   }
 
   get error(): E | null {
-    return this._error
+    return this._errors[0] || null
+  }
+
+  get errors(): E[] {
+    return this._errors
+  }
+
+  addErrors(errors: E | E[]): void {
+    const errs = Array.isArray(errors) ? errors : [errors]
+    if (errs.length === 0 || !errs[0]) {
+      // No errors to add, don't set success below
+      return
+    }
+    this._errors.push(...errs)
+    this.success = false
   }
 
   /**
@@ -73,15 +133,6 @@ export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
   unshiftMessages(...messages: LogMessage[] | LogMessage[][]): TryCatchResult<T, E> {
     this.messages.unshift(...messages.flat())
     return this
-  }
-
-  /**
-   * Creates a TryCatchResultWithLog from a standard TryCatchResult
-   * @param result - The TryCatchResult to convert
-   * @returns A new TryCatchResultWithLog instance
-   */
-  static from<T, E = Error>(result: TryCatchResultBase<T, E>): TryCatchResult<T, E> {
-    return new TryCatchResult<T, E>(result)
   }
 }
 
@@ -153,7 +204,9 @@ export async function tryCatch<T, E = Error>(
 
 /**
  * Wraps a promise and returns a boolean indicating success or failure
+ *
  * Primarily used for async operations that don't return a value.
+ *
  * @param promise - The promise to wrap
  * @returns A TryCatchResult object with the result of the promise
  */
@@ -170,6 +223,7 @@ export async function tryCatchBoolean<E = Error>(
 
 /**
  * Wraps a TryCatchResult object and returns a new TryCatchResult object with the error message updated
+ *
  * @param newMessage - The new error message
  * @param result - The TryCatchResult object to wrap
  * @returns A new TryCatchResult object with the error message updated
