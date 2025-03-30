@@ -1,6 +1,7 @@
 /**
  * Setup required env variables
  */
+import { OllamaService } from '@/services/ollama/service.ts'
 import { Input, Secret, Select } from '@cliffy/prompt'
 import { Config } from './lib/core/config/config.ts'
 import { runDockerCommand } from './lib/docker.ts'
@@ -590,7 +591,7 @@ export async function init(
     showInfo("GPU options require a compatible GPU on the host... because it's not magic.\n")
 
     // TODO: call configure on ollama service class
-    const ollamaService = config.getService('ollama')
+    const ollamaService = config.getServiceByName('ollama') as OllamaService
     if (ollamaService) {
       await ollamaService.configure({ silent: false, config })
     }
@@ -623,7 +624,7 @@ export async function init(
     // Create config file to indicate project is initialized
     await createConfigFile()
 
-    if (ollamaProfile === 'host') {
+    if (ollamaService?.useHostOllama()) {
       showInfo('\nOllama host option requires Ollama running on your host machine.')
       showService('Download Ollama', 'https://ollama.com/docs/installation')
       showUserAction('Run `ollama run` on your host machine to start the service\n')
