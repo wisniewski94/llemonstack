@@ -122,9 +122,7 @@ export type ServiceStatusType =
   | 'stopped'
   | 'error' // Error during start or stop
 
-export interface IServiceGroups {
-  [key: string]: ServicesMapType
-}
+export type IServicesGroups = Map<string, ServicesMapType>
 
 export interface ExposeHostConfig {
   host?: {

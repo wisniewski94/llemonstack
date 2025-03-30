@@ -2,7 +2,7 @@ import { Service, ServicesMap } from '@/core/services/index.ts'
 import * as fs from '@/lib/fs.ts'
 import { failure, success, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
 import { isTruthy } from '@/lib/utils/compare.ts'
-import { IServiceGroups, IServiceOptions, LLemonStackConfig, ServiceConfig } from '@/types'
+import { IServiceOptions, IServicesGroups, LLemonStackConfig, ServiceConfig } from '@/types'
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import configTemplate from '../../../../config/config.0.2.0.json' with { type: 'json' }
 import packageJson from '../../../../package.json' with { type: 'json' }
@@ -61,11 +61,11 @@ export class Config {
     success: false,
   })
 
-  private _serviceGroups: IServiceGroups = {
-    databases: new ServicesMap(),
-    middleware: new ServicesMap(),
-    apps: new ServicesMap(),
-  }
+  private _serviceGroups: IServicesGroups = new Map([
+    ['databases', new ServicesMap()],
+    ['middleware', new ServicesMap()],
+    ['apps', new ServicesMap()],
+  ])
 
   // Base configuration
   protected _configDir: string = ''
@@ -425,12 +425,12 @@ export class Config {
 
     // Add service to service group
 
-    const group = this._serviceGroups[service.serviceGroup]
-      ? this._serviceGroups[service.serviceGroup]
+    const group = this._serviceGroups.has(service.serviceGroup)
+      ? this._serviceGroups.get(service.serviceGroup)
       : new ServicesMap()
 
     // Add service to service group, if it already exists it will be replaced
-    group.addService(service, { force: true })
+    group!.addService(service, { force: true })
 
     // TODO: log warning if service is not added
     return added
@@ -594,7 +594,7 @@ export class Config {
     return services
   }
 
-  public getServiceGroups(): IServiceGroups {
+  public getServicesGroups(): IServicesGroups {
     return this._serviceGroups
   }
 
