@@ -28,15 +28,15 @@ export function getEndpoints(
     } as ExposeHost
 
     // Expand env vars in the url and info
-    if (host.url.includes('${')) {
+    if (host.url?.includes('${')) {
       host.url = expandEnvVars(host.url, env)
     }
-    if (host?.info?.includes('${')) {
+    if (host.info?.includes('${')) {
       host.info = expandEnvVars(host.info, env)
     }
 
     // Expand credentials from env vars
-    if (item.data.credentials) {
+    if (item.data?.credentials) {
       host.credentials = {}
       Object.entries(item.data.credentials).forEach(([key, value]) => {
         host.credentials![key] = expandEnvVars(String(value), env)
