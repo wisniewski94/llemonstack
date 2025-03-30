@@ -1,3 +1,4 @@
+import { tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
 import { Service } from './service.ts'
 
 /**
@@ -99,6 +100,27 @@ export class ServicesMap extends Map<string, Service> {
   }
 
   /**
+   * Map a function over the services in this map to a TryCatchResult
+   *
+   * @example
+   * ```ts
+   * // Run prepareEnv for all services in parallel
+   * const results = await Promise.all(services.tryCatchMap((service) => service.prepareEnv()))
+   *
+   * // Optionally collect the results into a single TryCatchResult
+   * const collectedResults = TryCatchResult.collect<boolean>(results)
+   * ```
+   *
+   * @param mapFunction - The function to map over the services
+   * @returns A promise of the results
+   */
+  public tryCatchMap<T>(
+    mapFunction: (service: Service) => Promise<T>,
+  ): Promise<TryCatchResult<T, Error>>[] {
+    return this.toArray().map((service) => tryCatch<T>(mapFunction(service)))
+  }
+
+  /**
    * Filter services by a function
    *
    * @param filter - The function to filter by
@@ -106,6 +128,16 @@ export class ServicesMap extends Map<string, Service> {
    */
   public filter(filter: (service: Service) => boolean): ServicesMap {
     return new ServicesMap([...this.entries()].filter(([_, service]) => filter(service)))
+  }
+
+  /**
+   * Map services by a function
+   *
+   * @param mapFunction - The function to map by
+   * @returns Array of results
+   */
+  public map<T>(mapFunction: (service: Service) => T): T[] {
+    return this.toArray().map(mapFunction)
   }
 
   /**
