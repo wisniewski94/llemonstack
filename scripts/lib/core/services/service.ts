@@ -1,5 +1,4 @@
 import { Config } from '@/core/config/config.ts'
-import { setupServiceRepo } from '@/core/services/repo.ts'
 import { dockerCompose, expandEnvVars } from '@/lib/docker.ts'
 import { fs, path } from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
@@ -15,6 +14,7 @@ import {
   ServiceStatusType,
 } from '@/types'
 import { searchObjectPaths } from '../../utils/search-object.ts'
+import { setupServiceRepo } from './utils/repo.ts'
 
 /**
  * Service
