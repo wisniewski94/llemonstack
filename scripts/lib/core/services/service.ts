@@ -1,6 +1,6 @@
 import { Config } from '@/core/config/config.ts'
 import { dockerCompose, expandEnvVars } from '@/lib/docker.ts'
-import { fs, path } from '@/lib/fs.ts'
+import { path } from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 import { ObservableStruct } from '@/lib/utils/observable.ts'
 import {
@@ -14,7 +14,7 @@ import {
   ServiceStatusType,
 } from '@/types'
 import { searchObjectPaths } from '../../utils/search-object.ts'
-import { setupServiceRepo } from './utils/repo.ts'
+import { prepareVolumes, setupServiceRepo } from './utils/index.ts'
 
 /**
  * Service
@@ -332,6 +332,12 @@ export class Service {
     return results
   }
 
+  /**
+   * Prepare the service repository
+   *
+   * @param {boolean} [pull=false] - Whether to update the repository to get the latest changes
+   * @returns {TryCatchResult<boolean>} - The result of the preparation
+   */
   public async prepareRepo(
     { pull = false }: { pull?: boolean } = {},
   ): Promise<TryCatchResult<boolean>> {
@@ -346,86 +352,24 @@ export class Service {
     })
   }
 
+  /**
+   * Prepare the service volumes
+   *
+   * @returns {TryCatchResult<boolean>} - The result of the preparation
+   */
   protected async prepareVolumes(): Promise<TryCatchResult<boolean>> {
-    const results = success<boolean>(true)
-
-    const volumesPath = this._configInstance.volumesDir
-
-    results.addMessage('info', 'Checking for required volumes...')
-    results.addMessage('debug', `Volumes base path: ${volumesPath}`)
-
-    const getRelativePath = (pathStr: string): string => {
-      return path.relative(Deno.cwd(), pathStr)
-    }
-
-    // Get all enabled services that have volumes or seeds
-    if (this.volumes.length === 0 || this.volumesSeeds.length === 0) {
+    // If no volumes, skip
+    if (this.volumes.length === 0 && this.volumesSeeds.length === 0) {
+      const results = success<boolean>(true)
+      results.addMessage('debug', `No volumes or seeds to prepare for ${this.name}`)
       return results
     }
-
-    results.addMessage('info', `Creating required volumes for ${this.name}...`)
-
-    // Create any required volume dirs
-    for (const volume of this.volumes) {
-      const volumePath = path.join(volumesPath, volume)
-      try {
-        const fileInfo = await Deno.stat(volumePath)
-        if (fileInfo.isDirectory) {
-          results.addMessage('debug', `✔️ ${volume}`)
-        } else {
-          return failure<boolean>(`Volume is not a directory: ${volumePath}`, results, false)
-        }
-      } catch (error) {
-        if (error instanceof Deno.errors.NotFound) {
-          await Deno.mkdir(volumePath, { recursive: true })
-          results.addMessage('info', `Created missing volume dir: ${volumePath}`)
-        } else {
-          results.error = error as Error
-          return failure<boolean>(`Error creating volume dir: ${volumePath}`, results, false)
-        }
-      }
-    }
-
-    // Copy any seed directories if needed
-    for (const seed of this.volumesSeeds) {
-      const seedPath = path.join(this._configInstance.volumesDir, seed.destination)
-      try {
-        // Check if seedPath already exists before copying
-        const seedPathExists = await fs.exists(seedPath)
-        if (seedPathExists) {
-          results.addMessage('debug', `Volume seed already exists: ${getRelativePath(seedPath)}`)
-          continue
-        }
-        let seedSource = seed.source
-        if (seed.from_repo && this.repoDir) {
-          seedSource = path.join(this.repoDir, seed.source)
-        } else {
-          return failure<boolean>(
-            `Volume seed requires repo to exist: ${seed.source}`,
-            results,
-            false,
-          )
-        }
-        await fs.copy(seedSource, seedPath, { overwrite: false })
-        results.addMessage(
-          'info',
-          `Copied ${getRelativePath(seedSource)} to ${getRelativePath(seedPath)}`,
-        )
-      } catch (error) {
-        results.error = error as Error
-        return failure<boolean>(
-          `Error copying seed: ${getRelativePath(seed.source)} to ${getRelativePath(seedPath)}`,
-          results,
-          false,
-        )
-      }
-    }
-
-    return results
+    return await prepareVolumes(this, this._configInstance.volumesDir)
   }
 
   //
   // Service Actions
+  //
   // These methods are called by the CLI and can be overridden by subclasses.
   //
 
