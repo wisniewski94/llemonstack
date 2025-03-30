@@ -241,16 +241,19 @@ export async function tryCatchBoolean<E = Error>(
 }
 
 /**
- * Wraps a list of promises and returns a TryCatchResult object with the results of the promises
+ * Executes list of functions in parallel in a tryCatch context and collects the results
  *
- * @param promises - The promises to wrap
+ * Functions can be async promises or regular functions.
+ *
+ * @param promises - The functions to wrap
  * @returns A TryCatchResult object with the results of the promises
  */
 export async function tryCatchAll<T, E = Error>(
-  promises: Promise<T>[] | Promise<TryCatchResult<T, E>>[],
+  promises: (Promise<T> | T)[],
 ): Promise<TryCatchResult<(T | null)[], E>> {
-  const results = await Promise.all(promises.map((p) => tryCatch<T, E>(p)))
-  return TryCatchResult.collect<T, E>(results)
+  return TryCatchResult.collect<T, E>(
+    await Promise.all(promises.map((p) => tryCatch<T, E>(p))),
+  )
 }
 
 /**
