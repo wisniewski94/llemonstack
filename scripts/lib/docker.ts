@@ -2,6 +2,7 @@
  * Docker management library
  *
  * TODO: move all docker related functions here
+ * TODO: convert all docker functions to return TryCatchResult
  */
 
 import type { EnvVars, RunCommandOutput } from '@/types'
@@ -91,7 +92,7 @@ export async function removeDockerNetwork(
  * @param args {DockerComposeOptions} - The options for the command
  * @returns {TryCatchResult<RunCommandOutput>} The output of the command
  */
-export async function dockerCompose(
+export async function tryDockerCompose(
   cmd: string, // Docker compose command: up, down, etc.
   options: DockerComposeOptions = {},
 ): Promise<TryCatchResult<RunCommandOutput>> {

@@ -1,5 +1,5 @@
 import { Config } from '@/core/config/config.ts'
-import { dockerCompose } from '@/lib/docker.ts'
+import { tryDockerCompose } from '@/lib/docker.ts'
 import { path } from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 import { ObservableStruct } from '@/lib/utils/observable.ts'
@@ -357,7 +357,7 @@ export class Service {
       silent?: boolean
     } = {},
   ): Promise<TryCatchResult<boolean>> {
-    const results = await dockerCompose('up', {
+    const results = await tryDockerCompose('up', {
       projectName: this._configInstance.projectName,
       composeFile: this.composeFile,
       profiles: this.getProfiles(),
@@ -374,7 +374,7 @@ export class Service {
   }
 
   public async stopService(): Promise<TryCatchResult<boolean>> {
-    const results = await dockerCompose('down', {
+    const results = await tryDockerCompose('down', {
       composeFile: this.composeFile,
       projectName: this._configInstance.projectName,
       silent: true,
