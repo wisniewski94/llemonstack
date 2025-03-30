@@ -2,7 +2,6 @@ import { Config } from '@/core/config/config.ts'
 import { setupServiceRepo } from '@/core/services/repo.ts'
 import { dockerCompose, expandEnvVars } from '@/lib/docker.ts'
 import { fs, path } from '@/lib/fs.ts'
-import { searchObjectPaths } from '@/lib/search-object.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 import { ObservableStruct } from '@/lib/utils/observable.ts'
 import {
@@ -15,6 +14,7 @@ import {
   ServiceConfig,
   ServiceStatusType,
 } from '@/types'
+import { searchObjectPaths } from '../../utils/search-object.ts'
 
 /**
  * Service
