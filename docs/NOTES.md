@@ -18,6 +18,8 @@ container logs in Docker Desktop.
 
 In Progress..
 
+- [ ] Rework types to IInterface ClassType
+
 - [ ] Use Deno.env a the basic global config manager and Config for the complicated stack config
 
   - [ ] Add LLEMONSTACK_LOG_LEVEL check to logger
