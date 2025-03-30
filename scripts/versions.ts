@@ -16,7 +16,6 @@ import {
 import { IServiceImage, ServicesMapType, ServiceType } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Column, Row, RowType } from '@cliffy/table'
-import { prepareEnv } from './start.ts'
 
 const MAX_COLUMN_WIDTH = 50
 
@@ -237,7 +236,9 @@ export async function versions(config: Config): Promise<void> {
   )
   showHeader('Docker Image Versions')
 
-  await prepareEnv({ config, silent: true })
+  await config.prepareEnv()
+
+  // TODO: move docker network preparation to config?
   await prepareDockerNetwork(config.dockerNetworkName)
 
   try {

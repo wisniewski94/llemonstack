@@ -12,10 +12,6 @@ import {
 } from '@/lib/docker.ts'
 import { colors, RowType, showAction, showError, showInfo, showTable } from '@/lib/logger.ts'
 import { ServicesMapType, ServiceType } from '@/types'
-import { prepareEnv, setupRepos } from './start.ts'
-
-const config = Config.getInstance()
-await config.initialize()
 
 async function removeAllNetworks(projectName: string): Promise<void> {
   const MAX_RETRIES = 3
@@ -101,7 +97,6 @@ async function stopServices(
  * Does not remove orphans.
  * @param {Service} service - The service to stop
  */
-// TODO: verify this works
 export async function stopService(
   service: ServiceType,
 ): Promise<void> {
@@ -149,15 +144,7 @@ export async function stop(
     showAction(`Stopping enabled services for project: ${config.projectName}...`)
   }
 
-  await prepareEnv({ config, silent: false })
-
-  // Make sure repos are all available in case any services need them
-  try {
-    // TODO: move this to Services class to auto handle repo setup
-    await setupRepos({ config, all: true, pull: false })
-  } catch (error) {
-    showError('Unable to setup repos, docker compose down may fail', error)
-  }
+  await config.prepareEnv() // TODO: check for errors and show them
 
   if (service) {
     await stopService(service)
