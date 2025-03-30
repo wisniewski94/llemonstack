@@ -1,5 +1,5 @@
 import { Config } from '@/core/config/config.ts'
-import { dockerCompose, expandEnvVars } from '@/lib/docker.ts'
+import { dockerCompose } from '@/lib/docker.ts'
 import { path } from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 import { ObservableStruct } from '@/lib/utils/observable.ts'
@@ -13,8 +13,7 @@ import {
   ServiceConfig,
   ServiceStatusType,
 } from '@/types'
-import { searchObjectPaths } from '../../utils/search-object.ts'
-import { prepareVolumes, setupServiceRepo } from './utils/index.ts'
+import { getEndpoints, prepareVolumes, setupServiceRepo } from './utils/index.ts'
 
 /**
  * Service
@@ -260,40 +259,7 @@ export class Service {
    */
   // TODO: move to helper lib
   public getEndpoints(context: string = 'host.*'): ExposeHost[] {
-    // Search the service config exposes sections
-    const data = searchObjectPaths<ExposeHost>(this._config.exposes, context)
-
-    const env = this._configInstance.env
-
-    // Map each host to an ExposeHost object with expanded env vars
-    const endpoints = data.map((item) => {
-      const host = {
-        _key: item.key,
-        name: item.data.name || (item.key.split('.').pop() ?? ''),
-        url: typeof item.data === 'string' ? item.data : item.data.url,
-        info: item.data.info,
-      } as ExposeHost
-
-      // Expand env vars in the url and info
-      if (host.url.includes('${')) {
-        host.url = expandEnvVars(host.url, env)
-      }
-      if (host?.info?.includes('${')) {
-        host.info = expandEnvVars(host.info, env)
-      }
-
-      // Expand credentials from env vars
-      if (item.data.credentials) {
-        host.credentials = {}
-        Object.entries(item.data.credentials).forEach(([key, value]) => {
-          host.credentials![key] = expandEnvVars(String(value), env)
-        })
-      }
-
-      return host
-    })
-
-    return endpoints
+    return getEndpoints(this, context, this._configInstance.env)
   }
 
   /**
