@@ -211,36 +211,6 @@ function getDockerTargetPlatform(): string {
 }
 
 /**
- * Build a docker image
- *
- * @param projectName - The name of the project
- * @param composeFile - The path to the compose file
- * @param envVars - The environment variables to set
- */
-// export async function buildImage(
-//   projectName: string,
-//   composeFile: string,
-//   envVars?: Record<string, string>,
-//   { noCache = false }: { noCache?: boolean } = {},
-// ): Promise<void> {
-//   await runCommand(
-//     'docker',
-//     {
-//       args: [
-//         'compose',
-//         '-p',
-//         projectName,
-//         '-f',
-//         composeFile,
-//         'build',
-//         noCache && '--no-cache',
-//       ],
-//       env: envVars,
-//     },
-//   )
-// }
-
-/**
  * Returns Dockerfile.arm64 if on Mac Silicon or aarch64 platform
  * @returns {string} Dockerfile.arm64 or empty string
  */
@@ -405,223 +375,27 @@ export async function dockerRun(
 }
 
 /**
- * Comprehensive Docker/shell-style variable expansion supporting various expansion patterns
- *
- * @param input - The string to expand variables in
- * @param envVars - Object containing environment variables
- * @param modifyEnv - Whether to allow modifying the environment variables (for :=)
- * @param errorOnMissing - Whether to throw an error on missing variables (:?)
- * @returns The expanded string with all variables resolved
- * @throws Error when a required variable is not set (:?)
+ * Build a docker image
  */
-export function expandEnvVars(
-  input: string,
-  envVars: Record<string, string | undefined>,
-  options: { modifyEnv?: boolean; errorOnMissing?: boolean } = {},
-): string {
-  if (!input || !input.includes('$')) {
-    return input
-  }
-
-  // Clone the env vars if we're allowing modifications
-  const workingEnv = options.modifyEnv ? { ...envVars } : envVars
-
-  // We'll repeat the expansion until there are no more changes
-  let result = input
-  let previousResult = ''
-  let iterations = 0
-  const maxIterations = 10
-
-  // Process the string repeatedly until all variables are resolved
-  while (result !== previousResult && iterations < maxIterations) {
-    previousResult = result
-
-    // Find variable patterns, starting with the innermost ones
-    // This regex matches the various forms of variable expansion
-    const varRegex = /\${([^{}:]+)(?::([?+=-])([^{}]*))?}|\$([a-zA-Z0-9_]+)/g
-
-    result = result.replace(varRegex, (_match, varNameBraces, operator, operand, varNameSimple) => {
-      const varName = varNameBraces || varNameSimple
-      const value = workingEnv[varName]
-      const isVarSet = value !== undefined && value !== ''
-
-      // Simple variable expansion with no operator
-      if (!operator && varNameBraces) {
-        return isVarSet ? value : ''
-      }
-
-      // Simple $VAR form
-      if (varNameSimple) {
-        return isVarSet ? value : ''
-      }
-
-      // Process each operator type
-      switch (operator) {
-        // Default value: ${VAR:-default}
-        case '-':
-          return isVarSet ? value : operand
-
-        // Error if not set: ${VAR:?error}
-        case '?':
-          if (!isVarSet) {
-            const errorMsg = operand || `Variable ${varName} is required but not set`
-            if (options.errorOnMissing) {
-              throw new Error(errorMsg)
-            }
-            return ''
-          }
-          return value
-
-        // Alternate value: ${VAR:+alternate}
-        case '+':
-          return isVarSet ? operand : ''
-
-        // Assign default: ${VAR:=default}
-        case '=':
-          if (!isVarSet && options.modifyEnv) {
-            // Process the default value in case it contains variables
-            const processedDefault = expandEnvVars(operand, workingEnv, options)
-            workingEnv[varName] = processedDefault
-            return processedDefault
-          } else if (!isVarSet) {
-            // If modification not allowed, just return the default but don't assign
-            return operand
-          }
-          return value
-
-        // No operator or unknown operator
-        default:
-          return isVarSet ? value : ''
-      }
-    })
-
-    iterations++
-  }
-
-  // Apply any changes back to the original env object if modifyEnv is true
-  if (options.modifyEnv) {
-    Object.assign(envVars, workingEnv)
-  }
-
-  return result
-}
-
-// // Example usage
-// const env: Record<string, string | undefined> = {
-//   'HOME': '/home/user',
-//   'APP_PORT': '3000',
-//   'NODE_ENV': 'development',
-//   // These are intentionally not defined
-//   // "DB_HOST": undefined,
-//   // "ERROR_VAR": undefined,
-// }
-
-// Test cases demonstrating all patterns
-// try {
-//   console.log(`
-//     Simple variable: ${expandEnvVars('${HOME}', env)}
-//     Default value: ${expandEnvVars('${DB_HOST:-localhost}', env)}
-//     Alternate value: ${expandEnvVars('${APP_PORT:+custom-port}', env)}
-//     Alternate (not set): ${expandEnvVars('${DB_HOST:+alternate}', env)}
-//     Assignment: ${expandEnvVars('${DB_HOST:=localhost:${APP_PORT}}', env, true)}
-//     After assignment: ${env.DB_HOST}
-
-//     Nested variables: ${
-//     expandEnvVars('${UNDEFINED:-${ALSO_UNDEFINED:-${APP_PORT}}}', env)
-//   }
-//   `)
-
-//   // This will throw an error
-//   console.log(expandEnvVars('${ERROR_VAR:?Must provide ERROR_VAR}', env))
-// } catch (error) {
-//   console.error(`Error caught: ${error.message}`)
-// }
-
-//
-// OLD VERSION
-// TODO: delete after creating tests for the new expandEnvVars
-//
-// // Define operator types for better type safety
-// type SubstitutionOperator = ':-' | ':?' | ':+' | ':='
-
-// // Define a type for the variable value map
-// type VariableMap = Record<string, string | undefined | null>
-
-// export const DOCKER_COMPOSE_VAR_REGEX = /\${([A-Za-z0-9_]+)(?:(:[-?+=])([^}]*))?}/g
-
-// /**
-//  * Replace Docker Compose variables in a string
-//  *
-//  * This regex matches all Docker Compose variable syntaxes:
-//  * - ${VAR} - simple variable
-//  * - ${VAR:-default} - variable with default value
-//  * - ${VAR:?error} - variable with error message if not set
-//  * - ${VAR:+alternate} - alternate value if variable is set
-//  * - ${VAR:=default} - assign default value with variable substitution
-//  *
-//  * @param str - The string containing Docker Compose variables
-//  * @param valueMap - Map of variable names to values
-//  * @param errorOnMissing - Whether to throw an error on missing variables
-//  * @returns The string with variables replaced
-//  */
-// export function replaceDockerComposeVars(
-//   str: string,
-//   valueMap: VariableMap = {},
-//   errorOnMissing: boolean = false,
-// ): string {
-//   return str.replace(
-//     DOCKER_COMPOSE_VAR_REGEX,
-//     (
-//       match: string,
-//       varName: string,
-//       operator: string | undefined,
-//       defaultVal: string | undefined,
-//     ): string => {
-//       // Check if variable exists in the map
-//       const hasVar = Object.prototype.hasOwnProperty.call(valueMap, varName)
-//       const varValue = valueMap[varName]
-//       const isEmpty = varValue === undefined || varValue === null || varValue === ''
-
-//       // Handle simple variable without operator: ${VAR}
-//       if (!operator) {
-//         if (!hasVar && errorOnMissing) {
-//           throw new Error(`Variable "${varName}" not found`)
-//         }
-//         return hasVar ? varValue as string : ''
-//       }
-
-//       // Cast operator to the appropriate type
-//       const op = operator as SubstitutionOperator
-
-//       switch (op) {
-//         case ':-':
-//           // Use default if var is unset or empty: ${VAR:-default}
-//           return isEmpty ? (defaultVal || '') : (varValue as string)
-
-//         case ':?':
-//           // Error if var is unset or empty: ${VAR:?error}
-//           if (isEmpty) {
-//             const errorMsg = defaultVal || `Variable "${varName}" is required but not set`
-//             throw new Error(errorMsg)
-//           }
-//           return varValue as string
-
-//         case ':+':
-//           // Use alternate value if var is set and not empty: ${VAR:+alternate}
-//           return !isEmpty ? (defaultVal || '') : ''
-
-//         case ':=':
-//           // Assign default with variable substitution: ${VAR:=default}
-//           if (isEmpty) {
-//             // Note: For complete implementation, you'd need to recursively process
-//             // the default value for nested variables
-//             return defaultVal || ''
-//           }
-//           return varValue as string
-
-//         default:
-//           return match // Return original if unknown operator (shouldn't happen with type safety)
-//       }
+// export async function buildImage(
+//   projectName: string,
+//   composeFile: string,
+//   envVars?: Record<string, string>,
+//   { noCache = false }: { noCache?: boolean } = {},
+// ): Promise<void> {
+//   await runCommand(
+//     'docker',
+//     {
+//       args: [
+//         'compose',
+//         '-p',
+//         projectName,
+//         '-f',
+//         composeFile,
+//         'build',
+//         noCache && '--no-cache',
+//       ],
+//       env: envVars,
 //     },
 //   )
 // }

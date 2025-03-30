@@ -1,4 +1,4 @@
-import { expandEnvVars } from '@/lib/docker.ts'
+import { expandEnvVars } from '@/lib/utils/envvars.ts'
 import { searchObjectPaths } from '@/lib/utils/search-object.ts'
 import type { ExposeHost, ServiceType } from '@/types'
 
