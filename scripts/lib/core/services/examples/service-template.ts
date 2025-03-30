@@ -19,10 +19,10 @@ export class ServiceStub extends Service {
   }
 
   /**
-   * Get the host url for the service
+   * Get the endpoints exposed by the service
    * @returns The host URL
    */
-  override getHosts(_context: string): ExposeHost[] {
+  override getEndpoints(_context: string): ExposeHost[] {
     // Example getting a custom host url from an env var
     const host =
       this._configInstance.env['SOME_SERVICE_HOST'] || (this.getProfiles()[0] === 'custom-host')

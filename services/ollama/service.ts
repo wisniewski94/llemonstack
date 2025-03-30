@@ -29,7 +29,7 @@ export class OllamaService extends Service {
    * Get the Ollama host based on the current profile
    * @returns The Ollama host URL
    */
-  override getHosts(_context: string): ExposeHost[] {
+  override getEndpoints(_context: string): ExposeHost[] {
     // Use the OLLAMA_HOST env var if set, otherwise check Ollama profile settings
     const host =
       this._configInstance.env['OLLAMA_HOST'] || (this.getProfiles()[0] === 'ollama-host')

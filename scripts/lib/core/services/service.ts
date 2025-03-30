@@ -239,16 +239,26 @@ export class Service {
    * @returns The container DNS host name and port, e.g. 'ollama:11434'
    */
   public getHost(context?: string): ExposeHost {
-    return this.getHosts(context)[0]
+    return this.getEndpoints(context)[0]
   }
 
   /**
-   * Get all hosts matching the context
+   * Get all the endpoints matching the context
+   *
+   * Used by UI scripts and other services to discover the hosts and ports
+   * this service is exposing to the host and internal to the stack.
+   *
+   * @example
+   * ```ts
+   * // Get all the
+   * const hosts = service.getEndpoints('host.*')
+   * console.log(hosts)
+   * ```
    *
    * @param {string} context - Dot object path for exposes in the service llemonstack.yaml config
    * @returns The container DNS host name and port, e.g. 'ollama:11434'
    */
-  public getHosts(context?: string): ExposeHost[] {
+  public getEndpoints(context?: string): ExposeHost[] {
     if (!context) {
       context = 'host.*'
     }
@@ -256,7 +266,8 @@ export class Service {
     // Get all hosts matching the context
     const data = searchObjectPaths<ExposeHost>(this._config.exposes, context)
 
-    const env = Config.getInstance().env
+    const env = this._configInstance.env
+
     // Map each host to an ExposeHost object
     return data.map((item) => {
       const host = {

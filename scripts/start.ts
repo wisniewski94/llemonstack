@@ -408,7 +408,7 @@ function showServicesInfo(
   services.toArray().sort((a, b) => a.name.localeCompare(b.name))
   const rows: RowType[] = []
   services.forEach((service) => {
-    const hosts = service.getHosts(hostContext)
+    const hosts = service.getEndpoints(hostContext)
     hosts?.forEach((host: ExposeHost) => {
       const name = ['api', 'dashboard'].includes((host.name || '').trim().toLowerCase())
         ? `${service.name} ${host.name}`
