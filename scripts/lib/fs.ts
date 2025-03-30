@@ -5,7 +5,7 @@
 import * as fs from 'jsr:@std/fs'
 import * as path from 'jsr:@std/path'
 import * as yaml from 'jsr:@std/yaml'
-import { failure, tryCatch, tryCatchBoolean, TryCatchResult } from './try-catch.ts'
+import { failure, success, tryCatch, tryCatchBoolean, TryCatchResult } from './try-catch.ts'
 
 // Re-export fs and path
 export { fs, path }
@@ -66,6 +66,39 @@ export async function dirExists(path: string): Promise<TryCatchResult<boolean>> 
   }
 }
 
+/**
+ * Create a dir if it doesn't exist
+ *
+ * @param {string} dir - The path of the dir to create
+ * @param {boolean} [allowOutsideCwd=false] - If true, allow the dir to be created outside of cwd
+ * @returns {TryCatchResult<boolean>} The results of the operation
+ */
+export async function ensureDir(
+  dir: string,
+  { allowOutsideCwd = false }: { allowOutsideCwd?: boolean } = {},
+): Promise<TryCatchResult<boolean>> {
+  const results = success<boolean>(true)
+
+  results.addMessage('debug', `Ensuring dir: ${dir}`)
+
+  if (!allowOutsideCwd && !isInsideCwd(dir)) {
+    // Check if dir already exists and return success if it does
+    if ((await dirExists(dir)).data) {
+      return results
+    }
+    // Otherwise return failure
+    return failure<boolean>(`Unable to create dir outside of cwd: ${dir}`, results, false)
+  }
+
+  const ensureDirResults = await tryCatch(fs.ensureDir(dir))
+  if (!ensureDirResults.success) {
+    results.error = ensureDirResults.error
+    return failure<boolean>(`Error creating dir: ${dir}`, results, false)
+  }
+
+  return results
+}
+
 export async function readDir(
   dirPath: string,
 ): Promise<TryCatchResult<AsyncIterable<Deno.DirEntry>>> {
@@ -102,6 +135,7 @@ export async function saveJson(filePath: string, data: unknown): Promise<TryCatc
  * @param envVars - The environment variables to save
  * @returns A TryCatchResult<boolean>
  */
+// TODO: move this to env lib
 export async function updateEnv(
   filePath: string,
   envVars: Record<string, string>,
