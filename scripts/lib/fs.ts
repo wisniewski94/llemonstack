@@ -19,6 +19,7 @@ export function escapePath(file: string): string {
   return path.normalize(file.replace(/(\s|`|\$|\\|"|&)/g, '\\$1'))
 }
 
+// TODO: add tests for this function
 export async function fileExists(path: string): Promise<TryCatchResult<boolean>> {
   try {
     const fileInfo = await Deno.stat(path)
@@ -32,11 +33,18 @@ export async function fileExists(path: string): Promise<TryCatchResult<boolean>>
       })
     }
   } catch (error) {
+    // Return success if the error is a NotFound error
+    if (error instanceof Deno.errors.NotFound) {
+      return new TryCatchResult<boolean>({ data: false, error: null, success: true })
+    }
+    // Return all other errors as a failure
     return new TryCatchResult<boolean>({ data: false, error: error as Error, success: false })
   }
 }
 
+// TODO: add tests for this function
 export async function dirExists(path: string): Promise<TryCatchResult<boolean>> {
+  // TODO: use tryCatch to reduce code duplication
   try {
     const fileInfo = await Deno.stat(path)
     if (fileInfo.isDirectory) {
@@ -49,6 +57,11 @@ export async function dirExists(path: string): Promise<TryCatchResult<boolean>> 
       })
     }
   } catch (error) {
+    // Return success if the error is a NotFound error
+    if (error instanceof Deno.errors.NotFound) {
+      return new TryCatchResult<boolean>({ data: false, error: null, success: true })
+    }
+    // Return all other errors as a failure
     return new TryCatchResult<boolean>({ data: false, error: error as Error, success: false })
   }
 }
