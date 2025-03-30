@@ -2,7 +2,7 @@
  * Show the versions of the services that support it
  */
 
-import { IServiceImage, Service } from '@/types'
+import { IServiceImage, ServicesMapType, ServiceType } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Column, Row, RowType } from '@cliffy/table'
 import { getImageFromCompose, getImagesFromComposeYaml } from './lib/compose.ts'
@@ -17,9 +17,6 @@ import {
   showWarning,
 } from './lib/logger.ts'
 import { prepareEnv } from './start.ts'
-
-const config = Config.getInstance()
-await config.initialize()
 
 const MAX_COLUMN_WIDTH = 50
 
@@ -46,33 +43,32 @@ function showVersionsTable(
  * Starts a new container so there's a chance the version differs from any running containers.
  */
 async function getAppVersion(
-  projectName: string,
-  service: string, // Service name
-  composeFile: string, // Compose file
+  config: Config,
+  service: ServiceType, // Service name
   entrypoint: string, // Entrypoint
   cmdArgs: string[], //
 ): Promise<IServiceImage> {
   let serviceImage: IServiceImage
   try {
-    const tmp = await getImageFromCompose(composeFile, service)
+    const tmp = await getImageFromCompose(service.composeFile, service.service)
     if (!tmp) {
-      throw new Error(`Unable to get image from ${composeFile}`)
+      throw new Error(`Unable to get image from ${service.composeFile}`)
     }
     serviceImage = tmp
   } catch (error) {
-    if (config.isEnabled(service)) {
-      showError(`Error getting image for ${service}`, error)
+    if (service.isEnabled()) {
+      showError(`Error getting image for ${service.name}`, error)
     }
     serviceImage = {
-      service,
+      service: service.name,
       containerName: '',
       image: '',
     }
   }
   try {
     const version = (await dockerRun(
-      projectName,
-      service,
+      config.projectName,
+      service.service,
       entrypoint,
       { args: cmdArgs },
     )).toString().trim()
@@ -85,10 +81,10 @@ async function getAppVersion(
   return serviceImage
 }
 
-async function getAppVersions(projectName: string, services: Service[]): Promise<string[][]> {
+async function getAppVersions(config: Config, services: ServicesMapType): Promise<string[][]> {
   // Get enabled services and process them in parallel
   const results = await Promise.all(
-    services.map(async (service) => {
+    services.filterMap((service) => {
       const composeFile = service.composeFile
       if (!composeFile) {
         showWarning(`Compose file not found for ${service}`)
@@ -100,10 +96,9 @@ async function getAppVersions(projectName: string, services: Service[]): Promise
         } as IServiceImage
       }
       const [entrypoint, ...args] = service.appVersionCmd || []
-      const serviceImage = await getAppVersion(
-        projectName,
-        service.service,
-        composeFile,
+      const serviceImage = getAppVersion(
+        config,
+        service,
         entrypoint,
         args,
       )
@@ -118,10 +113,11 @@ async function getAppVersions(projectName: string, services: Service[]): Promise
   return rows
 }
 
-async function showImageVersions(): Promise<RowType[]> {
+async function showImageVersions(config: Config): Promise<RowType[]> {
   // Iterate through all compose files to get images
   // Process all compose files in parallel
   const composeResults = await Promise.all(
+    // TODO: remove the extra async
     config.getComposeFiles({ all: true }).map(async (composeFile) => {
       let images: IServiceImage[] = []
       try {
@@ -241,17 +237,17 @@ export async function versions(config: Config): Promise<void> {
   )
   showHeader('Docker Image Versions')
 
-  await prepareEnv({ silent: true })
-  await prepareDockerNetwork()
+  await prepareEnv({ config, silent: true })
+  await prepareDockerNetwork(config.dockerNetworkName)
 
   try {
-    const services = config.getEnabledServices().filter((service) => service.appVersionCmd)
+    const services = config.getEnabledServices().filter((service) => service.appVersionCmd !== null)
 
-    const appVersionsPromise = services.length > 0
-      ? getAppVersions(config.projectName, services)
+    const appVersionsPromise = services.size > 0
+      ? getAppVersions(config, services)
       : Promise.resolve([])
 
-    const imageVersionRows = await showImageVersions()
+    const imageVersionRows = await showImageVersions(config)
 
     if (imageVersionRows.length > 0) {
       showVersionsTable(

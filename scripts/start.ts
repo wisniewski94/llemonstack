@@ -2,7 +2,7 @@
  * Start docker services
  */
 
-import { EnvVars, ExposeHost, IRepoConfig, Services } from '@/types'
+import { EnvVars, ExposeHost, IRepoConfig, ServicesMapType, ServiceType } from '@/types'
 import { runCommand } from './lib/command.ts'
 import { Config } from './lib/core/config/config.ts'
 import { isServiceRunning, prepareDockerNetwork } from './lib/docker.ts'
@@ -49,6 +49,7 @@ export async function checkPrerequisites(): Promise<void> {
 /**
  * Clone a service repo into repo dir
  */
+// TODO: finish moving this to service class and lib
 async function setupRepo(
   serviceName: string,
   repoConfig: IRepoConfig,
@@ -343,8 +344,8 @@ export async function isSupabaseStarted(projectName: string): Promise<boolean> {
 
 // TODO: update API and all references to startService
 export async function startService(
-  _projectName: string,
-  serviceName: string,
+  config: Config,
+  service: ServiceType,
   { envVars = {}, profiles: _profiles, createNetwork = true }: {
     envVars?: EnvVars
     profiles?: string[]
@@ -352,12 +353,7 @@ export async function startService(
   } = {},
 ) {
   if (createNetwork) {
-    await prepareDockerNetwork()
-  }
-
-  const service = config.getServiceByName(serviceName)
-  if (!service) {
-    throw new Error(`Invalid service name, unable to start: ${serviceName}`)
+    await prepareDockerNetwork(config.dockerNetworkName)
   }
 
   const composeFile = service?.composeFile
@@ -381,17 +377,17 @@ export async function startService(
  * @param composeFiles - The compose files to use
  */
 export async function startServices(
-  projectName: string,
-  services: string[],
+  config: Config,
+  services: ServicesMapType, // TODO: conver to ServicesMap
   { envVars = {} }: { envVars?: EnvVars } = {},
 ) {
   // Create the network if it doesn't exist
-  await prepareDockerNetwork()
+  await prepareDockerNetwork(config.dockerNetworkName)
 
   // Start all services in parallel
-  await Promise.all(services.map(async (service) => {
+  await Promise.all(services.filterMap(async (service) => {
     try {
-      await startService(projectName, service, { envVars, createNetwork: false })
+      await startService(config, service, { envVars, createNetwork: false })
     } catch (error) {
       showError(`Failed to start service ${service}:`, error)
       throw error
@@ -399,12 +395,12 @@ export async function startServices(
   }))
 }
 
-export function isInitialized(): boolean {
-  return config.projectInitialized
-}
+// export function isInitialized(): boolean {
+//   return config.projectInitialized
+// }
 
 function showServicesInfo(
-  services: Services,
+  services: ServicesMapType,
   hostContext: string,
   { hideCredentials = false }: { hideCredentials?: boolean } = {},
 ) {
@@ -499,8 +495,8 @@ function outputServicesInfo({
 
 export async function start(
   config: Config,
-  { service, skipOutput = false, hideCredentials = true }: {
-    service?: string
+  { service: serviceOrName, skipOutput = false, hideCredentials = true }: {
+    service?: string | ServiceType
     skipOutput?: boolean
     hideCredentials?: boolean
   } = {},
@@ -510,16 +506,20 @@ export async function start(
   //   showWarning('Config is outdated, re-running configure script...')
   //   await configure(projectName)
   // }
+  let service: ServiceType | null = null
 
-  if (service && !config.isEnabled(service)) {
-    showWarning(`${service} is not enabled`)
-    showInfo(
-      `Set ENABLE_${service.toUpperCase().replaceAll('-', '_')} to true in .env to enable it`,
-    )
+  if (serviceOrName) {
+    service = (typeof serviceOrName === 'string')
+      ? config.getServiceByName(serviceOrName)
+      : serviceOrName
+  }
+
+  if (service && !service.isEnabled()) {
+    showWarning(`${service.name} is not enabled`)
     return
   }
   try {
-    if (!isInitialized()) {
+    if (!config.isProjectInitialized()) {
       showWarning('Project not initialized', '❌')
       showUserAction('\nPlease run the init script first: llmn init')
       Deno.exit(1)
@@ -530,19 +530,19 @@ export async function start(
     showAction('Setting up repositories...')
     await setupRepos({ config })
     showAction('Setting up environment...')
-    await prepareEnv({ silent: false })
+    await prepareEnv({ config, silent: false })
 
     // Start services
     if (service) {
       // Start a single service
-      await startService(config.projectName, service)
+      await startService(config, service)
     } else {
       // Start all services by service group
       for (const [groupName, groupServices] of config.getServiceGroups()) {
         const enabledGroupServices = groupServices.filter((service) => config.isEnabled(service))
         if (enabledGroupServices.length > 0) {
           showAction(`\nStarting ${groupName} services...`)
-          await startServices(config.projectName, enabledGroupServices)
+          await startServices(config, enabledGroupServices)
         }
       }
     }

@@ -2,9 +2,9 @@ import {
   EnvVars,
   ExposeHost,
   IRepoConfig,
+  IServiceActionOptions,
   IServiceOptions,
   IServiceState,
-  ServiceActionOptions,
   ServiceConfig,
 } from '@/types'
 import { dockerCompose, expandEnvVars } from '../../docker.ts'
@@ -44,7 +44,7 @@ export class Service {
 
   protected _composeFile: string
   protected _profiles: string[] = []
-  // protected _dependencies: Map<Service.id, Service>
+  // protected _dependencies: ServicesMapType
 
   // Service's llemonstack.yaml config, once loaded it's frozen to prevent
   // accidental changes that are not saved
@@ -74,6 +74,15 @@ export class Service {
 
   public toString(): string {
     return this.name
+  }
+
+  /**
+   * Get the key used to store the service in a ServicesMap
+   *
+   * @returns {string} The key used to store the service in a ServicesMap
+   */
+  public get servicesMapKey(): string {
+    return this._id
   }
 
   public get id(): string {
@@ -330,7 +339,7 @@ export class Service {
    */
   // deno-lint-ignore require-await
   public async configure(
-    { silent: _silent }: ServiceActionOptions,
+    { silent: _silent }: IServiceActionOptions,
   ): Promise<TryCatchResult<boolean>> {
     return success<boolean>(true)
   }

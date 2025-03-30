@@ -21,10 +21,10 @@ export class ServicesMap extends Map<string, Service> {
     servicesMap: ServicesMap,
     { force = false }: { force?: boolean } = {},
   ): boolean {
-    if (!force && servicesMap.has(service.id)) {
+    if (!force && servicesMap.has(service.servicesMapKey)) {
       return false
     }
-    servicesMap.set(service.id, service)
+    servicesMap.set(service.servicesMapKey, service)
     return true
   }
 
@@ -34,8 +34,15 @@ export class ServicesMap extends Map<string, Service> {
    * @param {Service} service - The service to add
    * @returns {ServicesMap} The services map
    */
-  public addService(service: Service, { force = false }: { force?: boolean } = {}): boolean {
+  public addService(service: Service | null, { force = false }: { force?: boolean } = {}): boolean {
+    if (!service) {
+      return false
+    }
     return ServicesMap.addService(service, this, { force })
+  }
+
+  public hasService(service: Service): boolean {
+    return this.has(service.servicesMapKey)
   }
 
   /**

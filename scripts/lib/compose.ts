@@ -1,11 +1,11 @@
-import { ComposeYaml, ServiceImage } from '@/types'
+import { ComposeYaml, IServiceImage } from '@/types'
 import * as yaml from 'jsr:@std/yaml'
 import { dockerEnv, expandEnvVars } from './docker.ts'
 import { path } from './fs.ts'
 import { showDebug, showWarning } from './logger.ts'
 
-export const COMPOSE_IMAGES_CACHE = {} as Record<string, ServiceImage[]>
-const ROOT_DIR = Deno.cwd()
+export const COMPOSE_IMAGES_CACHE = {} as Record<string, IServiceImage[]>
+// const ROOT_DIR = Deno.cwd()
 
 /**
  * Get the images from the compose file
@@ -17,8 +17,8 @@ const ROOT_DIR = Deno.cwd()
 export async function getImagesFromComposeYaml(
   composeFile: string,
   processedFiles: Set<string> = new Set(),
-  { debug = false, rootDir = ROOT_DIR }: { debug?: boolean; rootDir?: string } = {},
-): Promise<Array<ServiceImage>> { // TODO: migrate to TryCatchResult
+  { debug = false, rootDir = '' }: { debug?: boolean; rootDir?: string } = {},
+): Promise<Array<IServiceImage>> { // TODO: migrate to TryCatchResult
   // Return the cached images if they exist
   if (COMPOSE_IMAGES_CACHE[composeFile]) {
     return COMPOSE_IMAGES_CACHE[composeFile]
@@ -40,7 +40,7 @@ export async function getImagesFromComposeYaml(
     // Read the compose file
     const fileContents = await Deno.readTextFile(composeFile)
     const composeConfig = yaml.parse(fileContents) as ComposeYaml
-    const serviceImages: ServiceImage[] = []
+    const serviceImages: IServiceImage[] = []
 
     // Check for include directive in the compose file
     if (composeConfig.include) {
@@ -158,8 +158,8 @@ export async function getImagesFromComposeYaml(
 
 export async function getImageFromCompose(
   composeFile: string,
-  service: string,
-): Promise<ServiceImage | null> {
+  serviceName: string,
+): Promise<IServiceImage | null> {
   const serviceImages = await getImagesFromComposeYaml(composeFile)
-  return serviceImages.find((img) => img.service === service) || null
+  return serviceImages.find((img) => img.service === serviceName) || null
 }

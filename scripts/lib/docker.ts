@@ -287,8 +287,11 @@ export async function dockerComposePs(
 }
 
 export async function prepareDockerNetwork(
-  network = Config.getInstance().dockerNetworkName,
+  network?: string,
 ): Promise<{ network: string; created: boolean }> {
+  if (!network) {
+    network = Config.getInstance().dockerNetworkName
+  }
   const result = await runCommand('docker', {
     args: ['network', 'ls'],
     captureOutput: true,

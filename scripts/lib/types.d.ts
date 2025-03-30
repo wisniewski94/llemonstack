@@ -1,4 +1,4 @@
-import { Config } from '@/core'
+import { Config, ServicesMapType } from '@/core'
 import {
   CommandError as CommandErrorClass,
   RunCommandOutput as RunCommandOutputClass,
@@ -110,6 +110,10 @@ export interface IServiceState {
   status: 'installed' | 'starting' | 'started' | 'stopped' | 'error'
 }
 
+export interface IServiceGroups {
+  [key: string]: ServicesMapType
+}
+
 export interface ExposeHostConfig {
   host?: {
     dashboard?: ExposeHost
@@ -143,9 +147,9 @@ export interface IServiceOptions {
 }
 
 // TODO: globally rename interfaces to use I prefix
-export interface ServiceActionOptions {
+export interface IServiceActionOptions {
   silent?: boolean
-  // config: Config // Removed since service already has a reference to the config instance
+  config: Config
 }
 
 // Define the type for the Docker Compose configuration

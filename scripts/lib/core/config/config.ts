@@ -1,4 +1,4 @@
-import { IServiceOptions, LLemonStackConfig, ServiceConfig } from '@/types'
+import { IServiceGroups, IServiceOptions, LLemonStackConfig, ServiceConfig } from '@/types'
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import configTemplate from '../../../../config/config.0.2.0.json' with { type: 'json' }
 import packageJson from '../../../../package.json' with { type: 'json' }
@@ -54,12 +54,11 @@ export class Config {
     success: false,
   })
 
-  // TODO: move to a ServicesMap map
-  private _serviceGroups: [string, string[]][] = [
-    ['databases', []],
-    ['middleware', []],
-    ['apps', []],
-  ]
+  private _serviceGroups: IServiceGroups = {
+    databases: new ServicesMap(),
+    middleware: new ServicesMap(),
+    apps: new ServicesMap(),
+  }
 
   // Base configuration
   protected _configDir: string = ''
@@ -145,11 +144,6 @@ export class Config {
     return this._config
   }
 
-  // Check if config.json has been initialized by init script
-  get projectInitialized(): boolean {
-    return !!this._config.initialized.trim()
-  }
-
   get env(): Record<string, string> {
     return this._env
   }
@@ -174,6 +168,11 @@ export class Config {
   //
   // Public Methods
   //
+
+  // Check if config.json has been initialized by init script
+  public isProjectInitialized(): boolean {
+    return !!this._config.initialized.trim()
+  }
 
   /**
    * Initialize the config
@@ -361,16 +360,6 @@ export class Config {
         )
       }
 
-      // Add service to service group
-      if (!this._serviceGroups.find((group) => group[0] === serviceConfig.service_group)) {
-        this._serviceGroups.push([serviceConfig.service_group, [serviceConfig.service]])
-      } else {
-        const group = this._serviceGroups.find((group) => group[0] === serviceConfig.service_group)
-          ?.[1]
-        if (group && !group.includes(serviceConfig.service)) {
-          group.push(serviceConfig.service)
-        }
-      }
       // Create Service constructor options
       const serviceOptions: IServiceOptions = {
         serviceConfig,
@@ -412,6 +401,7 @@ export class Config {
 
       // Load the default Service class if no custom implementation exists
       const service = new Service(serviceOptions)
+
       this.registerService(service)
     }
 
@@ -425,8 +415,18 @@ export class Config {
   public registerService(service: Service): boolean {
     const added = this._services.addService(service)
     if (added) {
-      this._servicesLookup.set(service.service, service.id)
+      this._servicesLookup.set(service.service, service.servicesMapKey)
     }
+
+    // Add service to service group
+
+    const group = this._serviceGroups[service.serviceGroup]
+      ? this._serviceGroups[service.serviceGroup]
+      : new ServicesMap()
+
+    // Add service to service group, if it already exists it will be replaced
+    group.addService(service, { force: true })
+
     // TODO: log warning if service is not added
     return added
   }
@@ -560,6 +560,7 @@ export class Config {
 
   /**
    * Get a service by service identifier
+   *
    * @param {string} service - The service key in llemonstack.yaml, or service.id
    * @returns {Service | null} The service or null if not found
    */
@@ -588,7 +589,7 @@ export class Config {
     return services
   }
 
-  public getServiceGroups(): [string, string[]][] {
+  public getServiceGroups(): IServiceGroups {
     return this._serviceGroups
   }
 

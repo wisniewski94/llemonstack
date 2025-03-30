@@ -2,7 +2,7 @@
  * Example Service template for creating new services
  */
 import { Service } from '@/core'
-import { EnvVars, ExposeHost, ServiceActionOptions } from '@/types'
+import { EnvVars, ExposeHost, IServiceActionOptions } from '@/types'
 // TODO: add TryCatch types to @types
 // import { showHeader, showInfo, showWarning } from '../../scripts/lib/logger.ts'
 import { success, TryCatchResult } from '../../scripts/lib/try-catch.ts'
@@ -70,7 +70,7 @@ export class ServiceStub extends Service {
    * @returns {TryCatchResult<boolean>} - The result of the configuration
    */
   override async configure(
-    { silent = false }: ServiceActionOptions,
+    { silent = false }: IServiceActionOptions,
   ): Promise<TryCatchResult<boolean>> {
     const gpuDisabled = this._configInstance.host.isMac()
 

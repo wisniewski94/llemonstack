@@ -1,5 +1,5 @@
 import { Config, Service } from '@/core'
-import { EnvVars, ExposeHost, ServiceActionOptions } from '@/types'
+import { EnvVars, ExposeHost, IServiceActionOptions } from '@/types'
 import { Select } from '@cliffy/prompt'
 import { showHeader, showInfo, showWarning } from '../../scripts/lib/logger.ts'
 import { success, TryCatchResult } from '../../scripts/lib/try-catch.ts'
@@ -19,9 +19,9 @@ export class OllamaService extends Service {
     }
     // Set enabled to true if ENABLE_OLLAMA is not false
     // Otherwise default to the enabled setting in the project config file
-    const env = Config.getInstance().env['ENABLE_OLLAMA'].trim().toLowerCase()
+    const env = this._configInstance.env['ENABLE_OLLAMA'].trim().toLowerCase()
     enabled = !(env === 'false') || this._enabledInConfig
-    this._state.set('enabled', enabled)
+    this.setState('enabled', enabled)
     return enabled
   }
 
@@ -70,7 +70,7 @@ export class OllamaService extends Service {
    * @returns {TryCatchResult<boolean>} - The result of the configuration
    */
   override async configure(
-    { silent = false, config }: ServiceActionOptions,
+    { silent = false, config }: IServiceActionOptions,
   ): Promise<TryCatchResult<boolean>> {
     const gpuDisabled = config.host.isMac()
 
@@ -112,7 +112,7 @@ export class OllamaService extends Service {
     }
 
     this.setProfiles([ollamaProfile])
-    this._enabled = !ollamaProfile.includes('disabled')
+    this.setState('enabled', !ollamaProfile.includes('disabled'))
 
     return super.configure({ silent, config })
   }
