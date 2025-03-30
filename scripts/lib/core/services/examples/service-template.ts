@@ -37,7 +37,7 @@ export class ServiceStub extends Service {
   // deno-lint-ignore require-await
   override async loadEnv(envVars: Record<string, string>): Promise<Record<string, string>> {
     // Example setting a custom host url for other services or configs to use at runtime
-    envVars.SOME_CUSTOM_SERVICE_ENV_HOST = this.getHost()?.url
+    envVars.SOME_CUSTOM_SERVICE_ENV_HOST = this.getHostEndpoint()?.url
     return envVars
   }
 

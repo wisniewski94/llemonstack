@@ -234,10 +234,13 @@ export class Service {
   /**
    * Get the first host matching the context
    *
+   * By default, gets the first 'host' entry in the exposes config in llemonstack.yaml.
+   * i.e. Returns the info for the main url exposed by the service on the host.
+   *
    * @param {string} context - Dot object path for exposes in the service llemonstack.yaml config
    * @returns The container DNS host name and port, e.g. 'ollama:11434'
    */
-  public getHost(context?: string): ExposeHost {
+  public getHostEndpoint(context: string = 'host.*'): ExposeHost {
     return this.getEndpoints(context)[0]
   }
 
@@ -252,13 +255,16 @@ export class Service {
    * // Get all the endpoints exposed to the host
    * const endpoints = service.getEndpoints('host.*')
    * console.log(endpoints)
+   *
+   * // Get all the endpoints
+   * const endpoints = service.getEndpoints('*.*')
+   * console.log(endpoints)
    * ```
    *
    * @param {string} context - Dot object path for exposes in the service llemonstack.yaml config
    * @returns The container DNS host name and port, e.g. 'ollama:11434'
    */
-  // TODO: move to helper lib
-  public getEndpoints(context: string = 'host.*'): ExposeHost[] {
+  public getEndpoints(context: string = '*.*'): ExposeHost[] {
     return getEndpoints(this, context, this._configInstance.env)
   }
 

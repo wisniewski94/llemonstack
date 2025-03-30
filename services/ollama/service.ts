@@ -48,7 +48,7 @@ export class OllamaService extends Service {
 
   // deno-lint-ignore require-await
   override async loadEnv(envVars: Record<string, string>): Promise<Record<string, string>> {
-    envVars.OLLAMA_HOST = this.getHost()?.url
+    envVars.OLLAMA_HOST = this.getHostEndpoint()?.url
     return envVars
   }
 
