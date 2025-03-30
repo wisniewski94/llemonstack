@@ -25,7 +25,7 @@ In Progress..
   - [ ] Add LLEMONSTACK_LOG_LEVEL check to logger
 
 - [ ] Adding state observability to Service class for config or other services to monitor changes
-- [ ] Migrating config.\_services to a Map<service.id, Service>
+- [x] Migrating config.\_services to ServicesMap
 - [ ] Migrating all scripts to accept { config } param instead of projectName
 - [ ] Move everything to src/commands and src/lib
 
