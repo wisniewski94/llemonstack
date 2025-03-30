@@ -637,7 +637,7 @@ export class Config {
    * @returns {Promise<TryCatchResult<boolean>>}
    */
   public async save(): Promise<TryCatchResult<boolean>> {
-    if (!fs.isInsideCwd(this.configFile).data) {
+    if (!fs.isInsideCwd(this.configFile)) {
       return new TryCatchResult<boolean, Error>({
         data: false,
         error: new Error(

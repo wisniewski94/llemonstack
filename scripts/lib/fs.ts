@@ -78,10 +78,10 @@ export async function readTextFile(
   return await tryCatch(Deno.readTextFile(filePath))
 }
 
-export function isInsideCwd(filePath: string): TryCatchResult<boolean> {
+export function isInsideCwd(filePath: string): boolean {
   const cwd = Deno.cwd()
   const relativePath = path.relative(cwd, filePath)
-  return new TryCatchResult<boolean>({ data: relativePath !== '', error: null, success: true })
+  return relativePath !== ''
 }
 
 export async function saveJson(filePath: string, data: unknown): Promise<TryCatchResult<boolean>> {
