@@ -187,10 +187,11 @@ export class Service {
   // After prepareEnv is called, service should update it's isReady state
   // Then other services can wait for their dependencies to be ready before starting
   // deno-lint-ignore require-await
-  public async prepareEnv(): Promise<boolean> {
+  public async prepareEnv(): Promise<TryCatchResult<boolean>> {
     this._state.set('ready', true)
+    console.log(`${this.name} is ready in prepareEnv`)
     // Override in subclasses to prepare the service environment
-    return true // return isReady state
+    return success<boolean>(true)
   }
 
   /**

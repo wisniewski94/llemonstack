@@ -10,12 +10,19 @@ import { Service, ServicesMap } from '../services/index.ts'
 import Host from './host.ts'
 
 const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
+
 // Absolute path to root of install dir
 const INSTALL_DIR = fs.path.join(
   fs.path.dirname(fs.path.fromFileUrl(import.meta.url)),
   '../../../../',
 )
 
+/**
+ * Config
+ *
+ * The Config class is responsible for loading the project config and services.
+ * It also provides an API for access the config and services settings.
+ */
 export class Config {
   //
   // Static Properties: Config.*
@@ -276,8 +283,6 @@ export class Config {
     result.messages.push(...servicesResult.messages)
 
     // Load enabled services env, skipping .env file
-    // TODO: replace with prepareEnv to call all services prepareEnv methods
-    // Calling loadEnv twice in initialize() is a hack
     await this.loadEnv({ envPath: null })
 
     if (updated) {
@@ -661,6 +666,31 @@ export class Config {
     Deno.env.set(key, value)
     this._env = env
     return this._env
+  }
+
+  /**
+   * Prepare the env for the project and all enabled services
+   *
+   * @param {Object} options - Options object
+   * @param {boolean=false} options.all - Prepare the env for all services, not just enabled ones
+   * @returns {Promise<TryCatchResult<boolean>>}
+   */
+  public async prepareEnv(
+    { all = false }: { all?: boolean } = {},
+  ): Promise<TryCatchResult<(boolean | null)[]>> {
+    // Calling loadEnv twice in initialize() is a hack
+    const services = all ? this.getAllServices() : this.getEnabledServices()
+
+    // Run all service prepareEnv methods in parallel
+    const results = await Promise.all(
+      services.map<Promise<TryCatchResult<boolean>>>((service) => service.prepareEnv()),
+    )
+
+    // Collect the results into a single TryCatchResult
+    const collectedResults = TryCatchResult.collect<boolean>(results)
+
+    // Return the results, results.success will be true if all services are ready
+    return collectedResults
   }
 
   //

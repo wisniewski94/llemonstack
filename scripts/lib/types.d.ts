@@ -107,7 +107,7 @@ export interface IServiceState {
   started: boolean
   healthy: boolean
   ready: boolean
-  status: 'installed' | 'starting' | 'started' | 'stopped' | 'error'
+  status: 'installed' | 'ready' | 'starting' | 'started' | 'stopped' | 'error'
 }
 
 export interface IServiceGroups {
