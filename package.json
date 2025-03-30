@@ -32,5 +32,9 @@
   "bugs": {
     "url": "https://github.com/llemonstack/llemonstack/issues"
   },
-  "homepage": "https://github.com/llemonstack/llemonstack#readme"
+  "homepage": "https://github.com/llemonstack/llemonstack#readme",
+  "dependencies": {
+    "ink": "^5.2.0",
+    "react": "^18.3.1"
+  }
 }
