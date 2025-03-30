@@ -1,7 +1,38 @@
-import { runCommand } from '@/lib/command.ts'
+import { tryCatchRunCommand } from '@/lib/command.ts'
 import { Service } from '@/lib/core/services/service.ts'
-import { escapePath, fs, path } from '@/lib/fs.ts'
+import { dirExists, escapePath, fileExists, path } from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
+import type { RunCommandOptions } from '@/types'
+
+/**
+ * Run a git command and add the results to the results object
+ *
+ * @param {TryCatchResult<boolean>} results - The results of the command
+ * @param {string[]} args - The arguments to pass to the command
+ * @param {boolean} silent - If true, command output is logged instead of shown
+ * @param {boolean} captureOutput - If true, command output is captured
+ */
+async function runGit(
+  results: TryCatchResult<boolean>,
+  { args, silent, captureOutput = false }: RunCommandOptions,
+): Promise<TryCatchResult<boolean>> {
+  const gitResults = await tryCatchRunCommand('git', {
+    args,
+    silent,
+    captureOutput,
+  })
+
+  results.addMessage('debug', `Git command: ${gitResults.data?.cmd}`)
+
+  if (!gitResults.success) {
+    results.error = gitResults.error
+    results.addMessage('error', `Error running git command: ${args?.join(' ')}`, {
+      error: gitResults.error,
+    })
+  }
+
+  return results
+}
 
 /**
  * Clone or pull a repo
@@ -18,9 +49,11 @@ export async function setupServiceRepo(
   {
     pull = false, // Pull latest changes from remote
     silent = false,
+    captureOutput = false,
   }: {
     pull?: boolean
     silent?: boolean
+    captureOutput?: boolean
   },
 ): Promise<TryCatchResult<boolean>> {
   const results = success<boolean>(true)
@@ -41,9 +74,19 @@ export async function setupServiceRepo(
     `Cloning ${service.name} repo: ${repoConfig.url}${repoConfig.sparse ? ' [sparse]' : ''}`,
   )
 
-  // Clone repo if repo dir doesn't exist
-  if (!fs.existsSync(repoDir)) {
-    await runCommand('git', {
+  // Check if repo dir exists
+  const repoDirResults = await dirExists(repoDir)
+
+  // Return failure if there was an error checking the repo dir
+  if (!repoDirResults.success) {
+    results.error = repoDirResults.error
+    return failure<boolean>(`Error checking repo dir: ${repoDir}`, results, false)
+  }
+
+  // If repo does not exist, clone it
+  if (!repoDirResults.data) {
+    // Clone repo
+    await runGit(results, {
       args: [
         '-C',
         escapePath(repoDir),
@@ -53,11 +96,13 @@ export async function setupServiceRepo(
         repoConfig.url,
         repoConfig.dir,
       ],
+      silent,
+      captureOutput,
     })
 
     // Spares checkout if spare config is set
     if (sparse) {
-      await runCommand('git', {
+      await runGit(results, {
         args: [
           '-C',
           repoDir,
@@ -65,11 +110,13 @@ export async function setupServiceRepo(
           'init',
           '--cone',
         ],
+        silent,
+        captureOutput,
       })
 
       // Checkout sparse dirs if sparseDir config is set
       if (repoConfig.sparseDir) {
-        await runCommand('git', {
+        await runGit(results, {
           args: [
             '-C',
             repoDir,
@@ -77,15 +124,19 @@ export async function setupServiceRepo(
             'set',
             ...[repoConfig.sparseDir].flat(),
           ],
+          silent,
+          captureOutput,
         })
       }
 
-      await runCommand('git', {
+      await runGit(results, {
         args: [
           '-C',
           repoDir,
           'checkout',
         ],
+        silent,
+        captureOutput,
       })
     }
   } else {
@@ -94,26 +145,36 @@ export async function setupServiceRepo(
     // Pull latest changes from remote if pull is true
     if (pull) {
       results.addMessage('info', `${service.name} repo exists, pulling latest code...`)
-      await runCommand('git', {
+      await runGit(results, {
         args: [
           '-C',
           repoDir,
           'pull',
         ],
+        silent,
+        captureOutput,
       })
     }
 
     // Check if the required file exists in the repo
     if (repoConfig.checkFile) {
       const checkFilePath = path.join(repoDir, repoConfig.checkFile)
-      if (!await fs.exists(checkFilePath)) {
+
+      const fileResults = await fileExists(checkFilePath)
+
+      if (fileResults.success) {
+        results.addMessage('debug', `Repo check: required file found: ${repoConfig.checkFile}`)
+      } else {
         const errMsg =
           `Required file ${repoConfig.checkFile} not found in ${service.name} directory: ${repoDir}`
-        results.addMessage('warning', errMsg)
+
+        results.addMessage('error', errMsg, { error: fileResults.error })
         results.addMessage('warning', `Please check the repository structure and try again.`)
+
         return failure<boolean>(errMsg, results, false)
       }
     }
+
     results.addMessage('info', `✔️ ${service.name} repo is ready`)
   }
 
