@@ -294,7 +294,7 @@ export class Service {
     }
 
     this._state.set('ready', true)
-    results.addMessage('info', `Service ${this.name} environment prepared, ready to start`)
+    results.addMessage('info', `✔️ ${this.name} environment prepared, ready to start`)
     return results
   }
 
@@ -326,10 +326,9 @@ export class Service {
   protected async prepareVolumes(): Promise<TryCatchResult<boolean>> {
     // If no volumes, skip
     if (this.volumes.length === 0 && this.volumesSeeds.length === 0) {
-      const results = success<boolean>(true)
-      results.addMessage('debug', `No volumes or seeds to prepare for ${this.name}`)
-      return results
+      return success<boolean>(true)
     }
+
     return await prepareVolumes(this, this._configInstance.volumesDir)
   }
 

@@ -25,15 +25,12 @@ export async function prepareVolumes(
 ): Promise<TryCatchResult<boolean>> {
   const results = success<boolean>(true)
 
-  results.addMessage('info', 'Checking for required volumes...')
-  results.addMessage('debug', `Volumes base path: ${volumesDir}`)
-
   // Return early if service has no volumes or seeds
   if (service.volumes.length === 0 || service.volumesSeeds.length === 0) {
     return results
   }
 
-  results.addMessage('info', `Creating required volumes for ${service.name}...`)
+  results.addMessage('debug', `Creating required volumes for ${service.name}...`)
 
   // Create any required volume dirs
   for (const volume of service.volumes) {

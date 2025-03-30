@@ -69,11 +69,6 @@ export async function setupServiceRepo(
   const repoConfig = service.repoConfig || {}
   const sparse = repoConfig.sparse || repoConfig.sparseDir
 
-  results.addMessage(
-    'info',
-    `Cloning ${service.name} repo: ${repoConfig.url}${repoConfig.sparse ? ' [sparse]' : ''}`,
-  )
-
   // Check if repo dir exists
   const repoDirResults = await dirExists(repoDir)
 
@@ -85,6 +80,12 @@ export async function setupServiceRepo(
 
   // If repo does not exist, clone it
   if (!repoDirResults.data) {
+    // Dir does not exist, clone it and checkout sparse dirs if sparseDir config is set
+    results.addMessage(
+      'debug',
+      `Cloning ${service.name} repo: ${repoConfig.url}${repoConfig.sparse ? ' [sparse]' : ''}`,
+    )
+
     // Clone repo
     await runGit(results, {
       args: [
@@ -144,7 +145,7 @@ export async function setupServiceRepo(
 
     // Pull latest changes from remote if pull is true
     if (pull) {
-      results.addMessage('info', `${service.name} repo exists, pulling latest code...`)
+      results.addMessage('debug', `${service.name} repo exists, pulling latest code...`)
       await runGit(results, {
         args: [
           '-C',
@@ -169,13 +170,14 @@ export async function setupServiceRepo(
           `Required file ${repoConfig.checkFile} not found in ${service.name} directory: ${repoDir}`
 
         results.addMessage('error', errMsg, { error: fileResults.error })
+        // TODO: add new log type for user actions
         results.addMessage('warning', `Please check the repository structure and try again.`)
 
         return failure<boolean>(errMsg, results, false)
       }
     }
 
-    results.addMessage('info', `✔️ ${service.name} repo is ready`)
+    results.addMessage('debug', `${service.name} repo is ready`)
   }
 
   return results
