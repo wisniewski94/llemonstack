@@ -1,4 +1,5 @@
 import { Service, ServicesMap } from '@/core/services/index.ts'
+import { loadEnv, updateEnv } from '@/lib/env.ts'
 import * as fs from '@/lib/fs.ts'
 import { failure, success, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
 import { isTruthy } from '@/lib/utils/compare.ts'
@@ -6,7 +7,6 @@ import { IServiceOptions, IServicesGroups, LLemonStackConfig, ServiceConfig } fr
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import configTemplate from '../../../../config/config.0.2.0.json' with { type: 'json' }
 import packageJson from '../../../../package.json' with { type: 'json' }
-import { loadEnv } from '../../env.ts'
 import Host from './host.ts'
 
 const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
@@ -507,7 +507,7 @@ export class Config {
       expand?: boolean
     } = {},
   ): Promise<TryCatchResult<Record<string, string>>> {
-    const updateResult = await fs.updateEnv(this.envFile, envVars)
+    const updateResult = await updateEnv(this.envFile, envVars)
 
     if (!updateResult.success) {
       return failure<Record<string, string>>(

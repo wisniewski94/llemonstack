@@ -7,6 +7,8 @@
  * See mod.ts and parse.ts from 'jsr:@std/dotenv'
  */
 
+import { ensureDir, path, readTextFile } from '@/lib/fs.ts'
+import { failure, tryCatchBoolean, TryCatchResult } from '@/lib/try-catch.ts'
 import { load as loadDotEnv } from 'jsr:@std/dotenv'
 
 /**
@@ -56,7 +58,71 @@ export async function loadEnv(
   return envValues
 }
 
+/**
+ * Update a .env file with new environment variables values
+ * @param filePath - The path to the .env file
+ * @param envVars - The environment variables to save
+ * @returns A TryCatchResult<boolean>
+ */
+export async function updateEnv(
+  filePath: string,
+  envVars: Record<string, string>,
+): Promise<TryCatchResult<boolean>> {
+  const results = new TryCatchResult<boolean>({
+    data: true,
+    error: null,
+    success: true,
+  })
+
+  const envDir = path.dirname(filePath)
+
+  const dirResult = await ensureDir(envDir)
+
+  if (!dirResult.success) {
+    return failure<boolean>(
+      `Unable to save env file, dir does not exist: ${envDir}`,
+      dirResult,
+    )
+  }
+
+  // Load existing env file content to update, if any
+  const readResults = await readTextFile(filePath)
+
+  if (!readResults.success) {
+    results.addMessage('debug', `Creating new .env file: ${filePath}`)
+  }
+
+  const envFileContent = readResults.success ? readResults.data || '' : ''
+  const updatedEnvFileContent = Object.entries(envVars).reduce((acc, [key, value]) => {
+    // Keep existing value in .env if envVars value not set
+    if (!value) return acc
+
+    // Replace existing key value with new value
+    const tmp = acc.replace(new RegExp(`${key}=.*`, 'g'), `${key}=${value}`)
+
+    // If the key is not found in the .env file, add it to the end of the file
+    if (tmp === acc && !acc.includes(`${key}=${value}`)) {
+      results.addMessage('debug', `Key '${key}' not found in env file, adding to end of file`)
+      return `${acc}\n${key}=${value}\n`
+    }
+
+    return tmp
+  }, envFileContent)
+
+  const writeResults = await tryCatchBoolean(Deno.writeTextFile(filePath, updatedEnvFileContent))
+
+  if (!writeResults.success) {
+    results.error = writeResults.error
+    results.addMessage('error', `Unable to save env file: ${filePath}`, {
+      error: writeResults.error,
+    })
+  }
+
+  return results
+}
+
 //
+// Helper functions for expanding env vars
 // Copied from mod.ts and parse.ts in 'jsr:@std/dotenv'
 //
 
