@@ -50,6 +50,7 @@ export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
     const result = new TryCatchResult<(T | null)[], E>({ data: [], error: null, success: true })
     results.forEach((r) => {
       result.addMessages(r.messages)
+      // TODO: modify this to ensure errors length matches data length if data is an array
       result.addErrors(r.errors)
       if (!Array.isArray(result.data)) {
         result.data = []
@@ -146,6 +147,7 @@ export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
   collect(results: TryCatchResult<T, E>[]): TryCatchResult<T, E> {
     results.forEach((r) => {
       this.addMessages(r.messages)
+      // TODO: modify this to ensure errors length matches data length if data is an array
       this.addErrors(r.errors)
     })
     this.success = this.errors.length === 0
@@ -236,6 +238,19 @@ export async function tryCatchBoolean<E = Error>(
   } catch (error) {
     return new TryCatchResult<boolean, E>({ data: false, error: error as E, success: false })
   }
+}
+
+/**
+ * Wraps a list of promises and returns a TryCatchResult object with the results of the promises
+ *
+ * @param promises - The promises to wrap
+ * @returns A TryCatchResult object with the results of the promises
+ */
+export async function tryCatchAll<T, E = Error>(
+  promises: Promise<T>[] | Promise<TryCatchResult<T, E>>[],
+): Promise<TryCatchResult<(T | null)[], E>> {
+  const results = await Promise.all(promises.map((p) => tryCatch<T, E>(p)))
+  return TryCatchResult.collect<T, E>(results)
 }
 
 /**
