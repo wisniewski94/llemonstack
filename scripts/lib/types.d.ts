@@ -40,6 +40,7 @@ export interface CommandOutput {
   code: number
   success: boolean
   signal?: Deno.Signal | null
+  cmd: string // The command that was run
 }
 
 export type RunCommandOutput = InstanceType<typeof RunCommandOutputClass>
