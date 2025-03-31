@@ -102,7 +102,7 @@ export async function stopService(
 ): Promise<void> {
   showAction(`Stopping ${service.name}...`)
 
-  const result = await service.stopService()
+  const result = await service.stop()
 
   if (result.success) {
     showAction(`${service.name} stopped`)

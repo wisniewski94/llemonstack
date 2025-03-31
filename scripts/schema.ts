@@ -1,11 +1,13 @@
+import { ServiceType } from '@/types'
 import { Config } from './lib/core/config/config.ts'
 import { confirm, showAction, showError, showInfo, showWarning } from './lib/logger.ts'
 import { createServiceSchema, removeServiceSchema } from './lib/postgres.ts'
-import { isSupabaseStarted, startService } from './start.ts'
-import { stopService } from './stop.ts'
+import { startService } from './start.ts'
 
-// const config = Config.getInstance()
-// await config.initialize()
+async function isSupabaseStarted(config: Config) {
+  const supabase = config.getServiceByName('supabase')
+  return await supabase?.isRunning() || false
+}
 
 export async function schema(config: Config, action: string, service: string) {
   if (action !== 'create' && action !== 'remove') {
@@ -29,16 +31,17 @@ export async function schema(config: Config, action: string, service: string) {
 
   // Track whether we started supabase and need to stop it at the end
   let supabaseStarted = false
+  let supabaseService: ServiceType | null = null
 
-  if (!await isSupabaseStarted(config.projectName)) {
+  if (!await isSupabaseStarted(config)) {
     if (confirm(`Supabase is not running. Shall we start it?`, true)) {
-      await startService(config.projectName, 'supabase')
+      supabaseService = await startService(config, 'supabase')
       supabaseStarted = true
     }
     // Wait a few seconds for supabase to fully initialize
     showAction('Waiting for Supabase to initialize...')
     await new Promise((resolve) => setTimeout(resolve, 3000))
-    if (!await isSupabaseStarted(config.projectName)) {
+    if (!await isSupabaseStarted(config)) {
       showError('Supabase failed to start, unable to create schema')
       Deno.exit(1)
     }
@@ -63,9 +66,9 @@ export async function schema(config: Config, action: string, service: string) {
     showInfo(`Username: ${username}`)
   }
 
-  if (supabaseStarted) {
+  if (supabaseStarted && supabaseService) {
     if (confirm(`Supabase was started for this operation. Shall we stop it?`)) {
-      await stopService(config.projectName, 'supabase')
+      await supabaseService.stop()
     }
   }
 }

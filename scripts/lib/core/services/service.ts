@@ -432,7 +432,7 @@ export class Service {
     return failure<boolean>(`Failed to start service: ${this.name}`, results, false)
   }
 
-  public async stopService(): Promise<TryCatchResult<boolean>> {
+  public async stop(): Promise<TryCatchResult<boolean>> {
     const results = await tryDockerCompose('down', {
       composeFile: this.composeFile,
       projectName: this._configInstance.projectName,

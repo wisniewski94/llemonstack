@@ -6,7 +6,6 @@
 import { Config } from './lib/core/config/config.ts'
 import { runDockerComposeCommand } from './lib/docker.ts'
 import { confirm, showAction, showError, showInfo } from './lib/logger.ts'
-import { prepareEnv, setupRepos } from './start.ts'
 import { stop } from './stop.ts'
 import { versions } from './versions.ts'
 
@@ -85,15 +84,11 @@ export async function update(
       }
     }
 
-    await prepareEnv({ silent: false })
+    await config.prepareEnv()
 
     if (!skipStop) {
       await stop(config, { all: true })
     }
-
-    // Get the latest code for repos
-    showAction('Update code repos...')
-    await setupRepos({ config, pull: true })
 
     // Pull latest images
     showAction('Pulling latest docker images...')

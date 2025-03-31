@@ -3,7 +3,7 @@
  */
 
 import { runCommand } from '@/lib/command.ts'
-import { isServiceRunning, prepareDockerNetwork } from '@/lib/docker.ts'
+import { prepareDockerNetwork } from '@/lib/docker.ts'
 import { EnvVars, ExposeHost, ServicesMapType, ServiceType } from '@/types'
 import { Config } from './lib/core/config/config.ts'
 import {
@@ -44,15 +44,6 @@ export async function checkPrerequisites(): Promise<void> {
   showInfo('✔️ All prerequisites are installed')
 }
 
-/**
- * Check if supabase was started by any of the services that depend on it
- * @param projectName
- */
-export async function isSupabaseStarted(projectName: string): Promise<boolean> {
-  // TODO: replace this
-  return await isServiceRunning('supabase', { projectName, match: 'partial' })
-}
-
 // TODO: update API and all references to startService
 export async function startService(
   config: Config,
@@ -62,7 +53,7 @@ export async function startService(
     profiles?: string[]
     createNetwork?: boolean
   } = {},
-) {
+): Promise<ServiceType> {
   if (createNetwork) {
     await prepareDockerNetwork(config.dockerNetworkName)
   }
@@ -84,6 +75,7 @@ export async function startService(
     showError(result.error)
   }
   showLogMessages(result.messages)
+  return service
 }
 
 /**
