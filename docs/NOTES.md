@@ -16,6 +16,12 @@ container logs in Docker Desktop.
 
 **Code:**
 
+- [ ] Remove all config.initialize() calls except for in main.ts
+
+- [ ] Replace silent option in scripts with relayer logging
+
+- [ ] Add an info command that shows status of enabled services, including all the exposed endpoints
+
 In Progress..
 
 - [ ] Rework types to IInterface ClassType
@@ -127,6 +133,10 @@ In Progress..
 - [ ] Create main.ts script to handle the CLI args and help text
 
 **Someday / low priority:**
+
+- [ ] Add llemonstack labels to containers when started to make it easier to `docker ps` to inspect
+
+  - Especiallly important when multiple services use the same service name in the future.
 
 - [ ] Create preconfigured styles for showTable
 
@@ -336,7 +346,11 @@ Not AI, but potentially useful:
   - https://github.com/inngest/agent-kit/tree/main/examples/e2b-coding-agent
   - https://agentkit.inngest.com/llms-full.txt
 - https://llmstxt.org/
+
   - https://developers.cloudflare.com/agents/llms-full.txt example from cloudflare
+
+- https://github.com/denolib/awesome-deno
+  - https://github.com/littledivy/autopilot-deno
 
 **Prompts:**
 
