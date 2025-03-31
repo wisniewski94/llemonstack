@@ -9,10 +9,7 @@ import { confirm, showAction, showError, showInfo } from './lib/logger.ts'
 import { stop } from './stop.ts'
 import { versions } from './versions.ts'
 
-const config = Config.getInstance()
-await config.initialize()
-
-async function pullImages(projectName: string): Promise<void> {
+async function pullImages(config: Config): Promise<void> {
   // Run pull for each profile in parallel
   const composeFiles = config.getComposeFiles()
 
@@ -36,7 +33,7 @@ async function pullImages(projectName: string): Promise<void> {
         runDockerComposeCommand(
           'pull',
           {
-            projectName,
+            projectName: config.projectName,
             composeFile,
             ansi: 'never',
             // TODO: add support for service specific profiles
@@ -51,7 +48,7 @@ async function pullImages(projectName: string): Promise<void> {
         runDockerComposeCommand(
           'build',
           {
-            projectName,
+            projectName: config.projectName,
             composeFile,
             ansi: 'never',
             // TODO: add support for service specific profiles
@@ -92,7 +89,7 @@ export async function update(
 
     // Pull latest images
     showAction('Pulling latest docker images...')
-    await pullImages(config.projectName)
+    await pullImages(config)
 
     // Show the software versions for images that support it
     showAction('\n------ VERSIONS ------')

@@ -11,9 +11,6 @@
  */
 import { Config } from './lib/core/config/config.ts'
 
-// const config = Config.getInstance()
-// await config.initialize()
-
 type LiteLLMModelList = Array<{
   id: string
   object?: string

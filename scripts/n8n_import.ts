@@ -7,7 +7,6 @@ import { Config } from './lib/core/config/config.ts'
 import { dockerExec } from './lib/docker.ts'
 import { fs, path } from './lib/fs.ts'
 import { confirm, showAction, showError, showInfo, showWarning } from './lib/logger.ts'
-import { prepareEnv } from './start.ts'
 
 const config = Config.getInstance()
 await config.initialize()
@@ -91,7 +90,7 @@ async function prepareCredentialsImport(): Promise<void> {
 }
 
 async function importToN8n(
-  config: Config,
+  _config: Config,
   { skipPrompt = false, archiveAfterImport = true }: {
     skipPrompt?: boolean
     archiveAfterImport?: boolean
@@ -124,7 +123,7 @@ async function importToN8n(
     let results: RunCommandOutput
 
     // Import credentials from import/n8n/credentials
-    results = await dockerExec(projectName, 'n8n', 'n8n', {
+    results = await dockerExec(config.projectName, 'n8n', 'n8n', {
       args: [
         'import:credentials',
         '--separate',
@@ -141,7 +140,7 @@ async function importToN8n(
     }
 
     // Import workflows from import/n8n/workflows
-    results = await dockerExec(projectName, 'n8n', 'n8n', {
+    results = await dockerExec(config.projectName, 'n8n', 'n8n', {
       args: [
         'import:workflow',
         '--separate',
@@ -180,6 +179,6 @@ export async function runImport(
     archive?: boolean
   } = {},
 ): Promise<void> {
-  await prepareEnv({ silent: false })
+  await config.prepareEnv() // TODO: add logging of errors
   await importToN8n(config, { skipPrompt, archiveAfterImport: archive })
 }

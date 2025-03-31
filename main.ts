@@ -16,6 +16,7 @@ import {
   showError,
   showInfo,
   showLogMessages,
+  showWarning,
 } from './scripts/lib/logger.ts'
 import { Relayer } from './scripts/lib/relayer/relayer.ts'
 import { isTruthy } from './scripts/lib/utils/compare.ts'
@@ -157,9 +158,11 @@ main
   .command('reset')
   .description('Reset the LLemonStack environment')
   .action(async (options) => {
-    const config = await initConfig(options)
-    const { reset } = await import('./scripts/reset.ts')
-    await reset(config)
+    showWarning('Reset is currently disabled. Check for LLemonStack updates later.')
+    Deno.exit(1)
+    // const config = await initConfig(options)
+    // const { reset } = await import('./scripts/reset.ts')
+    // await reset(config)
   })
 
 // Update the LLemonStack services

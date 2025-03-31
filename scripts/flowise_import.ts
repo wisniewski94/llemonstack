@@ -6,8 +6,8 @@ import { Config } from './lib/core/config/config.ts'
 import { getFlowiseApiKey } from './lib/flowise.ts'
 import { fs, path } from './lib/fs.ts'
 import { confirm, showError, showInfo, showWarning } from './lib/logger.ts'
-import { prepareEnv } from './start.ts'
 
+// todo: remove this
 const config = Config.getInstance()
 await config.initialize()
 
@@ -178,6 +178,6 @@ export async function runImport(
     archive?: boolean
   } = {},
 ): Promise<void> {
-  await prepareEnv({ silent: true })
+  await config.prepareEnv()
   await importToFlowise(projectName, { skipPrompt, archiveAfterImport: archive })
 }

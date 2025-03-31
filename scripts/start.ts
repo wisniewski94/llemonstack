@@ -23,12 +23,6 @@ import {
   showWarning,
 } from './lib/logger.ts'
 
-// const config = Config.getInstance()
-// await config.initialize()
-
-// Enable extra debug logging
-// const DEBUG = config.DEBUG
-
 /*******************************************************************************
  * FUNCTIONS
  *******************************************************************************/

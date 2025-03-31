@@ -19,11 +19,7 @@ import {
   showUserAction,
   showWarning,
 } from './lib/logger.ts'
-import { getProfilesArgs, prepareEnv, setupRepos } from './start.ts'
 import { update } from './update.ts'
-
-const config = Config.getInstance()
-await config.initialize()
 
 const DOCKER_CLEANUP_COMMANDS = [
   'docker builder prune -a',
@@ -31,25 +27,24 @@ const DOCKER_CLEANUP_COMMANDS = [
 ]
 
 async function dockerComposeCleanup(
-  projectName: string,
+  config: Config,
 ): Promise<void> {
-  const services = config.getAllServices()
-
+  // TODO: call config.prepareRepos instead
   // Make sure repos exist before running docker compose cleanup
-  await setupRepos({ all: true })
+  // await setupRepos({ all: true })
 
   // Iterate through each compose file and run the down command individually
   // This catches any errors with compose files that extend a non-existent file.
-  for (const service of services) {
+  for (const [_, service] of config.getAllServices()) {
     try {
       if (!service.composeFile || !fs.existsSync(service.composeFile)) {
         showInfo(`Skip ${service} teardown, compose file not found: ${service.composeFile}`)
         continue
       }
       await runDockerComposeCommand('down', {
-        projectName,
+        projectName: config.projectName,
         composeFile: service.composeFile,
-        profiles: getProfilesArgs({ all: true }),
+        profiles: service.getProfiles(),
         args: ['--rmi', 'all', '--volumes', '--remove-orphans'],
       })
     } catch (error) {
@@ -110,11 +105,11 @@ export async function reset(
     }
   }
 
-  await prepareEnv({ silent: false })
+  await config.prepareEnv()
 
   // Get the latest code for repos
   showAction('\nStopping services and cleaning up docker images...')
-  await dockerComposeCleanup(config.projectName)
+  await dockerComposeCleanup(config)
 
   if (!skipCache) {
     if (skipPrompt || confirm('Do you want to clean the docker cache?', false)) {
