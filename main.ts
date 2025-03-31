@@ -6,6 +6,7 @@
  * CLI interface for managing the LLemonStack local AI agent stack
  */
 
+import { LogLevel } from '@/lib/relayer/logger.ts'
 import { Command, EnumType } from '@cliffy/command'
 import { CompletionsCommand } from '@cliffy/command/completions'
 import { Config } from './scripts/lib/core/config/config.ts'
@@ -16,7 +17,9 @@ import {
   showInfo,
   showLogMessages,
 } from './scripts/lib/logger.ts'
+import { Relayer } from './scripts/lib/relayer/relayer.ts'
 import { isTruthy } from './scripts/lib/utils/compare.ts'
+
 /**
  * Initialize the LLemonStack config
  *
@@ -25,11 +28,20 @@ import { isTruthy } from './scripts/lib/utils/compare.ts'
  * @param debug - Whether to enable debug mode
  * @returns The LLemonStack config
  */
-async function initConfig({ config: configFile, debug }: { config: string; debug?: boolean }) {
-  debug = isTruthy(debug)
+async function initConfig(
+  options: { config: string; debug?: boolean; logLevel?: LogLevel },
+) {
+  const debug = isTruthy(options.debug)
+  const logLevel = debug ? 'debug' : options.logLevel ?? 'info'
+
+  // Initialize the relayer / logger
+  await Relayer.initialize({ logLevel })
+  const relayer = Relayer.getInstance()
+
+  relayer.debug('Initializing script in main...')
 
   const config = Config.getInstance()
-  const result = await config.initialize(configFile, { debug })
+  const result = await config.initialize(options.config, { logLevel })
 
   if (debug) {
     showDebug('DEBUG enabled in CLI option')
@@ -53,12 +65,7 @@ async function initConfig({ config: configFile, debug }: { config: string; debug
   return config
 }
 
-// Keep this for later use, log level could be used to auto configure services log levels
-const logLevelType = new EnumType(['debug', 'info', 'warn', 'error'])
-// .globalType('log-level', logLevelType)
-// .globalOption('-l, --log-level <level:log-level>', 'Set log level.', {
-//   default: 'info',
-// })
+const logLevelType = new EnumType(['debug', 'info', 'warning', 'error'])
 
 // Base command options
 const main = new Command()
@@ -67,11 +74,9 @@ const main = new Command()
   .description('Command line for LLemonStack local AI agent stack')
   .versionOption('-v, --version', 'Get LLemonStack app version')
   .globalType('log-level', logLevelType)
-  .globalEnv('DEBUG=<log-level>', 'Enable debugging output.')
-  // .globalEnv('LOG_LEVEL=<boolean>', 'Set level of logs to output')
-  // .globalOption('-l, --log-level <level:log-level>', 'Set log level.', {
-  //   default: 'info',
-  // })
+  .globalOption('-l, --log-level <level:log-level>', 'Set log level.', {
+    default: 'info',
+  })
   .globalOption('-d, --debug', 'Enable debugging output.')
   .globalOption(
     '-c --config <configFile:string>',
@@ -80,6 +85,8 @@ const main = new Command()
       default: Config.defaultConfigFilePath,
     },
   )
+  .globalEnv('DEBUG=<boolean>', 'Enable debugging output.')
+  .globalEnv('LOG_LEVEL=<log-level>', 'Set level of logs to output')
   .action(function (_options) {
     // Show help as the default action
     this.showHelp()

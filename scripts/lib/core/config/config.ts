@@ -47,7 +47,6 @@ export class Config {
 
   private _host: Host = Host.getInstance()
 
-  public DEBUG: boolean = false
   public LOG_LEVEL: LogLevel = 'info'
   private _configTemplate: LLemonStackConfig = configTemplate as LLemonStackConfig
   private _config: LLemonStackConfig = this._configTemplate
@@ -92,6 +91,10 @@ export class Config {
   //
   // Public Properties
   //
+
+  get DEBUG(): boolean {
+    return this.LOG_LEVEL === 'debug'
+  }
 
   /**
    * Get the project name from config.json, env, or default
@@ -183,24 +186,18 @@ export class Config {
    */
   public async initialize(
     configFile?: string,
-    { debug, logLevel, init = false }: {
-      debug?: boolean
+    { logLevel = 'info', init = false }: {
       logLevel?: LogLevel
       init?: boolean // If false, return error if config file is invalid
     } = {},
   ): Promise<TryCatchResult<Config, Error>> {
-    if (logLevel) {
-      this.LOG_LEVEL = logLevel
-    }
-    if (debug) {
-      // Only update if debug was explicitly set to true
-      this.DEBUG = debug
-      this.LOG_LEVEL = 'debug'
-    }
-
     // If previously cached initialize result, return it
     if (this._initializeResult.success) {
       return this._initializeResult
+    }
+
+    if (logLevel) {
+      this.LOG_LEVEL = logLevel
     }
 
     // Create a result object to add messages to
@@ -249,12 +246,13 @@ export class Config {
     await this.loadEnv()
 
     // Update DEBUG flag from env vars if not already enabled
+    // TODO: update Relayer if log level has changed & reset the Relayer config
     if (!this.DEBUG) {
       if (isTruthy(this.env.LLEMONSTACK_DEBUG)) {
-        this.DEBUG = true
+        this.LOG_LEVEL = 'debug'
         result.addMessage('debug', 'DEBUG enabled in LLEMONSTACK_DEBUG env var')
       } else if (isTruthy(this.env.DEBUG)) {
-        this.DEBUG = true
+        this.LOG_LEVEL = 'debug'
         result.addMessage('debug', 'DEBUG enabled in DEBUG env var')
       }
     }

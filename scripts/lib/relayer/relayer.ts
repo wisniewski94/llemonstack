@@ -1,4 +1,3 @@
-import { Config } from '@/core/config/config.ts'
 import { LoggerConfig, LogLevel, LogtapeLogger } from './logger.ts'
 import { InterfaceRelayer } from './ui/interface.ts'
 export type { LogLevel }
@@ -34,7 +33,7 @@ export class Relayer {
 
     LoggerConfig.appName = this.rootAppName
 
-    this.logLevel = logLevel || Config.getInstance().LOG_LEVEL
+    this.logLevel = logLevel
 
     // Create and configure Logtape logger
     await LoggerConfig.initLogger(this.rootAppName, {
