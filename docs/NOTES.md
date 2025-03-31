@@ -16,7 +16,7 @@ container logs in Docker Desktop.
 
 **Code:**
 
-- [ ] Remove all config.initialize() calls except for in main.ts
+- [ ] Remove all config.initialize() calls except for in cli.ts
 
 - [ ] Replace silent option in scripts with relayer logging
 
@@ -84,7 +84,7 @@ In Progress..
     - [ ] Check registry on init to make sure there aren't conflicts with the volumes
     - [ ] OR move all non bind-mount volumes to bind mount
   - [ ] Refactor to use .llemonstack dir for all config, repos, etc.
-  - [x] Register llmn as bin alias for main.ts
+  - [x] Register llmn as bin alias for cli.ts
   - [x] Create an install script that installs deno and git and checks for docker
   - [ ] Update README.md with instructions on installing through npm
   - [x] Update README.md with `llmn` commands instead of `deno run`
@@ -130,7 +130,7 @@ In Progress..
 - [x] Create a setup script to generate random passwords and JWT secrets
 - [x] Update install instructions for deno
 
-- [ ] Create main.ts script to handle the CLI args and help text
+- [ ] Create cli.ts script to handle the CLI args and help text
 
 **Someday / low priority:**
 

@@ -2,12 +2,12 @@
 
 ## Flow
 
-One main (main.ts) script to load Config and call the primary script actions.
+One main (cli.ts) script to load Config and call the primary script actions.
 
-Loading (main.ts):
+Loading (cli.ts):
 
 1. `llmn <command>`
-2. main.ts runs...
+2. cli.ts runs...
 3. initializes Config
 4. calls the primary command action, passing initalized config
 

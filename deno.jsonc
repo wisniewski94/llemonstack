@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "llmn": "deno run --allow-read --allow-env --allow-run --allow-write main.ts"
+    "llmn": "deno run --allow-read --allow-env --allow-run --allow-write cli.ts"
   },
   "imports": {
     "@cliffy/ansi": "jsr:@cliffy/ansi@^1.0.0-rc.7",

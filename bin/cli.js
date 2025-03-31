@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// deno-lint-ignore-file
 
 const { spawnSync, execSync } = require('child_process')
 const path = require('path')
@@ -23,13 +24,13 @@ function main() {
     process.exit(1)
   }
 
-  // Get the path to your main.ts file (relative to this script)
+  // Get the path to your cli.ts file (relative to this script)
   const scriptDir = __dirname
-  const mainTsPath = path.join(scriptDir, '..', 'main.ts')
+  const mainTsPath = path.join(scriptDir, '..', 'cli.ts')
 
   // Make sure the file exists
   if (!fs.existsSync(mainTsPath)) {
-    console.error(`\x1b[31mError: Could not find main.ts at ${mainTsPath}\x1b[0m`)
+    console.error(`\x1b[31mError: Could not find cli.ts at ${mainTsPath}\x1b[0m`)
     process.exit(1)
   }
 
