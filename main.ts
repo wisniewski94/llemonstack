@@ -54,7 +54,7 @@ async function initConfig({ config: configFile, debug }: { config: string; debug
 }
 
 // Keep this for later use, log level could be used to auto configure services log levels
-// const logLevelType = new EnumType(['debug', 'info', 'warn', 'error'])
+const logLevelType = new EnumType(['debug', 'info', 'warn', 'error'])
 // .globalType('log-level', logLevelType)
 // .globalOption('-l, --log-level <level:log-level>', 'Set log level.', {
 //   default: 'info',
@@ -66,7 +66,12 @@ const main = new Command()
   .version(Config.llemonstackVersion)
   .description('Command line for LLemonStack local AI agent stack')
   .versionOption('-v, --version', 'Get LLemonStack app version')
-  .globalEnv('DEBUG=<boolean>', 'Enable debugging output.')
+  .globalType('log-level', logLevelType)
+  .globalEnv('DEBUG=<log-level>', 'Enable debugging output.')
+  // .globalEnv('LOG_LEVEL=<boolean>', 'Set level of logs to output')
+  // .globalOption('-l, --log-level <level:log-level>', 'Set log level.', {
+  //   default: 'info',
+  // })
   .globalOption('-d, --debug', 'Enable debugging output.')
   .globalOption(
     '-c --config <configFile:string>',

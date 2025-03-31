@@ -1,3 +1,4 @@
+import { Config } from '@/core/config/config.ts'
 import { LoggerConfig, LogLevel, LogtapeLogger } from './logger.ts'
 import { InterfaceRelayer } from './ui/interface.ts'
 export type { LogLevel }
@@ -9,6 +10,7 @@ export class Relayer {
   private static initialized: boolean = false
   private static instances: Map<string, Relayer> = new Map()
   public static rootAppName: string = 'llmn'
+  public static logLevel: LogLevel = 'info'
 
   protected _logger: LogtapeLogger
   protected _context: Record<string, unknown>
@@ -23,17 +25,20 @@ export class Relayer {
    *
    * This needs to be called once before getInstance()
    */
-  public static async initialize({ reset = false }: { reset?: boolean } = {}): Promise<boolean> {
+  public static async initialize(
+    { logLevel = 'info', reset = false }: { logLevel?: LogLevel; reset?: boolean } = {},
+  ): Promise<boolean> {
     if (this.initialized && !reset) {
       return true
     }
 
     LoggerConfig.appName = this.rootAppName
 
+    this.logLevel = logLevel || Config.getInstance().LOG_LEVEL
+
     // Create and configure Logtape logger
     await LoggerConfig.initLogger(this.rootAppName, {
-      // TODO: get log level from env
-      defaultLevel: 'debug',
+      defaultLevel: logLevel as LogLevel,
       reset,
     })
 

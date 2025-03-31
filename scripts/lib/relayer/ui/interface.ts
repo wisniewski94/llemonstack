@@ -1,3 +1,4 @@
+import { CommandError } from '@/lib/command.ts'
 import { colors } from '@cliffy/ansi/colors'
 import { LoggerConfig, LogLevel, LogRecord, LogtapeLogger, Sink } from '../logger.ts'
 import { RowType, showTable, Table, TableOptions } from './tables.ts'
@@ -5,7 +6,10 @@ import { RowType, showTable, Table, TableOptions } from './tables.ts'
 interface UserLogRecord extends LogRecord {
   properties: Record<string, unknown> & {
     _meta?: {
-      type: 'userAction'
+      type: 'user_action' | 'action'
+      emoji?: string
+      args?: unknown[] // Any additional arguments passed to methods that support debugging
+      error?: unknown
     }
   }
 }
@@ -25,10 +29,33 @@ export class InterfaceRelayer {
   }
 
   public static log(record: UserLogRecord): void {
-    // TODO: check the levels and
-    console.log('InterfaceRelayer log', record)
-    if (record.properties._meta?.type === 'userAction') {
-      console.log(`${colors.magenta(record.message.join(''))}`)
+    // console.log('InterfaceRelayer log', record)
+
+    const data = record.properties
+    const meta = data._meta
+    const message = record.message.join('')
+    const level = record.level
+    const emoji: string = meta?.emoji ? meta.emoji : ''
+
+    if (meta?.type === 'user_action') {
+      console.log(`${colors.magenta(message)}`)
+    } else if (meta?.type === 'action') {
+      console.log(`${colors.green(message)}`)
+    } else if (level === 'fatal') {
+      console.error(`‼️ ${colors.red('ERROR: unable to continue,exiting...')}`)
+      showError(message, meta?.error)
+      Deno.exit(1)
+    } else if (level === 'error') {
+      showError(message, meta?.error)
+    } else if (level === 'warning') {
+      console.warn(`${emoji ? `${emoji} ` : '❗ '}${colors.yellow.bold(message)}`)
+    } else if (level === 'info') {
+      showInfo(message)
+    } else if (level === 'debug') {
+      showInfo(`[DEBUG] ${message}`)
+      data?._meta?.args?.forEach((arg) => {
+        showInfo(`  ${typeof arg === 'object' ? Deno.inspect(arg) : arg}`)
+      })
     }
   }
 
@@ -51,7 +78,7 @@ export class InterfaceRelayer {
   //
   // Interaction Methods
   //
-  // These methods do not route through the logger.
+  // These methods output to UI without logging the message.
   //
 
   /**
@@ -72,6 +99,25 @@ export class InterfaceRelayer {
     return showTable(header, rows, options)
   }
 
+  public header(message: string, len = 50): void {
+    const padding = '-'.repeat((len - message.length - 2) / 2)
+    let header = `${padding} ${message} ${padding}`
+    if (header.length < len) {
+      header += '-' // handle odd number of characters
+    }
+    console.log(`\n${colors.cyan.bold(header)}`)
+  }
+
+  public credentials(credentials: Record<string, string | null | undefined>): void {
+    for (const [key, value] of Object.entries(credentials)) {
+      value && showInfo(`  ${key}: ${value}`)
+    }
+  }
+
+  public serviceHost(service: string, url: string): void {
+    console.log(`${service}: ${colors.yellow(url)}`)
+  }
+
   //
   // Log Methods
   //
@@ -87,22 +133,66 @@ export class InterfaceRelayer {
   }
 
   public warn(message: string, data?: Record<string, unknown>): void {
-    this.logger.warn(message, { ...this.context, ...data })
+    this.logger.warn(message, { ...this.context, ...data, _meta: { emoji: data?.emoji } })
   }
 
   public error(message: string, data?: Record<string, unknown>): void {
-    this.logger.error(message, { ...this.context, ...data })
+    this.logger.error(message, { ...this.context, ...data, _meta: { error: data?.error } })
   }
 
-  public debug(message: string, data?: Record<string, unknown>): void {
-    this.logger.debug(message, { ...this.context, ...data })
+  public fatal(message: string, data?: Record<string, unknown>): void {
+    this.logger.fatal(message, { ...this.context, ...data, _meta: { error: data?.error } })
+  }
+
+  public debug(message: string, ...args: unknown[]): void {
+    console.log('debug', message, args)
+    this.logger.debug(message, { ...this.context, _meta: { args } })
+  }
+
+  public action(message: string, data?: Record<string, unknown>): void {
+    this.logger.info(message, { ...this.context, ...data, _meta: { type: 'action' } })
   }
 
   public userAction(message: string, data?: Record<string, unknown>): void {
-    this.logger.info(message, { ...this.context, ...data, _meta: { type: 'userAction' } })
+    this.logger.info(message, { ...this.context, ...data, _meta: { type: 'user_action' } })
   }
+}
 
-  public header(message: string, data?: Record<string, unknown>): void {
-    this.logger.info(message, { ...this.context, ...data, _meta: { type: 'header' } })
+//
+// Helper functions
+//
+
+function showInfo(message: string): void {
+  console.log(`${colors.gray(message)}`)
+}
+
+function showError(msgOrError: string | unknown, err?: unknown): void {
+  const message = (typeof msgOrError === 'string') ? msgOrError : null
+  const error = err || msgOrError
+  const logError = (message: string, ...args: unknown[]) => {
+    if (args.length > 0 && args[0] === message) {
+      args.shift()
+    }
+    console.error(colors.red(message), ...args)
+  }
+  if (error instanceof CommandError) {
+    message && logError(message)
+    logError(`Command failed: "${error.cmd}" \n${error.stderr}`)
+  } else {
+    let errorMessage: string | undefined
+    if (error && typeof error === 'object') {
+      errorMessage = 'message' in error
+        ? error.message as string
+        : 'stderr' in error
+        ? error.stderr as string
+        : String(error)
+    } else {
+      errorMessage = String(error)
+    }
+    if (message) {
+      logError(message, errorMessage)
+    } else {
+      logError(errorMessage)
+    }
   }
 }

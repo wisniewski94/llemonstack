@@ -1,6 +1,7 @@
 // File: relayer.ts
 import {
   configure,
+  getAnsiColorFormatter,
   getConsoleSink,
   getLogger,
   Logger,
@@ -68,7 +69,6 @@ export class LoggerConfig {
       console.error('[Logger] Logger not initialized')
     }
 
-    console.log('getting logger', name)
     const logger = Array.isArray(name)
       ? getLogger(name)
       : name && name !== this.appName
@@ -130,7 +130,12 @@ export class LoggerConfig {
     await configure({
       reset: options.reset, // This resets the logger and allow another configuration
       sinks: {
-        console: getConsoleSink(),
+        console: getConsoleSink({
+          formatter: getAnsiColorFormatter({
+            timestamp: 'time',
+            level: 'FULL',
+          }),
+        }),
         interface: InterfaceRelayer.getUISink(),
         // interface: (record) => {
         //   console.log('interface', record)

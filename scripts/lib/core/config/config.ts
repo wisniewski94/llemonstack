@@ -2,6 +2,7 @@ import configTemplate from '@/config/templates/config.0.2.0.json' with { type: '
 import { Service, ServicesMap } from '@/core/services/index.ts'
 import { loadEnv, updateEnv } from '@/lib/env.ts'
 import * as fs from '@/lib/fs.ts'
+import { LogLevel } from '@/lib/relayer/logger.ts'
 import { failure, success, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
 import { isTruthy } from '@/lib/utils/compare.ts'
 import { IServiceOptions, IServicesGroups, LLemonStackConfig, ServiceConfig } from '@/types'
@@ -46,7 +47,8 @@ export class Config {
 
   private _host: Host = Host.getInstance()
 
-  protected _debug: boolean = false
+  public DEBUG: boolean = false
+  public LOG_LEVEL: LogLevel = 'info'
   private _configTemplate: LLemonStackConfig = configTemplate as LLemonStackConfig
   private _config: LLemonStackConfig = this._configTemplate
 
@@ -90,14 +92,6 @@ export class Config {
   //
   // Public Properties
   //
-
-  get DEBUG(): boolean {
-    return this._debug
-  }
-
-  set DEBUG(value: boolean) {
-    this._debug = value
-  }
 
   /**
    * Get the project name from config.json, env, or default
@@ -189,16 +183,22 @@ export class Config {
    */
   public async initialize(
     configFile?: string,
-    { debug, init = false }: {
+    { debug, logLevel, init = false }: {
       debug?: boolean
+      logLevel?: LogLevel
       init?: boolean // If false, return error if config file is invalid
     } = {},
   ): Promise<TryCatchResult<Config, Error>> {
+    if (logLevel) {
+      this.LOG_LEVEL = logLevel
+    }
     if (debug) {
       // Only update if debug was explicitly set to true
       this.DEBUG = debug
+      this.LOG_LEVEL = 'debug'
     }
 
+    // If previously cached initialize result, return it
     if (this._initializeResult.success) {
       return this._initializeResult
     }
