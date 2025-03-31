@@ -2,7 +2,8 @@
  * Docker management library
  *
  * TODO: move all docker related functions here
- * TODO: convert all docker functions to return TryCatchResult
+ * TODO: convert into a class
+ * TODO: add a catchall method that auto detects 'try' prefix and wraps the result in a TryCatchResult?
  */
 
 import type { EnvVars, RunCommandOutput } from '@/types'
@@ -220,22 +221,22 @@ function getDockerfileArch(): string {
   return arch ? `Dockerfile.${arch}` : ''
 }
 
-export async function isServiceRunning(
-  service: string,
-  { projectName, match = 'exact' }: { projectName?: string; match?: 'exact' | 'partial' },
-) {
-  const result = await dockerComposePs(
-    projectName || Config.getInstance().projectName,
-  ) as DockerComposePsResult
-  return result.some((c) =>
-    match === 'exact' ? c.Name === service : c.Name?.toLowerCase().includes(service.toLowerCase())
-  )
+export async function tryDockerComposePs(
+  projectName: string,
+  { services }: { services?: string | string[] } = {},
+): Promise<TryCatchResult<DockerComposePsResult>> {
+  return await tryCatch(dockerComposePs(projectName, {
+    format: 'json',
+    services,
+  }))
 }
 
-export async function dockerComposePs(
+type PsFormatType = 'json' | 'table' | string
+
+export async function dockerComposePs<T extends PsFormatType>(
   projectName: string,
-  { format = 'json' }: { format?: string } = {},
-): Promise<DockerComposePsResult | string[]> {
+  { format = 'json' as T, services }: { format?: T; services?: string | string[] } = {},
+): Promise<T extends 'json' ? DockerComposePsResult : string[]> {
   const results = await runCommand(
     'docker',
     {
@@ -246,15 +247,19 @@ export async function dockerComposePs(
         'ps',
         '-a',
         '--format',
-        format,
+        format as string,
+        ...(Array.isArray(services) ? services : [services]),
       ],
       captureOutput: true,
       silent: true,
     },
   )
+
   return format.startsWith('table')
-    ? results.toList()
-    : results.toJsonList() as DockerComposePsResult
+    // deno-lint-ignore no-explicit-any
+    ? results.toList() as any
+    // deno-lint-ignore no-explicit-any
+    : results.toJsonList() as any
 }
 
 export async function prepareDockerNetwork(

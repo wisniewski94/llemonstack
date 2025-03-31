@@ -48,7 +48,7 @@ export type RunCommandOutput = InstanceType<typeof RunCommandOutputClass>
 export type CommandError = InstanceType<typeof CommandErrorClass>
 
 export interface RunCommandOptions {
-  args?: Array<string | false>
+  args?: Array<string | false | null | undefined>
   silent?: boolean
   captureOutput?: boolean
   env?: EnvVars
@@ -109,7 +109,8 @@ export interface IServiceState {
   started: boolean | null
   healthy: boolean | null
   ready: boolean | null
-  // TODO: add other states like error message
+  last_checked: Date | null
+  state: string | null // Value of state string from Docker Compose ps
 }
 
 export type ServiceStatusType =
@@ -117,8 +118,9 @@ export type ServiceStatusType =
   | 'loaded'
   | 'ready'
   | 'starting'
-  | 'started:healthy' // Running and healthy
-  | 'started:unhealthy' // Running but health check is failing
+  | 'started' // Started but health is unknown
+  | 'running' // Running and healthy
+  | 'unhealthy' // Running but health check is failing
   | 'stopped'
   | 'error' // Error during start or stop
 

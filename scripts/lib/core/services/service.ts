@@ -1,5 +1,5 @@
 import { Config } from '@/core/config/config.ts'
-import { tryDockerCompose } from '@/lib/docker.ts'
+import { tryDockerCompose, tryDockerComposePs } from '@/lib/docker.ts'
 import { path } from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 import { ObservableStruct } from '@/lib/utils/observable.ts'
@@ -33,6 +33,8 @@ export class Service {
     started: false,
     healthy: false,
     ready: false,
+    last_checked: null,
+    state: null,
   })
 
   // Reference back to the active config object
@@ -167,23 +169,27 @@ export class Service {
    * Set the state for a key in the service state object
    *
    * @param {keyof IServiceState} key - The key to set
-   * @param {boolean} value - The value to set
+   * @param {IServiceState[K]} value - The value to set
    * @returns {boolean} Whether or not the state was set, could return false if value was invalid
    */
-  public setState(key: keyof IServiceState, value: boolean): boolean {
+  public setState<K extends keyof IServiceState>(key: K, value: IServiceState[K]): boolean {
     this._state.set(key, value)
     return true // Whether or not the state was set
   }
 
-  public getStatus(): ServiceStatusType {
+  public async getStatus(): Promise<ServiceStatusType> {
+    await this.checkState()
     if (!this.isEnabled()) {
       return 'disabled'
     }
     if (this._state.get('started')) {
-      if (this._state.get('healthy')) {
-        return 'started:healthy'
+      const health = this._state.get('healthy')
+      if (health === true) {
+        return 'running'
+      } else if (health === false) {
+        return 'unhealthy'
       } else {
-        return 'started:unhealthy'
+        return 'started'
       }
     }
     if (this._state.get('ready')) {
@@ -193,16 +199,6 @@ export class Service {
     // Default status: 'loaded'
     // Service is enabled but prepareEnv has not yet successfully completed
     return 'loaded'
-  }
-
-  // TODO: rename this to prepareEnv ??? loadEnv gets confusing as to when it's called
-  // deno-lint-ignore require-await
-  public async loadEnv(
-    envVars: Record<string, string>,
-    { config: _config }: { config: Config },
-  ): Promise<Record<string, string>> {
-    // Override in subclasses to set environment variables for the service
-    return envVars
   }
 
   /**
@@ -229,6 +225,53 @@ export class Service {
 
     this._state.set('enabled', enabled)
     return enabled
+  }
+
+  public isStarted(): boolean {
+    return this._state.get('started') || false
+  }
+
+  public async isRunning(): Promise<boolean> {
+    await this.checkState()
+    return this._state.get('started') || false
+  }
+
+  /**
+   * Check the state of the service with Docker Compose and update the state object
+   *
+   * @returns {TryCatchResult<IServiceState>} - The result of the check
+   */
+  protected async checkState(): Promise<TryCatchResult<IServiceState>> {
+    const results = success<IServiceState>(this._state as unknown as IServiceState)
+
+    const serviceNames = this._config.provides
+      ? Object.values(this._config.provides)
+      : [this.service]
+    const psResults = await tryDockerComposePs(
+      this._configInstance.projectName,
+      { services: serviceNames },
+    )
+    if (!psResults.success || !psResults.data) {
+      this.setState('state', 'unknown')
+      return failure(
+        `Failed to update service state: ${this.name}`,
+        results, // Return the current state
+      )
+    }
+
+    // Use the ps results for the first service listed in provides key in llemonstack.yaml.
+    // This first container is considered primary. e.g. supabase will check the db container.
+    const data = psResults.data.find((c) => c.Service === serviceNames[0])
+    // TODO: combine the status of all the matching services in the ps results?
+
+    const state = data?.State ?? null
+    this.setState('state', state)
+    this.setState('started', state === 'running')
+    this.setState('last_checked', new Date())
+    this.setState('enabled', this.isEnabled())
+    // TODO add more states checks here
+
+    return results
   }
 
   /**
@@ -283,6 +326,22 @@ export class Service {
   }
 
   /**
+   * Load the environment variables for the service
+   *
+   * @param {Record<string, string>} envVars - The environment variables to load
+   * @param {Config} config - The config instance
+   * @returns {Promise<Record<string, string>>} - The environment variables
+   */
+  // deno-lint-ignore require-await
+  public async loadEnv(
+    envVars: Record<string, string>,
+    { config: _config }: { config: Config },
+  ): Promise<Record<string, string>> {
+    // Override in subclasses to set environment variables for the service
+    return envVars
+  }
+
+  /**
    * Prepare the service environment
    *
    * @returns {TryCatchResult<boolean>} - The result of the preparation
@@ -299,7 +358,7 @@ export class Service {
       return failure<boolean>(`Failed to prepare service environment: ${this.name}`, results, false)
     }
 
-    this._state.set('ready', true)
+    this.setState('ready', true)
     results.addMessage('info', `✔️ ${this.name} environment prepared, ready to start`)
     return results
   }

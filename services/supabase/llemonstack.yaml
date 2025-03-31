@@ -8,7 +8,11 @@ compose_file: docker-compose.yaml
 service_group: databases
 
 provides:
-  postgres: supabase-db # Name of the container
+  # [key]: [value]
+  # The key is the service name that other services can depend on
+  # The value is the name of the container from docker inspect: com.docker.compose.service
+  # The value is also used to for docker ps to check status of the service
+  postgres: db
 
 repo:
   url: https://github.com/supabase/supabase.git
