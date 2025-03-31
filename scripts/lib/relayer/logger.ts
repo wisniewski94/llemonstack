@@ -1,8 +1,16 @@
 // File: relayer.ts
-import { configure, getConsoleSink, getLogger, Logger, LogLevel } from '@logtape/logtape'
+import {
+  configure,
+  getConsoleSink,
+  getLogger,
+  Logger,
+  LogLevel,
+  LogRecord,
+  Sink,
+} from '@logtape/logtape'
 import { AsyncLocalStorage } from 'node:async_hooks'
-
-export type { Logger as LogtapeLogger, LogLevel }
+import { InterfaceRelayer } from './ui/interface.ts'
+export type { Logger as LogtapeLogger, LogLevel, LogRecord, Sink }
 
 /**
  * Config wrapper to get the configured Logtape logger instance
@@ -26,9 +34,9 @@ export class LoggerConfig {
    */
   public static async initLogger(
     appName: string,
-    { defaultLevel }: { defaultLevel?: LogLevel } = {},
+    { defaultLevel, reset = false }: { defaultLevel?: LogLevel; reset?: boolean } = {},
   ): Promise<void> {
-    if (this.initialized) {
+    if (this.initialized && !reset) {
       return
     }
 
@@ -37,6 +45,7 @@ export class LoggerConfig {
 
     await this.configureLogger({
       defaultLevel: defaultLevel || this.defaultLevel,
+      reset,
     })
 
     this.initialized = true
@@ -101,20 +110,32 @@ export class LoggerConfig {
   private static async configureLogger(
     options: {
       defaultLevel?: LogLevel
+      reset?: boolean
     } = {},
   ) {
-    console.log('configuring logger???', this.initialized)
     // Return the default logger if it's already initialized
-    if (this.initialized) {
+    if (this.initialized && !options.reset) {
       this.rootLogger.debug('Logger already initialized')
       return
+    }
+
+    if (options.reset) {
+      this.initialized
+        ? this.rootLogger.debug('Resetting logger')
+        : console.debug('Resetting logger')
     }
 
     // Configure the Logtape logger
     // After configuration, Logtape's getLogger will be ready to use.
     await configure({
+      reset: options.reset, // This resets the logger and allow another configuration
       sinks: {
         console: getConsoleSink(),
+        interface: InterfaceRelayer.getUISink(),
+        // interface: (record) => {
+        //   console.log('interface', record)
+        //   // showInfo(String(record.message))
+        // },
         // console: getConsoleSink({
         //   formatter: getAnsiColorFormatter({
         //     timestamp: 'date-time-tz',
@@ -143,6 +164,12 @@ export class LoggerConfig {
       },
       filters: {},
       loggers: [
+        {
+          // This routes ui messages to the interface relayer
+          category: ['ui'],
+          lowestLevel: options.defaultLevel || this.defaultLevel,
+          sinks: ['interface'],
+        },
         {
           // This will log all "llmn.*" messages
           category: [this.appName],
