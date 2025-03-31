@@ -2,7 +2,7 @@ import type { LogMessage } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Border, Cell, CellType, Column, Row, RowType, Table } from '@cliffy/table'
 import { CommandError } from './command.ts'
-
+import { Config } from './core/config/config.ts'
 const DEFAULT_MAX_COLUMN_WIDTH = 50
 
 export { Cell, colors, Column, Row, Table }
@@ -103,7 +103,7 @@ export function showInfo(message: string): void {
 // Use Deno.env a the basic global config manager and Config for the complicated stack config
 export function showLogMessages(
   messages: LogMessage[],
-  { debug = false }: { debug?: boolean } = {},
+  { debug = Config.getInstance().DEBUG }: { debug?: boolean } = {},
 ): void {
   messages.forEach((message) => {
     switch (message.level) {
