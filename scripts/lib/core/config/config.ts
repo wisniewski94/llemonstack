@@ -3,6 +3,7 @@ import { Service, ServicesMap } from '@/core/services/index.ts'
 import { loadEnv, updateEnv } from '@/lib/env.ts'
 import * as fs from '@/lib/fs.ts'
 import { LogLevel } from '@/lib/relayer/logger.ts'
+import { Relayer } from '@/lib/relayer/relayer.ts'
 import { failure, success, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
 import { isTruthy } from '@/lib/utils/compare.ts'
 import { IServiceOptions, IServicesGroups, LLemonStackConfig, ServiceConfig } from '@/types'
@@ -167,6 +168,13 @@ export class Config {
     }
     this._host = new Host()
     return this._host
+  }
+
+  /**
+   * Get the root relayer instance with the project name set
+   */
+  get relayer(): Relayer {
+    return Relayer.getInstance().setContext({ projectName: this.projectName })
   }
 
   //

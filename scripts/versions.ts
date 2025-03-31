@@ -5,14 +5,7 @@
 import { Config } from '@/core/config/config.ts'
 import { getImageFromCompose, getImagesFromComposeYaml } from '@/lib/compose.ts'
 import { dockerRun, prepareDockerNetwork, runDockerCommand } from '@/lib/docker.ts'
-import {
-  showAction,
-  showError,
-  showHeader,
-  showInfo,
-  showTable,
-  showWarning,
-} from '@/lib/logger.ts'
+import { showError, showHeader, showInfo, showTable, showWarning } from '@/lib/logger.ts'
 import { IServiceImage, ServicesMapType, ServiceType } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Column, Row, RowType } from '@cliffy/table'
@@ -229,12 +222,14 @@ async function showImageVersions(config: Config): Promise<RowType[]> {
 }
 
 export async function versions(config: Config): Promise<void> {
-  showAction(`Getting versions for ${config.projectName}...`)
-  showInfo(
+  const show = config.relayer.show
+
+  show.action(`Getting versions for ${config.projectName}...`)
+  show.info(
     'Versions shown may differ from running containers.\n' +
       'Restart the stack to ensure the versions are correct.',
   )
-  showHeader('Docker Image Versions')
+  show.header('Docker Image Versions')
 
   await config.prepareEnv()
 
