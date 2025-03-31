@@ -3,9 +3,10 @@
  */
 import { OllamaService } from '@/services/ollama/service.ts'
 import { Input, Secret, Select } from '@cliffy/prompt'
+import { configure } from './configure.ts'
 import { Config } from './lib/core/config/config.ts'
 import { runDockerCommand } from './lib/docker.ts'
-import { path } from './lib/fs.ts'
+import { fileExists, path } from './lib/fs.ts'
 import {
   generateJWT,
   generateRandomBase64,
@@ -26,14 +27,7 @@ import {
 } from './lib/logger.ts'
 import { createServiceSchema, isPostgresConnectionValid } from './lib/postgres.ts'
 import { reset } from './reset.ts'
-import {
-  checkPrerequisites,
-  isInitialized,
-  isSupabaseStarted,
-  prepareEnv,
-  setupRepos,
-  startService,
-} from './start.ts' // Adjust the path as necessary
+import { checkPrerequisites, startService } from './start.ts' // Adjust the path as necessary
 
 // Env var key names we care about
 type EnvVarsKeys = keyof {
@@ -129,40 +123,27 @@ const POSTGRES_SERVICES: Array<[string, PostgresServiceEnvKeys]> = [
   // }],
 ]
 
-async function envFileExists(): Promise<boolean> {
-  try {
-    await Deno.stat(CONFIG.envFile)
-    return true
-  } catch (_error) {
-    return false
-  }
+async function envFileExists(config: Config): Promise<boolean> {
+  return (await fileExists(config.envFile)).success
 }
 
-async function createConfigFile(): Promise<void> {
-  // Check if the config directory exists
-  try {
-    await Deno.stat(CONFIG.configDir)
-  } catch (_error) {
-    // Create the config directory if it doesn't exist
-    await Deno.mkdir(CONFIG.configDir, { recursive: true })
-  }
-  try {
-    // Create the config file with initial configuration
-    const config = {
-      initialized: new Date().toISOString(),
-      version: CONFIG.version,
-    }
-    // TODO: use Config.save() instead
-    await Deno.writeTextFile(
-      CONFIG.configFile,
-      JSON.stringify(config, null, 2),
-    )
-  } catch (error) {
-    showError(`Error creating config file: ${CONFIG.configFile}`, error)
-  }
-}
+// async function createConfigFile(config: Config): Promise<void> {
+//   // Check if the config directory exists
+//   if (!(await fileExists(config.configDir)).success) {
+//     // Create the config directory if it doesn't exist
+//     await Deno.mkdir(config.configDir, { recursive: true })
+//   }
+//   try {
+//     await Deno.writeTextFile(
+//       CONFIG.configFile,
+//       JSON.stringify(config, null, 2),
+//     )
+//   } catch (error) {
+//     showError(`Error creating config file: ${CONFIG.configFile}`, error)
+//   }
+// }
 
-export async function clearConfigFile(): Promise<void> {
+export async function clearConfigFile(config: Config): Promise<void> {
   try {
     await Deno.stat(config.configFile)
     await Deno.remove(config.configFile)
@@ -198,24 +179,6 @@ function projectNameValidator(value?: string): boolean | string {
   }
   return /^[a-zA-Z0-9][a-zA-Z0-9_-]+$/.test(value || '') ||
     'Name can only use letters, numbers, hyphens and underscores'
-}
-
-async function updateEnvFile(
-  envVars: Record<AllEnvVarKeys, string>,
-): Promise<Record<string, string>> {
-  const envFileContent = await Deno.readTextFile(CONFIG.envFile)
-  const updatedEnvFileContent = Object.entries(envVars).reduce((acc, [key, value]) => {
-    if (!value) return acc // Keep existing value in .env if key value not set
-    const tmp = acc.replace(new RegExp(`${key}=.*`, 'g'), `${key}=${value}`)
-    // If the key is not found in the .env file, add it to the end of the file
-    if (tmp === acc && !acc.includes(`${key}=${value}`)) {
-      showWarning(`${key} not found in .env file, adding to end of file`)
-      return `${acc}\n${key}=${value}\n`
-    }
-    return tmp
-  }, envFileContent)
-  await Deno.writeTextFile(CONFIG.envFile, updatedEnvFileContent)
-  return await CONFIG.loadEnv({ reload: true, expand: false })
 }
 
 /**
@@ -293,53 +256,25 @@ function replacePostgresPasswords(
   return envVars
 }
 
-/**
- * Prompt user for ollama configuration options
- * @returns The selected ollama profile
- */
-async function configOllama(): Promise<string> {
-  const gpuDisabled = CONFIG.os === 'macOS'
-  if (gpuDisabled) {
-    showWarning('GPU options are not currently available on macOS due to Docker limitations.\n')
-  }
-
-  const gpuMessage = gpuDisabled ? ' (not available on macOS)' : ''
-  const ollamaProfile: string = await Select.prompt({
-    message: 'How do you want to run Ollama?',
-    options: [
-      Select.separator('----- Run on Host 🖥️ -----'),
-      {
-        name: '[HOST] Creates a network bridge',
-        value: 'host',
-      },
-      { name: '[NONE] Disable Ollama service', value: 'false' },
-      Select.separator('----- Run in Docker Container 🐳 -----'),
-      { name: '[CPU] Run on CPU, slow but compatible', value: 'cpu' },
-      {
-        name: `[AMD] Run on AMD GPU ${gpuMessage} `,
-        value: 'gpu-amd',
-        disabled: gpuDisabled,
-      },
-      {
-        name: `[NVIDIA] Run on Nvidia GPU ${gpuMessage}`,
-        value: 'gpu-nvidia',
-        disabled: gpuDisabled,
-      },
-    ],
-  })
-  return ollamaProfile
-}
-
 async function startSupabase(
-  projectName: string,
+  config: Config,
   envVars: Record<AllEnvVarKeys, string>,
 ): Promise<void> {
+  const supabase = config.getServiceByName('supabase')
+
+  if (!supabase) {
+    showError('Supabase service not found')
+    Deno.exit(1)
+  }
+
   // Make sure supabase is running
-  if (!await isSupabaseStarted(projectName)) {
+  // TODO: get supabase service and and call isRunning
+  // isSupabaseStarted was originally exported by start.ts
+  if (!await supabase.isRunning()) {
     try {
       // Start supabase
       showInfo('Starting Supabase...')
-      await startService(projectName, 'supabase')
+      await supabase.start()
       // Wait for 3 seconds to ensure Supabase is fully initialized
       await new Promise((resolve) => setTimeout(resolve, 3000))
     } catch (error) {
@@ -352,7 +287,7 @@ async function startSupabase(
   } else {
     showInfo('Attempting to start Supabase again...')
     try {
-      await startService(projectName, 'supabase')
+      await startService(config, 'supabase')
       await new Promise((resolve) => setTimeout(resolve, 5000))
     } catch (error) {
       showError('Error while starting Supabase', error)
@@ -444,7 +379,7 @@ export async function init(
   // Script will fail if another LLemonStack, Supabase, etc. is already running on the required ports.
 
   try {
-    if (isInitialized()) {
+    if (config.isProjectInitialized()) {
       showWarning(`Project already initialized: ${config.projectName}`)
       const resetOption: string = await Select.prompt({
         message: 'How do you want to proceed?',
@@ -474,7 +409,7 @@ export async function init(
       if (resetOption === 'hard-reset') {
         if (confirm('Are you sure you want to delete all data and start over?')) {
           showAction('Resetting project...')
-          await reset(config.projectName, { skipPrompt: true, skipCache: true })
+          await reset(config, { skipPrompt: true, skipCache: true })
           await clearEnvFile(config)
           await clearConfigFile(config)
         } else {
@@ -512,10 +447,6 @@ export async function init(
 
     showInfo('.env file is ready to configure')
 
-    showAction('\nSetting up service repositories...')
-    await setupRepos({ all: true })
-    showInfo('Repositories ready\n\n')
-
     let uniqueName = false
     let projectName = ''
     while (!uniqueName) {
@@ -527,6 +458,7 @@ export async function init(
         validate: projectNameValidator,
       })
 
+      // TODO: move existing project check to config
       uniqueName = !(await isExistingProject(projectName))
 
       if (!uniqueName) {
@@ -598,9 +530,9 @@ export async function init(
     // const ollamaProfile = await configOllama()
 
     // Run the config at this point?
-    await configure()
+    await configure(config)
 
-    envVars.ENABLE_OLLAMA = ollamaProfile
+    // envVars.ENABLE_OLLAMA = ollamaProfile
 
     // Checkpoint, save env vars to .env file
     // TODO: move to config
@@ -610,11 +542,11 @@ export async function init(
     })
 
     // Setup supabase env
-    await prepareEnv()
+    await config.prepareEnv()
 
     showAction('\nSetting up postgres schemas...')
     showInfo('This will create a postgres user and schema for each service that supports schemas.')
-    await startSupabase(projectName, envVars)
+    await startSupabase(config, envVars)
     await createServiceSchemas(config)
     showInfo('Postgres schemas successfully created')
 
@@ -622,7 +554,8 @@ export async function init(
     showInfo('Config values saved to .env file')
 
     // Create config file to indicate project is initialized
-    await createConfigFile()
+    // TODO: double check config is already creating the file, then remove this
+    // await createConfigFile(config)
 
     if (ollamaService?.useHostOllama()) {
       showInfo('\nOllama host option requires Ollama running on your host machine.')

@@ -1,29 +1,39 @@
 /**
  * Configure the services
  */
-import { Checkbox, CheckboxOption } from '@cliffy/prompt'
+import { CheckboxOption, Select } from '@cliffy/prompt'
 import { Config } from './lib/core/config/config.ts'
 import { showAction, showError, showInfo, showLogMessages, showWarning } from './lib/logger.ts'
-import { DEFAULT_PROJECT_NAME } from './start.ts' // Adjust the path as necessary
 
-// async function migrateEnabledEnvVars(): Promise<void> {
-//   // TODO: loop through all config.env keys to get list of ENABLE_* env vars
-//   // Then set enabled for each service
-//   // The save config
-//   // Then comment out ENABLE_* env vars in .env
-//   const enabledEnvVars = Object.entries(config.env).filter(([key]) => key.startsWith('ENABLE_'))
-//   for (const [key, value] of enabledEnvVars) {
-//     const service = config.getService(key.replace('ENABLE_', ''))
-//     if (service) {
-//       service.enabled = value === 'true'
-//     }
-//   }
-// }
+function getServiceOption(
+  serviceName: string,
+  config: Config,
+  dependencies: Record<string, string[]>,
+): CheckboxOption<string> | null {
+  const service = config.getServiceByName(serviceName)
+  if (!service) {
+    return null
+  }
+  const requiredByServices = service.provides.map((key) =>
+    dependencies[key]?.map((s) => config.getServiceByName(s))
+  ).flat().filter(Boolean)
+  const required = requiredByServices.some((s) => s?.isEnabled())
+  return {
+    name: `${service.name} - ${service.description} ${
+      requiredByServices.length > 0
+        ? `\n    ... Required by ${requiredByServices.map((s) => s?.name || '').join(', ')}`
+        : ''
+    }`,
+    value: service.servicesMapKey,
+    checked: service.isEnabled() || required,
+    disabled: required,
+  }
+}
 
 export async function configure(
   config: Config, // An initialized config instance
 ): Promise<void> {
-  const groups = config.getServiceGroups()
+  const groups = config.getServicesGroups()
 
   showWarning('THIS IS WIP and does not yet save the selected services.')
 
@@ -36,10 +46,14 @@ export async function configure(
   const enabledServices = new Set<string>()
   const dependencies: Record<string, string[]> = {}
 
+  // const hasDependencies = (serviceName: string) => {
+  //   return dependencies[serviceName]?.length > 0
+  // }
+
   // Build dependencies map for all services
   // TODO: move this to config.ts
-  config.getInstalledServices().forEach((service) => {
-    service.dependencies.forEach((dependency) => {
+  config.getAllServices().forEach((service) => {
+    service.depends_on.forEach((dependency) => {
       if (!dependencies[dependency]) {
         dependencies[dependency] = []
       }
@@ -53,42 +67,30 @@ export async function configure(
     const groupServices = groups[i][1]
     if (groupServices.length === 0) continue
 
-    const groupResult = await Checkbox.prompt({
-      message: `Select ${groupName} services to enable:`,
-      options: groupServices.map((serviceName) => {
-        const service = config.getService(serviceName)
-        if (!service) {
-          return null
-        }
-        const requiredByServices = service.provides.map((key) =>
-          dependencies[key]?.map((s) => config.getService(s))
-        ).flat().filter(Boolean)
-        const required = requiredByServices.some((s) => s && enabledServices.has(s.service))
-        return {
-          name: `${service.name} - ${service.description} ${
-            requiredByServices.length > 0
-              ? `\n    ... Required by ${requiredByServices.map((s) => s?.name || '').join(', ')}`
-              : ''
-          }`,
-          value: service.service,
-          checked: service.enabled || required,
-          disabled: required,
-        }
-      }).filter(Boolean) as CheckboxOption<string>[],
+    const selection = await Select.prompt({
+      message: `Select ${groupName} services to manage (or exit):`,
+      options: [
+        ...groupServices.map((serviceName) => getServiceOption(serviceName, config, dependencies))
+          .filter(Boolean) as CheckboxOption<string>[],
+        'Exit',
+      ],
     })
-    groupResult.forEach((serviceName) => {
-      const service = config.getService(serviceName)
-      if (service) {
-        enabledServices.add(service.service)
-        service.enabled = true
-      }
-    })
+
+    console.log('selection', selection)
+    if (selection === 'Exit') {
+      break
+    }
+    const service = config.getServiceByName(selection)
+    if (service) {
+      service.setState('enabled', true)
+      await service.configure({ silent: false, config })
+    }
   }
 
   // Configure each enabled service
-  for (const service of config.getInstalledServices()) {
+  for (const [_, service] of config.getAllServices()) {
     if (service && typeof service.configure === 'function') {
-      if (enabledServices.has(service.service)) {
+      if (enabledServices.has(service.servicesMapKey)) {
         const result = await service.configure({ silent: false, config })
         if (!result.success) {
           showError(`Failed to configure ${service.name}`)
@@ -96,7 +98,7 @@ export async function configure(
         }
       } else {
         // console.log('disabling service', service.service)
-        service.enabled(false)
+        service.setState('enabled', false)
       }
     }
   }
