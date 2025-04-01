@@ -145,6 +145,7 @@ services:
   # It discards all events sent to it to reduce resource consumption.
   # Logflare normally uses 500MB+ of memory. Dummy uses <3MB.
   analytics:
+    image: dummy-analytics:latest
     container_name: dummy-analytics
     labels:
       dev.dozzle.group: Analytics
