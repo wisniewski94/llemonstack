@@ -38,7 +38,7 @@ exposes:
   host:
     supabase:
       name: Supabase
-      url: http://localhost:8080
+      url: http://localhost:8000
       credentials:
         Username: ${SUPABASE_DASHBOARD_USERNAME}
         Password: ${SUPABASE_DASHBOARD_PASSWORD}
