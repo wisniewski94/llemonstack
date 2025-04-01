@@ -86,7 +86,7 @@ const main = new Command()
 // Initialize the LLemonStack environment
 main
   .command('config')
-  .description('Configure the stack services')
+  .description('Enable or disable services')
   .option('--all', 'Show all services in one list', { default: false })
   .action(async (options) => {
     const config = await initConfig(options)
