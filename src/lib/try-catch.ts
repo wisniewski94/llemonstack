@@ -74,6 +74,14 @@ export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
     this.messages = result.messages || []
   }
 
+  toString(): string {
+    if (!this.success && this.error) {
+      const err = this.error as unknown as { stderr?: string; message?: string }
+      return err?.stderr || err?.message || 'Unknown error'
+    }
+    return this.data?.toString() || 'Unknown'
+  }
+
   set error(error: E | null) {
     error && this._errors.push(error)
     this.success = !error

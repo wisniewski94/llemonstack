@@ -42,7 +42,7 @@ export class InterfaceRelayer {
     } else if (meta?.type === 'action') {
       console.log(`${colors.green(message)}`)
     } else if (level === 'fatal') {
-      console.error(`‼️ ${colors.red('ERROR: unable to continue,exiting...')}`)
+      console.error(`‼️ ${colors.red('ERROR: unable to continue, exiting...')}`)
       showError(message, meta?.error)
       Deno.exit(1)
     } else if (level === 'error') {
@@ -136,12 +136,12 @@ export class InterfaceRelayer {
     this.logger.warn(message, { ...this.context, ...data, _meta: { emoji: data?.emoji } })
   }
 
-  public error(message: string, data?: Record<string, unknown>): void {
-    this.logger.error(message, { ...this.context, ...data, _meta: { error: data?.error } })
+  public error(message: string | Error, data?: Record<string, unknown>): void {
+    this.handleError('error', message, data)
   }
 
   public fatal(message: string, data?: Record<string, unknown>): void {
-    this.logger.fatal(message, { ...this.context, ...data, _meta: { error: data?.error } })
+    this.handleError('fatal', message, data)
   }
 
   public debug(message: string, ...args: unknown[]): void {
@@ -155,6 +155,30 @@ export class InterfaceRelayer {
 
   public userAction(message: string, data?: Record<string, unknown>): void {
     this.logger.info(message, { ...this.context, ...data, _meta: { type: 'user_action' } })
+  }
+
+  public handleError(
+    level: LogLevel,
+    message: string | Error,
+    data?: Record<string, unknown>,
+  ): void {
+    // If message is not a string, extract the string from it and set _meta.error
+    let metaError: unknown
+    if (message instanceof Error) {
+      metaError = message
+      message = String(message)
+    }
+    const context = {
+      ...this.context,
+      ...data,
+      _meta: { error: metaError || data?.error },
+    }
+    if (level === 'fatal') {
+      this.logger.fatal(message, context)
+      Deno.exit(1)
+    } else {
+      this.logger.error(message, context)
+    }
   }
 }
 

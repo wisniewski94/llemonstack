@@ -6,11 +6,20 @@
  * TODO: add a catchall method that auto detects 'try' prefix and wraps the result in a TryCatchResult?
  */
 
+import { Relayer } from '@/relayer/relayer.ts'
 import type { EnvVars, RunCommandOutput } from '@/types'
 import { Config } from '../core/config/config.ts'
 import Host from '../core/config/host.ts'
-import { runCommand } from './command.ts'
+import { runCommand, tryRunCommand } from './command.ts'
 import { tryCatch, TryCatchResult } from './try-catch.ts'
+
+export type DockerCommandOptions = {
+  args?: Array<string | false>
+  silent?: boolean
+  captureOutput?: boolean
+  env?: EnvVars
+  autoLoadEnv?: boolean
+}
 
 export type DockerComposeOptions = {
   composeFile?: string | string[]
@@ -87,7 +96,7 @@ export async function removeDockerNetwork(
 /**
  * Run a docker compose command and return the output
  *
- * This is a wrapper around runCommand that injects dockerEnv vars.
+ * This is a wrapper around runDockerComposeCommand that injects dockerEnv vars.
  *
  * @param cmd - The docker compose to run: up, down, etc.
  * @param args {DockerComposeOptions} - The options for the command
@@ -98,6 +107,22 @@ export async function tryDockerCompose(
   options: DockerComposeOptions = {},
 ): Promise<TryCatchResult<RunCommandOutput>> {
   return await tryCatch(runDockerComposeCommand(cmd, options))
+}
+
+/**
+ * Run a docker command and return the output
+ *
+ * This is a wrapper around runDockerCommand that injects dockerEnv vars.
+ *
+ * @param cmd - The docker command to run: ps, up, down, etc.
+ * @param args {DockerCommandOptions} - The options for the command
+ * @returns {TryCatchResult<RunCommandOutput>} The output of the command
+ */
+export async function tryDocker(
+  cmd: string,
+  options: DockerCommandOptions = {},
+): Promise<TryCatchResult<RunCommandOutput>> {
+  return await tryCatch(runDockerCommand(cmd, options))
 }
 
 /**
@@ -170,13 +195,7 @@ export async function runDockerCommand(
     captureOutput = false,
     env = {},
     autoLoadEnv = true, // If true, load env from .env file
-  }: {
-    args?: Array<string | false>
-    silent?: boolean
-    captureOutput?: boolean
-    env?: EnvVars
-    autoLoadEnv?: boolean
-  } = {},
+  }: DockerCommandOptions = {},
 ): Promise<RunCommandOutput> {
   return await runCommand('docker', {
     args: [
@@ -264,30 +283,35 @@ export async function dockerComposePs<T extends PsFormatType>(
 
 export async function prepareDockerNetwork(
   network?: string,
-): Promise<{ network: string; created: boolean }> {
+): Promise<TryCatchResult<RunCommandOutput>> {
   if (!network) {
     network = Config.getInstance().dockerNetworkName
   }
-  const result = await runCommand('docker', {
+  const results = await tryRunCommand('docker', {
     args: ['network', 'ls'],
     captureOutput: true,
     silent: true,
   })
-  if (!result.toString().includes(network)) {
-    await runCommand('docker', {
-      args: ['network', 'create', network],
-      silent: true,
+  if (!results.success) {
+    Relayer.getInstance().error('Unable to check docker network: {error}', {
+      error: results.error?.stderr,
     })
-    return {
-      network,
-      created: true,
-    }
-  } else {
-    return {
-      network,
-      created: false,
+  }
+  if (results.success && !results.toString().includes(network)) {
+    results.collect([
+      await tryRunCommand('docker', {
+        args: ['network', 'create', network],
+        silent: true,
+      }),
+    ])
+    if (!results.success) {
+      Relayer.getInstance().error('Unable to create docker network: {network}: {error}', {
+        network,
+        error: results.error?.stderr,
+      })
     }
   }
+  return results
 }
 
 /**

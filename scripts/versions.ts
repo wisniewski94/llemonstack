@@ -5,7 +5,6 @@
 import { getImageFromCompose, getImagesFromComposeYaml } from '@/lib/compose.ts'
 import { dockerRun, prepareDockerNetwork, runDockerCommand } from '@/lib/docker.ts'
 import { InterfaceRelayer } from '@/relayer/ui/interface.ts'
-import { showError } from '@/relayer/ui/show.ts'
 import { IServiceImage, ServicesMapType, ServiceType } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Column, Row, RowType } from '@cliffy/table'
@@ -241,7 +240,11 @@ export async function versions(config: Config): Promise<void> {
   await config.prepareEnv()
 
   // TODO: move docker network preparation to config?
-  await prepareDockerNetwork(config.dockerNetworkName)
+  const results = await prepareDockerNetwork(config.dockerNetworkName)
+  if (!results.success) {
+    show.fatal(results.toString())
+    Deno.exit(1)
+  }
 
   try {
     const services = config.getEnabledServices().filter((service) => service.appVersionCmd !== null)
@@ -287,8 +290,6 @@ export async function versions(config: Config): Promise<void> {
     }
     console.log('\n')
   } catch (error) {
-    // TODO: use show.error or relayer.error
-    showError(error)
-    Deno.exit(1)
+    show.error(error as Error)
   }
 }
