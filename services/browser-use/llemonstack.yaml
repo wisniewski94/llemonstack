@@ -15,7 +15,6 @@ repo:
 
 volumes:
   - browser-use/output
-  - browser-use/chrome_data
   - browser-use/gradio_tmp
 
 exposes:
