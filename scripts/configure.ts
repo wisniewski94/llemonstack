@@ -2,106 +2,155 @@
  * Configure the services
  */
 import { Config } from '@/core/config/config.ts'
-import { CheckboxOption, Select } from '@cliffy/prompt'
+import { ServicesMapType, ServiceType } from '@/types'
+import { Select } from '@cliffy/prompt'
 
 function getServiceOption(
-  serviceName: string,
+  service: ServiceType,
   config: Config,
-  dependencies: Record<string, string[]>,
-): CheckboxOption<string> | null {
-  const service = config.getServiceByName(serviceName)
+  // dependencies: Record<string, string[]>,
+): { name: string; value: string; disabled?: boolean } | null {
   if (!service) {
     return null
   }
-  const requiredByServices = service.provides.map((key) =>
-    dependencies[key]?.map((s) => config.getServiceByName(s))
-  ).flat().filter(Boolean)
-  const required = requiredByServices.some((s) => s?.isEnabled())
+
+  // Get all dependents of the service
+  const dependents = config.getServiceDependents(service)
+
+  // Check if the service has any enabled dependents
+  const required = dependents.getEnabled()?.size > 0
+
+  // Check if the service is enabled
+  const isEnabled = service.isEnabled()
+
+  // Check if the service is auto enabled
+  const isAutoEnabled = config.isServiceAutoEnabled(service)
+
+  // ⚫  🟢 ⚪  🟡  🔴  🔵
+  const statusEmoji = isAutoEnabled
+    ? required ? '🟡' : '🔵'
+    : isEnabled
+    ? '🟢'
+    : required
+    ? '🔴'
+    : '⚪'
+
   return {
-    name: `${service.name} - ${service.description} ${
-      requiredByServices.length > 0
-        ? `\n    ... Required by ${requiredByServices.map((s) => s?.name || '').join(', ')}`
+    name: `${statusEmoji} ${service.name} - ${service.description} ${
+      dependents.size > 0
+        ? `\n    ... Required by ${
+          dependents
+            .map((s) => s?.name || '')
+            .join(', ')
+        }`
         : ''
     }`,
     value: service.servicesMapKey,
-    checked: service.isEnabled() || required,
-    disabled: required,
+    // disabled: required,
   }
 }
 
 export async function configure(
   config: Config, // An initialized config instance
+  options: { all: boolean },
 ): Promise<void> {
   const show = config.relayer.show
-  const groups = config.getServicesGroups()
-
-  show.warn('THIS IS WIP and does not yet save the selected services.')
 
   show.action(`Configuring services for ${config.projectName}...`)
-  // TODO: loop through all config.env keys to get list of ENABLE_* env vars
-  // Then set enabled for each service
-  // The save config
-  // Then comment out ENABLE_* env vars in .env
 
-  const enabledServices = new Set<string>()
-  const dependencies: Record<string, string[]> = {}
-
-  // const hasDependencies = (serviceName: string) => {
-  //   return dependencies[serviceName]?.length > 0
-  // }
-
-  // Build dependencies map for all services
-  // TODO: move this to config.ts
-  config.getAllServices().forEach((service) => {
-    service.depends_on.forEach((dependency) => {
-      if (!dependencies[dependency]) {
-        dependencies[dependency] = []
-      }
-      dependencies[dependency].push(service.service)
-    })
-  })
+  // Convert groups Map to array for iteration
+  // Reverse order to start with group with fewest dependencies (apps)
+  const serviceGroups = options.all
+    ? [['All Services', config.getAllServices()]]
+    : Array.from(config.getServicesGroups().entries()).reverse()
 
   // Prompt user for each group, starting with apps
-  for (let i = groups.length - 1; i >= 0; i--) {
-    const groupName = groups[i][0]
-    const groupServices = groups[i][1]
-    if (groupServices.length === 0) continue
+  for (let groupNum = 0; groupNum < serviceGroups.length; groupNum++) {
+    const [groupName, groupServices] = serviceGroups[groupNum] as [string, ServicesMapType]
 
-    const selection = await Select.prompt({
-      message: `Select ${groupName} services to manage (or exit):`,
-      options: [
-        ...groupServices.map((serviceName: string) =>
-          getServiceOption(serviceName, config, dependencies)
-        )
-          .filter(Boolean) as CheckboxOption<string>[],
-        'Exit',
-      ],
-    })
+    // Skip if group has no services
+    if (groupServices.size === 0) continue
 
-    console.log('selection', selection)
-    if (selection === 'Exit') {
-      break
-    }
-    const service = config.getServiceByName(selection)
-    if (service) {
-      service.setState('enabled', true)
-      await service.configure({ silent: false, config })
-    }
-  }
+    // Prompt user for each service in group until they continue to next group
+    while (true) {
+      const getServiceOptions = () =>
+        Array.from(groupServices.values())
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((service) => getServiceOption(service, config))
+          .filter(Boolean) as {
+            name: string
+            value: string
+            disabled?: boolean
+          }[]
 
-  // Configure each enabled service
-  for (const [_, service] of config.getAllServices()) {
-    if (service && typeof service.configure === 'function') {
-      if (enabledServices.has(service.servicesMapKey)) {
-        const result = await service.configure({ silent: false, config })
-        if (!result.success) {
-          show.error(`Failed to configure ${service.name}`)
-          show.logMessages(result.messages)
-        }
-      } else {
-        // console.log('disabling service', service.service)
-        service.setState('enabled', false)
+      const serviceOptions = getServiceOptions()
+
+      const navigationOptions = []
+      if (groupNum < serviceGroups.length) {
+        navigationOptions.push({
+          name: 'Continue to next group',
+          value: 'continue',
+        })
       }
+      if (groupNum > 0) {
+        navigationOptions.push({
+          name: 'Back to previous group',
+          value: 'back',
+        })
+      }
+
+      // Prompt user for service selection
+      const selection = await Select.prompt({
+        message: `Select ${groupName} service to configure:`,
+        maxRows: options.all ? 30 : 10,
+        options: [...serviceOptions, ...navigationOptions],
+      })
+
+      if (selection === 'continue') {
+        break // Breaks out of the while loop
+      }
+
+      if (selection === 'back') {
+        groupNum = groupNum - 2 // Move back a group, for loop increments by 1
+        break // Breaks out of the while loop
+      }
+
+      // User selected a service to configure
+
+      // Get the service
+      const service = config.getServiceByName(selection)
+      if (!service) continue
+
+      // Prompt user for service action
+      const action = await Select.prompt({
+        message: `Configure ${service.name}:`,
+        options: [
+          { name: 'Enable', value: 'enable' },
+          { name: 'Disable', value: 'disable' },
+          { name: 'Auto (based on dependencies)', value: 'auto' },
+          { name: 'Back to service list', value: 'back' },
+        ],
+      })
+
+      if (action === 'back') {
+        continue
+      }
+
+      const enabled = action === 'enable' ? true : action === 'disable' ? false : 'auto'
+
+      // Update service state with config
+      // This updates the config._autoEnabledServices map
+      config.updateServiceEnabledState(service, enabled)
+
+      // Save the state changes before configuring, save config.json file
+      const saveResult = await config.save()
+      if (!saveResult.success) {
+        show.warn(`Failed to save state changes: ${saveResult.error?.message}`)
+        continue
+      }
+
+      // If service has it's own configure method, call it
+      await service.configure({ silent: false, config })
     }
   }
 
@@ -111,5 +160,6 @@ export async function configure(
     show.warn(`Failed to save configuration: ${saveResult.error?.message}`)
   } else {
     show.info('Configuration saved successfully.')
+    show.userAction('Start services with `llmn start`')
   }
 }
