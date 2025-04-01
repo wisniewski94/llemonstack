@@ -2,7 +2,7 @@
  * Configure the services
  */
 import { Config } from '@/core/config/config.ts'
-import { showAction, showError, showInfo, showLogMessages, showWarning } from '@/lib/logger.ts'
+import { showAction, showError, showInfo, showLogMessages, showWarning } from '@/relayer/ui/show.ts'
 import { CheckboxOption, Select } from '@cliffy/prompt'
 
 function getServiceOption(

@@ -11,6 +11,7 @@ import {
   supabaseAnonJWTPayload,
   supabaseServiceJWTPayload,
 } from '@/lib/jwt.ts'
+import { createServiceSchema, isPostgresConnectionValid } from '@/lib/postgres.ts'
 import {
   confirm,
   showAction,
@@ -20,8 +21,7 @@ import {
   showService,
   showUserAction,
   showWarning,
-} from '@/lib/logger.ts'
-import { createServiceSchema, isPostgresConnectionValid } from '@/lib/postgres.ts'
+} from '@/relayer/ui/show.ts'
 import { OllamaService } from '@/services/ollama/service.ts'
 import { Input, Secret, Select } from '@cliffy/prompt'
 import { Config } from '../src/core/config/config.ts'

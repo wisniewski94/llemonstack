@@ -1,6 +1,6 @@
+import { showDebug, showError } from '@/relayer/ui/show.ts'
 import { Config } from '../core/config/config.ts'
 import { path } from './fs.ts'
-import { showDebug, showError } from './logger.ts'
 
 /**
  * Get the Flowise API key from the config file

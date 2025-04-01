@@ -1,10 +1,19 @@
+/**
+ * Show messages to the user
+ *
+ * TODO: migrate all code that use this module to use the Relayer.
+ *
+ * This module is temporary and will be removed once everything is migrated to
+ * use the Relayer and InterfaceRelayer for cli input/output.
+ */
+
+import { Config } from '@/core/config/config.ts'
+import { CommandError } from '@/lib/command.ts'
 import type { LogMessage } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Cell, CellType, Column, Row, RowType, Table } from '@cliffy/table'
-import { Config } from '../core/config/config.ts'
-import { CommandError } from './command.ts'
 
-export { showTable } from '../relayer/ui/tables.ts'
+export { showTable } from '@/relayer/ui/tables.ts'
 export { Cell, colors, Column, Row, Table }
 export type { CellType, RowType }
 

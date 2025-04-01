@@ -1,7 +1,7 @@
 import { dockerEnv } from '@/lib/docker.ts'
 import { path } from '@/lib/fs.ts'
-import { showDebug, showWarning } from '@/lib/logger.ts'
 import { expandEnvVars } from '@/lib/utils/envvars.ts'
+import { showDebug, showWarning } from '@/relayer/ui/show.ts'
 import { ComposeYaml, IServiceImage } from '@/types'
 import * as yaml from 'jsr:@std/yaml'
 

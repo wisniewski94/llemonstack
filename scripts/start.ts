@@ -20,7 +20,7 @@ import {
   showTable,
   showUserAction,
   showWarning,
-} from '@/lib/logger.ts'
+} from '@/relayer/ui/show.ts'
 import { EnvVars, ExposeHost, ServicesMapType, ServiceType } from '@/types'
 
 /*******************************************************************************

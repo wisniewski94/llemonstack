@@ -5,7 +5,7 @@
 import { CommandError } from '@/lib/command.ts'
 import { dockerExec } from '@/lib/docker.ts'
 import { fs, path } from '@/lib/fs.ts'
-import { showAction, showError, showInfo, showWarning } from '@/lib/logger.ts'
+import { showAction, showError, showInfo, showWarning } from '@/relayer/ui/show.ts'
 import { Config } from '../src/core/config/config.ts'
 
 // Relative path of backup dir in shared dir

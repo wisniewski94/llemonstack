@@ -1,6 +1,6 @@
 import { Config } from '@/core/config/config.ts'
-import { confirm, showAction, showError, showInfo, showWarning } from '@/lib/logger.ts'
 import { createServiceSchema, removeServiceSchema } from '@/lib/postgres.ts'
+import { confirm, showAction, showError, showInfo, showWarning } from '@/relayer/ui/show.ts'
 import { ServiceType } from '@/types'
 import { startService } from './start.ts'
 

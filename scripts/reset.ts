@@ -16,7 +16,7 @@ import {
   showInfo,
   showUserAction,
   showWarning,
-} from '@/lib/logger.ts'
+} from '@/relayer/ui/show.ts'
 import { Config } from '../src/core/config/config.ts'
 import { clearConfigFile, clearEnvFile } from './init.ts'
 import { update } from './update.ts'

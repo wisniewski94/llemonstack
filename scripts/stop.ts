@@ -9,7 +9,7 @@ import {
   removeDockerNetwork,
   runDockerCommand,
 } from '@/lib/docker.ts'
-import { colors, RowType, showAction, showError, showInfo, showTable } from '@/lib/logger.ts'
+import { colors, RowType, showAction, showError, showInfo, showTable } from '@/relayer/ui/show.ts'
 import { ServicesMapType, ServiceType } from '@/types'
 import { Config, ServicesMap } from '../src/core/mod.ts'
 

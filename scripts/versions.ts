@@ -4,7 +4,7 @@
 
 import { getImageFromCompose, getImagesFromComposeYaml } from '@/lib/compose.ts'
 import { dockerRun, prepareDockerNetwork, runDockerCommand } from '@/lib/docker.ts'
-import { showError, showHeader, showInfo, showTable, showWarning } from '@/lib/logger.ts'
+import { showError, showHeader, showInfo, showTable, showWarning } from '@/relayer/ui/show.ts'
 import { IServiceImage, ServicesMapType, ServiceType } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Column, Row, RowType } from '@cliffy/table'

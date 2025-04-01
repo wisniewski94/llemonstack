@@ -1,6 +1,6 @@
 import { Service } from '@/core/services/mod.ts'
-import { showHeader, showInfo, showWarning } from '@/lib/logger.ts'
 import { success, TryCatchResult } from '@/lib/try-catch.ts'
+import { showHeader, showInfo, showWarning } from '@/relayer/ui/show.ts'
 import { EnvVars, ExposeHost, IServiceActionOptions } from '@/types'
 import { Select } from '@cliffy/prompt'
 

@@ -4,7 +4,7 @@
  * Pulls and builds the latest changes for docker images.
  */
 import { runDockerComposeCommand } from '@/lib/docker.ts'
-import { confirm, showAction, showError, showInfo } from '@/lib/logger.ts'
+import { confirm, showAction, showError, showInfo } from '@/relayer/ui/show.ts'
 import { Config } from '../src/core/config/config.ts'
 import { stop } from './stop.ts'
 import { versions } from './versions.ts'

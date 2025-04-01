@@ -5,7 +5,7 @@
 import { RunCommandOutput } from '@/lib/command.ts'
 import { dockerExec } from '@/lib/docker.ts'
 import { fs, path } from '@/lib/fs.ts'
-import { confirm, showAction, showError, showInfo, showWarning } from '@/lib/logger.ts'
+import { confirm, showAction, showError, showInfo, showWarning } from '@/relayer/ui/show.ts'
 import { Config } from '../src/core/config/config.ts'
 
 const config = Config.getInstance()

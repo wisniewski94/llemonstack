@@ -1,6 +1,6 @@
 import { Config } from '@/core/config/config.ts'
-import { showDebug, showError, showInfo } from '@/lib/logger.ts'
 import { tryCatch, type TryCatchResult } from '@/lib/try-catch.ts'
+import { showDebug, showError, showInfo } from '@/relayer/ui/show.ts'
 import type { CommandOutput, RunCommandOptions } from '@/types'
 
 export class RunCommandOutput {
