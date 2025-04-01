@@ -86,9 +86,15 @@ export async function configure(
       const serviceOptions = getServiceOptions()
 
       const navigationOptions = []
-      if (groupNum < serviceGroups.length) {
+      if (groupNum < serviceGroups.length - 1) {
         navigationOptions.push({
           name: 'Continue to next group',
+          value: 'continue',
+        })
+      }
+      if (groupNum === serviceGroups.length - 1) {
+        navigationOptions.push({
+          name: 'Finish configuration',
           value: 'continue',
         })
       }
@@ -161,5 +167,17 @@ export async function configure(
   } else {
     show.info('Configuration saved successfully.')
     show.userAction('Start services with `llmn start`')
+    // Show the list of enabled services
+    const enabledServices = config.getEnabledServices().toArray().sort((a, b) =>
+      a.name.localeCompare(b.name)
+    )
+    if (enabledServices.length > 0) {
+      show.info('The following services will be started:')
+      for (const service of enabledServices.values()) {
+        show.info(`  - ${service.name}`)
+      }
+    } else {
+      show.info('No services are currently enabled.')
+    }
   }
 }
