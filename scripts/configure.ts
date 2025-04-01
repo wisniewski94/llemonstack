@@ -52,7 +52,7 @@ function getServiceOption(
 
 export async function configure(
   config: Config, // An initialized config instance
-  options: { all: boolean },
+  options: { all: boolean } = { all: false },
 ): Promise<void> {
   const show = config.relayer.show
 
@@ -108,7 +108,7 @@ export async function configure(
       // Prompt user for service selection
       const selection = await Select.prompt({
         message: `Select ${groupName} service to configure:`,
-        maxRows: options.all ? 30 : 10,
+        maxRows: options.all ? 40 : 10,
         options: [...serviceOptions, ...navigationOptions],
       })
 

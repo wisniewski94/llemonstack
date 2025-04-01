@@ -87,10 +87,11 @@ const main = new Command()
 main
   .command('config')
   .description('Configure the stack services')
+  .option('--all', 'Show all services in one list', { default: false })
   .action(async (options) => {
     const config = await initConfig(options)
     const { configure } = await import('./scripts/configure.ts')
-    await configure(config)
+    await configure(config, options)
   })
 
 // Initialize the LLemonStack environment
