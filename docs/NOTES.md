@@ -286,6 +286,7 @@ docker exec -it --user root n8n sh
 - https://github.com/weaviate/weaviate
 - https://github.com/Mintplex-Labs/vector-admin
 - https://github.com/e2b-dev/fragments
+  https://github.com/microsoft/OmniParser
 
 - https://github.com/automatisch/automatisch
 - https://github.com/airbytehq/airbyte
@@ -340,6 +341,8 @@ Not AI, but potentially useful:
 
 **MCP & Code Tools:**
 
+- https://github.com/OpenAdaptAI/OmniMCP
+- https://github.com/gumloop/guMCP
 - https://github.com/modelcontextprotocol/inspector
 - https://github.com/wild-card-ai/agents-json
 - https://github.com/inngest/agent-kit
