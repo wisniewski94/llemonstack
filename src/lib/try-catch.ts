@@ -152,7 +152,7 @@ export class TryCatchResult<T, E = Error> implements ITryCatchResult<T, E> {
    * @param results - The list of TryCatchResults to collect
    * @returns A new TryCatchResult with the data set to null and the success set to true
    */
-  collect(results: TryCatchResult<T, E>[]): TryCatchResult<T, E> {
+  collect(results: TryCatchResult<unknown, E>[]): TryCatchResult<T, E> {
     results.forEach((r) => {
       this.addMessages(r.messages)
       // TODO: modify this to ensure errors length matches data length if data is an array
