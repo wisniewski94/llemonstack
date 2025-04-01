@@ -5,7 +5,6 @@
 import { Config } from '@/core/config/config.ts'
 import { getFlowiseApiKey } from '@/lib/flowise.ts'
 import { fs, path } from '@/lib/fs.ts'
-import { confirm, showError, showInfo, showWarning } from '@/relayer/ui/show.ts'
 
 // todo: remove this
 const config = Config.getInstance()
@@ -16,7 +15,8 @@ const FLOWISE_IMPORT_DIR = path.join(config.importDir, 'flowise')
 const ARCHIVE_BASE_DIR = path.join(config.importDir, `.imported`)
 
 async function resetFlowiseImportFolder(importDir: string): Promise<void> {
-  showInfo(`Clearing import folder: ${importDir}`)
+  const show = config.relayer.show
+  show.info(`Clearing import folder: ${importDir}`)
   const credentialsDir = path.join(importDir, 'credentials')
   const workflowsDir = path.join(importDir, 'workflows')
 
@@ -38,18 +38,19 @@ async function resetFlowiseImportFolder(importDir: string): Promise<void> {
 }
 
 async function archiveFlowiseImportFolder(): Promise<void> {
+  const show = config.relayer.show
   // Create timestamp for unique archive folder
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
   const newArchiveDir = path.join(ARCHIVE_BASE_DIR, `flowise-${timestamp}`)
 
-  showInfo(`Archiving import folder: ${FLOWISE_IMPORT_DIR} -> ${newArchiveDir}`)
+  show.info(`Archiving import folder: ${FLOWISE_IMPORT_DIR} -> ${newArchiveDir}`)
 
   // Create archive directory if it doesn't exist
   await fs.ensureDir(newArchiveDir)
 
   // Check if import folder exists
   if (!await fs.exists(FLOWISE_IMPORT_DIR)) {
-    showWarning(`Import folder not found: ${FLOWISE_IMPORT_DIR}`)
+    show.warn(`Import folder not found: ${FLOWISE_IMPORT_DIR}`)
     return
   }
   // Copy the directory recursively
@@ -62,6 +63,7 @@ async function importFolder(
   type: 'MULTIAGENT' | 'CHATFLOW',
   { apiKey }: { apiKey: string },
 ) {
+  const show = config.relayer.show
   const subdir = type === 'MULTIAGENT' ? 'agentflows' : 'chatflows'
 
   // Import Flowise workflows from JSON files
@@ -74,13 +76,13 @@ async function importFolder(
   const entries = Deno.readDir(flowiseImportDir)
   let filesFound = false
 
-  showInfo(`Importing Flowise ${type} workflows from ${flowiseImportDir}...`)
+  show.info(`Importing Flowise ${type} workflows from ${flowiseImportDir}...`)
 
   for await (const entry of entries) {
     if (entry.isFile && entry.name.endsWith('.json')) {
       filesFound = true
       const filePath = path.join(flowiseImportDir, entry.name)
-      showInfo(`Importing workflow from ${entry.name}...`)
+      show.info(`Importing workflow from ${entry.name}...`)
 
       try {
         // Read the JSON file
@@ -103,26 +105,27 @@ async function importFolder(
 
         if (!response.ok) {
           const errorText = await response.text()
-          showError(
+          show.error(
             `Failed to import ${entry.name}: ${response.status} ${response.statusText}`,
-            errorText,
+            { error: errorText },
           )
         } else {
           const result = await response.json()
-          showInfo(`Successfully imported workflow: ${result.name || entry.name}`)
+          show.info(`Successfully imported workflow: ${result.name || entry.name}`)
         }
       } catch (error) {
-        showError(`Error processing ${entry.name}`, error)
+        show.error(`Error processing ${entry.name}`, { error })
       }
     }
   }
 
   if (!filesFound) {
-    showInfo(`No JSON files found in ${flowiseImportDir}. Nothing to import.`)
+    show.info(`No JSON files found in ${flowiseImportDir}. Nothing to import.`)
   } else {
-    showInfo('Flowise workflow import completed.')
+    show.info('Flowise workflow import completed.')
   }
 }
+
 async function importToFlowise(
   _projectName: string,
   { skipPrompt = false, archiveAfterImport = true }: {
@@ -130,27 +133,28 @@ async function importToFlowise(
     archiveAfterImport?: boolean
   } = {},
 ): Promise<void> {
+  const show = config.relayer.show
   if (!skipPrompt) {
-    showInfo('Importing Flowise chatflows from the import folder.')
-    if (!confirm('Are you sure you want to continue?')) {
-      showInfo('Import cancelled')
+    show.info('Importing Flowise chatflows from the import folder.')
+    if (!show.confirm('Are you sure you want to continue?')) {
+      show.info('Import cancelled')
       return
     }
   }
 
   try {
     // Check if Flowise is running by pinging the API
-    showInfo('Checking if Flowise is running...')
+    show.info('Checking if Flowise is running...')
     try {
       const response = await fetch(`${FLOWISE_BASE_URL}/api/v1/ping`)
       if (!response.ok && (await response.text()) !== 'pong') {
         throw new Error(`Failed to ping Flowise API: ${response.status} ${response.statusText}`)
       }
-      showInfo('Flowise is running and appears ready for import')
+      show.info('Flowise is running and appears ready for import')
     } catch (_error) {
-      showError('Error connecting to Flowise API', FLOWISE_BASE_URL)
-      showInfo(`Please make sure Flowise is running and accessible at ${FLOWISE_BASE_URL}`)
-      showInfo('Import cancelled')
+      show.error('Error connecting to Flowise API', { error: FLOWISE_BASE_URL })
+      show.info(`Please make sure Flowise is running and accessible at ${FLOWISE_BASE_URL}`)
+      show.info('Import cancelled')
       return
     }
 
@@ -166,7 +170,7 @@ async function importToFlowise(
       await archiveFlowiseImportFolder()
     }
   } catch (error) {
-    showError('Error during import', error)
+    show.error('Error during import', { error })
     Deno.exit(1)
   }
 }

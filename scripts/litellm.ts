@@ -9,7 +9,8 @@
  * LOCAL_LLM_OPENAI_API_BASE_URL and LOCAL_LLM_OPENAI_HOST_PORT must be set in
  * .env file for OpenAI compatible models to be loaded.
  */
-import { Config } from '../src/core/config/config.ts'
+import { Config } from '@/core/config/config.ts'
+import { InterfaceRelayer } from '@/relayer/ui/interface.ts'
 
 type LiteLLMModelList = Array<{
   id: string
@@ -30,16 +31,17 @@ interface LiteLLMModel {
 }
 
 async function addOllamaModelsToLiteLLM(
-  { models_url, api_base, litellm_api_base, litellm_api_key, models = [] }: {
+  { models_url, api_base, litellm_api_base, litellm_api_key, models = [], show }: {
     models_url: string
     api_base: string
     litellm_api_base: string
     litellm_api_key: string
     models: LiteLLMModelList
+    show: InterfaceRelayer
   },
 ) {
   try {
-    console.log('Fetching models from Ollama...')
+    show.action('Fetching models from Ollama...')
 
     // Fetch all available models from Ollama
     const ollamaResponse = await fetch(models_url)
@@ -50,7 +52,7 @@ async function addOllamaModelsToLiteLLM(
     const ollamaData = await ollamaResponse.json()
     const ollamaModels = ollamaData.models || []
 
-    console.log(`Found ${ollamaModels.length} models on Ollama server`)
+    show.info(`Found ${ollamaModels.length} models on Ollama server`)
 
     // LiteLLM has an issue with using custom_llm_provider:"ollama" from n8n.
     // It's better to use the OpenAI compatible API endpoints for ollama.
@@ -75,26 +77,27 @@ async function addOllamaModelsToLiteLLM(
           input_cost_per_token: 0,
           output_cost_per_token: 0,
         },
-      }, { models, litellm_api_base, litellm_api_key, force: false })
+      }, { models, litellm_api_base, litellm_api_key, force: false, show })
     }
 
-    console.log('All Ollama models have been added to LiteLLM')
+    show.info('All Ollama models have been added to LiteLLM')
   } catch (error) {
-    console.error('Error adding Ollama models to LiteLLM:', error)
+    show.error('Error adding Ollama models to LiteLLM', { error })
   }
 }
 
 async function addOpenAICompatibleModelsToLiteLLM(
-  { models_url, api_base, litellm_api_base, litellm_api_key, models = [] }: {
+  { models_url, api_base, litellm_api_base, litellm_api_key, models = [], show }: {
     models_url: string
     api_base: string
     litellm_api_base: string
     litellm_api_key: string
     models: LiteLLMModelList
+    show: InterfaceRelayer
   },
 ) {
   try {
-    console.log(`Fetching models from OpenAI compatible provider: ${models_url}...`)
+    show.action(`Fetching models from OpenAI compatible provider: ${models_url}...`)
 
     // Fetch all available models from provider
     const modelsResponse = await fetch(models_url)
@@ -105,7 +108,7 @@ async function addOpenAICompatibleModelsToLiteLLM(
     const modelsData = await modelsResponse.json()
     const openAIModels = modelsData.data || []
 
-    console.log(`Found ${openAIModels.length} models on OpenAI compatible provider`)
+    show.info(`Found ${openAIModels.length} models on OpenAI compatible provider`)
 
     // Add each model to LiteLLM
     for (const model of openAIModels) {
@@ -119,12 +122,12 @@ async function addOpenAICompatibleModelsToLiteLLM(
           input_cost_per_token: 0,
           output_cost_per_token: 0,
         },
-      }, { models, litellm_api_base, litellm_api_key, force: false })
+      }, { models, litellm_api_base, litellm_api_key, force: false, show })
     }
 
-    console.log('All OpenAI compatible models have been added to LiteLLM')
+    show.info('All OpenAI compatible models have been added to LiteLLM')
   } catch (error) {
-    console.error('Error adding OpenAI compatible models to LiteLLM:', error)
+    show.error('Error adding OpenAI compatible models to LiteLLM', { error })
   }
 }
 
@@ -142,25 +145,26 @@ async function getLiteLLMModels({ litellm_api_base, litellm_api_key }: {
 
 async function addModelToLiteLLM(
   model: LiteLLMModel,
-  { litellm_api_base, litellm_api_key, models, force = false }: {
+  { litellm_api_base, litellm_api_key, models, force = false, show }: {
     litellm_api_base: string
     litellm_api_key: string
     models: LiteLLMModelList
     force?: boolean
+    show: InterfaceRelayer
   },
 ): Promise<LiteLLMModel> {
   // Check if the model already exists in LiteLLM before adding it
   if (models.find((m) => m.id === model.model_name)) {
     if (!force) {
-      console.log(`Model ${model.model_name} already exists, skipping`)
+      show.info(`Model ${model.model_name} already exists, skipping`)
       return model
     } else {
-      console.log(
+      show.info(
         `Model ${model.model_name} already exists, but force is true, so attempting to re-add the model...`,
       )
     }
   } else {
-    console.log(`Model ${model.model_name} does not exist, adding...`)
+    show.action(`Model ${model.model_name} does not exist, adding...`)
   }
 
   // Add the model to LiteLLM
@@ -175,16 +179,17 @@ async function addModelToLiteLLM(
 
   if (!response.ok) {
     const errorText = await response.json()
-    console.error(`Failed to add model ${model.model_name}: ${errorText}`)
+    show.error(`Failed to add model ${model.model_name}`, { error: errorText })
     throw new Error(`Failed to add model ${model.model_name}: ${errorText}`)
   }
 
   const result = await response.json()
-  console.log(`Successfully added model ${result.model_name}`)
+  show.info(`Successfully added model ${result.model_name}`)
   return result
 }
 
 export async function loadModels(config: Config) {
+  const show = config.relayer.show
   // Load environment variables from .env file
   const env = config.env
 
@@ -197,8 +202,8 @@ export async function loadModels(config: Config) {
     litellm_api_base: LITELLM_API_BASE,
     litellm_api_key: LITELLM_API_KEY,
   })
-  console.log('Existing LiteLLM models:', liteLLMModels)
-  console.log(`Found ${liteLLMModels.length} models on LiteLLM`)
+  show.info('Existing LiteLLM models:', liteLLMModels)
+  show.info(`Found ${liteLLMModels.length} models on LiteLLM`)
 
   await addOllamaModelsToLiteLLM({
     litellm_api_base: LITELLM_API_BASE,
@@ -206,6 +211,7 @@ export async function loadModels(config: Config) {
     models_url: 'http://localhost:11434/api/tags', // Tags endpoint gives more data than /v1/models
     api_base: 'http://host.docker.internal:11434',
     models: liteLLMModels,
+    show,
   })
   await addOpenAICompatibleModelsToLiteLLM({
     litellm_api_base: LITELLM_API_BASE,
@@ -213,5 +219,6 @@ export async function loadModels(config: Config) {
     models_url: `http://localhost:${LOCAL_LLM_OPENAI_HOST_PORT}/v1/models`,
     api_base: LOCAL_LLM_OPENAI_API_BASE_URL,
     models: liteLLMModels,
+    show,
   })
 }

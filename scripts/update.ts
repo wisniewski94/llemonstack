@@ -4,12 +4,12 @@
  * Pulls and builds the latest changes for docker images.
  */
 import { runDockerComposeCommand } from '@/lib/docker.ts'
-import { confirm, showAction, showError, showInfo } from '@/relayer/ui/show.ts'
 import { Config } from '../src/core/config/config.ts'
 import { stop } from './stop.ts'
 import { versions } from './versions.ts'
 
 async function pullImages(config: Config): Promise<void> {
+  const show = config.relayer.show
   // Run pull for each profile in parallel
   const composeFiles = config.getComposeFiles()
 
@@ -25,7 +25,7 @@ async function pullImages(config: Config): Promise<void> {
   // Process each batch sequentially
   for (let i = 0; i < composeBatches.length; i++) {
     const batch = composeBatches[i]
-    showInfo(`Processing batch ${i + 1} of ${composeBatches.length} (${batch.length} files)`)
+    show.info(`Processing batch ${i + 1} of ${composeBatches.length} (${batch.length} files)`)
 
     // Pull images in parallel
     await Promise.all(
@@ -68,15 +68,16 @@ export async function update(
     skipPrompt = false,
   }: { skipStop?: boolean; skipPrompt?: boolean } = {},
 ): Promise<void> {
+  const show = config.relayer.show
   try {
     if (!skipPrompt) {
-      showInfo(
+      show.info(
         '\nUpdate repos, pull the latest Docker images, and rebuild custom Docker images.\n' +
           'Only services enabled in your .env file will be updated.\n' +
           'This can take a while.',
       )
-      if (!confirm('Are you sure you want to continue?')) {
-        showInfo('Update cancelled')
+      if (!show.confirm('Are you sure you want to continue?')) {
+        show.info('Update cancelled')
         return
       }
     }
@@ -88,16 +89,16 @@ export async function update(
     }
 
     // Pull latest images
-    showAction('Pulling latest docker images...')
+    show.action('Pulling latest docker images...')
     await pullImages(config)
 
     // Show the software versions for images that support it
-    showAction('\n------ VERSIONS ------')
+    show.action('\n------ VERSIONS ------')
     await versions(config)
 
-    showAction('Update successfully completed!')
+    show.action('Update successfully completed!')
   } catch (error) {
-    showError(error)
+    show.error('Update failed', { error })
     Deno.exit(1)
   }
 }

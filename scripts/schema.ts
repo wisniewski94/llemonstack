@@ -1,6 +1,5 @@
 import { Config } from '@/core/config/config.ts'
 import { createServiceSchema, removeServiceSchema } from '@/lib/postgres.ts'
-import { confirm, showAction, showError, showInfo, showWarning } from '@/relayer/ui/show.ts'
 import { ServiceType } from '@/types'
 import { startService } from './start.ts'
 
@@ -10,19 +9,20 @@ async function isSupabaseStarted(config: Config) {
 }
 
 export async function schema(config: Config, action: string, service: string) {
+  const show = config.relayer.show
   if (action !== 'create' && action !== 'remove') {
-    showError('First argument must be either "create" or "remove"')
+    show.error('First argument must be either "create" or "remove"')
     Deno.exit(1)
   }
   if (!service) {
-    showError('Service name is required')
+    show.error('Service name is required')
     Deno.exit(1)
   }
 
   // Make sure it's a valid service
   if (!config.getServiceByName(service)) {
-    showWarning(`Unknown service name: ${service}`)
-    if (!confirm(`Continue anyway?`)) {
+    show.warn(`Unknown service name: ${service}`)
+    if (!show.confirm(`Continue anyway?`)) {
       Deno.exit(1)
     }
   }
@@ -34,40 +34,40 @@ export async function schema(config: Config, action: string, service: string) {
   let supabaseService: ServiceType | null = null
 
   if (!await isSupabaseStarted(config)) {
-    if (confirm(`Supabase is not running. Shall we start it?`, true)) {
+    if (show.confirm(`Supabase is not running. Shall we start it?`, true)) {
       supabaseService = await startService(config, 'supabase')
       supabaseStarted = true
     }
     // Wait a few seconds for supabase to fully initialize
-    showAction('Waiting for Supabase to initialize...')
+    show.action('Waiting for Supabase to initialize...')
     await new Promise((resolve) => setTimeout(resolve, 3000))
     if (!await isSupabaseStarted(config)) {
-      showError('Supabase failed to start, unable to create schema')
+      show.error('Supabase failed to start, unable to create schema')
       Deno.exit(1)
     }
   }
 
   if (action === 'create') {
-    showAction(`Creating schema for ${service}...`)
+    show.action(`Creating schema for ${service}...`)
     const credentials = await createServiceSchema(service, {
       password,
     })
-    showInfo(`Schema created for ${service}`)
-    showInfo(`Username: ${credentials.username}`)
-    showInfo(`Password: ${credentials.password}`)
-    showInfo(`Database: ${credentials.database}`)
-    showInfo(`Schema: ${credentials.schema}`)
+    show.info(`Schema created for ${service}`)
+    show.info(`Username: ${credentials.username}`)
+    show.info(`Password: ${credentials.password}`)
+    show.info(`Database: ${credentials.database}`)
+    show.info(`Schema: ${credentials.schema}`)
   } else if (action === 'remove') {
-    showAction(`Removing schema for ${service}...`)
+    show.action(`Removing schema for ${service}...`)
     const { schema, username } = await removeServiceSchema(service, {
       password,
     })
-    showInfo(`Schema ${schema} removed for ${service}`)
-    showInfo(`Username: ${username}`)
+    show.info(`Schema ${schema} removed for ${service}`)
+    show.info(`Username: ${username}`)
   }
 
   if (supabaseStarted && supabaseService) {
-    if (confirm(`Supabase was started for this operation. Shall we stop it?`)) {
+    if (show.confirm(`Supabase was started for this operation. Shall we stop it?`)) {
       await supabaseService.stop()
     }
   }

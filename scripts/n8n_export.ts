@@ -5,7 +5,6 @@
 import { CommandError } from '@/lib/command.ts'
 import { dockerExec } from '@/lib/docker.ts'
 import { fs, path } from '@/lib/fs.ts'
-import { showAction, showError, showInfo, showWarning } from '@/relayer/ui/show.ts'
 import { Config } from '../src/core/config/config.ts'
 
 // Relative path of backup dir in shared dir
@@ -56,16 +55,17 @@ async function prepareBackupDir(): Promise<BackupDirs> {
 }
 
 async function runExportCommands(config: Config): Promise<void> {
+  const show = config.relayer.show
   for (const serviceCommand of SERVICES_EXPORT_COMMANDS) {
     const service = config.getServiceByName(serviceCommand.service)
     if (!service) {
-      showWarning(`Service ${serviceCommand.service} not found, skipping`)
+      show.warn(`Service ${serviceCommand.service} not found, skipping`)
       continue
     }
     const composeFile = service.composeFile
     if (!composeFile) {
       service.isEnabled() &&
-        showWarning(`Compose file not found for ${serviceCommand.service}, skipping`)
+        show.warn(`Compose file not found for ${serviceCommand.service}, skipping`)
       continue
     }
     try {
@@ -77,23 +77,25 @@ async function runExportCommands(config: Config): Promise<void> {
     } catch (error) {
       if (error instanceof CommandError) {
         if (!error.stderr.match(/no (workflows|credentials) found/ig)) {
-          showInfo(`No ${serviceCommand.type} found to export.\n`)
+          show.info(`No ${serviceCommand.type} found to export.\n`)
         }
       } else {
-        showError(`Error exporting ${serviceCommand.service}`, error)
+        show.error(`Error exporting ${serviceCommand.service}`, { error })
       }
     }
   }
 }
+
 export async function runExport(config: Config): Promise<void> {
-  showAction(`Preparing export folders in ./shared...`)
+  const show = config.relayer.show
+  show.action(`Preparing export folders in ./shared...`)
   const dirs = await prepareBackupDir()
-  showInfo(`Export dirs:\n  ${dirs.map((d) => d[1]).join('\n  ')}`)
-  showAction(`Exporting n8n workflows and credentials...`)
+  show.info(`Export dirs:\n  ${dirs.map((d) => d[1]).join('\n  ')}`)
+  show.action(`Exporting n8n workflows and credentials...`)
   try {
     await runExportCommands(config)
-    showInfo(`Export complete`)
+    show.info(`Export complete`)
   } catch (error) {
-    showError(`Error exporting n8n workflows and credentials`, error)
+    show.error(`Error exporting n8n workflows and credentials`, { error })
   }
 }

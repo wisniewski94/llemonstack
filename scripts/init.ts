@@ -12,16 +12,6 @@ import {
   supabaseServiceJWTPayload,
 } from '@/lib/jwt.ts'
 import { createServiceSchema, isPostgresConnectionValid } from '@/lib/postgres.ts'
-import {
-  confirm,
-  showAction,
-  showError,
-  showHeader,
-  showInfo,
-  showService,
-  showUserAction,
-  showWarning,
-} from '@/relayer/ui/show.ts'
 import { OllamaService } from '@/services/ollama/service.ts'
 import { Input, Secret, Select } from '@cliffy/prompt'
 import { Config } from '../src/core/config/config.ts'
@@ -260,10 +250,11 @@ async function startSupabase(
   config: Config,
   envVars: Record<AllEnvVarKeys, string>,
 ): Promise<void> {
+  const show = config.relayer.show
   const supabase = config.getServiceByName('supabase')
 
   if (!supabase) {
-    showError('Supabase service not found')
+    show.fatal('Supabase service not found')
     Deno.exit(1)
   }
 
@@ -273,28 +264,27 @@ async function startSupabase(
   if (!await supabase.isRunning()) {
     try {
       // Start supabase
-      showInfo('Starting Supabase...')
+      show.info('Starting Supabase...')
       await supabase.start()
       // Wait for 3 seconds to ensure Supabase is fully initialized
       await new Promise((resolve) => setTimeout(resolve, 3000))
     } catch (error) {
-      showError('Supabase failed to start', error)
+      show.error('Supabase failed to start', { error })
     }
   }
   // Check postgres connection
   if (await isPostgresConnectionValid({ password: envVars.POSTGRES_PASSWORD })) {
-    showInfo('Successfully connected to Supabase postgres')
+    show.info('Successfully connected to Supabase postgres')
   } else {
-    showInfo('Attempting to start Supabase again...')
+    show.info('Attempting to start Supabase again...')
     try {
       await startService(config, 'supabase')
       await new Promise((resolve) => setTimeout(resolve, 5000))
     } catch (error) {
-      showError('Error while starting Supabase', error)
+      show.error('Error while starting Supabase', { error })
     }
     if (!await isPostgresConnectionValid({ password: envVars.POSTGRES_PASSWORD })) {
-      showError('Failed to start Supabase again, unable to continue')
-      Deno.exit(1)
+      show.fatal('Failed to start Supabase again, unable to continue')
     }
   }
 }
@@ -304,14 +294,14 @@ async function startSupabase(
  * @returns The updated environment variables
  */
 async function createServiceSchemas(config: Config): Promise<Record<AllEnvVarKeys, string>> {
+  const show = config.relayer.show
   const dbPassword = Deno.env.get('POSTGRES_PASSWORD') ?? ''
   if (!dbPassword) {
-    showError('POSTGRES_PASSWORD is not set in .env file, unable to create postgres schemas')
-    Deno.exit(1)
+    show.fatal('POSTGRES_PASSWORD is not set in .env file, unable to create postgres schemas')
   }
   const dbVars: Record<string, string> = {}
   for (const service of POSTGRES_SERVICES) {
-    showInfo(`Creating schema for ${service[0]}...`)
+    show.info(`Creating schema for ${service[0]}...`)
     const credentials = await createServiceSchema(service[0], {
       password: dbPassword,
     })
@@ -323,7 +313,7 @@ async function createServiceSchemas(config: Config): Promise<Record<AllEnvVarKey
         dbVars[key] = value
       }
     }
-    showInfo(`Schema created for ${service[0]}: ${credentials.schema}`)
+    show.info(`Schema created for ${service[0]}: ${credentials.schema}`)
   }
   // Save db vars to .env file
   // Replace any password that equals POSTGRES_PASSWORD with ${POSTGRES_PASSWORD} placeholder
@@ -332,8 +322,7 @@ async function createServiceSchemas(config: Config): Promise<Record<AllEnvVarKey
     expand: false,
   })
   if (!results.success) {
-    showError(results.error)
-    Deno.exit(1)
+    show.fatal('Failed to update env file', { error: results.error })
   }
   return results.data ?? {}
 }
@@ -355,7 +344,7 @@ async function isExistingProject(projectName: string): Promise<boolean> {
     return projects.some((project) => project.Name.toLowerCase() === projectName.toLowerCase())
   } catch (error) {
     // If command fails, log the error but don't fail the initialization
-    showError('Failed to check if project exists', error)
+    console.error('Failed to check if project exists:', error)
     return false
   }
 }
@@ -363,16 +352,17 @@ async function isExistingProject(projectName: string): Promise<boolean> {
 export async function init(
   config: Config,
 ): Promise<void> {
+  const show = config.relayer.show
+
   try {
-    showAction('Checking prerequisites...')
+    show.action('Checking prerequisites...')
     await checkPrerequisites()
-    showInfo('Prerequisites met')
+    show.info('Prerequisites met')
   } catch (error) {
-    showError(
+    show.fatal(
       'Prerequisites not met, please install the required dependencies and try again.',
-      error,
+      { error },
     )
-    Deno.exit(1)
   }
 
   // TODO: check if required host ports are available.
@@ -380,7 +370,7 @@ export async function init(
 
   try {
     if (config.isProjectInitialized()) {
-      showWarning(`Project already initialized: ${config.projectName}`)
+      show.warn(`Project already initialized: ${config.projectName}`)
       const resetOption: string = await Select.prompt({
         message: 'How do you want to proceed?',
         options: [
@@ -403,49 +393,49 @@ export async function init(
         ],
       })
       if (resetOption === 'none') {
-        showInfo('OK, exiting...')
+        show.info('OK, exiting...')
         Deno.exit(0)
       }
       if (resetOption === 'hard-reset') {
-        if (confirm('Are you sure you want to delete all data and start over?')) {
-          showAction('Resetting project...')
+        if (show.confirm('Are you sure you want to delete all data and start over?')) {
+          show.action('Resetting project...')
           await reset(config, { skipPrompt: true, skipCache: true })
           await clearEnvFile(config)
           await clearConfigFile(config)
         } else {
-          showInfo('OK, exiting...')
+          show.info('OK, exiting...')
           Deno.exit(1)
         }
       } else if (resetOption === 'config-reset') {
-        showInfo('Replacing .env file with a fresh copy from .env.example')
+        show.info('Replacing .env file with a fresh copy from .env.example')
         await clearEnvFile(config)
         await clearConfigFile(config)
       } else if (resetOption === 'reinitialize') {
-        showInfo('Using existing config data from .env file')
+        show.info('Using existing config data from .env file')
         await clearConfigFile(config)
       }
     }
 
-    showHeader('Initializing project...')
+    show.header('Initializing project...')
 
     if (await envFileExists(config)) {
-      showInfo('.env file already exists')
-      if (confirm('Do you want to delete .env and start fresh?', false)) {
+      show.info('.env file already exists')
+      if (show.confirm('Do you want to delete .env and start fresh?', false)) {
         await clearEnvFile(config)
         await createEnvFile(config)
-        showInfo('.env recreated from .env.example')
+        show.info('.env recreated from .env.example')
       } else {
-        showInfo('OK, using existing .env file')
+        show.info('OK, using existing .env file')
       }
     } else {
-      showInfo('.env does not exist, copying from .env.example')
+      show.info('.env does not exist, copying from .env.example')
       await createEnvFile(config)
     }
 
     // Create a copy of env vars to modify
     let envVars = { ...config.env }
 
-    showInfo('.env file is ready to configure')
+    show.info('.env file is ready to configure')
 
     let uniqueName = false
     let projectName = ''
@@ -462,15 +452,15 @@ export async function init(
       uniqueName = !(await isExistingProject(projectName))
 
       if (!uniqueName) {
-        showWarning(`This project name is already in use: ${projectName}`)
-        showInfo(
+        show.warn(`This project name is already in use: ${projectName}`)
+        show.info(
           `Projects with the same name will reuse some of the same Docker containers.\n` +
             `This can result in unexpected behavior. It's safest to choose a unique name.`,
         )
-        if (confirm('Do you want to choose a different name?', true)) {
+        if (show.confirm('Do you want to choose a different name?', true)) {
           continue
         } else {
-          showInfo(`OK, proceeding with the duplicate name: ${projectName}`)
+          show.info(`OK, proceeding with the duplicate name: ${projectName}`)
           break
         }
       }
@@ -478,15 +468,14 @@ export async function init(
 
     const result = await config.setProjectName(projectName)
     if (!result.success) {
-      showError(result.error)
-      Deno.exit(1)
+      show.fatal('Failed to set project name', { error: result.error })
     }
 
     // Generate random security keys
     envVars = await setSecurityKeys(envVars)
 
-    showAction('\nSetting up passwords...')
-    showInfo('Passwords are stored in the .env file and shown to you when you start the stack\n')
+    show.action('\nSetting up passwords...')
+    show.info('Passwords are stored in the .env file and shown to you when you start the stack\n')
 
     // Prompt user for passwords
     // Supabase
@@ -508,7 +497,7 @@ export async function init(
     })
 
     // Prompt for OpenAI API key
-    showAction('\nConfigure optional LLM API keys...')
+    show.action('\nConfigure optional LLM API keys...')
     envVars.OPENAI_API_KEY = await Secret.prompt({
       message: 'Enter the OpenAI API key',
       hint: 'Leave blank to configure later',
@@ -516,23 +505,20 @@ export async function init(
       hideDefault: true,
     })
 
-    showHeader('Ollama Configuration Options')
-    showInfo('Ollama can run on your host machine or inside a Docker container.')
-    showInfo('The host option requires manually starting ollama on your host machine.')
-    showInfo('If running in Docker, you can choose to run it on the CPU (slow) or a GPU (fast).')
-    showInfo("GPU options require a compatible GPU on the host... because it's not magic.\n")
+    show.header('Ollama Configuration Options')
+    show.info('Ollama can run on your host machine or inside a Docker container.')
+    show.info('The host option requires manually starting ollama on your host machine.')
+    show.info('If running in Docker, you can choose to run it on the CPU (slow) or a GPU (fast).')
+    show.info("GPU options require a compatible GPU on the host... because it's not magic.\n")
 
     // TODO: call configure on ollama service class
     const ollamaService = config.getServiceByName('ollama') as OllamaService
     if (ollamaService) {
       await ollamaService.configure({ silent: false, config })
     }
-    // const ollamaProfile = await configOllama()
 
     // Run the config at this point?
     await configure(config)
-
-    // envVars.ENABLE_OLLAMA = ollamaProfile
 
     // Checkpoint, save env vars to .env file
     // TODO: move to config
@@ -544,27 +530,23 @@ export async function init(
     // Setup supabase env
     await config.prepareEnv()
 
-    showAction('\nSetting up postgres schemas...')
-    showInfo('This will create a postgres user and schema for each service that supports schemas.')
+    show.action('\nSetting up postgres schemas...')
+    show.info('This will create a postgres user and schema for each service that supports schemas.')
     await startSupabase(config, envVars)
     await createServiceSchemas(config)
-    showInfo('Postgres schemas successfully created')
-
-    showAction('\nProject successfully initialized!\n')
-    showInfo('Config values saved to .env file')
+    show.info('Postgres schemas successfully created')
 
     // Create config file to indicate project is initialized
     // TODO: double check config is already creating the file, then remove this
     // await createConfigFile(config)
 
     if (ollamaService?.useHostOllama()) {
-      showInfo('\nOllama host option requires Ollama running on your host machine.')
-      showService('Download Ollama', 'https://ollama.com/docs/installation')
-      showUserAction('Run `ollama run` on your host machine to start the service\n')
+      show.info('\nOllama host option requires Ollama running on your host machine.')
+      show.info('Download Ollama: https://ollama.com/docs/installation')
+      show.userAction('Run `ollama run` on your host machine to start the service\n')
     }
-    showUserAction('Start the stack with `llmn start`')
+    show.userAction('Start the stack with `llmn start`')
   } catch (error) {
-    showError(error)
-    Deno.exit(1)
+    show.fatal('Initialization failed', { error })
   }
 }

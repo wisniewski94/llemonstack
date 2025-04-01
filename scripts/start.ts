@@ -5,22 +5,7 @@
 import { Config } from '@/core/config/config.ts'
 import { runCommand } from '@/lib/command.ts'
 import { prepareDockerNetwork } from '@/lib/docker.ts'
-import {
-  Cell,
-  colors,
-  Column,
-  Row,
-  RowType,
-  showAction,
-  showError,
-  showHeader,
-  showInfo,
-  showLogMessages,
-  showService,
-  showTable,
-  showUserAction,
-  showWarning,
-} from '@/relayer/ui/show.ts'
+import { Cell, colors, Column, Row, RowType, showTable } from '@/relayer/ui/show.ts'
 import { EnvVars, ExposeHost, ServicesMapType, ServiceType } from '@/types'
 
 /*******************************************************************************
@@ -35,7 +20,7 @@ export async function checkPrerequisites(): Promise<void> {
   await runCommand('docker --version')
   await runCommand('docker compose version')
   await runCommand('git --version')
-  showInfo('✔️ All prerequisites are installed')
+  console.log('✔️ All prerequisites are installed')
 }
 
 // TODO: update API and all references to startService
@@ -48,6 +33,8 @@ export async function startService(
     createNetwork?: boolean
   } = {},
 ): Promise<ServiceType> {
+  const show = config.relayer.show
+
   if (createNetwork) {
     await prepareDockerNetwork(config.dockerNetworkName)
   }
@@ -66,9 +53,9 @@ export async function startService(
 
   const result = await service.start({ envVars, silent: false })
   if (!result.success) {
-    showError(result.error)
+    show.error('Service failed to start', { error: result.error || new Error('Unknown error') })
   }
-  showLogMessages(result.messages)
+  show.logMessages(result.messages)
   return service
 }
 
@@ -85,6 +72,8 @@ export async function startServices(
   services: ServicesMapType,
   { envVars = {} }: { envVars?: EnvVars } = {},
 ) {
+  const show = config.relayer.show
+
   // Create the network if it doesn't exist
   await prepareDockerNetwork(config.dockerNetworkName)
 
@@ -93,7 +82,7 @@ export async function startServices(
     try {
       await startService(config, service, { envVars, createNetwork: false })
     } catch (error) {
-      showError(`Failed to start service ${service}:`, error)
+      show.error(`Failed to start service ${service}:`, { error })
       throw error
     }
   }))
@@ -155,20 +144,21 @@ function outputServicesInfo({
   config: Config
   hideCredentials?: boolean
 }): void {
+  const show = config.relayer.show
   const services = config.getEnabledServices()
   if (!services.size) {
-    showWarning('No services are enabled')
+    show.warn('No services are enabled')
     return
   }
 
-  showHeader('Service Dashboards')
-  showInfo('Access the dashboards in a browser on your host machine.\n')
+  show.header('Service Dashboards')
+  show.info('Access the dashboards in a browser on your host machine.\n')
 
   showServicesInfo(services, 'host.*', { hideCredentials })
 
-  showHeader('API Endpoints')
-  showInfo('For connecting services within the stack, use the following endpoints.')
-  showInfo('i.e. for n8n credentials, postgres connections, API requests, etc.\n')
+  show.header('API Endpoints')
+  show.info('For connecting services within the stack, use the following endpoints.')
+  show.info('i.e. for n8n credentials, postgres connections, API requests, etc.\n')
 
   showServicesInfo(services, 'internal.*', { hideCredentials })
 
@@ -178,17 +168,16 @@ function outputServicesInfo({
   const ollamaService = config.getServiceByName('ollama')
   if (ollamaService?.getProfiles()[0] === 'ollama-host') {
     const ollamaUrl = config.getServiceByName('ollama')?.getHostEndpoint()?.url || ''
-    // showService('Ollama', ollamaUrl)
-    showUserAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
-    showUserAction('  Start Ollama on your computer: `ollama serve`')
+    show.userAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
+    show.userAction('  Start Ollama on your computer: `ollama serve`')
     if (config.isEnabled('n8n')) {
-      showUserAction(`  Set n8n Ollama credential url to: ${ollamaUrl}`)
-      showUserAction(
+      show.userAction(`  Set n8n Ollama credential url to: ${ollamaUrl}`)
+      show.userAction(
         `  Or connect n8n to LiteLLM http://litellm:4000 to proxy requests to Ollama`,
       )
     }
   } else if (config.isEnabled('ollama')) {
-    showService('Ollama', 'http://ollama:11434')
+    show.info('Ollama: http://ollama:11434')
   }
   console.log('\n')
 }
@@ -201,6 +190,8 @@ export async function start(
     hideCredentials?: boolean
   } = {},
 ): Promise<void> {
+  const show = config.relayer.show
+
   // Check if config is old format and re-run configure script if needed
   // if (config.isOutdatedConfig()) {
   //   showWarning('Config is outdated, re-running configure script...')
@@ -215,20 +206,20 @@ export async function start(
   }
 
   if (service && !service.isEnabled()) {
-    showWarning(`${service.name} is not enabled`)
+    show.warn(`${service.name} is not enabled`)
     return
   }
   try {
     if (!config.isProjectInitialized()) {
-      showWarning('Project not initialized', '❌')
-      showUserAction('\nPlease run the init script first: llmn init')
+      show.warn('Project not initialized', { emoji: '❌' })
+      show.userAction('\nPlease run the init script first: llmn init')
       Deno.exit(1)
     }
 
-    showAction('Checking prerequisites...')
+    show.action('Checking prerequisites...')
     await checkPrerequisites()
 
-    showAction('Setting up environment...')
+    show.action('Setting up environment...')
     await config.prepareEnv() // TODO: check for errors and show them
 
     // Start services
@@ -242,7 +233,7 @@ export async function start(
           service.isEnabled()
         )
         if (enabledGroupServices.size > 0) {
-          showAction(`\nStarting ${groupName} services...`)
+          show.action(`\nStarting ${groupName} services...`)
           await startServices(config, enabledGroupServices)
         }
       }
@@ -253,18 +244,18 @@ export async function start(
     const ollamaProfile = ollamaService?.getProfiles()[0]
     // TODO: fix this, doesn't seem correct
     if (ollamaProfile !== 'ollama-false' && !service || service?.service === 'ollama') {
-      showAction(`\nStarting Ollama...`)
+      show.action(`\nStarting Ollama...`)
       if (ollamaProfile === 'ollama-host') {
-        showInfo('Using host Ollama, no need to start ollama service')
+        show.info('Using host Ollama, no need to start ollama service')
       } else {
         await startService(config, 'ollama', { profiles: [ollamaProfile || ''] })
       }
     }
 
     if (service) {
-      showAction(`\n${service} started successfully!`)
+      show.action(`\n${service} started successfully!`)
     } else {
-      showAction('\nAll services started successfully!')
+      show.action('\nAll services started successfully!')
     }
 
     if (!skipOutput) {
@@ -274,7 +265,7 @@ export async function start(
       })
     }
   } catch (error) {
-    showError(error)
+    show.error('Failed to start services', { error })
     Deno.exit(1)
   }
 }

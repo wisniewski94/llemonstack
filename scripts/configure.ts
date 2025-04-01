@@ -2,7 +2,6 @@
  * Configure the services
  */
 import { Config } from '@/core/config/config.ts'
-import { showAction, showError, showInfo, showLogMessages, showWarning } from '@/relayer/ui/show.ts'
 import { CheckboxOption, Select } from '@cliffy/prompt'
 
 function getServiceOption(
@@ -33,11 +32,12 @@ function getServiceOption(
 export async function configure(
   config: Config, // An initialized config instance
 ): Promise<void> {
+  const show = config.relayer.show
   const groups = config.getServicesGroups()
 
-  showWarning('THIS IS WIP and does not yet save the selected services.')
+  show.warn('THIS IS WIP and does not yet save the selected services.')
 
-  showAction(`Configuring services for ${config.projectName}...`)
+  show.action(`Configuring services for ${config.projectName}...`)
   // TODO: loop through all config.env keys to get list of ENABLE_* env vars
   // Then set enabled for each service
   // The save config
@@ -95,8 +95,8 @@ export async function configure(
       if (enabledServices.has(service.servicesMapKey)) {
         const result = await service.configure({ silent: false, config })
         if (!result.success) {
-          showError(`Failed to configure ${service.name}`)
-          showLogMessages(result.messages)
+          show.error(`Failed to configure ${service.name}`)
+          show.logMessages(result.messages)
         }
       } else {
         // console.log('disabling service', service.service)
@@ -108,8 +108,8 @@ export async function configure(
   // Save the configuration
   const saveResult = await config.save()
   if (!saveResult.success) {
-    showWarning(`Failed to save configuration: ${saveResult.error?.message}`)
+    show.warn(`Failed to save configuration: ${saveResult.error?.message}`)
   } else {
-    showInfo('Configuration saved successfully.')
+    show.info('Configuration saved successfully.')
   }
 }

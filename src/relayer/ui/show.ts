@@ -30,7 +30,7 @@ export function confirm(message: string, defaultAnswer: boolean = false): boolea
 export function showDebug(message: string, ...args: unknown[]): void {
   showInfo(`[DEBUG] ${message}`)
   args?.length && args.forEach((arg) => {
-    showInfo(`  ${typeof arg === 'object' ? JSON.stringify(arg) : arg}`)
+    showInfo(`  ${typeof arg === 'object' ? Deno.inspect(arg, { colors: true }) : arg}`)
   })
 }
 

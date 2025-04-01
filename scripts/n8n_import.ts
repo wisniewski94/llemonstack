@@ -5,14 +5,14 @@
 import { RunCommandOutput } from '@/lib/command.ts'
 import { dockerExec } from '@/lib/docker.ts'
 import { fs, path } from '@/lib/fs.ts'
-import { confirm, showAction, showError, showInfo, showWarning } from '@/relayer/ui/show.ts'
 import { Config } from '../src/core/config/config.ts'
 
 const config = Config.getInstance()
 await config.initialize()
 
 async function resetN8nImportFolder(importDir: string): Promise<void> {
-  showInfo(`Clearing import folder: ${importDir}`)
+  const show = config.relayer.show
+  show.info(`Clearing import folder: ${importDir}`)
   const credentialsDir = path.join(importDir, 'credentials')
   const workflowsDir = path.join(importDir, 'workflows')
 
@@ -34,6 +34,7 @@ async function resetN8nImportFolder(importDir: string): Promise<void> {
 }
 
 async function archiveN8nImportFolder(): Promise<void> {
+  const show = config.relayer.show
   const n8nImportDir = path.join(config.importDir, 'n8n')
   const archiveBaseDir = path.join(config.importDir, `.imported`)
 
@@ -41,14 +42,14 @@ async function archiveN8nImportFolder(): Promise<void> {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
   const newArchiveDir = path.join(archiveBaseDir, `n8n-${timestamp}`)
 
-  showInfo(`Archiving import folder: ${n8nImportDir} -> ${newArchiveDir}`)
+  show.info(`Archiving import folder: ${n8nImportDir} -> ${newArchiveDir}`)
 
   // Create archive directory if it doesn't exist
   await fs.ensureDir(newArchiveDir)
 
   // Check if import folder exists
   if (!await fs.exists(n8nImportDir)) {
-    showWarning(`Import folder not found: ${n8nImportDir}`)
+    show.warn(`Import folder not found: ${n8nImportDir}`)
     return
   }
   // Copy the directory recursively
@@ -63,6 +64,7 @@ async function archiveN8nImportFolder(): Promise<void> {
  * This ensures the credentials are correct for the current stack configuration.
  */
 async function prepareCredentialsImport(): Promise<void> {
+  const show = config.relayer.show
   const credentialsDir = path.join(config.importDir, 'n8n', 'credentials')
   const credentials = Deno.readDir(credentialsDir)
 
@@ -77,9 +79,9 @@ async function prepareCredentialsImport(): Promise<void> {
       const envVar = envVars[p1]
       if (envVar) {
         updated = true
-        showInfo(`Updating ${credentialPath} with env var: $\{${p1}\}`)
+        show.info(`Updating ${credentialPath} with env var: $\{${p1}\}`)
       } else {
-        showWarning(`No env var found for $\{${p1}\} in ${credentialPath}`)
+        show.warn(`No env var found for $\{${p1}\} in ${credentialPath}`)
       }
       return envVar || match
     })
@@ -96,17 +98,18 @@ async function importToN8n(
     archiveAfterImport?: boolean
   } = {},
 ): Promise<void> {
+  const show = config.relayer.show
   if (!skipPrompt) {
-    showWarning(
+    show.warn(
       'WARNING: Importing n8n data overwrites existing workflows and credentials',
     )
-    showInfo(
+    show.info(
       "If you've previously imported any of the workflows or credentials\n" +
         "in the import folder, any modifications you've made will be overwritten.\n" +
         'Only the credentials and workflows matching those in the import folder will be overwritten.',
     )
-    if (!confirm('Are you sure you want to continue?')) {
-      showInfo('Import cancelled')
+    if (!show.confirm('Are you sure you want to continue?')) {
+      show.info('Import cancelled')
       return
     }
   }
@@ -133,10 +136,10 @@ async function importToN8n(
       captureOutput: true,
     })
     if (!results.success) {
-      showError('Error importing credentials', results.stderr)
+      show.error('Error importing credentials', { error: results.stderr })
     } else {
-      showAction(`Imported ${getNumImported(results)} credentials`)
-      showInfo(results.stdout)
+      show.action(`Imported ${getNumImported(results)} credentials`)
+      show.info(results.stdout)
     }
 
     // Import workflows from import/n8n/workflows
@@ -150,10 +153,10 @@ async function importToN8n(
       captureOutput: true,
     })
     if (!results.success) {
-      showError('Error importing workflows', results.stderr)
+      show.error('Error importing workflows', { error: results.stderr })
     } else {
-      showAction(`Imported ${getNumImported(results)} workflows`)
-      showInfo(results.stdout)
+      show.action(`Imported ${getNumImported(results)} workflows`)
+      show.info(results.stdout)
     }
 
     // TODO: archive BEFORE the import to capture the state before
@@ -167,7 +170,7 @@ async function importToN8n(
       await archiveN8nImportFolder()
     }
   } catch (error) {
-    showError('Error during import', error)
+    show.error('Error during import', { error })
     Deno.exit(1)
   }
 }

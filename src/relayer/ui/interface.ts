@@ -1,4 +1,6 @@
+import { Config } from '@/core/config/config.ts'
 import { CommandError } from '@/lib/command.ts'
+import { LogMessage } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { LoggerConfig, LogLevel, LogRecord, LogtapeLogger, Sink } from '../logger.ts'
 import { RowType, showTable, Table, TableOptions } from './tables.ts'
@@ -179,6 +181,33 @@ export class InterfaceRelayer {
     } else {
       this.logger.error(message, context)
     }
+  }
+
+  public logMessages(
+    messages: LogMessage[],
+    { debug = Config.getInstance().DEBUG }: { debug?: boolean } = {},
+  ): void {
+    messages.forEach((message) => {
+      switch (message.level) {
+        case 'error':
+          this.error(message.message, { error: message.error })
+          break
+        case 'warning':
+          this.warn(message.message)
+          break
+        case 'debug':
+          if (debug) {
+            message.args !== undefined
+              ? this.debug(message.message, message.args)
+              : this.debug(message.message)
+          }
+          break
+        default:
+        case 'info':
+          this.info(message.message)
+          break
+      }
+    })
   }
 }
 
