@@ -23,7 +23,8 @@
     "@/services/": "./services/",
     "@/relayer/": "./src/relayer/",
     "@/types": "./src/types/types.d.ts",
-    "@packageJson": "./package.json"
+    "@packageJson": "./package.json",
+    "@templateConfig": "./src/core/config/templates/config.0.3.0.json"
   },
   "fmt": {
     "useTabs": false,

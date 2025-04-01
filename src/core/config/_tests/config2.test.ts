@@ -11,6 +11,8 @@ import { returnsNext, stub } from 'https://deno.land/std/testing/mock.ts'
 import * as path from 'jsr:@std/path'
 import { Config } from '../config.ts'
 
+const VERSION = '0.3.0'
+
 // Create stubs for Deno functions
 let existsSyncStub = stub(
   Deno,
@@ -126,7 +128,7 @@ Deno.test.ignore('Config', async (t) => {
 
       assertEquals(config.project, {
         initialized: '',
-        version: '0.2.0',
+        version: VERSION,
         projectName: 'llemonstack',
         envFile: '.env',
         dirs: {
@@ -143,7 +145,7 @@ Deno.test.ignore('Config', async (t) => {
     await t.step('should load existing configuration when config file exists', () => {
       const testConfig: LLemonStackConfig = {
         initialized: new Date().toISOString(),
-        version: '0.2.0',
+        version: VERSION,
         projectName: 'test-project',
         envFile: '.env',
         dirs: {

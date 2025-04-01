@@ -1,6 +1,6 @@
 {
   "name": "llemonstack",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Local AI Agent Stack - A fully featured, open source, low-code AI agent automation platform",
   "bin": {
     "llmn": "./bin/cli.js"

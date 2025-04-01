@@ -1,4 +1,3 @@
-import configTemplate from '@/config/templates/config.0.2.0.json' with { type: 'json' }
 import { Service, ServicesMap } from '@/core/services/mod.ts'
 import { prepareDockerNetwork } from '@/lib/docker.ts'
 import { loadEnv } from '@/lib/env.ts'
@@ -15,6 +14,7 @@ import {
   ServiceYaml,
 } from '@/types'
 import packageJson from '@packageJson' with { type: 'json' }
+import configTemplate from '@templateConfig' with { type: 'json' }
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import Host from './host.ts'
 

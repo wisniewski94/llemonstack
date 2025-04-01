@@ -9,6 +9,8 @@ import { Stub, stub } from 'jsr:@std/testing/mock'
 import * as fs from '../../../lib/fs.ts'
 import { Config, config } from '../config.ts'
 
+const VERSION = '0.3.0'
+
 Deno.test('Config', async (t) => {
   let saveStub: Stub
 
@@ -167,10 +169,10 @@ Deno.test('Config initialization - templates', async (t) => {
     delete Config.instance
     const configInstance = Config.getInstance()
 
-    // Valid config should include services from config.0.2.0.json
+    // Valid config should include services from config.VERSION.json
     const validConfig = {
       initialized: true,
-      version: '0.2.0',
+      version: '0.3.0',
       projectName: 'test',
       envFile: '.env',
       dirs: {
@@ -271,7 +273,7 @@ Deno.test('Config initialization - templates', async (t) => {
 
     const template = {
       initialized: true,
-      version: '0.2.0',
+      version: VERSION,
       projectName: 'template-project',
       envFile: '.env',
       dirs: {
@@ -322,7 +324,7 @@ Deno.test('Config initialization - templates', async (t) => {
     assertEquals(updatedConfig.newField, 'new value', 'New field should be added from template')
 
     // Version should be updated to match template
-    assertEquals(updatedConfig.version, '0.2.0', 'Version should be updated to match template')
+    assertEquals(updatedConfig.version, VERSION, 'Version should be updated to match template')
   })
 
   // Clean up after all tests
