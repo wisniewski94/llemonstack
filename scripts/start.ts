@@ -2,10 +2,9 @@
  * Start docker services
  */
 
+import { Config } from '@/core/config/config.ts'
 import { runCommand } from '@/lib/command.ts'
 import { prepareDockerNetwork } from '@/lib/docker.ts'
-import { EnvVars, ExposeHost, ServicesMapType, ServiceType } from '@/types'
-import { Config } from './lib/core/config/config.ts'
 import {
   Cell,
   colors,
@@ -21,7 +20,8 @@ import {
   showTable,
   showUserAction,
   showWarning,
-} from './lib/logger.ts'
+} from '@/lib/logger.ts'
+import { EnvVars, ExposeHost, ServicesMapType, ServiceType } from '@/types'
 
 /*******************************************************************************
  * FUNCTIONS
@@ -238,7 +238,9 @@ export async function start(
     } else {
       // Start all services by service group
       for (const [groupName, groupServices] of config.getServicesGroups()) {
-        const enabledGroupServices = groupServices.filter((service) => service.isEnabled())
+        const enabledGroupServices = groupServices.filter((service: ServiceType) =>
+          service.isEnabled()
+        )
         if (enabledGroupServices.size > 0) {
           showAction(`\nStarting ${groupName} services...`)
           await startServices(config, enabledGroupServices)

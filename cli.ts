@@ -6,10 +6,9 @@
  * CLI interface for managing the LLemonStack local AI agent stack
  */
 
-import { LogLevel } from '@/lib/relayer/logger.ts'
 import { Command, EnumType } from '@cliffy/command'
 import { CompletionsCommand } from '@cliffy/command/completions'
-import { Config } from './scripts/lib/core/config/config.ts'
+import { Config } from './src/core/config/config.ts'
 import {
   showAction,
   showDebug,
@@ -17,9 +16,10 @@ import {
   showInfo,
   showLogMessages,
   showWarning,
-} from './scripts/lib/logger.ts'
-import { Relayer } from './scripts/lib/relayer/relayer.ts'
-import { isTruthy } from './scripts/lib/utils/compare.ts'
+} from './src/lib/logger.ts'
+import { isTruthy } from './src/lib/utils/compare.ts'
+import { LogLevel } from './src/relayer/logger.ts'
+import { Relayer } from './src/relayer/relayer.ts'
 
 /**
  * Initialize the LLemonStack config

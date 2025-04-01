@@ -4,7 +4,7 @@
  * Displays the health status of all running containers
  */
 
-import { dockerComposePs, type DockerComposePsResult } from './lib/docker.ts'
+import { dockerComposePs, type DockerComposePsResult } from '@/lib/docker.ts'
 
 /**
  * Check the health status of all running containers

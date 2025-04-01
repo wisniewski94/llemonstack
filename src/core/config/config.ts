@@ -1,14 +1,14 @@
 import configTemplate from '@/config/templates/config.0.2.0.json' with { type: 'json' }
-import { Service, ServicesMap } from '@/core/services/index.ts'
 import { loadEnv, updateEnv } from '@/lib/env.ts'
 import * as fs from '@/lib/fs.ts'
-import { LogLevel } from '@/lib/relayer/logger.ts'
-import { Relayer } from '@/lib/relayer/relayer.ts'
 import { failure, success, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
 import { isTruthy } from '@/lib/utils/compare.ts'
 import { IServiceOptions, IServicesGroups, LLemonStackConfig, ServiceConfig } from '@/types'
 import packageJson from '@packageJson' with { type: 'json' }
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
+import { LogLevel } from '../../relayer/logger.ts'
+import { Relayer } from '../../relayer/relayer.ts'
+import { Service, ServicesMap } from '../services/mod.ts'
 import Host from './host.ts'
 
 const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
@@ -16,7 +16,7 @@ const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
 // Absolute path to root of install dir
 const INSTALL_DIR = fs.path.join(
   fs.path.dirname(fs.path.fromFileUrl(import.meta.url)),
-  '../../../../',
+  '../../../',
 )
 
 /**

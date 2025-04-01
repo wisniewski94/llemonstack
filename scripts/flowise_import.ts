@@ -2,10 +2,10 @@
  * Import workflows and credentials from the import folder
  */
 
-import { Config } from './lib/core/config/config.ts'
-import { getFlowiseApiKey } from './lib/flowise.ts'
-import { fs, path } from './lib/fs.ts'
-import { confirm, showError, showInfo, showWarning } from './lib/logger.ts'
+import { Config } from '@/core/config/config.ts'
+import { getFlowiseApiKey } from '@/lib/flowise.ts'
+import { fs, path } from '@/lib/fs.ts'
+import { confirm, showError, showInfo, showWarning } from '@/lib/logger.ts'
 
 // todo: remove this
 const config = Config.getInstance()

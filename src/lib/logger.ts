@@ -1,10 +1,10 @@
 import type { LogMessage } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Cell, CellType, Column, Row, RowType, Table } from '@cliffy/table'
+import { Config } from '../core/config/config.ts'
 import { CommandError } from './command.ts'
-import { Config } from './core/config/config.ts'
 
-export { showTable } from './relayer/ui/tables.ts'
+export { showTable } from '../relayer/ui/tables.ts'
 export { Cell, colors, Column, Row, Table }
 export type { CellType, RowType }
 

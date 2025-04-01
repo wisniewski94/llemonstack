@@ -1,8 +1,8 @@
-import { Service } from '@/core/services/index.ts'
+import { Service } from '@/core/services/mod.ts'
+import { showHeader, showInfo, showWarning } from '@/lib/logger.ts'
+import { success, TryCatchResult } from '@/lib/try-catch.ts'
 import { EnvVars, ExposeHost, IServiceActionOptions } from '@/types'
 import { Select } from '@cliffy/prompt'
-import { showHeader, showInfo, showWarning } from '../../scripts/lib/logger.ts'
-import { success, TryCatchResult } from '../../scripts/lib/try-catch.ts'
 
 export class OllamaService extends Service {
   /**

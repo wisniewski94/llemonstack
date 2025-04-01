@@ -1,4 +1,3 @@
-import { Config } from '@/core/config/config.ts'
 import { tryDockerCompose, tryDockerComposePs } from '@/lib/docker.ts'
 import { path } from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
@@ -13,7 +12,8 @@ import {
   ServiceConfig,
   ServiceStatusType,
 } from '@/types'
-import { getEndpoints, prepareVolumes, setupServiceRepo } from './utils/index.ts'
+import { Config } from '../config/config.ts'
+import { getEndpoints, prepareVolumes, setupServiceRepo } from './utils/mod.ts'
 
 /**
  * Service

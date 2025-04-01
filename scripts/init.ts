@@ -1,12 +1,8 @@
 /**
  * Setup required env variables
  */
-import { OllamaService } from '@/services/ollama/service.ts'
-import { Input, Secret, Select } from '@cliffy/prompt'
-import { configure } from './configure.ts'
-import { Config } from './lib/core/config/config.ts'
-import { runDockerCommand } from './lib/docker.ts'
-import { fileExists, path } from './lib/fs.ts'
+import { runDockerCommand } from '@/lib/docker.ts'
+import { fileExists, path } from '@/lib/fs.ts'
 import {
   generateJWT,
   generateRandomBase64,
@@ -14,7 +10,7 @@ import {
   generateUUID,
   supabaseAnonJWTPayload,
   supabaseServiceJWTPayload,
-} from './lib/jwt.ts'
+} from '@/lib/jwt.ts'
 import {
   confirm,
   showAction,
@@ -24,8 +20,12 @@ import {
   showService,
   showUserAction,
   showWarning,
-} from './lib/logger.ts'
-import { createServiceSchema, isPostgresConnectionValid } from './lib/postgres.ts'
+} from '@/lib/logger.ts'
+import { createServiceSchema, isPostgresConnectionValid } from '@/lib/postgres.ts'
+import { OllamaService } from '@/services/ollama/service.ts'
+import { Input, Secret, Select } from '@cliffy/prompt'
+import { Config } from '../src/core/config/config.ts'
+import { configure } from './configure.ts'
 import { reset } from './reset.ts'
 import { checkPrerequisites, startService } from './start.ts' // Adjust the path as necessary
 

@@ -1,9 +1,9 @@
 /**
  * Example Service template for creating new services
  */
-import { Service } from '@/core/services/service.ts'
 import { success } from '@/lib/try-catch.ts'
 import { EnvVars, ExposeHost, IServiceActionOptions, TryCatchResult } from '@/types'
+import { Service } from '../service.ts'
 
 export class ServiceStub extends Service {
   /**

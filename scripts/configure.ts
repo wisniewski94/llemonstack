@@ -1,9 +1,9 @@
 /**
  * Configure the services
  */
+import { Config } from '@/core/config/config.ts'
+import { showAction, showError, showInfo, showLogMessages, showWarning } from '@/lib/logger.ts'
 import { CheckboxOption, Select } from '@cliffy/prompt'
-import { Config } from './lib/core/config/config.ts'
-import { showAction, showError, showInfo, showLogMessages, showWarning } from './lib/logger.ts'
 
 function getServiceOption(
   serviceName: string,
@@ -70,7 +70,9 @@ export async function configure(
     const selection = await Select.prompt({
       message: `Select ${groupName} services to manage (or exit):`,
       options: [
-        ...groupServices.map((serviceName) => getServiceOption(serviceName, config, dependencies))
+        ...groupServices.map((serviceName: string) =>
+          getServiceOption(serviceName, config, dependencies)
+        )
           .filter(Boolean) as CheckboxOption<string>[],
         'Exit',
       ],

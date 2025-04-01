@@ -2,11 +2,11 @@
  * Export workflows from n8n
  */
 
-import { CommandError } from './lib/command.ts'
-import { Config } from './lib/core/config/config.ts'
-import { dockerExec } from './lib/docker.ts'
-import { fs, path } from './lib/fs.ts'
-import { showAction, showError, showInfo, showWarning } from './lib/logger.ts'
+import { CommandError } from '@/lib/command.ts'
+import { dockerExec } from '@/lib/docker.ts'
+import { fs, path } from '@/lib/fs.ts'
+import { showAction, showError, showInfo, showWarning } from '@/lib/logger.ts'
+import { Config } from '../src/core/config/config.ts'
 
 // Relative path of backup dir in shared dir
 const BACKUP_DIR_N8N = 'backups/n8n'

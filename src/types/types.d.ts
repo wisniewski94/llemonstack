@@ -1,12 +1,12 @@
-import { Config, ServicesMapType } from '@/core/index.ts'
+import { Config, ServicesMapType } from '../core/mod.ts'
 import {
   CommandError as CommandErrorClass,
   RunCommandOutput as RunCommandOutputClass,
-} from './command.ts'
+} from '../lib/command.ts'
 
-export type { ServicesMapType, ServiceType } from '@/core/index.ts'
-export type { DockerComposeOptions, DockerComposePsResult } from './docker.ts'
-export type { TryCatchError, TryCatchResult } from './try-catch.ts'
+export type { ServicesMapType, ServiceType } from '../core/mod.ts'
+export type { DockerComposeOptions, DockerComposePsResult } from '../lib/docker.ts'
+export type { TryCatchError, TryCatchResult } from '../lib/try-catch.ts'
 
 export interface LLemonStackConfig {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty

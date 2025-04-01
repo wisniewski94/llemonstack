@@ -1,8 +1,8 @@
 import { tryRunCommand } from '@/lib/command.ts'
-import { Service } from '@/lib/core/services/service.ts'
 import { dirExists, ensureDir, escapePath, fileExists, path } from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 import type { RunCommandOptions } from '@/types'
+import { Service } from '../service.ts'
 
 /**
  * Run a git command and add the results to the results object

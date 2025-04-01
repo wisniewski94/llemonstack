@@ -1,7 +1,7 @@
+import { Config } from '@/core/config/config.ts'
+import { confirm, showAction, showError, showInfo, showWarning } from '@/lib/logger.ts'
+import { createServiceSchema, removeServiceSchema } from '@/lib/postgres.ts'
 import { ServiceType } from '@/types'
-import { Config } from './lib/core/config/config.ts'
-import { confirm, showAction, showError, showInfo, showWarning } from './lib/logger.ts'
-import { createServiceSchema, removeServiceSchema } from './lib/postgres.ts'
 import { startService } from './start.ts'
 
 async function isSupabaseStarted(config: Config) {

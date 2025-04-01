@@ -1,6 +1,6 @@
-import { Config } from '../../scripts/lib/core/config/config.ts'
-import { Service } from '../../scripts/lib/core/services/service.ts'
-import { getFlowiseApiKey } from '../../scripts/lib/flowise.ts'
+import { Config } from '../../src/core/config/config.ts'
+import { Service } from '../../src/core/services/service.ts'
+import { getFlowiseApiKey } from '../../src/lib/flowise.ts'
 
 export class FlowiseService extends Service {
   override async loadEnv(

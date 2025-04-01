@@ -1,8 +1,8 @@
 /**
  * Stop and restart the services
  */
-import { Config } from './lib/core/config/config.ts'
-import { showError } from './lib/logger.ts'
+import { showError } from '@/lib/logger.ts'
+import { Config } from '../src/core/config/config.ts'
 import { start } from './start.ts' // Adjust the path as necessary
 import { stop } from './stop.ts' // Adjust the path as necessary
 

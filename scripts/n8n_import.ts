@@ -2,11 +2,11 @@
  * Import workflows and credentials from the import folder
  */
 
-import { RunCommandOutput } from './lib/command.ts'
-import { Config } from './lib/core/config/config.ts'
-import { dockerExec } from './lib/docker.ts'
-import { fs, path } from './lib/fs.ts'
-import { confirm, showAction, showError, showInfo, showWarning } from './lib/logger.ts'
+import { RunCommandOutput } from '@/lib/command.ts'
+import { dockerExec } from '@/lib/docker.ts'
+import { fs, path } from '@/lib/fs.ts'
+import { confirm, showAction, showError, showInfo, showWarning } from '@/lib/logger.ts'
+import { Config } from '../src/core/config/config.ts'
 
 const config = Config.getInstance()
 await config.initialize()

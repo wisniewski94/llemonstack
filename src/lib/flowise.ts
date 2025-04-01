@@ -1,4 +1,4 @@
-import { Config } from './core/config/config.ts'
+import { Config } from '../core/config/config.ts'
 import { path } from './fs.ts'
 import { showDebug, showError } from './logger.ts'
 

@@ -7,9 +7,9 @@
  */
 
 import type { EnvVars, RunCommandOutput } from '@/types'
+import { Config } from '../core/config/config.ts'
+import Host from '../core/config/host.ts'
 import { runCommand } from './command.ts'
-import { Config } from './core/config/config.ts'
-import Host from './core/config/host.ts'
 import { tryCatch, TryCatchResult } from './try-catch.ts'
 
 export type DockerComposeOptions = {

@@ -2,7 +2,6 @@
  * Stop the stack by downing docker containers and cleaning up networks.
  */
 
-import { Config, ServicesMap } from '@/core/index.ts'
 import {
   dockerComposePs,
   type DockerComposePsResult,
@@ -12,6 +11,7 @@ import {
 } from '@/lib/docker.ts'
 import { colors, RowType, showAction, showError, showInfo, showTable } from '@/lib/logger.ts'
 import { ServicesMapType, ServiceType } from '@/types'
+import { Config, ServicesMap } from '../src/core/mod.ts'
 
 async function removeAllNetworks(projectName: string): Promise<void> {
   const MAX_RETRIES = 3

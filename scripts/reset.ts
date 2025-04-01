@@ -7,10 +7,8 @@
  * Optionally runs the update script.
  * Optionally starts the stack.
  */
-import { clearConfigFile, clearEnvFile } from './init.ts'
-import { Config } from './lib/core/config/config.ts'
-import { runDockerCommand, runDockerComposeCommand } from './lib/docker.ts'
-import { fs, path } from './lib/fs.ts'
+import { runDockerCommand, runDockerComposeCommand } from '@/lib/docker.ts'
+import { fs, path } from '@/lib/fs.ts'
 import {
   confirm,
   showAction,
@@ -18,7 +16,9 @@ import {
   showInfo,
   showUserAction,
   showWarning,
-} from './lib/logger.ts'
+} from '@/lib/logger.ts'
+import { Config } from '../src/core/config/config.ts'
+import { clearConfigFile, clearEnvFile } from './init.ts'
 import { update } from './update.ts'
 
 const DOCKER_CLEANUP_COMMANDS = [
