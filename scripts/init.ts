@@ -2,6 +2,7 @@
  * Setup required env variables
  */
 import { runDockerCommand } from '@/lib/docker.ts'
+import { updateEnv } from '@/lib/env.ts'
 import { fileExists, path } from '@/lib/fs.ts'
 import {
   generateJWT,
@@ -12,16 +13,16 @@ import {
   supabaseServiceJWTPayload,
 } from '@/lib/jwt.ts'
 import { createServiceSchema, isPostgresConnectionValid } from '@/lib/postgres.ts'
+import { failure, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
 import { OllamaService } from '@/services/ollama/service.ts'
 import { Input, Secret, Select } from '@cliffy/prompt'
 import { Config } from '../src/core/config/config.ts'
-import { configure } from './configure.ts'
 import { reset } from './reset.ts'
 import { checkPrerequisites, startService } from './start.ts' // Adjust the path as necessary
 
 // Env var key names we care about
 type EnvVarsKeys = keyof {
-  LLEMONSTACK_PROJECT_NAME: string
+  // LLEMONSTACK_PROJECT_NAME: string
   // Supabase
   SUPABASE_DASHBOARD_USERNAME: string
   SUPABASE_DASHBOARD_PASSWORD: string
@@ -45,7 +46,7 @@ type EnvVarsKeys = keyof {
   // OpenAI
   OPENAI_API_KEY: string
   // Ollama
-  ENABLE_OLLAMA: string
+  // ENABLE_OLLAMA: string
   // LiteLLM
   LITELLM_MASTER_KEY: string
   LITELLM_UI_PASSWORD: string
@@ -113,25 +114,50 @@ const POSTGRES_SERVICES: Array<[string, PostgresServiceEnvKeys]> = [
   // }],
 ]
 
-async function envFileExists(config: Config): Promise<boolean> {
-  return (await fileExists(config.envFile)).success
+/**
+ * Update the .env file with the given env vars
+ * @param envVars - The env vars to update the .env file with
+ * @param {Object} options - Options object
+ * @param {boolean} options.reload - Reload the env vars from the .env file into Deno.env
+ * @param {boolean} options.expand - Expand the env vars
+ * @returns {Promise<TryCatchResult<Record<string, string>>>}
+ */
+async function updateEnvFile(
+  config: Config,
+  envVars: Record<string, string>,
+  { reload = true, expand = false }: {
+    reload?: boolean
+    expand?: boolean
+  } = {},
+): Promise<TryCatchResult<Record<string, string>>> {
+  const _env = { ...envVars }
+
+  // Make sure LLEMONSTACK_PROJECT_NAME and DEBUG vars are not saved
+  // They're handled by config.json and the cli instead of .env
+  delete _env.LLEMONSTACK_PROJECT_NAME
+  delete _env.DEBUG
+  delete _env.LLEMONSTACK_DEBUG
+
+  const updateResult = await updateEnv(config.envFile, _env)
+
+  if (!updateResult.success) {
+    return failure<Record<string, string>>(
+      `Unable to update env file: ${config.envFile}`,
+      updateResult,
+    )
+  }
+
+  // TODO: test this to make sure its returning properly
+
+  // Reload the env vars and add prepend messages
+  return (
+    await tryCatch(config.loadEnv({ reload, expand }))
+  ).unshiftMessages(updateResult.messages)
 }
 
-// async function createConfigFile(config: Config): Promise<void> {
-//   // Check if the config directory exists
-//   if (!(await fileExists(config.configDir)).success) {
-//     // Create the config directory if it doesn't exist
-//     await Deno.mkdir(config.configDir, { recursive: true })
-//   }
-//   try {
-//     await Deno.writeTextFile(
-//       CONFIG.configFile,
-//       JSON.stringify(config, null, 2),
-//     )
-//   } catch (error) {
-//     showError(`Error creating config file: ${CONFIG.configFile}`, error)
-//   }
-// }
+async function envFileExists(config: Config): Promise<boolean> {
+  return (await fileExists(config.envFile)).data ?? false
+}
 
 export async function clearConfigFile(config: Config): Promise<void> {
   try {
@@ -259,12 +285,11 @@ async function startSupabase(
   }
 
   // Make sure supabase is running
-  // TODO: get supabase service and and call isRunning
-  // isSupabaseStarted was originally exported by start.ts
   if (!await supabase.isRunning()) {
     try {
       // Start supabase
       show.info('Starting Supabase...')
+
       await supabase.start()
       // Wait for 3 seconds to ensure Supabase is fully initialized
       await new Promise((resolve) => setTimeout(resolve, 3000))
@@ -317,7 +342,7 @@ async function createServiceSchemas(config: Config): Promise<Record<AllEnvVarKey
   }
   // Save db vars to .env file
   // Replace any password that equals POSTGRES_PASSWORD with ${POSTGRES_PASSWORD} placeholder
-  const results = await config.updateEnvFile(replacePostgresPasswords(dbVars, dbPassword), {
+  const results = await updateEnvFile(config, replacePostgresPasswords(dbVars, dbPassword), {
     reload: true,
     expand: false,
   })
@@ -421,6 +446,7 @@ export async function init(
     if (await envFileExists(config)) {
       show.info('.env file already exists')
       if (show.confirm('Do you want to delete .env and start fresh?', false)) {
+        // TODO: double confirm with user as this will delete all existing env vars
         await clearEnvFile(config)
         await createEnvFile(config)
         show.info('.env recreated from .env.example')
@@ -435,6 +461,8 @@ export async function init(
     // Create a copy of env vars to modify
     let envVars = { ...config.env }
 
+    // console.log('envVars', envVars)
+
     show.info('.env file is ready to configure')
 
     let uniqueName = false
@@ -447,6 +475,8 @@ export async function init(
         transform: (value?: string) => value?.toLowerCase(),
         validate: projectNameValidator,
       })
+
+      show.info(`Checking if project name is unique: ${projectName}`)
 
       // TODO: move existing project check to config
       uniqueName = !(await isExistingProject(projectName))
@@ -466,7 +496,11 @@ export async function init(
       }
     }
 
-    const result = await config.setProjectName(projectName)
+    // Set project name & initialize
+    // Initialize will save the config file
+    await config.setProjectName(projectName, { save: false })
+    const result = await config.initializeProject()
+
     if (!result.success) {
       show.fatal('Failed to set project name', { error: result.error })
     }
@@ -505,30 +539,32 @@ export async function init(
       hideDefault: true,
     })
 
-    show.header('Ollama Configuration Options')
-    show.info('Ollama can run on your host machine or inside a Docker container.')
-    show.info('The host option requires manually starting ollama on your host machine.')
-    show.info('If running in Docker, you can choose to run it on the CPU (slow) or a GPU (fast).')
-    show.info("GPU options require a compatible GPU on the host... because it's not magic.\n")
+    // Checkpoint, save env vars to .env file
+    const envResult = await updateEnvFile(config, envVars, {
+      reload: true,
+      expand: false, // Preserve KEY=${POSTGRES_PASSWORD} format during the init process
+    })
 
-    // TODO: call configure on ollama service class
+    if (!envResult.success) {
+      show.fatal('Failed to update .env file', { error: envResult.error })
+    }
+
+    show.action('\nPreparing environment and services. This could take a bit...')
+
+    // Setup supabase env
+    // TODO: turn on debug mode for this or show a message
+    // it clones the repos which could take awhile
+    // For now, we'll let them read the ollama message while it runs in the background
+    await config.prepareEnv()
+
+    // Configure ollama
     const ollamaService = config.getServiceByName('ollama') as OllamaService
     if (ollamaService) {
       await ollamaService.configure({ silent: false, config })
     }
 
-    // Run the config at this point?
-    await configure(config)
-
-    // Checkpoint, save env vars to .env file
-    // TODO: move to config
-    const _result = await config.updateEnvFile(envVars, {
-      reload: true,
-      expand: false, // Preserve KEY=${POSTGRES_PASSWORD} format during the init process
-    })
-
-    // Setup supabase env
-    await config.prepareEnv()
+    // Save ollama config settings
+    await config.save()
 
     show.action('\nSetting up postgres schemas...')
     show.info('This will create a postgres user and schema for each service that supports schemas.')

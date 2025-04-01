@@ -1,8 +1,9 @@
 import configTemplate from '@/config/templates/config.0.2.0.json' with { type: 'json' }
 import { Service, ServicesMap } from '@/core/services/mod.ts'
-import { loadEnv, updateEnv } from '@/lib/env.ts'
+import { prepareDockerNetwork } from '@/lib/docker.ts'
+import { loadEnv } from '@/lib/env.ts'
 import * as fs from '@/lib/fs.ts'
-import { failure, success, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
+import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 import { isTruthy } from '@/lib/utils/compare.ts'
 import { LogLevel } from '@/relayer/logger.ts'
 import { Relayer } from '@/relayer/relayer.ts'
@@ -63,11 +64,7 @@ export class Config {
   // Caches
   private _servicesLookup: Map<string, string> = new Map() // Maps service.service to serve.id
   private _env: Record<string, string> = {}
-  private _initializeResult: TryCatchResult<Config, Error> = new TryCatchResult<Config, Error>({
-    data: this,
-    error: new Error('Config not initialized'),
-    success: false,
-  })
+  private _initializeResult: TryCatchResult<boolean, Error> | null = null
 
   private _serviceGroups: IServicesGroups = new Map([
     ['databases', new ServicesMap()],
@@ -121,8 +118,7 @@ export class Config {
    * @returns {string}
    */
   get projectName(): string {
-    return this._config.projectName || this.env.LLEMONSTACK_PROJECT_NAME ||
-      Config.defaultProjectName
+    return this._config.projectName || Config.defaultProjectName
   }
 
   get configFile(): string {
@@ -205,6 +201,11 @@ export class Config {
     return !!this._config.initialized.trim()
   }
 
+  public async initializeProject() {
+    this._config.initialized = new Date().toISOString()
+    return await this.save()
+  }
+
   /**
    * Initialize the config
    *
@@ -217,9 +218,9 @@ export class Config {
       logLevel?: LogLevel
       init?: boolean // If false, return error if config file is invalid
     } = {},
-  ): Promise<TryCatchResult<Config, Error>> {
+  ): Promise<TryCatchResult<boolean, Error>> {
     // If previously cached initialize result, return it
-    if (this._initializeResult.success) {
+    if (this._initializeResult && this._initializeResult.success) {
       return this._initializeResult
     }
 
@@ -228,7 +229,7 @@ export class Config {
     }
 
     // Create a result object to add messages to
-    const result = new TryCatchResult<Config, Error>({ data: this, error: null, success: true })
+    const result = new TryCatchResult<boolean, Error>({ data: true, error: null, success: true })
 
     result.addMessage('debug', 'INITIALIZING CONFIG: this log message should only appear once')
 
@@ -248,7 +249,7 @@ export class Config {
       if (!init) {
         // Preserve the NotFound error
         result.error = readResult.error
-        return failure(`Config file not found: ${this.configFile}`, result)
+        return failure(`Config file not found: ${this.configFile}`, result, false)
       }
       // Populate config from the template
       this._config = this._configTemplate
@@ -262,7 +263,7 @@ export class Config {
     if (!this.isValidConfig()) {
       // Return error if not initializing from template
       if (!init) {
-        return failure(`Project config file is invalid: ${this.configFile}`, result)
+        return failure(`Project config file is invalid: ${this.configFile}`, result, false)
       }
       this.updateConfig(this._configTemplate)
       result.addMessage('info', 'Project config file is invalid, updating from template')
@@ -304,21 +305,20 @@ export class Config {
     }
 
     // Load services from services Directory
-    const servicesResult = await this.loadServices()
-    result.messages.push(...servicesResult.messages)
+    result.collect([
+      await this.loadServices(),
+    ])
 
     // Load enabled services env, skipping .env file
     await this.loadEnv({ envPath: null })
 
     if (updated) {
-      const saveResult = await this.save()
-      if (!saveResult.success) {
-        result.error = saveResult.error
-        result.addMessage(
-          'error',
-          `Error saving project config from template: ${this.configFile}`,
-          { error: saveResult.error },
-        )
+      // Save and collect messages
+      result.collect([
+        await this.save(),
+      ])
+      if (!result.success) {
+        return failure(`Error saving project config file: ${this.configFile}`, result, false)
       }
     }
 
@@ -561,10 +561,11 @@ export class Config {
 
     // TODO: populate global env vars like DEBUG, LOG_LEVEL, etc. ???
 
-    // Call loadEnv on all enabled services
-    // Allow services to modify the env vars as needed
     // TODO: load Services env by service group, this will allow services that depend on
     // lower level services to discover the env settings if needed?
+
+    // Call loadEnv on all enabled services
+    // Allow services to modify the env vars as needed
     for (const [_, service] of this.getEnabledServices()) {
       // Use a proxy to intercept env var changes and update Deno.env
       await service.loadEnv(
@@ -586,37 +587,6 @@ export class Config {
     this._setEnv(env)
 
     return this._env
-  }
-
-  /**
-   * Update the .env file with the given env vars
-   * @param envVars - The env vars to update the .env file with
-   * @param {Object} options - Options object
-   * @param {boolean} options.reload - Reload the env vars from the .env file into Deno.env
-   * @param {boolean} options.expand - Expand the env vars
-   * @returns {Promise<TryCatchResult<Record<string, string>>>}
-   */
-  public async updateEnvFile(
-    envVars: Record<string, string>,
-    { reload = true, expand = true }: {
-      reload?: boolean
-      expand?: boolean
-    } = {},
-  ): Promise<TryCatchResult<Record<string, string>>> {
-    const updateResult = await updateEnv(this.envFile, envVars)
-
-    if (!updateResult.success) {
-      return failure<Record<string, string>>(
-        `Unable to update env file: ${this.envFile}`,
-        updateResult,
-      )
-    }
-
-    // TODO: test this to make sure it returning properly
-    // Reload the env vars and add prepend messages
-    return (
-      await tryCatch(this.loadEnv({ reload, expand }))
-    ).unshiftMessages(updateResult.messages)
   }
 
   /**
@@ -770,6 +740,7 @@ export class Config {
       }
       this._config.services[service.service] = serviceConfig
     })
+
     return await fs.saveJson(this.configFile, this._config)
   }
 
@@ -778,11 +749,9 @@ export class Config {
   }
 
   public setEnvKey(key: string, value: string) {
-    const env = { ...this._env } // Clone the env object to remove immutability
-    env[key] = value
+    const env = { ...this._env, [key]: value } // Clone _env object to remove immutability
     Deno.env.set(key, value)
-    this._env = env
-    return this._env
+    return this._setEnv(env)
   }
 
   /**
@@ -808,10 +777,18 @@ export class Config {
 
     if (!results.success) {
       results.addMessage('error', 'Failed to ensure required dirs exist')
-      return results
+    }
+
+    // Create the docker network
+    const networkResult = await prepareDockerNetwork(this.dockerNetworkName)
+    if (!networkResult.success) {
+      results.addMessage('error', 'Failed to prepare docker network')
     }
 
     const services = all ? this.getAllServices() : this.getEnabledServices()
+
+    // TODO: log messages in services instead of collecting them
+    // Services prep could take awhile, so it's better to log messages as they come in
 
     // Run all service prepareEnv methods in parallel
     results.collect(

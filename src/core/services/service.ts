@@ -400,6 +400,9 @@ export class Service {
       silent?: boolean
     } = {},
   ): Promise<TryCatchResult<boolean>> {
+    // TODO: check if config.prepareEnv has run, if not, run it
+    // prepareEnv will ensure the service and docker network are ready.
+
     const results = await tryDockerCompose('up', {
       projectName: this._configInstance.projectName,
       composeFile: this.composeFile,

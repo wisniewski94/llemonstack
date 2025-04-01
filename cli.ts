@@ -10,14 +10,7 @@ import { Config } from '@/core/config/config.ts'
 import { isTruthy } from '@/lib/utils/compare.ts'
 import { LogLevel } from '@/relayer/logger.ts'
 import { Relayer } from '@/relayer/relayer.ts'
-import {
-  showAction,
-  showDebug,
-  showError,
-  showInfo,
-  showLogMessages,
-  showWarning,
-} from '@/relayer/ui/show.ts'
+import { showAction, showError, showInfo, showWarning } from '@/relayer/ui/show.ts'
 import { Command, EnumType } from '@cliffy/command'
 import { CompletionsCommand } from '@cliffy/command/completions'
 
@@ -31,6 +24,7 @@ import { CompletionsCommand } from '@cliffy/command/completions'
  */
 async function initConfig(
   options: { config: string; debug?: boolean; logLevel?: LogLevel },
+  init = false,
 ) {
   const debug = isTruthy(options.debug)
   const logLevel = debug ? 'debug' : options.logLevel ?? 'info'
@@ -39,24 +33,20 @@ async function initConfig(
   await Relayer.initialize({ logLevel })
   const relayer = Relayer.getInstance()
 
-  relayer.debug('Initializing script in main...')
+  relayer.debug('Initializing in main CLI script...')
+  relayer.debug('DEBUG enabled in CLI option')
 
   const config = Config.getInstance()
-  const result = await config.initialize(options.config, { logLevel })
+  const result = await config.initialize(options.config, { logLevel, init })
 
-  if (debug) {
-    showDebug('DEBUG enabled in CLI option')
-  }
+  // Show log messages, auto filters by log level
+  relayer.show.logMessages(result.messages, { debug: config.DEBUG })
 
   if (!result.success && result.error instanceof Deno.errors.NotFound) {
     // Show a friendly message if the config file is not found
-    showInfo(`Config file not found: ${config.configFile}`)
     showAction('Please run `llmn init` to create a new project')
     Deno.exit(1)
   }
-
-  // Show log messages
-  showLogMessages(result.messages, { debug: config.DEBUG })
 
   if (!result.success) {
     showError('Error initializing config', result.error)
@@ -108,7 +98,7 @@ main
   .command('init')
   .description('Initialize the LLemonStack environment')
   .action(async (options) => {
-    const config = await initConfig(options)
+    const config = await initConfig(options, true)
     const { init } = await import('./scripts/init.ts')
     await init(config)
   })
@@ -118,15 +108,14 @@ main
   .command('start')
   .description('Start the LLemonStack services')
   .arguments('[service:string]')
-  .option('-n, --nokeys', 'Hide credentials', { default: false })
+  .option('-n, --no-keys', 'Hide credentials', { default: false })
   .action(async (options, service?: string) => {
     const config = await initConfig(options)
     const { start } = await import('./scripts/start.ts')
     await start(config, {
       service,
       skipOutput: !!service,
-      // cspell:disable-next-line
-      hideCredentials: options.nokeys,
+      hideCredentials: options.keys,
     })
   })
 
@@ -157,7 +146,7 @@ main
 main
   .command('reset')
   .description('Reset the LLemonStack environment')
-  .action(async (options) => {
+  .action((_options) => {
     showWarning('Reset is currently disabled. Check for LLemonStack updates later.')
     Deno.exit(1)
     // const config = await initConfig(options)
