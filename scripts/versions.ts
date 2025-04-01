@@ -4,7 +4,8 @@
 
 import { getImageFromCompose, getImagesFromComposeYaml } from '@/lib/compose.ts'
 import { dockerRun, prepareDockerNetwork, runDockerCommand } from '@/lib/docker.ts'
-import { showError, showHeader, showInfo, showTable, showWarning } from '@/relayer/ui/show.ts'
+import { InterfaceRelayer } from '@/relayer/ui/interface.ts'
+import { showError } from '@/relayer/ui/show.ts'
 import { IServiceImage, ServicesMapType, ServiceType } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Column, Row, RowType } from '@cliffy/table'
@@ -19,11 +20,12 @@ const MAX_COLUMN_WIDTH = 50
  * @param options
  */
 function showVersionsTable(
+  show: InterfaceRelayer,
   header: RowType,
   rows: RowType[],
   options: { maxColumnWidth?: number },
 ): void {
-  const table = showTable(header, rows, { ...options, render: false })
+  const table = show.table(header, rows, { ...options, render: false })
   table.column(0, new Column().align('right'))
   table.column(3, new Column().align('right'))
   table.render()
@@ -40,6 +42,7 @@ async function getAppVersion(
   entrypoint: string, // Entrypoint
   cmdArgs: string[], //
 ): Promise<IServiceImage> {
+  const show = config.relayer.show
   let serviceImage: IServiceImage
   try {
     const tmp = await getImageFromCompose(service.composeFile, service.service)
@@ -49,7 +52,7 @@ async function getAppVersion(
     serviceImage = tmp
   } catch (error) {
     if (service.isEnabled()) {
-      showError(`Error getting image for ${service.name}`, error)
+      show.error(`Error getting image for ${service.name}`, { error })
     }
     serviceImage = {
       service: service.name,
@@ -68,18 +71,20 @@ async function getAppVersion(
     serviceImage.version = version.split('\n').pop() || ''
     return serviceImage
   } catch (error) {
-    showError(`Error getting version for ${service}`, error)
+    show.error(`Error getting version for ${service}`, { error })
   }
   return serviceImage
 }
 
 async function getAppVersions(config: Config, services: ServicesMapType): Promise<string[][]> {
+  const show = config.relayer.show
+
   // Get enabled services and process them in parallel
   const results = await Promise.all(
     services.filterMap((service) => {
       const composeFile = service.composeFile
       if (!composeFile) {
-        showWarning(`Compose file not found for ${service}`)
+        show.warn(`Compose file not found for ${service}`)
         return {
           service: service.name,
           containerName: '',
@@ -106,6 +111,8 @@ async function getAppVersions(config: Config, services: ServicesMapType): Promis
 }
 
 async function showImageVersions(config: Config): Promise<RowType[]> {
+  const show = config.relayer.show
+
   // Iterate through all compose files to get images
   // Process all compose files in parallel
   const composeResults = await Promise.all(
@@ -117,7 +124,7 @@ async function showImageVersions(config: Config): Promise<RowType[]> {
         return { composeFile, images, error: null }
       } catch (error) {
         if (error instanceof Deno.errors.NotFound) {
-          showWarning(`Compose file (${composeFile}) not found, skipping`)
+          show.warn(`Compose file (${composeFile}) not found, skipping`)
           return { composeFile, images: [], error }
         } else {
           throw error
@@ -247,6 +254,7 @@ export async function versions(config: Config): Promise<void> {
 
     if (imageVersionRows.length > 0) {
       showVersionsTable(
+        config.relayer.show,
         [
           'Service',
           'Image Version',
@@ -259,7 +267,7 @@ export async function versions(config: Config): Promise<void> {
       )
     }
 
-    showHeader('Service App Versions')
+    show.header('Service App Versions')
     const appVersionRows = await appVersionsPromise
 
     // Sort app version rows by service name (first column)
@@ -270,15 +278,16 @@ export async function versions(config: Config): Promise<void> {
     })
 
     if (appVersionRows.length > 0) {
-      showInfo('Version of apps inside the container, if available.\n')
-      showVersionsTable(['Service', 'App Version', 'Docker Image'], appVersionRows, {
+      show.info('Version of apps inside the container, if available.\n')
+      show.table(['Service', 'App Version', 'Docker Image'], appVersionRows, {
         maxColumnWidth: MAX_COLUMN_WIDTH,
       })
     } else {
-      showInfo('No app versions found')
+      show.info('No app versions found')
     }
     console.log('\n')
   } catch (error) {
+    // TODO: use show.error or relayer.error
     showError(error)
     Deno.exit(1)
   }
