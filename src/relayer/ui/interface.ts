@@ -147,7 +147,6 @@ export class InterfaceRelayer {
   }
 
   public debug(message: string, ...args: unknown[]): void {
-    console.log('debug', message, args)
     this.logger.debug(message, { ...this.context, _meta: { args } })
   }
 
