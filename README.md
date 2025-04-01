@@ -15,8 +15,7 @@ Pre-configured and ready to squeeze. LLemoStack gets you up and running in minut
 
 LLemonStack is currently a pre-release version. It works on macOS, Linux and Windows with WSL 2.
 
-The scripts and API are in rapid development. Check the git history and pull regularly for bug
-fixes.
+The scripts and API are in rapid development. Check the git history and branches.
 
 ## Walkthrough Video
 
@@ -26,22 +25,13 @@ fixes.
 
 ## Changelog
 
+- Apr 1, 2025: v0.3.0 pre-release
+
+  - Remove ENABLE\_\* vars from .env and use `llmn config` to enable/disable services
+  - Major refactor of internal APIs to make it easier to add and manage services
+  - Internal code is still be migrated to the new API, there may be bugs
+
 - Mar 23, 2035: v0.2.0: introduce `llmn` command
-
-  - Moved all services to services/ dir for better isolation
-  - All services now run independently with separate docker-compose.yml
-  - Several bug fixes, start refactoring code for service based API
-
-- Mar 15, 2025: BREAKING CHANGE: moved container volumes to ./volumes
-- Mar 14, 2025: BREAKING CHANGE: switched to using supavisor instead of direct postgres db
-  connection
-  - See .env.example for changes to env variables
-  - docker-compose.yml files were changed and now require a few new env vars to work
-  - Replaced Supabase Analytics server (Logflare) with dummy server
-- Mar 13, 2025: Fixed the init script
-- Mar 12, 2025: Added custom n8n image with OTEL tracing, and ffmpeg support and Langfuse in n8n
-  LangChain Code nodes
-- Mar 10, 2025: Added LiteLLM and Langfuse to the stack
 
 ## Known Issues
 
@@ -49,6 +39,9 @@ Zep requires a quick workaround fix for a hard coded `public.role_type_num` bug.
 issue when using the custom service_zep schema created by the init script..
 
 See [examples/zep/README.md](examples/zep/README.md) for details and the quick fix.
+
+Zep self hosted (local) is not yet compatible with the n8n node. However, you can run custom code
+in n8n and other stack components to use the local Zep service.
 
 <br />
 
@@ -71,7 +64,7 @@ WSL 2.
 > 🍋🍋🍋🍋🍋 _5 lemon rating FTW_
 
 Ultimately, LLemonStack aims to provide a comprehensive AI configuration framework & education
-ecosystem... where sh!t just works so you can focus on the fun part of building AI agents.
+ecosystem... where stuff just works so you can focus on the fun part of building AI agents.
 
 With this first release, we're just scratching the surface of what's possible.
 
@@ -113,7 +106,7 @@ your host machine.
 - [**Git**](https://github.com/git-guides/install-git) - needed to clone stack services that require
   custom build steps
 
-After you've installed the prerequisites, you won't need to directly use them. LLemonStack does all
+After installing the prerequisites, you won't need to directly use them. LLemonStack does all
 the heavy lifting for you.
 
 ### How To Install the Prerequisites
@@ -191,7 +184,11 @@ git clone https://github.com/llemonstack/llemonstack.git
 ```bash
 cd llemonstack
 deno install # Install dependencies
-npm link # Enable the global llmn command
+
+# Enable the global llmn command
+npm link
+
+# llmn is now available to use from any directory
 ```
 
 `npm link` creates a global symbolic link for `llmn` to `bin/cli.js`. Once the link is enabled, the
@@ -202,7 +199,7 @@ npm link # Enable the global llmn command
 ```bash
 # Create a new project directory anywhere on your system
 cd ..
-mkdir my_llemonstack_project && cd my_llemonstack_project
+mkdir mystack && cd mystack
 
 # Run the init script to configure a new stack
 llmn init
@@ -215,9 +212,10 @@ To create multiple projects, make sure the current stack is stopped by running `
 project directory. Then create a new project directory and run `llmn init` inside of the new
 directory.
 
-Each project directory contains the unique `.env` file as well as the `volumes` directory that
+Each project directory contains the unique `.env`, `config.json` and `volumes` directory that
 stores that stack data. Contents of the `volumes` directory contains database data and other
-persistent data needed to run the stack.
+persistent data needed to run the stack. This keeps each stack project isolated from other
+projects on the same machine.
 
 ## Usage
 
@@ -227,6 +225,9 @@ llmn --help
 
 # Init a new project
 llmn init
+
+# Enable/disable services
+llmn config
 
 # Start the services
 # Automatically installs dependencies & docker images as needed
