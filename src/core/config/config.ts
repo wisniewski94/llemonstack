@@ -6,7 +6,13 @@ import { failure, success, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
 import { isTruthy } from '@/lib/utils/compare.ts'
 import { LogLevel } from '@/relayer/logger.ts'
 import { Relayer } from '@/relayer/relayer.ts'
-import { IServiceOptions, IServicesGroups, LLemonStackConfig, ServiceConfig } from '@/types'
+import {
+  IServiceConfigState,
+  IServiceOptions,
+  IServicesGroups,
+  LLemonStackConfig,
+  ServiceYaml,
+} from '@/types'
 import packageJson from '@packageJson' with { type: 'json' }
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import Host from './host.ts'
@@ -68,6 +74,19 @@ export class Config {
     ['middleware', new ServicesMap()],
     ['apps', new ServicesMap()],
   ])
+
+  // Map of service id to services that depend on it
+  // Auto populated when services are registered
+  // <service.id>: ServicesMap<services that depend on service.id>
+  private _dependencies: Map<string, ServicesMap> = new Map()
+
+  // Provider fulfillment map - when services load, they register as the primary provider
+  // The last service loaded that fulfills the dependency will be used.
+  // e.g. postgres -> [Service<supabase>, 'db'] - db is the container name for the service
+  private _providers: Map<string, [Service, string]> = new Map()
+
+  // Services that are enabled when a dependent service is enabled
+  private _autoEnabledServices: ServicesMap = new ServicesMap()
 
   // Base configuration
   protected _configDir: string = ''
@@ -349,7 +368,7 @@ export class Config {
         result.addMessage('debug', `Service config file not found: ${serviceDir.name}`)
         continue
       }
-      const yamlResult = await fs.readYaml<ServiceConfig>(
+      const yamlResult = await fs.readYaml<ServiceYaml>(
         yamlFilePath,
       )
       if (!yamlResult.success || !yamlResult.data) {
@@ -359,24 +378,27 @@ export class Config {
         continue
       }
 
-      const serviceConfig = yamlResult.data
+      const serviceYaml = yamlResult.data
 
-      if (serviceConfig.disabled) {
-        result.addMessage('debug', `Service ${serviceConfig.service} is disabled, skipping`)
+      if (serviceYaml.disabled) {
+        result.addMessage('debug', `Service ${serviceYaml.service} is disabled, skipping`)
         continue
       } else {
         result.addMessage(
           'debug',
-          `${serviceConfig.name} loaded into ${serviceConfig.service_group} group`,
+          `${serviceYaml.name} loaded into ${serviceYaml.service_group} group`,
         )
       }
 
+      const serviceConfig = this._config.services[serviceYaml.service] || {}
+
       // Create Service constructor options
       const serviceOptions: IServiceOptions = {
-        serviceConfig,
-        serviceDir: fs.path.join(this.servicesDir, serviceConfig.service),
+        serviceYaml,
+        serviceDir: fs.path.join(this.servicesDir, serviceYaml.service),
         config: this,
-        configSettings: this._config.services[serviceConfig.service] || {},
+        configSettings: serviceConfig,
+        enabled: serviceConfig.enabled !== false, // Enable service unless explicitly disabled
       }
 
       // Check if there's a custom service implementation in the service directory
@@ -395,14 +417,14 @@ export class Config {
 
             result.addMessage(
               'debug',
-              `Using custom service implementation for ${serviceConfig.service}`,
+              `Using custom service implementation for ${serviceYaml.service}`,
             )
             continue // Skip the default Service instantiation below
           }
         } catch (error) {
           result.addMessage(
             'error',
-            `Error loading custom service implementation for ${serviceConfig.service}`,
+            `Error loading custom service implementation for ${serviceYaml.service}`,
             {
               error,
             },
@@ -415,6 +437,12 @@ export class Config {
 
       this.registerService(service)
     }
+
+    // After all services are loaded, update the dependencies map
+    this.updateDependencies()
+
+    // After all services are loaded, update the auto enabled services
+    this.updateAutoEnabledServices()
 
     return result
   }
@@ -430,7 +458,6 @@ export class Config {
     }
 
     // Add service to service group
-
     const group = this._serviceGroups.has(service.serviceGroup)
       ? this._serviceGroups.get(service.serviceGroup)
       : new ServicesMap()
@@ -438,8 +465,71 @@ export class Config {
     // Add service to service group, if it already exists it will be replaced
     group!.addService(service, { force: true })
 
+    // Add service to provider map
+    // Adds ['postgres' => [Service<supabase>, 'db']]
+    service.provides.forEach(([provides, container]) => {
+      this._providers.set(provides, [service, container])
+    })
+
+    // Add service to auto enabled services map
+    if (this._config.services[service.service]?.enabled === 'auto') {
+      this._autoEnabledServices.addService(service)
+    }
+
     // TODO: log warning if service is not added
     return added
+  }
+
+  public updateDependencies() {
+    // Walk through each enabled service and populate _dependencies with providers
+    // e.g. n8n depends on postgres, so it will check _providers for postgres and get [Service<supabase>, 'db']
+    // Then update _dependencies<supabase.id> with n8n
+    for (const [_, service] of this.getAllServices()) {
+      // Get the list of services the service depends on
+      // e.g. n8n depends on postgres, so it will check _providers for postgres and get [Service<supabase>, 'db']
+      // Then update _dependencies<supabase.id> with n8n
+      service.depends_on.forEach((dependency) => {
+        const [serviceProvider, _] = this._providers.get(dependency) || []
+        if (serviceProvider) {
+          this.getServiceDependents(serviceProvider).addService(service)
+        }
+      })
+    }
+  }
+
+  public getServiceDependents(service: Service): ServicesMap {
+    let dependents = this._dependencies.get(service.id)
+    if (!dependents) {
+      dependents = new ServicesMap()
+      this._dependencies.set(service.id, dependents)
+    }
+    return dependents
+  }
+
+  /**
+   * Enable auto enabled services that have enabled dependencies
+   */
+  public updateAutoEnabledServices(): void {
+    // For each service that is auto enabled, check if it has any enabled dependencies
+    // If it does, enable the service
+    // If it doesn't, disable the service
+    for (const [_, service] of this._autoEnabledServices) {
+      const enabledDependencies = this._dependencies.get(service.id)?.getEnabled()
+      if (enabledDependencies && enabledDependencies.size > 0) {
+        service.setState('enabled', true)
+      } else {
+        service.setState('enabled', false)
+      }
+    }
+  }
+
+  /**
+   * Check if a service is auto enabled
+   * @param {Service} service - The service to check
+   * @returns {boolean} True if the service is auto enabled, false otherwise
+   */
+  public isServiceAutoEnabled(service: Service): boolean {
+    return this._autoEnabledServices.has(service.id)
   }
 
   /**
@@ -626,20 +716,31 @@ export class Config {
   }
 
   /**
-   * Get the dependencies of a service
+   * Update the enabled state of a service
    *
-   * Returns TryCatchError if service has dependencies that are not loaded.
+   * If enabled is 'auto', the service will be added to the auto enabled services map
+   * and the service will be enabled if it has any enabled dependents.
    *
-   * @param service - The service to get the dependencies of
-   * @returns {Promise<TryCatchResult<Service[]>>}
+   * @param service - The service to update the enabled state of
+   * @param {boolean | 'auto'} enabled - The new enabled state of the service
    */
-  // public async getDependencies(service: string | Service): TryCatchResult<Services> {
-  //   const _service = (service instanceof Service) ? service : this.getServiceByName(service)
-  //   if (!_service) {
-  //     return success<Service[]>([])
-  //   }
-  //   return success<Service[]>(_service.depends_on.map((dependency) => this.getServiceByName(dependency)))
-  // }
+  public updateServiceEnabledState(service: Service, enabled: boolean | 'auto') {
+    if (enabled === 'auto') {
+      // Add service to auto enabled services map
+      this._autoEnabledServices.addService(service)
+      // Check if service has any enabled dependents
+      const enabledDependents = this.getServiceDependents(service)?.getEnabled()
+      if (enabledDependents && enabledDependents.size > 0) {
+        service.setState('enabled', true)
+      } else {
+        service.setState('enabled', false)
+      }
+    } else {
+      service.setState('enabled', enabled)
+      // Remove service from auto enabled services map
+      this._autoEnabledServices.delete(service.id)
+    }
+  }
 
   /**
    * Save the project config to the config file
@@ -655,12 +756,19 @@ export class Config {
         success: false,
       })
     }
+
     // Update service enabled state and profiles in config before saving
     this.getAllServices().forEach((service) => {
-      this._config.services[service.service] = {
-        enabled: service.isEnabled(),
+      const enabled = service.isEnabled()
+      const auto = this._autoEnabledServices.has(service.id)
+      const serviceConfig = {
+        enabled: auto ? 'auto' : enabled,
         profiles: service.getProfiles(),
+      } as IServiceConfigState
+      if (serviceConfig.profiles && serviceConfig.profiles.length === 0) {
+        delete serviceConfig.profiles
       }
+      this._config.services[service.service] = serviceConfig
     })
     return await fs.saveJson(this.configFile, this._config)
   }

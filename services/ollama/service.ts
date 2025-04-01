@@ -6,26 +6,6 @@ import { Select } from '@cliffy/prompt'
 
 export class OllamaService extends Service {
   /**
-   * Get or set the enabled status of Ollama service
-   *
-   * @param value - Optional boolean value to set the enabled status
-   * @returns The enabled status of the service
-   */
-  override isEnabled(): boolean {
-    // Skip the env check if already enabled
-    let enabled = this._state.get('enabled')
-    if (enabled) {
-      return true
-    }
-    // Set enabled to true if ENABLE_OLLAMA is not false
-    // Otherwise default to the enabled setting in the project config file
-    const env = this._configInstance.env['ENABLE_OLLAMA'].trim().toLowerCase()
-    enabled = !(env === 'false') || this._enabledInConfig
-    this.setState('enabled', enabled)
-    return enabled
-  }
-
-  /**
    * Get the Ollama host based on the current profile
    * @returns The Ollama host URL
    */

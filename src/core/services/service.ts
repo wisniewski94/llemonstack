@@ -9,8 +9,8 @@ import {
   IServiceActionOptions,
   IServiceOptions,
   IServiceState,
-  ServiceConfig,
   ServiceStatusType,
+  ServiceYaml,
 } from '@/types'
 import { Config } from '../config/config.ts'
 import { getEndpoints, prepareVolumes, setupServiceRepo } from './utils/mod.ts'
@@ -42,35 +42,34 @@ export class Service {
   protected _configInstance: Config
 
   protected _dir: string
-  protected _enabledInConfig: boolean
 
   protected _composeFile: string
   protected _profiles: string[] = []
-  // protected _dependencies: ServicesMapType
 
   // Service's llemonstack.yaml config, once loaded it's frozen to prevent
   // accidental changes that are not saved
-  readonly _config: ServiceConfig
+  readonly _config: ServiceYaml
 
   constructor(
-    { serviceConfig, serviceDir, config, configSettings }: IServiceOptions,
+    { serviceYaml, serviceDir, config, configSettings, enabled }: IServiceOptions,
   ) {
-    this._name = serviceConfig.name
-    this._service = serviceConfig.service
-    this._description = serviceConfig.description
+    this._name = serviceYaml.name
+    this._service = serviceYaml.service
+    this._description = serviceYaml.description
 
     // Set id to 'namespace/service' if not set in llemonstack.yaml
-    this._id = serviceConfig.id ?? `${this.namespace}/${this._service}`
+    this._id = serviceYaml.id ?? `${this.namespace}/${this._service}`
 
     this._configInstance = config // TODO: check for circular reference issues
-    this._config = Object.freeze({ ...serviceConfig })
+
+    // Freeze the original config state to prevent accidental changes
+    this._config = Object.freeze({ ...serviceYaml })
+
     this._dir = serviceDir
-    this._composeFile = path.join(this._dir, serviceConfig.compose_file)
+    this._composeFile = path.join(this._dir, serviceYaml.compose_file)
 
-    // TODO: double check if this is the best way to handle this? now that _configInstance is being saved
+    this.setState('enabled', enabled)
 
-    // Configure with settings from the service entry in config.json
-    this._enabledInConfig = configSettings.enabled
     this.setProfiles(configSettings.profiles || [])
   }
 
@@ -107,7 +106,7 @@ export class Service {
     return this._composeFile
   }
 
-  public get config(): ServiceConfig {
+  public get config(): ServiceYaml {
     return this._config
   }
 
@@ -145,8 +144,15 @@ export class Service {
     return Object.keys(this._config.depends_on || {}) ?? []
   }
 
-  public get provides(): string[] {
-    return Object.keys(this._config.provides || {}) ?? []
+  /**
+   * Get the services that this service provides
+   *
+   * Returns ['postgres', 'db'] where postgres is provided by the db container.
+   *
+   * @returns {[string, string][]} The service name and container name for each service provided
+   */
+  public get provides(): [string, string][] {
+    return Object.entries(this._config.provides || {}) ?? []
   }
 
   //
@@ -170,11 +176,11 @@ export class Service {
    *
    * @param {keyof IServiceState} key - The key to set
    * @param {IServiceState[K]} value - The value to set
-   * @returns {boolean} Whether or not the state was set, could return false if value was invalid
+   * @returns {boolean} Returns true if the state was set, false if value was invalid
    */
   public setState<K extends keyof IServiceState>(key: K, value: IServiceState[K]): boolean {
     this._state.set(key, value)
-    return true // Whether or not the state was set
+    return true
   }
 
   public async getStatus(): Promise<ServiceStatusType> {
@@ -201,30 +207,8 @@ export class Service {
     return 'loaded'
   }
 
-  /**
-   * Get or set the enabled status of the service
-   *
-   * Used a single method instead of get/set to make a more compact API.
-   * Allows for ```config.getServiceByName('n8n')?.enabled(false)```
-   *
-   * @param value - Optional boolean value to set the enabled status
-   * @returns The enabled status of the service
-   */
   public isEnabled(): boolean {
-    if (this._state.get('enabled')) {
-      return true
-    }
-
-    // Check Deno env vars for ENABLED_<service>
-    // TODO: remove this check once config script is working properly and
-    // everything migrated to config.json
-    const env = this._configInstance.env[`ENABLE_${this.service.toUpperCase().replace(/-/g, '_')}`]
-    const enabled = env?.trim().toLowerCase() === 'true' || this._enabledInConfig
-
-    // TODO: log a deprecation warning if env var check is used
-
-    this._state.set('enabled', enabled)
-    return enabled
+    return this._state.get('enabled')
   }
 
   public isStarted(): boolean {

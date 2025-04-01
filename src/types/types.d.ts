@@ -28,7 +28,7 @@ export interface LLemonStackConfig {
 }
 
 export interface IServiceConfigState {
-  enabled: boolean
+  enabled: boolean | 'auto'
   profiles?: string[]
 }
 
@@ -83,7 +83,7 @@ export interface IServiceImage {
 /**
  * From service's llemonstack.yaml
  */
-export interface ServiceConfig {
+export interface ServiceYaml {
   id?: string // The ID of the service
   service: string // The name of the service
   name: string // Friendly name of the service to show to users
@@ -105,7 +105,7 @@ export interface ServiceConfig {
 }
 
 export interface IServiceState {
-  enabled: boolean | null
+  enabled: boolean
   started: boolean | null
   healthy: boolean | null
   ready: boolean | null
@@ -152,10 +152,11 @@ export type ExposeHost = {
  * Options for the Service class constructor
  */
 export interface IServiceOptions {
-  serviceConfig: ServiceConfig
+  serviceYaml: ServiceYaml
   serviceDir: string
   config: Config // Instance of initialized Config class
   configSettings: IServiceConfigState // Settings from the service entry in config.json
+  enabled: boolean
 }
 
 // TODO: globally rename interfaces to use I prefix
