@@ -2,7 +2,7 @@ import { Config } from '@/core/config/config.ts'
 import { CommandError } from '@/lib/command.ts'
 import { LogMessage } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
-import { LoggerConfig, LogLevel, LogRecord, LogtapeLogger, Sink } from '../logger.ts'
+import { Logger, LogLevel, LogRecord, LogtapeLogger, Sink } from '../logger.ts'
 import { RowType, showTable, Table, TableOptions } from './tables.ts'
 
 interface UserLogRecord extends LogRecord {
@@ -21,8 +21,9 @@ interface UserLogRecord extends LogRecord {
  */
 export class InterfaceRelayer {
   private static instance: InterfaceRelayer
-  private _logLevel: LogLevel = 'info'
   private initialized: boolean = false
+
+  private _logLevel: LogLevel = 'info'
   protected _logger: LogtapeLogger
   protected context: Record<string, unknown>
 
@@ -31,8 +32,6 @@ export class InterfaceRelayer {
   }
 
   public static log(record: UserLogRecord): void {
-    // console.log('InterfaceRelayer log', record)
-
     const data = record.properties
     const meta = data._meta
     const message = record.message.join('')
@@ -65,9 +64,14 @@ export class InterfaceRelayer {
     options: {
       context?: Record<string, unknown>
       logger?: LogtapeLogger
+      defaultLevel?: LogLevel
     } = {},
   ) {
-    this._logger = LoggerConfig.getLogger(['ui'])
+    if (options.defaultLevel) {
+      this._logLevel = options.defaultLevel
+    }
+
+    this._logger = Logger.getLogger(['ui'])
 
     // Save context to auto populate context for all log messages below
     this.context = options.context || {}
@@ -131,7 +135,6 @@ export class InterfaceRelayer {
   // Log methods that include context
   public info(message: string, data?: Record<string, unknown>): void {
     this.logger.info(message, { ...this.context, ...data })
-    // console.log(`${colors.gray(message)}`)
   }
 
   public warn(message: string, data?: Record<string, unknown>): void {

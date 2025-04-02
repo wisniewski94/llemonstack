@@ -762,7 +762,7 @@ export class Config {
    * @returns {Promise<TryCatchResult<boolean>>}
    */
   public async prepareEnv(
-    { all = false }: { all?: boolean } = {},
+    { all = false, silent = false }: { all?: boolean; silent?: boolean } = {},
   ): Promise<TryCatchResult<boolean>> {
     const results = success<boolean>(true)
 
@@ -793,7 +793,7 @@ export class Config {
     // Run all service prepareEnv methods in parallel
     results.collect(
       await Promise.all(
-        services.map((service) => service.prepareEnv()),
+        services.map((service) => service.prepareEnv({ silent })),
       ),
     )
 

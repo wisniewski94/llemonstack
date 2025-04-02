@@ -1,4 +1,4 @@
-import { LoggerConfig, LogLevel, LogtapeLogger } from './logger.ts'
+import { Logger, LogLevel, LogtapeLogger } from './logger.ts'
 import { InterfaceRelayer } from './ui/interface.ts'
 export type { LogLevel }
 
@@ -31,12 +31,12 @@ export class Relayer {
       return true
     }
 
-    LoggerConfig.appName = this.rootAppName
+    Logger.appName = this.rootAppName
 
     this.logLevel = logLevel
 
     // Create and configure Logtape logger
-    await LoggerConfig.initLogger(this.rootAppName, {
+    await Logger.initLogger(this.rootAppName, {
       defaultLevel: logLevel as LogLevel,
       reset,
     })
@@ -82,7 +82,7 @@ export class Relayer {
   ) {
     this._instanceId = Relayer.getInstanceId(options.name)
 
-    this._logger = LoggerConfig.getLogger(options.name || Relayer.rootAppName)
+    this._logger = Logger.getLogger(options.name || Relayer.rootAppName)
 
     // Save context to auto populate context for all log messages below
     this._context = options.context || {}
@@ -109,12 +109,10 @@ export class Relayer {
    * @returns A new Relayer instance with the combined context
    */
   public withContext(additionalContext: Record<string, unknown>): Relayer {
-    // Combine this Relayer's context with additional context
-    const newContext = { ...this._context, ...additionalContext }
-
+    // Combine this Relayer's context with additional context in a new instance
     return new Relayer({
       name: this._logger.category[1],
-      context: newContext,
+      context: { ...this._context, ...additionalContext },
     })
   }
 
@@ -124,7 +122,7 @@ export class Relayer {
    * @returns The result of the function
    */
   public async run<T>(fn: () => Promise<T>): Promise<T> {
-    return await LoggerConfig.runWithContext(this._context, fn)
+    return await Logger.runWithContext(this._context, fn)
   }
 
   /**
@@ -138,7 +136,7 @@ export class Relayer {
     context: Record<string, unknown>,
     fn: () => Promise<T>,
   ): Promise<T> {
-    return await LoggerConfig.runWithContext({ ...this._context, ...context }, fn)
+    return await Logger.runWithContext({ ...this._context, ...context }, fn)
   }
 
   // Log methods that include context

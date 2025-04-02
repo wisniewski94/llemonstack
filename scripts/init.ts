@@ -555,7 +555,7 @@ export async function init(
     // TODO: turn on debug mode for this or show a message
     // it clones the repos which could take awhile
     // For now, we'll let them read the ollama message while it runs in the background
-    await config.prepareEnv()
+    await config.prepareEnv({ silent: false })
 
     // Configure ollama
     const ollamaService = config.getServiceByName('ollama') as OllamaService

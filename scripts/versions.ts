@@ -3,7 +3,7 @@
  */
 
 import { getImageFromCompose, getImagesFromComposeYaml } from '@/lib/compose.ts'
-import { dockerRun, prepareDockerNetwork, runDockerCommand } from '@/lib/docker.ts'
+import { dockerRun, runDockerCommand } from '@/lib/docker.ts'
 import { InterfaceRelayer } from '@/relayer/ui/interface.ts'
 import { IServiceImage, ServicesMapType, ServiceType } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
@@ -237,10 +237,7 @@ export async function versions(config: Config): Promise<void> {
   )
   show.header('Docker Image Versions')
 
-  await config.prepareEnv()
-
-  // TODO: move docker network preparation to config?
-  const results = await prepareDockerNetwork(config.dockerNetworkName)
+  const results = await config.prepareEnv()
   if (!results.success) {
     show.fatal(results.toString())
     Deno.exit(1)

@@ -330,12 +330,14 @@ export class Service {
    *
    * @returns {TryCatchResult<boolean>} - The result of the preparation
    */
-  public async prepareEnv(): Promise<TryCatchResult<boolean>> {
+  public async prepareEnv(
+    { silent = true }: { silent?: boolean } = {},
+  ): Promise<TryCatchResult<boolean>> {
     const results = success<boolean>(true)
 
     results.collect([
-      await this.prepareRepo(),
-      await this.prepareVolumes(),
+      await this.prepareRepo({ silent }),
+      await this.prepareVolumes({ silent }),
     ])
 
     if (!results.success) {
@@ -354,7 +356,7 @@ export class Service {
    * @returns {TryCatchResult<boolean>} - The result of the preparation
    */
   public async prepareRepo(
-    { pull = false }: { pull?: boolean } = {},
+    { pull = false, silent = true }: { pull?: boolean; silent?: boolean } = {},
   ): Promise<TryCatchResult<boolean>> {
     // If no repo config, skip
     if (!this.repoConfig) {
@@ -363,7 +365,7 @@ export class Service {
 
     return await setupServiceRepo(this, {
       pull,
-      silent: true,
+      silent,
       createBaseDir: false, // Base dir is ensured in config
     })
   }
@@ -373,13 +375,15 @@ export class Service {
    *
    * @returns {TryCatchResult<boolean>} - The result of the preparation
    */
-  protected async prepareVolumes(): Promise<TryCatchResult<boolean>> {
+  protected async prepareVolumes(
+    { silent = true }: { silent?: boolean } = {},
+  ): Promise<TryCatchResult<boolean>> {
     // If no volumes, skip
     if (this.volumes.length === 0 && this.volumesSeeds.length === 0) {
       return success<boolean>(true)
     }
 
-    return await prepareVolumes(this, this._configInstance.volumesDir)
+    return await prepareVolumes(this, this._configInstance.volumesDir, { silent })
   }
 
   //

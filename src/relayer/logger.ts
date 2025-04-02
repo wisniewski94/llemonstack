@@ -1,24 +1,29 @@
 // File: relayer.ts
 import {
+  compareLogLevel,
   configure,
   getAnsiColorFormatter,
+  getConfig,
   getConsoleSink,
+  getLevelFilter,
   getLogger,
-  Logger,
+  Logger as LogtapeLogger,
   LogLevel,
   LogRecord,
   Sink,
 } from '@logtape/logtape'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { InterfaceRelayer } from './ui/interface.ts'
-export type { Logger as LogtapeLogger, LogLevel, LogRecord, Sink }
+
+export { compareLogLevel, getConfig, getLevelFilter }
+export type { LogLevel, LogRecord, LogtapeLogger, Sink }
 
 /**
  * Config wrapper to get the configured Logtape logger instance
  */
-export class LoggerConfig {
+export class Logger {
   private static initialized = false
-  private static rootLogger: Logger
+  private static rootLogger: LogtapeLogger
   private static defaultLevel: LogLevel = 'debug'
   public static appName: string = 'root'
 
@@ -64,7 +69,7 @@ export class LoggerConfig {
    */
   public static getLogger(
     name: string | string[],
-  ): Logger {
+  ): LogtapeLogger {
     if (!this.initialized) {
       console.error('[Logger] Logger not initialized')
     }
