@@ -1,7 +1,8 @@
-// File: relayer.ts
 import {
   compareLogLevel,
   configure,
+  Filter,
+  FilterLike,
   getAnsiColorFormatter,
   getConfig,
   getConsoleSink,
@@ -13,10 +14,41 @@ import {
   Sink,
 } from '@logtape/logtape'
 import { AsyncLocalStorage } from 'node:async_hooks'
+import { Relayer } from './relayer.ts'
 import { InterfaceRelayer } from './ui/interface.ts'
+export { compareLogLevel, getAnsiColorFormatter, getConfig, getConsoleSink, getLevelFilter }
+export type { Filter, FilterLike, LogLevel, LogRecord, LogtapeLogger, Sink }
 
-export { compareLogLevel, getConfig, getLevelFilter }
-export type { LogLevel, LogRecord, LogtapeLogger, Sink }
+/**
+ * Example configuration for a console sink
+ * See https://logtape.org/manual/sinks
+ *
+console: getConsoleSink({
+  formatter: getAnsiColorFormatter({
+    timestamp: 'date-time-tz',
+    timestampColor: 'black',
+    timestampStyle: 'bold',
+    level: 'ABBR',
+    levelStyle: 'bold',
+    levelColors: {
+      debug: 'blue',
+      info: 'green',
+      warning: 'yellow',
+      error: 'red',
+      fatal: 'red',
+    },
+    category: '.',
+    categoryColor: 'red',
+    categoryStyle: 'bold',
+    value: Deno.inspect, // Function to use to format values
+    format: (values) => {
+      // values.level  values.message  values.record  values.timestamp
+      console.log('values', values)
+      return values.category + ' ' + values.message
+    },
+  }),
+}),
+*/
 
 /**
  * Config wrapper to get the configured Logtape logger instance
@@ -39,25 +71,39 @@ export class Logger {
    * @param options - The options for the logger
    */
   public static async initLogger(
-    appName: string,
-    { defaultLevel, reset = false }: { defaultLevel?: LogLevel; reset?: boolean } = {},
+    relayer: typeof Relayer,
+    uiRelayer: typeof InterfaceRelayer,
+    {
+      appName = 'app',
+      defaultLevel,
+      reset = false,
+    }: {
+      appName?: string
+      defaultLevel?: LogLevel
+      reset?: boolean
+    } = {},
   ): Promise<void> {
     if (this.initialized && !reset) {
       return
     }
 
-    this.appName = appName || 'app'
+    // Create a new AsyncLocalStorage instance for context propagation
     this.loggerStorage = new AsyncLocalStorage<Record<string, unknown>>()
 
-    await this.configureLogger({
-      defaultLevel: defaultLevel || this.defaultLevel,
-      reset,
-    })
+    await this.configureLogger(
+      relayer,
+      uiRelayer,
+      {
+        appName,
+        defaultLevel: defaultLevel || this.defaultLevel,
+        reset,
+      },
+    )
 
     this.initialized = true
 
     // App logger is the default logger for LLemonStack log messages vs docker, etc.
-    this.rootLogger = await this.getLogger(this.appName)
+    this.rootLogger = await this.getLogger(appName)
     this.rootLogger.debug('Logger initialized')
   }
 
@@ -71,14 +117,11 @@ export class Logger {
     name: string | string[],
   ): LogtapeLogger {
     if (!this.initialized) {
+      // Log to console since rootLogger is not initialized yet
       console.error('[Logger] Logger not initialized')
     }
 
-    const logger = Array.isArray(name)
-      ? getLogger(name)
-      : name && name !== this.appName
-      ? getLogger([this.appName, name])
-      : getLogger(name || this.appName)
+    const logger = getLogger(name)
 
     return logger
   }
@@ -91,11 +134,11 @@ export class Logger {
    * Run an async function with the provided context
    *
    * This method should be called from a Relayer instance.
-   * Any logs generated in the provided function will inherit the context
-   * via AsyncLocalStorage
+   * Logs generated in the fn function will inherit the context via AsyncLocalStorage.
    *
-   * @param fn
-   * @returns
+   * @param context The context to run the function with
+   * @param fn The function to run
+   * @returns The result of the function
    */
   public static async runWithContext<T>(
     context: Record<string, unknown>,
@@ -113,10 +156,13 @@ export class Logger {
    * @param options
    */
   private static async configureLogger(
+    relayer: typeof Relayer,
+    uiRelayer: typeof InterfaceRelayer,
     options: {
+      appName: string
       defaultLevel?: LogLevel
       reset?: boolean
-    } = {},
+    } = { appName: 'app' },
   ) {
     // Return the default logger if it's already initialized
     if (this.initialized && !options.reset) {
@@ -135,56 +181,29 @@ export class Logger {
     await configure({
       reset: options.reset, // This resets the logger and allow another configuration
       sinks: {
-        console: getConsoleSink({
-          formatter: getAnsiColorFormatter({
-            timestamp: 'time',
-            level: 'FULL',
-          }),
-        }),
-        interface: InterfaceRelayer.getUISink(),
-        // interface: (record) => {
-        //   console.log('interface', record)
-        //   // showInfo(String(record.message))
-        // },
-        // console: getConsoleSink({
-        //   formatter: getAnsiColorFormatter({
-        //     timestamp: 'date-time-tz',
-        //     timestampColor: 'black',
-        //     timestampStyle: 'bold',
-        //     level: 'ABBR',
-        //     levelStyle: 'bold',
-        //     levelColors: {
-        //       debug: 'blue',
-        //       info: 'green',
-        //       warning: 'yellow',
-        //       error: 'red',
-        //       fatal: 'red',
-        //     },
-        //     category: '.',
-        //     categoryColor: 'red',
-        //     categoryStyle: 'bold',
-        //     value: Deno.inspect, // Function to use to format values
-        //     format: (values) => {
-        //       // values.level  values.message  values.record  values.timestamp
-        //       console.log('values', values)
-        //       return values.category + ' ' + values.message
-        //     },
-        //   }),
-        // }),
+        // This is the default sink for Logtape meta messages
+        consoleMeta: getConsoleSink(),
+        // This is the sink for app messages
+        app: relayer.getSink(),
+        // This is the sink for ui messages
+        interface: uiRelayer.getSink(),
       },
-      filters: {},
+      filters: {
+        appFilter: relayer.getFilter({ defaultLevel: options.defaultLevel }),
+        interfaceFilter: uiRelayer.getFilter({ defaultLevel: options.defaultLevel }),
+      },
       loggers: [
         {
           // This routes ui messages to the interface relayer
           category: ['ui'],
-          lowestLevel: options.defaultLevel || this.defaultLevel,
           sinks: ['interface'],
+          filters: ['interfaceFilter'],
         },
         {
           // This will log all "llmn.*" messages
-          category: [this.appName],
-          lowestLevel: options.defaultLevel || this.defaultLevel,
-          sinks: ['console'],
+          category: [options.appName],
+          sinks: ['app'],
+          filters: ['appFilter'],
         },
         {
           // Disable logtape meta info messages by setting lowestLevel to warning or above.
@@ -192,7 +211,7 @@ export class Logger {
           // Logtape will show warnings or errors if there are any issues with the other log sinks.
           category: ['logtape', 'meta'],
           lowestLevel: 'warning',
-          sinks: ['console'],
+          sinks: ['consoleMeta'],
         },
       ],
       // Enable implicit contexts for context propagation

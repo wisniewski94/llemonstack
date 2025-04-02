@@ -1,8 +1,7 @@
-import { Config } from '@/core/config/config.ts'
 import { CommandError } from '@/lib/command.ts'
-import { LogMessage } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
-import { Logger, LogLevel, LogRecord, LogtapeLogger, Sink } from '../logger.ts'
+import { RelayerBase } from '../base.ts'
+import { Filter, getLevelFilter, LogLevel, LogRecord, Sink } from '../logger.ts'
 import { RowType, showTable, Table, TableOptions } from './tables.ts'
 
 interface UserLogRecord extends LogRecord {
@@ -10,7 +9,7 @@ interface UserLogRecord extends LogRecord {
     _meta?: {
       type: 'user_action' | 'action'
       emoji?: string
-      args?: unknown[] // Any additional arguments passed to methods that support debugging
+      debug?: unknown[] // Any additional arguments passed to methods that support debugging
       error?: unknown
     }
   }
@@ -19,15 +18,19 @@ interface UserLogRecord extends LogRecord {
 /**
  * Relayer for user interaction messages
  */
-export class InterfaceRelayer {
-  private static instance: InterfaceRelayer
-  private initialized: boolean = false
+export class InterfaceRelayer extends RelayerBase {
+  private static _defaultFilter: Filter = getLevelFilter(this.logLevel)
 
-  private _logLevel: LogLevel = 'info'
-  protected _logger: LogtapeLogger
-  protected context: Record<string, unknown>
+  public static override filter(record: UserLogRecord): boolean {
+    // Filter at the context level if set
+    if (typeof record.properties._filter === 'function') {
+      return record.properties._filter(record)
+    }
+    // Default filter
+    return InterfaceRelayer._defaultFilter(record)
+  }
 
-  public static getUISink(): Sink {
+  public static override getSink(): Sink {
     return this.log as Sink
   }
 
@@ -54,37 +57,16 @@ export class InterfaceRelayer {
       showInfo(message)
     } else if (level === 'debug') {
       showInfo(`[DEBUG] ${message}`)
-      data?._meta?.args?.forEach((arg) => {
+      data?._meta?.debug?.forEach((arg) => {
         showInfo(`  ${typeof arg === 'object' ? Deno.inspect(arg) : arg}`)
       })
     }
   }
 
-  constructor(
-    options: {
-      context?: Record<string, unknown>
-      logger?: LogtapeLogger
-      defaultLevel?: LogLevel
-    } = {},
-  ) {
-    if (options.defaultLevel) {
-      this._logLevel = options.defaultLevel
-    }
-
-    this._logger = Logger.getLogger(['ui'])
-
-    // Save context to auto populate context for all log messages below
-    this.context = options.context || {}
-  }
-
-  get logger() {
-    return this._logger
-  }
-
   //
   // Interaction Methods
   //
-  // These methods output to UI without logging the message.
+  // These methods output to UI without logging or filtering the message.
   //
 
   /**
@@ -132,36 +114,25 @@ export class InterfaceRelayer {
   // the user log messages.
   //
 
-  // Log methods that include context
-  public info(message: string, data?: Record<string, unknown>): void {
-    this.logger.info(message, { ...this.context, ...data })
-  }
-
-  public warn(message: string, data?: Record<string, unknown>): void {
-    this.logger.warn(message, { ...this.context, ...data, _meta: { emoji: data?.emoji } })
-  }
-
-  public error(message: string | Error, data?: Record<string, unknown>): void {
-    this.handleError('error', message, data)
-  }
-
-  public fatal(message: string, data?: Record<string, unknown>): void {
-    this.handleError('fatal', message, data)
-  }
-
-  public debug(message: string, ...args: unknown[]): void {
-    this.logger.debug(message, { ...this.context, _meta: { args } })
-  }
-
   public action(message: string, data?: Record<string, unknown>): void {
-    this.logger.info(message, { ...this.context, ...data, _meta: { type: 'action' } })
+    this.logger.info(message, { ...this._context, ...data, _meta: { type: 'action' } })
   }
 
   public userAction(message: string, data?: Record<string, unknown>): void {
-    this.logger.info(message, { ...this.context, ...data, _meta: { type: 'user_action' } })
+    this.logger.info(message, { ...this._context, ...data, _meta: { type: 'user_action' } })
   }
 
-  public handleError(
+  // debug, info, warn are inherited from RelayerBase
+
+  public override error(message: string | Error, data?: Record<string, unknown>): void {
+    this._handleError('error', message, data)
+  }
+
+  public override fatal(message: string, data?: Record<string, unknown>): void {
+    this._handleError('fatal', message, data)
+  }
+
+  private _handleError(
     level: LogLevel,
     message: string | Error,
     data?: Record<string, unknown>,
@@ -173,7 +144,7 @@ export class InterfaceRelayer {
       message = String(message)
     }
     const context = {
-      ...this.context,
+      ...this._context,
       ...data,
       _meta: { error: metaError || data?.error },
     }
@@ -183,33 +154,6 @@ export class InterfaceRelayer {
     } else {
       this.logger.error(message, context)
     }
-  }
-
-  public logMessages(
-    messages: LogMessage[],
-    { debug = Config.getInstance().DEBUG }: { debug?: boolean } = {},
-  ): void {
-    messages.forEach((message) => {
-      switch (message.level) {
-        case 'error':
-          this.error(message.message, { error: message.error })
-          break
-        case 'warning':
-          this.warn(message.message)
-          break
-        case 'debug':
-          if (debug) {
-            message.args !== undefined
-              ? this.debug(message.message, message.args)
-              : this.debug(message.message)
-          }
-          break
-        default:
-        case 'info':
-          this.info(message.message)
-          break
-      }
-    })
   }
 }
 

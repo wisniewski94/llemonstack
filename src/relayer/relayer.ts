@@ -1,23 +1,20 @@
-import { Logger, LogLevel, LogtapeLogger } from './logger.ts'
+import { RelayerBase } from './base.ts'
+import { Filter, getLevelFilter, Logger, LogLevel, LogRecord } from './logger.ts'
 import { InterfaceRelayer } from './ui/interface.ts'
 export type { LogLevel }
 
 /**
  * Relayer handles relaying log and user interaction messages.
  */
-export class Relayer {
+export class Relayer extends RelayerBase {
   private static initialized: boolean = false
-  private static instances: Map<string, Relayer> = new Map()
-  public static rootAppName: string = 'llmn'
-  public static logLevel: LogLevel = 'info'
+  private static _defaultFilter: Filter = getLevelFilter(this.logLevel)
 
-  protected _logger: LogtapeLogger
-  protected _context: Record<string, unknown>
+  protected _interface: InterfaceRelayer | null = null
 
-  private _logLevel: LogLevel = 'info'
-  private _instanceId: string
-
-  public _interface: InterfaceRelayer
+  static override getInstance<T extends RelayerBase = Relayer>(name?: string | string[]): T {
+    return super.getInstance<T>(name)
+  }
 
   /**
    * Initialize the Relayer system
@@ -25,7 +22,7 @@ export class Relayer {
    * This needs to be called once before getInstance()
    */
   public static async initialize(
-    { logLevel = 'info', reset = false }: { logLevel?: LogLevel; reset?: boolean } = {},
+    { logLevel = this.logLevel, reset = false }: { logLevel?: LogLevel; reset?: boolean } = {},
   ): Promise<boolean> {
     if (this.initialized && !reset) {
       return true
@@ -36,123 +33,39 @@ export class Relayer {
     this.logLevel = logLevel
 
     // Create and configure Logtape logger
-    await Logger.initLogger(this.rootAppName, {
-      defaultLevel: logLevel as LogLevel,
-      reset,
-    })
+    await Logger.initLogger(
+      Relayer, // Pass the Relayer class to get the sink and filter
+      InterfaceRelayer, // Pass the InterfaceRelayer class to get the sink and filter
+      {
+        appName: this.rootAppName,
+        defaultLevel: logLevel as LogLevel,
+        reset,
+      },
+    )
 
     this.initialized = true
 
     return true
   }
 
-  /**
-   * Get the singleton instance of the Relayer
-   * @returns The singleton instance of the Relayer
-   */
-  public static getInstance(
-    name: string | string[] = this.rootAppName,
-  ): Relayer {
-    const id = this.getInstanceId(name)
-    if (this.instances.has(id)) {
-      const instance = this.instances.get(id)
-      if (instance) {
-        return instance
-      }
+  public static override filter(record: LogRecord): boolean {
+    // Filter at the context level if set
+    if (typeof record.properties._filter === 'function') {
+      return record.properties._filter(record)
     }
-
-    this.instances.set(id, new Relayer({ name }))
-
-    return this.instances.get(id) as Relayer
+    // Default filter
+    return Relayer._defaultFilter(record)
   }
 
-  private static getInstanceId(name: string | string[] | undefined): string {
-    const id = (Array.isArray(name) ? name.join(':') : name || '').trim().toLowerCase()
-    if (!id || id === this.rootAppName) {
-      return this.rootAppName
+  // Get the interface instance
+  public get show() {
+    if (!this._interface) {
+      this._interface = new InterfaceRelayer({
+        name: 'ui',
+        context: this._context,
+        defaultLevel: this._logLevel,
+      })
     }
-    return `${this.rootAppName}:${id}`
-  }
-
-  constructor(
-    options: {
-      name?: string | string[]
-      context?: Record<string, unknown>
-    } = {},
-  ) {
-    this._instanceId = Relayer.getInstanceId(options.name)
-
-    this._logger = Logger.getLogger(options.name || Relayer.rootAppName)
-
-    // Save context to auto populate context for all log messages below
-    this._context = options.context || {}
-
-    this._interface = new InterfaceRelayer({ context: this._context })
-  }
-
-  get show() {
     return this._interface
-  }
-
-  public getContext(): Record<string, unknown> {
-    return this._context
-  }
-
-  public setContext(context: Record<string, unknown>) {
-    this._context = context
-    return this
-  }
-
-  /**
-   * Creates a new Relayer with combined context
-   * @param additionalContext Context to add to the existing context
-   * @returns A new Relayer instance with the combined context
-   */
-  public withContext(additionalContext: Record<string, unknown>): Relayer {
-    // Combine this Relayer's context with additional context in a new instance
-    return new Relayer({
-      name: this._logger.category[1],
-      context: { ...this._context, ...additionalContext },
-    })
-  }
-
-  /**
-   * Run an async function with this relayer's context
-   * @param fn The function to run
-   * @returns The result of the function
-   */
-  public async run<T>(fn: () => Promise<T>): Promise<T> {
-    return await Logger.runWithContext(this._context, fn)
-  }
-
-  /**
-   * Run an async function with this relayer's context and additional context
-   *
-   * @param context Additional context to add to the existing context
-   * @param fn The function to run
-   * @returns The result of the function
-   */
-  public async runWithContext<T>(
-    context: Record<string, unknown>,
-    fn: () => Promise<T>,
-  ): Promise<T> {
-    return await Logger.runWithContext({ ...this._context, ...context }, fn)
-  }
-
-  // Log methods that include context
-  public info(message: string, data?: Record<string, unknown>): void {
-    this._logger.info(message, { ...this._context, ...data })
-  }
-
-  public warn(message: string, data?: Record<string, unknown>): void {
-    this._logger.warn(message, { ...this._context, ...data })
-  }
-
-  public error(message: string, data?: Record<string, unknown>): void {
-    this._logger.error(message, { ...this._context, ...data })
-  }
-
-  public debug(message: string, data?: Record<string, unknown>): void {
-    this._logger.debug(message, { ...this._context, ...data })
   }
 }

@@ -29,7 +29,7 @@ async function initConfig(
   const debug = isTruthy(options.debug)
   const logLevel = debug ? 'debug' : options.logLevel ?? 'info'
 
-  // Initialize the relayer / logger
+  // Initialize the relayer to capture config log messages
   await Relayer.initialize({ logLevel })
   const relayer = Relayer.getInstance()
 
@@ -39,8 +39,8 @@ async function initConfig(
   const config = Config.getInstance()
   const result = await config.initialize(options.config, { logLevel, init })
 
-  // Show log messages, auto filters by log level
-  relayer.show.logMessages(result.messages, { debug: config.DEBUG })
+  // TODO: remove logMessages call once config is migrated to use the new logger
+  relayer.show.logMessages(result.messages)
 
   if (!result.success && result.error instanceof Deno.errors.NotFound) {
     // Show a friendly message if the config file is not found
