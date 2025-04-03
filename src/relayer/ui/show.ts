@@ -9,6 +9,7 @@
 
 import { Config } from '@/core/config/config.ts'
 import { CommandError } from '@/lib/command.ts'
+import { Relayer } from '@/relayer/relayer.ts'
 import type { LogMessage } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Cell, CellType, Column, Row, RowType, Table } from '@cliffy/table'
@@ -27,11 +28,17 @@ export function confirm(message: string, defaultAnswer: boolean = false): boolea
   return input?.toLowerCase() === 'y' || (!input && defaultAnswer)
 }
 
-export function showDebug(message: string, ...args: unknown[]): void {
-  showInfo(`[DEBUG] ${message}`)
-  args?.length && args.forEach((arg) => {
-    showInfo(`  ${typeof arg === 'object' ? Deno.inspect(arg, { colors: true }) : arg}`)
+export async function showDebug(message: string, ...args: unknown[]): Promise<void> {
+  // Route debug messages to the interface relayer
+  // TODO: remove this once all calls to showDebug are migrated to the relayer
+  const show = Relayer.getInstance().show
+  await show.withLevel('debug', () => {
+    show.debug(message, ...args)
   })
+  // showInfo(`[DEBUG] ${message}`)
+  // args?.length && args.forEach((arg) => {
+  //   showInfo(`  ${typeof arg === 'object' ? Deno.inspect(arg, { colors: true }) : arg}`)
+  // })
 }
 
 // Shows magenta text, prompting user to take an action later on
