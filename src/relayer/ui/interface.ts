@@ -1,39 +1,34 @@
 import { CommandError } from '@/lib/command.ts'
 import { colors } from '@cliffy/ansi/colors'
-import { RelayerBase } from '../base.ts'
-import { Filter, getLevelFilter, LogLevel, LogRecord, Sink } from '../logger.ts'
+import { AppLogRecord, RelayerBase } from '../base.ts'
+import { LogLevel, Sink } from '../logger.ts'
 import { RowType, showTable, Table, TableOptions } from './tables.ts'
 
-interface UserLogRecord extends LogRecord {
+interface UserLogRecord extends AppLogRecord {
   properties: Record<string, unknown> & {
-    _meta?: {
+    _meta?: AppLogRecord['properties']['_meta'] & {
       type: 'user_action' | 'action'
       emoji?: string
-      debug?: unknown[] // Any additional arguments passed to methods that support debugging
-      error?: unknown
     }
   }
 }
 
 /**
  * Relayer for user interaction messages
+ *
+ * Log message flow:
+ * show.debug -> logger.debug -> this.filter -> this.log -> console
  */
 export class InterfaceRelayer extends RelayerBase {
-  private static _defaultFilter: Filter = getLevelFilter(this.logLevel)
-
-  public static override filter(record: UserLogRecord): boolean {
-    // Filter at the context level if set
-    if (typeof record.properties._filter === 'function') {
-      return record.properties._filter(record)
-    }
-    // Default filter
-    return InterfaceRelayer._defaultFilter(record)
-  }
-
   public static override getSink(): Sink {
     return this.log as Sink
   }
 
+  /**
+   * Console log sink for user interaction messages
+   *
+   * @param record The log record
+   */
   public static log(record: UserLogRecord): void {
     const data = record.properties
     const meta = data._meta

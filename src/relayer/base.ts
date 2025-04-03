@@ -1,7 +1,9 @@
 import { LogMessage } from '@/types'
+import { colors } from '@cliffy/ansi/colors'
 import {
   Filter,
   FilterLike,
+  FormattedValues,
   getAnsiColorFormatter,
   getConsoleSink,
   getLevelFilter,
@@ -10,6 +12,19 @@ import {
   LogRecord,
   LogtapeLogger,
 } from './logger.ts'
+
+export type LogMethod = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
+
+export interface AppLogRecord extends LogRecord {
+  properties: Record<string, unknown> & {
+    _meta?: {
+      debug?: unknown[] // Any additional arguments passed to methods that support debugging
+      error?: unknown
+      relayerId?: string // The instance ID of the relayer that logged the message
+    }
+  }
+}
+
 /**
  * Relayer handles relaying log and user interaction messages.
  */
@@ -43,7 +58,7 @@ export class RelayerBase {
     }
 
     // Create a new instance
-    const instance = new this({ name, instanceId: id })
+    const instance = new this({ name: id.split(':'), instanceId: id })
 
     // Save the instance to the map
     this.instances.set(id, instance)
@@ -77,8 +92,27 @@ export class RelayerBase {
   public static getSink() {
     return getConsoleSink({
       formatter: getAnsiColorFormatter({
+        // See https://logtape.org/manual/formatters
         timestamp: 'time',
         level: 'FULL',
+        levelColors: {
+          debug: 'blue',
+          info: 'green',
+          warning: 'yellow',
+          error: 'red',
+          fatal: 'magenta',
+        },
+        category: ':',
+        format: ({ timestamp, level, category, message, record }: FormattedValues) => {
+          // console.log('???? values', values)
+          if (record.level === 'debug') {
+            return `${level}${colors.yellow(category.replace(this.rootAppName, ''))} ${
+              colors.gray(message)
+            }`
+          }
+          // From https://github.com/dahlia/logtape/blob/67a223479f3605c5fd79e7063d05e044944fc7ef/logtape/formatter.ts#L265
+          return `${timestamp ? `${timestamp} ` : ''}[${level}] ${category}: ${message}`
+        },
       }),
     })
   }
@@ -87,7 +121,7 @@ export class RelayerBase {
     if (defaultLevel) {
       this.logLevel = defaultLevel
     }
-    return this.filter
+    return this.filter.bind(this)
   }
 
   /**
@@ -95,8 +129,13 @@ export class RelayerBase {
    * @param record
    * @returns
    */
-  public static filter(_record: LogRecord): boolean {
-    return true
+  public static filter(record: LogRecord): boolean {
+    // Filter at the context level if set
+    if (typeof record.properties._filter === 'function') {
+      return record.properties._filter(record)
+    }
+    // Default filter
+    return getLevelFilter(this.logLevel || 'info')(record)
   }
 
   //
@@ -269,21 +308,53 @@ export class RelayerBase {
   // Base logging methods
   //
 
-  public info(message: string, data?: Record<string, unknown>): void {
+  /**
+   * Log a message to the logger
+   *
+   * @param level The log level
+   * @param rawMessage The message to log
+   * @param properties The properties to log
+   */
+  public log(
+    level: LogLevel,
+    rawMessage: string,
+    properties: AppLogRecord['properties'] | (() => AppLogRecord['properties']),
+  ): void {
     // Explicit context is applied to the log record before being sent to the logger.
     // The Relayer's context and any data provided when this function is called
     // are merged into the log record. When the log record is processed,
     // any missing data from the explicit context will be fetched from implicit
     // AsyncLocalStorage context.
-    this.logger.info(message, { ...this._context, ...data })
+
+    // SOMEDAY: Add a contextLocalStore lookup of other context properties like _filter
+    // to explicitly set before calling the logger method. This will ensure high priority
+    // meta data like _filter is applied.
+
+    const method = ((level === 'warning') ? 'warn' : level) as LogMethod
+
+    const context = {
+      ...this._context,
+      ...properties,
+      _meta: {
+        ...(this._context._meta || {}),
+        ...(typeof properties === 'function' ? properties()._meta : properties._meta || {}),
+        // relayerId: this._instanceId, // categories already has the instanceID
+      },
+    }
+
+    this.logger[method](rawMessage, context)
+  }
+
+  public info(message: string, data?: Record<string, unknown>): void {
+    this.log('info', message, data ?? {})
   }
 
   public warn(message: string, data?: Record<string, unknown>): void {
-    this.logger.warn(message, { ...this._context, ...data })
+    this.log('warning', message, data ?? {})
   }
 
   public error(message: string, data?: Record<string, unknown>): void {
-    this.logger.error(message, { ...this._context, ...data })
+    this.log('error', message, data ?? {})
   }
 
   /**
@@ -298,11 +369,11 @@ export class RelayerBase {
    * @param args The arguments to log
    */
   public debug(message: string, ...args: unknown[]): void {
-    this.logger.debug(message, { ...this._context, _meta: { debug: args } })
+    this.log('debug', message, { _meta: { debug: args } })
   }
 
   public fatal(message: string, data?: Record<string, unknown>): void {
-    this.logger.fatal(message, { ...this._context, ...data })
+    this.log('fatal', message, data ?? {})
   }
 
   /**

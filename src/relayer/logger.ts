@@ -3,6 +3,7 @@ import {
   configure,
   Filter,
   FilterLike,
+  FormattedValues,
   getAnsiColorFormatter,
   getConfig,
   getConsoleSink,
@@ -17,7 +18,7 @@ import { AsyncLocalStorage } from 'node:async_hooks'
 import { Relayer } from './relayer.ts'
 import { InterfaceRelayer } from './ui/interface.ts'
 export { compareLogLevel, getAnsiColorFormatter, getConfig, getConsoleSink, getLevelFilter }
-export type { Filter, FilterLike, LogLevel, LogRecord, LogtapeLogger, Sink }
+export type { Filter, FilterLike, FormattedValues, LogLevel, LogRecord, LogtapeLogger, Sink }
 
 /**
  * Example configuration for a console sink

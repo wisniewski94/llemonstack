@@ -1,5 +1,5 @@
 import { RelayerBase } from './base.ts'
-import { Filter, getLevelFilter, Logger, LogLevel, LogRecord } from './logger.ts'
+import { Logger, LogLevel } from './logger.ts'
 import { InterfaceRelayer } from './ui/interface.ts'
 export type { LogLevel }
 
@@ -8,7 +8,6 @@ export type { LogLevel }
  */
 export class Relayer extends RelayerBase {
   private static initialized: boolean = false
-  private static _defaultFilter: Filter = getLevelFilter(this.logLevel)
 
   protected _interface: InterfaceRelayer | null = null
 
@@ -46,15 +45,6 @@ export class Relayer extends RelayerBase {
     this.initialized = true
 
     return true
-  }
-
-  public static override filter(record: LogRecord): boolean {
-    // Filter at the context level if set
-    if (typeof record.properties._filter === 'function') {
-      return record.properties._filter(record)
-    }
-    // Default filter
-    return Relayer._defaultFilter(record)
   }
 
   // Get the interface instance

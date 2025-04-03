@@ -1,9 +1,14 @@
 import { Config } from '@/core/config/config.ts'
 import { tryCatch, type TryCatchResult } from '@/lib/try-catch.ts'
+import { Relayer } from '@/relayer/relayer.ts'
 import { showDebug, showError, showInfo } from '@/relayer/ui/show.ts'
 import type { CommandOutput, RunCommandOptions } from '@/types'
 
 export class RunCommandOutput {
+  // [Symbol.for('Deno.customInspect')](): string {
+  //   return 'RunCommandOutput ' + JSON.stringify(this)
+  // }
+
   private _output: CommandOutput
   constructor(output: CommandOutput) {
     this._output = output
@@ -114,6 +119,8 @@ export async function runCommand(
     debug = Config.getInstance().DEBUG ?? false,
   }: RunCommandOptions = {},
 ): Promise<RunCommandOutput> {
+  const relayer = Relayer.getInstance(['runCommand'])
+
   // If silent is true, pipe output so streamStdout receives output below
   const stdout = captureOutput ? 'piped' : (silent || debug) ? 'piped' : 'inherit'
   const stderr = stdout
@@ -173,15 +180,10 @@ export async function runCommand(
       }).join(' '),
     ].filter(Boolean).join(' ')
 
-    // TODO: replace with proper logger
-    showDebug(
-      `Running command: ${fullCmd}\n` +
-        `  > ${bashFullCmd}`,
-    )
-    // Extra debugging info, comment out when not needed
-    // showDebug(`Deno.Command: ${cmdCmd}`)
-    // showDebug('[args]:', cmdArgs)
-    // showDebug('[env]:', cmdEnv)
+    relayer.debug(`Running command: ${fullCmd}`)
+
+    // TODO: add debug verbosity levels to Relayer to show the bashFullCmd
+    // relayer.debug(`Running command: ${fullCmd}\n> ${bashFullCmd}`)
   }
 
   const command = new Deno.Command(cmdCmd, {
@@ -257,6 +259,7 @@ export async function runCommand(
       stderr === 'piped' && showDebug(`STDERR: ${stderrCollector}`)
     }
   } else if (!silent) {
+    // TODO: replace with Relayer.show.console() or similar
     stdoutCollector && console.log(stdoutCollector)
     stderrCollector && console.error(stderrCollector)
   }
