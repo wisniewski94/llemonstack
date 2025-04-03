@@ -165,25 +165,26 @@ export async function runCommand(
   ].filter(Boolean).join(' ')
 
   if (debug) {
-    // Show full command with escaped quotes
-    const bashFullCmd = [
-      Object.entries(env)
-        .map(([key, value]) => {
-          // Escape quotes
-          const escapedValue = String(value).replaceAll('"', '\\"').replaceAll("'", "\\'")
-          return `${key}="${escapedValue}"`
-        })
-        .join(' '),
-      cmdCmd,
-      cmdArgs.map((arg) => {
-        const escapedArg = String(arg).replaceAll('"', '\\"').replaceAll("'", "\\'")
-        return `"${escapedArg}"`
-      }).join(' '),
-    ].filter(Boolean).join(' ')
-
     relayer.debug(`Running: ${fullCmd}`)
 
     if (relayer.verbose) {
+      // Show full command with escaped quotes
+      // Allows for copy/paste of the command to retry it in a terminal
+      const bashFullCmd = [
+        Object.entries(env)
+          .map(([key, value]) => {
+            // Escape quotes
+            const escapedValue = String(value).replaceAll('"', '\\"').replaceAll("'", "\\'")
+            return `${key}="${escapedValue}"`
+          })
+          .join(' '),
+        cmdCmd,
+        cmdArgs.map((arg) => {
+          const escapedArg = String(arg).replaceAll('"', '\\"').replaceAll("'", "\\'")
+          return `"${escapedArg}"`
+        }).join(' '),
+      ].filter(Boolean).join(' ')
+
       relayer.debug(`> ${bashFullCmd}`)
     }
   }
