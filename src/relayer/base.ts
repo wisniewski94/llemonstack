@@ -61,7 +61,7 @@ export class RelayerBase {
     }
 
     // Create a new instance
-    const instance = new this({ name: id.split(':'), instanceId: id })
+    const instance = new this({ name: id.split(':'), instanceId: id, defaultLevel: this.logLevel })
 
     // Save the instance to the map
     this.instances.set(id, instance)
@@ -157,6 +157,8 @@ export class RelayerBase {
     this._instanceId = options.instanceId ?? staticThis.getInstanceId(options.name)
 
     this._logger = Logger.getLogger(options.name || staticThis.rootAppName)
+
+    this._logLevel = options.defaultLevel ?? staticThis.logLevel
 
     // Save context to auto populate context for all log messages below
     this._context = options.context || {}
@@ -408,20 +410,21 @@ export class RelayerBase {
         )
           .join(' -> '),
       )
+      const stackLines = (this._logLevel === 'debug') ? callStack : callStack.slice(0, 1)
       // Show the file links for the 2nd and 3rd entries in the call stack
-      if (callStack.length > 1) {
-        const call = callStack[0]
+      stackLines.forEach((c) => {
         console.error(
-          colors.yellow(`  ${call.module ? `${call.module}.` : ''}${call.function}`),
+          colors.yellow(`  ${c.module ? `${c.module}.` : ''}${c.function}`),
           `${
             colors.gray(
-              `${call.fileName}${call.lineNumber ? `:${call.lineNumber}` : ''}${
-                call.columnNumber ? `:${call.columnNumber}` : ''
+              `${c.fileName}${c.lineNumber ? `:${c.lineNumber}` : ''}${
+                c.columnNumber ? `:${c.columnNumber}` : ''
               }`,
             )
           }`,
         )
-      }
+      })
+
       return
     }
 

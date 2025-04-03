@@ -11,6 +11,7 @@ import { isTruthy } from '@/lib/utils/compare.ts'
 import { LogLevel } from '@/relayer/logger.ts'
 import { Relayer } from '@/relayer/relayer.ts'
 import { showAction, showError, showInfo, showWarning } from '@/relayer/ui/show.ts'
+import { colors } from '@cliffy/ansi/colors'
 import { Command, EnumType } from '@cliffy/command'
 import { CompletionsCommand } from '@cliffy/command/completions'
 
@@ -248,7 +249,7 @@ async function initConfig(
   init = false,
 ) {
   // Start the timer
-  timerId = `LLemonStack CLI [${command}]`
+  timerId = colors.gray(`LLemonStack CLI [${command}]`)
   console.time(timerId)
 
   const logLevel = isTruthy(options.debug) ? 'debug' : options.logLevel ?? 'info'
