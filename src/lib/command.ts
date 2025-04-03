@@ -2,7 +2,7 @@ import { Config } from '@/core/config/config.ts'
 import { tryCatch, type TryCatchResult } from '@/lib/try-catch.ts'
 import { Relayer } from '@/relayer/relayer.ts'
 import { showDebug, showError, showInfo } from '@/relayer/ui/show.ts'
-import type { CommandOutput, RunCommandOptions } from '@/types'
+import type { AppLogRecord, CommandOutput, RunCommandOptions } from '@/types'
 
 export class RunCommandOutput {
   private _output: CommandOutput
@@ -116,6 +116,11 @@ export async function runCommand(
   }: RunCommandOptions = {},
 ): Promise<RunCommandOutput> {
   const relayer = Relayer.getInstance(['runCommand'])
+
+  // If verbose debug is enabled, show output even if silent is true
+  if (debug && relayer.verbose) {
+    silent = false
+  }
 
   // If silent is true, pipe output so streamStdout receives output below
   const stdout = captureOutput ? 'piped' : (silent || debug) ? 'piped' : 'inherit'
@@ -269,9 +274,16 @@ export async function runCommand(
       stderr: stderrCollector,
     })
 
-    relayer.error(`[${cmdCmd}] Command failed: ${error.stderr?.replace('\n', '')}`, {
+    const context: AppLogRecord['properties'] = {
       _meta: { error },
-    })
+    }
+    // When silent is true, prevent error from outputting but still send to Relayer
+    // The calling function can still check the error and re-log it as needed
+    // This is useful for commands that are expected to fail but are not fatal
+    if (silent && !relayer.verbose) {
+      context._filter = () => false
+    }
+    relayer.error(`[${cmdCmd}] Command failed: ${error.stderr?.replace('\n', '')}`, context)
 
     throw error
   }

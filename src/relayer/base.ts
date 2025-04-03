@@ -23,6 +23,7 @@ export interface AppLogRecord extends LogRecord {
       callStack?: string // The call stack as a string, generated from `new Error().stack`
       relayerId?: string // The instance ID of the relayer that logged the message
     }
+    _filter?: Filter // Optional filter to apply to the log record
   }
 }
 
@@ -130,7 +131,7 @@ export class RelayerBase {
    * @param record
    * @returns
    */
-  public static filter(record: LogRecord): boolean {
+  public static filter(record: AppLogRecord): boolean {
     // Filter at the context level if set
     if (typeof record.properties._filter === 'function') {
       return record.properties._filter(record)

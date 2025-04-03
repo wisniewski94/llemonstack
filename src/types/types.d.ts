@@ -7,6 +7,8 @@ import {
 export type { ServicesMapType, ServiceType } from '../core/mod.ts'
 export type { DockerComposeOptions, DockerComposePsResult } from '../lib/docker.ts'
 export type { TryCatchError, TryCatchResult } from '../lib/try-catch.ts'
+export type { AppLogRecord } from '../relayer/base.ts'
+export type { ICallStackInfo, ICallStackOptions } from '../relayer/callstack.ts'
 
 export interface LLemonStackConfig {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty

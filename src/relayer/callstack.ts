@@ -1,4 +1,4 @@
-export interface CallStackInfo {
+export interface ICallStackInfo {
   callStack: Array<{
     module?: string // Optional module name
     function: string // Function name (required)
@@ -10,9 +10,9 @@ export interface CallStackInfo {
   stackLines: string[]
 }
 
-export interface CallStackOptions {
+export interface ICallStackOptions {
   error?: Error
-  callStack?: CallStackInfo | string | string[]
+  callStack?: ICallStackInfo | string | string[]
   skip?: number // Number of lines to skip in the stack trace, defaults to 1 (the error line)
   filter?: false | {
     skipEventLoopTick?: boolean
@@ -69,7 +69,7 @@ export function getCallStackInfo({
     skipCommand: true,
     skipUnknown: true,
   },
-}: CallStackOptions = {}): CallStackInfo {
+}: ICallStackOptions = {}): ICallStackInfo {
   let stackLines: string[]
 
   if (callStack && typeof callStack === 'string') {
@@ -77,7 +77,7 @@ export function getCallStackInfo({
   } else if (callStack && Array.isArray(callStack)) {
     stackLines = callStack
   } else if (callStack && typeof callStack === 'object') {
-    stackLines = callStack.stackLines as CallStackInfo['stackLines']
+    stackLines = callStack.stackLines as ICallStackInfo['stackLines']
   } else {
     const err = error || new Error()
     const stack = err.stack || ''
