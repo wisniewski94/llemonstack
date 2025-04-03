@@ -88,3 +88,19 @@ if (!results.success) {
   fatal('Unable to continue')
 }
 ```
+
+## Working example
+
+```ts
+show.setLevel("info")
+show.debug("!!! debug context after setting to info, should not output")
+show.warn("!!!! this should output")
+show.setContext({ test: "some explicit context" })
+const result = await show.withLevel("debug", () => {
+  show.debug("debug << if this outputs, debug level is working")
+  show.info("This will output <<<<<")
+  return "result?"
+})
+show.debug("This should not output, level should be reset to info")
+show.info("This is an info after everything: {result}", { result })
+```
