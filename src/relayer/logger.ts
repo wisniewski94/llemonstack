@@ -20,6 +20,15 @@ import { InterfaceRelayer } from './ui/interface.ts'
 export { compareLogLevel, getAnsiColorFormatter, getConfig, getConsoleSink, getLevelFilter }
 export type { Filter, FilterLike, FormattedValues, LogLevel, LogRecord, LogtapeLogger, Sink }
 
+// Manually define types that are not exported from logtape
+// See https://github.com/dahlia/logtape/blob/67a223479f3605c5fd79e7063d05e044944fc7ef/logtape/logger.ts#L12
+export type LogTemplatePrefix = (
+  message: TemplateStringsArray,
+  ...values: unknown[]
+) => unknown[]
+export type LogCallback = (prefix: LogTemplatePrefix) => unknown[]
+export type LogMessageType = TemplateStringsArray | string | LogCallback
+
 /**
  * Example configuration for a console sink
  * See https://logtape.org/manual/sinks

@@ -10,6 +10,7 @@ import {
   getLevelFilter,
   Logger,
   LogLevel,
+  LogMessageType,
   LogRecord,
   LogtapeLogger,
 } from './logger.ts'
@@ -325,7 +326,7 @@ export class RelayerBase {
    */
   public log(
     level: LogLevel,
-    rawMessage: string,
+    message: LogMessageType,
     properties: AppLogRecord['properties'] | (() => AppLogRecord['properties']),
   ): void {
     // Explicit context is applied to the log record before being sent to the logger.
@@ -350,12 +351,14 @@ export class RelayerBase {
       },
     }
 
-    this.logger[method](rawMessage, context)
+    // Send the log to the logger
+    // Casting to string to avoid TypeScript error
+    this.logger[method](message as string, context)
 
     // Verbose logging
     // Outputs additional information from the structured log message
     if (this.verbose) {
-      this.logVerbose(level, rawMessage, properties)
+      this.logVerbose(level, message, properties)
     }
   }
 
@@ -368,7 +371,7 @@ export class RelayerBase {
    */
   public logVerbose(
     level: LogLevel,
-    _rawMessage: string,
+    _message: LogMessageType,
     properties: AppLogRecord['properties'] | (() => AppLogRecord['properties']),
   ): void {
     if (typeof properties === 'function') {
@@ -443,11 +446,11 @@ export class RelayerBase {
     }
   }
 
-  public info(message: string, data?: Record<string, unknown>): void {
+  public info(message: LogMessageType, data?: Record<string, unknown>): void {
     this.log('info', message, data ?? {})
   }
 
-  public warn(message: string, data?: Record<string, unknown>): void {
+  public warn(message: LogMessageType, data?: Record<string, unknown>): void {
     this.log('warning', message, data ?? {})
   }
 

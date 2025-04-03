@@ -1,7 +1,7 @@
 import { CommandError } from '@/lib/command.ts'
 import { colors } from '@cliffy/ansi/colors'
 import { AppLogRecord, RelayerBase } from '../base.ts'
-import { LogLevel, Sink } from '../logger.ts'
+import { LogMessageType, Sink } from '../logger.ts'
 import { RowType, showTable, Table, TableOptions } from './tables.ts'
 
 interface UserLogRecord extends AppLogRecord {
@@ -109,18 +109,20 @@ export class InterfaceRelayer extends RelayerBase {
   // the user log messages.
   //
 
-  public action(message: string, data?: Record<string, unknown>): void {
-    this.logger.info(message, { ...this._context, ...data, _meta: { type: 'action' } })
-  }
-
-  public userAction(message: string, data?: Record<string, unknown>): void {
-    this.logger.info(message, { ...this._context, ...data, _meta: { type: 'user_action' } })
+  public action(message: LogMessageType, data?: Record<string, unknown>): void {
+    this.logger.info(message as string, { ...this._context, ...data, _meta: { type: 'action' } })
   }
 
   // debug, info, warn are inherited from RelayerBase
 
   public override error(message: string | Error, data?: Record<string, unknown>): void {
     this._handleError('error', message, data)
+  public userAction(message: LogMessageType, data?: Record<string, unknown>): void {
+    this.logger.info(message as string, {
+      ...this._context,
+      ...data,
+      _meta: { type: 'user_action' },
+    })
   }
 
   public override fatal(message: string, data?: Record<string, unknown>): void {
