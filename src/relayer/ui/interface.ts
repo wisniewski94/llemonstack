@@ -113,10 +113,6 @@ export class InterfaceRelayer extends RelayerBase {
     this.logger.info(message as string, { ...this._context, ...data, _meta: { type: 'action' } })
   }
 
-  // debug, info, warn are inherited from RelayerBase
-
-  public override error(message: string | Error, data?: Record<string, unknown>): void {
-    this._handleError('error', message, data)
   public userAction(message: LogMessageType, data?: Record<string, unknown>): void {
     this.logger.info(message as string, {
       ...this._context,
@@ -125,32 +121,25 @@ export class InterfaceRelayer extends RelayerBase {
     })
   }
 
-  public override fatal(message: string, data?: Record<string, unknown>): void {
-    this._handleError('fatal', message, data)
-  }
+  //
+  // Override base logger methods
+  // debug, info, warn, and error are inherited from RelayerBase
+  //
 
-  private _handleError(
-    level: LogLevel,
-    message: string | Error,
-    data?: Record<string, unknown>,
+  /**
+   * Logs and exits the process
+   *
+   * @param message
+   * @param dataOrError
+   * @param error
+   */
+  public override fatal(
+    message: LogMessageType,
+    dataOrError: Record<string, unknown> = {},
+    error?: Error,
   ): void {
-    // If message is not a string, extract the string from it and set _meta.error
-    let metaError: unknown
-    if (message instanceof Error) {
-      metaError = message
-      message = String(message)
-    }
-    const context = {
-      ...this._context,
-      ...data,
-      _meta: { error: metaError || data?.error },
-    }
-    if (level === 'fatal') {
-      this.logger.fatal(message, context)
-      Deno.exit(1)
-    } else {
-      this.logger.error(message, context)
-    }
+    super.fatal(message, dataOrError, error)
+    Deno.exit(1)
   }
 }
 

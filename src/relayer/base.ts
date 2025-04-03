@@ -454,8 +454,30 @@ export class RelayerBase {
     this.log('warning', message, data ?? {})
   }
 
-  public error(message: string, data?: Record<string, unknown>): void {
-    this.log('error', message, data ?? {})
+  /**
+   * Log an error message
+   *
+   * @param message The message to log
+   * @param dataOrError The data or error to log
+   * @param error The error to log
+   */
+  public error(
+    message: LogMessageType | Error,
+    dataOrError: Record<string, unknown> = {},
+    error?: Error,
+  ): void {
+    const { message: _message, context } = this._formatErrorContent(message, dataOrError, error)
+    this.log('error', _message, context)
+  }
+
+  public fatal(
+    message: LogMessageType | Error,
+    dataOrError: Record<string, unknown> = {},
+    error?: Error,
+  ): void {
+    const { message: _message, context } = this._formatErrorContent(message, dataOrError, error)
+    this.log('fatal', _message, context)
+    // Don't exit the process here, let the caller handle it
   }
 
   /**
@@ -471,10 +493,6 @@ export class RelayerBase {
    */
   public debug(message: string, ...args: unknown[]): void {
     this.log('debug', message, { _meta: { debug: args } })
-  }
-
-  public fatal(message: string, data?: Record<string, unknown>): void {
-    this.log('fatal', message, data ?? {})
   }
 
   /**
@@ -505,5 +523,51 @@ export class RelayerBase {
           break
       }
     })
+  }
+
+  //
+  // Helper methods
+  //
+
+  /**
+   * Format a message or error into a loggable message and context
+   *
+   * Used to process calls to error or fatal methods.
+   *
+   * @param messageOrError The message or error to format
+   * @param dataOrError The data or error to format
+   * @param error The error to format
+   * @returns The formatted message and context
+   */
+  protected _formatErrorContent(
+    messageOrError: LogMessageType | Error,
+    dataOrError: Record<string, unknown> = {},
+    error?: Error,
+  ): { message: LogMessageType; context: AppLogRecord['properties'] } {
+    if (messageOrError instanceof Error) {
+      return {
+        message: messageOrError.message || String(messageOrError),
+        context: {
+          ...dataOrError,
+          _meta: {
+            error: messageOrError,
+          },
+        },
+      }
+    }
+
+    let data = {}
+    if (dataOrError instanceof Error) {
+      error = dataOrError
+    } else {
+      data = dataOrError
+    }
+    return {
+      message: messageOrError,
+      context: {
+        ...data,
+        ...(error ? { _meta: { error } } : {}),
+      } as AppLogRecord['properties'],
+    }
   }
 }

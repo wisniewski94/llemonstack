@@ -60,6 +60,7 @@ export class Relayer extends RelayerBase {
         context: this._context,
         defaultLevel: this._logLevel,
       })
+      InterfaceRelayer.verbose = this.verbose
     }
     return this._interface
   }
