@@ -10,6 +10,7 @@ import {
   getLevelFilter,
   Logger,
   LogLevel,
+  LogMessageProperties,
   LogMessageType,
   LogRecord,
   LogtapeLogger,
@@ -27,6 +28,10 @@ export interface AppLogRecord extends LogRecord {
     _filter?: Filter // Optional filter to apply to the log record
   }
 }
+
+// TODO: create a proper interface to match Logtape's API
+// Functions are allowed in properties but only when the message is a string or template string
+export type LogMessageData = AppLogRecord['properties'] | LogMessageProperties
 
 /**
  * Relayer handles relaying log and user interaction messages.
@@ -327,7 +332,7 @@ export class RelayerBase {
   public log(
     level: LogLevel,
     message: LogMessageType,
-    properties: AppLogRecord['properties'] | (() => AppLogRecord['properties']),
+    properties: AppLogRecord['properties'] | LogMessageProperties,
   ): void {
     // Explicit context is applied to the log record before being sent to the logger.
     // The Relayer's context and any data provided when this function is called
@@ -341,12 +346,16 @@ export class RelayerBase {
 
     const method = ((level === 'warning') ? 'warn' : level) as LogMethod
 
+    if (typeof properties === 'function') {
+      properties = properties()
+    }
+
     const context = {
       ...this._context,
       ...properties,
       _meta: {
         ...(this._context._meta || {}),
-        ...(typeof properties === 'function' ? properties()._meta : properties._meta || {}),
+        ...(properties._meta ? properties._meta : {}),
         // relayerId: this._instanceId, // categories already has the instanceID
       },
     }
@@ -446,11 +455,11 @@ export class RelayerBase {
     }
   }
 
-  public info(message: LogMessageType, data?: Record<string, unknown>): void {
+  public info(message: LogMessageType, data?: LogMessageData): void {
     this.log('info', message, data ?? {})
   }
 
-  public warn(message: LogMessageType, data?: Record<string, unknown>): void {
+  public warn(message: LogMessageType, data?: LogMessageData): void {
     this.log('warning', message, data ?? {})
   }
 
@@ -463,7 +472,7 @@ export class RelayerBase {
    */
   public error(
     message: LogMessageType | Error,
-    dataOrError: Record<string, unknown> = {},
+    dataOrError: LogMessageData = {},
     error?: Error,
   ): void {
     const { message: _message, context } = this._formatErrorContent(message, dataOrError, error)
@@ -472,7 +481,7 @@ export class RelayerBase {
 
   public fatal(
     message: LogMessageType | Error,
-    dataOrError: Record<string, unknown> = {},
+    dataOrError: LogMessageData = {},
     error?: Error,
   ): void {
     const { message: _message, context } = this._formatErrorContent(message, dataOrError, error)
@@ -541,7 +550,7 @@ export class RelayerBase {
    */
   protected _formatErrorContent(
     messageOrError: LogMessageType | Error,
-    dataOrError: Record<string, unknown> = {},
+    dataOrError: LogMessageData = {},
     error?: Error,
   ): { message: LogMessageType; context: AppLogRecord['properties'] } {
     if (messageOrError instanceof Error) {

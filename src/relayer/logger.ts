@@ -28,6 +28,7 @@ export type LogTemplatePrefix = (
 ) => unknown[]
 export type LogCallback = (prefix: LogTemplatePrefix) => unknown[]
 export type LogMessageType = TemplateStringsArray | string | LogCallback
+export type LogMessageProperties = Record<string, unknown> | (() => Record<string, unknown>)
 
 /**
  * Example configuration for a console sink
