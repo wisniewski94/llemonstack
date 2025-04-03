@@ -14,49 +14,8 @@ import { showAction, showError, showInfo, showWarning } from '@/relayer/ui/show.
 import { Command, EnumType } from '@cliffy/command'
 import { CompletionsCommand } from '@cliffy/command/completions'
 
-/**
- * Initialize the LLemonStack config
- *
- * This function must be called first before loading other scripts in the below commands.
- * @param configFile - The path to the config file
- * @param debug - Whether to enable debug mode
- * @returns The LLemonStack config
- */
-async function initConfig(
-  options: { config: string; debug?: boolean; logLevel?: LogLevel },
-  init = false,
-) {
-  const debug = isTruthy(options.debug)
-  const logLevel = debug ? 'debug' : options.logLevel ?? 'info'
-
-  // Initialize the relayer to capture config log messages
-  await Relayer.initialize({ logLevel })
-  const relayer = Relayer.getInstance()
-
-  relayer.debug('Initializing in main CLI script...')
-  relayer.debug('DEBUG enabled in CLI option')
-
-  const config = Config.getInstance()
-  const result = await config.initialize(options.config, { logLevel, init })
-
-  // TODO: remove logMessages call once config is migrated to use the new logger
-  relayer.show.logMessages(result.messages)
-
-  if (!result.success && result.error instanceof Deno.errors.NotFound) {
-    // Show a friendly message if the config file is not found
-    showAction('Please run `llmn init` to create a new project')
-    Deno.exit(1)
-  }
-
-  if (!result.success) {
-    showError('Error initializing config', result.error)
-    Deno.exit(1)
-  }
-
-  return config
-}
-
-const logLevelType = new EnumType(['debug', 'info', 'warning', 'error'])
+const logLevelType = new EnumType(['debug', 'info', 'warning', 'error', 'fatal'])
+let timerId: string | undefined
 
 // Base command options
 const main = new Command()
@@ -69,6 +28,7 @@ const main = new Command()
     default: 'info',
   })
   .globalOption('-d, --debug', 'Enable debugging output.')
+  .globalOption('-D, --verbose', 'Enable verbose output for the log level.')
   .globalOption(
     '-c --config <configFile:string>',
     'Path to a project config file.',
@@ -89,7 +49,7 @@ main
   .description('Enable or disable services')
   .option('--all', 'Show all services in one list', { default: false })
   .action(async (options) => {
-    const config = await initConfig(options)
+    const config = await initConfig('config', options)
     const { configure } = await import('./scripts/configure.ts')
     await configure(config, options)
   })
@@ -99,7 +59,7 @@ main
   .command('init')
   .description('Initialize the LLemonStack environment')
   .action(async (options) => {
-    const config = await initConfig(options, true)
+    const config = await initConfig('init', options, true)
     const { init } = await import('./scripts/init.ts')
     await init(config)
   })
@@ -111,7 +71,7 @@ main
   .arguments('[service:string]')
   .option('-n, --no-keys', 'Hide credentials', { default: false })
   .action(async (options, service?: string) => {
-    const config = await initConfig(options)
+    const config = await initConfig('start', options)
     const { start } = await import('./scripts/start.ts')
     await start(config, {
       service,
@@ -127,7 +87,7 @@ main
   .option('--all', 'Stop all services', { default: true })
   .arguments('[service:string]')
   .action(async (options, service?: string) => {
-    const config = await initConfig(options)
+    const config = await initConfig('stop', options)
     const { stop } = await import('./scripts/stop.ts')
     await stop(config, { all: options.all, service })
   })
@@ -138,7 +98,7 @@ main
   .description('Restart the LLemonStack services')
   .arguments('[service:string]')
   .action(async (options, service?: string) => {
-    const config = await initConfig(options)
+    const config = await initConfig('restart', options)
     const { restart } = await import('./scripts/restart.ts')
     await restart(config, { service, skipOutput: !!service })
   })
@@ -150,7 +110,7 @@ main
   .action((_options) => {
     showWarning('Reset is currently disabled. Check for LLemonStack updates later.')
     Deno.exit(1)
-    // const config = await initConfig(options)
+    // const config = await initConfig('reset', options)
     // const { reset } = await import('./scripts/reset.ts')
     // await reset(config)
   })
@@ -160,7 +120,7 @@ main
   .command('update')
   .description('Update the LLemonStack environment')
   .action(async (options) => {
-    const config = await initConfig(options)
+    const config = await initConfig('update', options)
     const { update } = await import('./scripts/update.ts')
     await update(config)
   })
@@ -170,7 +130,7 @@ main
   .command('versions')
   .description('Show all versions of all services in the stack')
   .action(async (options) => {
-    const config = await initConfig(options)
+    const config = await initConfig('versions', options)
     const { versions } = await import('./scripts/versions.ts')
     await versions(config)
   })
@@ -186,7 +146,7 @@ main
   .option('--skip-prompt', 'Skip confirmation prompts', { default: false })
   .option('--archive', 'Archive after import', { default: true })
   .action(async (options, ...services) => {
-    const config = await initConfig(options)
+    const config = await initConfig('import', options)
     if (!services || services.length === 0) {
       services = importServices.values().map((svc) => [svc])
       showInfo(`Importing all supported services: ${services.join(', ')}`)
@@ -215,7 +175,7 @@ main
   .type('service', exportServices)
   .arguments('[...service:service[]]')
   .action(async (options, ...services) => {
-    const config = await initConfig(options)
+    const config = await initConfig('export', options)
     if (!services || services.length === 0) {
       services = exportServices.values().map((svc) => [svc])
       showInfo(`Exporting all supported services: ${services.join(', ')}`)
@@ -241,7 +201,7 @@ main.command('schema')
     'llmn schema remove service_name',
   )
   .action(async (options, action: string, service: string) => {
-    const config = await initConfig(options)
+    const config = await initConfig('schema', options)
     const { schema } = await import('./scripts/schema.ts')
     await schema(config, action, service)
   })
@@ -256,7 +216,7 @@ main.command('litellm')
     'llmn litellm seed',
   )
   .action(async (options, action: string) => {
-    const config = await initConfig(options)
+    const config = await initConfig('litellm', options)
     if (action === 'seed') {
       const { loadModels } = await import('./scripts/litellm.ts')
       await loadModels(config)
@@ -268,3 +228,54 @@ main
 
 // Run the command
 await main.parse(Deno.args)
+
+if (timerId !== undefined) {
+  console.timeEnd(timerId)
+}
+
+/**
+ * Initialize the LLemonStack config
+ *
+ * This function must be called first before loading other scripts in the below commands.
+ * @param config - The path to the config file
+ * @param debug - Whether to enable debug mode
+ * @param logLevel - The log level to use
+ * @returns The LLemonStack config
+ */
+async function initConfig(
+  command: string,
+  options: { config: string; debug?: boolean; logLevel?: LogLevel; verbose?: boolean },
+  init = false,
+) {
+  // Start the timer
+  timerId = `LLemonStack CLI [${command}]`
+  console.time(timerId)
+
+  const logLevel = isTruthy(options.debug) ? 'debug' : options.logLevel ?? 'info'
+
+  // Initialize the relayer to capture config log messages
+  await Relayer.initialize({ logLevel, verbose: options.verbose })
+  const relayer = Relayer.getInstance()
+
+  relayer.debug('Initializing in main CLI script...')
+  relayer.debug('DEBUG enabled in CLI option')
+
+  const config = Config.getInstance()
+  const result = await config.initialize(options.config, { logLevel, init })
+
+  // TODO: remove logMessages call once config is migrated to use the new logger
+  relayer.show.logMessages(result.messages)
+
+  if (!result.success && result.error instanceof Deno.errors.NotFound) {
+    // Show a friendly message if the config file is not found
+    showAction('Please run `llmn init` to create a new project')
+    Deno.exit(1)
+  }
+
+  if (!result.success) {
+    showError('Error initializing config', result.error)
+    Deno.exit(1)
+  }
+
+  return config
+}

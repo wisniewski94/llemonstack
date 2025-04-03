@@ -215,7 +215,7 @@ export class Config {
   public async initialize(
     configFile?: string,
     { logLevel = 'info', init = false }: {
-      logLevel?: LogLevel
+      logLevel?: LogLevel // TODO: move logLevel to Relayer
       init?: boolean // If false, return error if config file is invalid
     } = {},
   ): Promise<TryCatchResult<boolean, Error>> {

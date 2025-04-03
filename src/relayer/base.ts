@@ -1,5 +1,6 @@
 import { LogMessage } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
+import { getCallStackInfo } from './callstack.ts'
 import {
   Filter,
   FilterLike,
@@ -12,14 +13,14 @@ import {
   LogRecord,
   LogtapeLogger,
 } from './logger.ts'
-
 export type LogMethod = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 
 export interface AppLogRecord extends LogRecord {
   properties: Record<string, unknown> & {
     _meta?: {
       debug?: unknown[] // Any additional arguments passed to methods that support debugging
-      error?: unknown
+      error?: Error | unknown
+      callStack?: string // The call stack as a string, generated from `new Error().stack`
       relayerId?: string // The instance ID of the relayer that logged the message
     }
   }
@@ -33,6 +34,7 @@ export class RelayerBase {
   private static instances: Map<string, InstanceType<typeof RelayerBase>> = new Map()
   public static rootAppName: string = 'llmn'
   public static logLevel: LogLevel = 'info' // Default log level
+  public static verbose: boolean = false
 
   // Instance properties
   protected _logger: LogtapeLogger
@@ -103,15 +105,14 @@ export class RelayerBase {
           fatal: 'magenta',
         },
         category: ':',
-        format: ({ timestamp, level, category, message, record }: FormattedValues) => {
-          // console.log('???? values', values)
+        format: ({ timestamp: _, level, category, message, record }: FormattedValues) => {
+          category = category.replace(this.rootAppName, '')
           if (record.level === 'debug') {
-            return `${level}${colors.yellow(category.replace(this.rootAppName, ''))} ${
-              colors.gray(message)
-            }`
+            return `${level}${colors.yellow(category)} ${colors.gray(message)}`
           }
           // From https://github.com/dahlia/logtape/blob/67a223479f3605c5fd79e7063d05e044944fc7ef/logtape/formatter.ts#L265
-          return `${timestamp ? `${timestamp} ` : ''}[${level}] ${category}: ${message}`
+          // return `${timestamp ? `${timestamp} ` : ''}[${level}] ${category}: ${message}`
+          return `${level}${category}: ${message}`
         },
       }),
     })
@@ -162,6 +163,10 @@ export class RelayerBase {
 
   public get logger() {
     return this._logger
+  }
+
+  public get verbose() {
+    return (this.constructor as typeof RelayerBase).verbose
   }
 
   public getContext(): Record<string, unknown> {
@@ -343,6 +348,95 @@ export class RelayerBase {
     }
 
     this.logger[method](rawMessage, context)
+
+    // Verbose logging
+    // Outputs additional information from the structured log message
+    if (this.verbose) {
+      this.logVerbose(level, rawMessage, properties)
+    }
+  }
+
+  /**
+   * Outputs additional information from the structured log message to console
+   *
+   * @param level The log level
+   * @param _rawMessage The message to log
+   * @param properties The properties to log
+   */
+  public logVerbose(
+    level: LogLevel,
+    _rawMessage: string,
+    properties: AppLogRecord['properties'] | (() => AppLogRecord['properties']),
+  ): void {
+    if (typeof properties === 'function') {
+      properties = properties()
+    }
+
+    // Return early if not error and there are no properties to verbose log
+    if (
+      level !== 'error' &&
+      (!properties || !properties._meta || !properties._meta.error || !properties._meta.callStack)
+    ) {
+      return
+    }
+
+    // Log the error call stack if the message is an error
+    if (level === 'error') {
+      // Get the call stack info from the error, callStack, or create a new one
+      const callStack = getCallStackInfo({
+        error: properties._meta?.error as Error,
+        callStack: properties._meta?.callStack,
+      }).callStack
+
+      const module = callStack[0].module
+      console.error(
+        `  Error occurred in ${colors.red(module ? `${module}.` : '')}${
+          colors.red(callStack[0].function)
+        } ${
+          colors.gray(
+            `line ${callStack[0].lineNumber} in ${callStack[0].fileName}${
+              callStack[0].lineNumber ? `:${callStack[0].lineNumber}` : ''
+            }${callStack[0].columnNumber ? `:${callStack[0].columnNumber}` : ''}`,
+          )
+        }`,
+      )
+      console.error(
+        '  Call stack:',
+        callStack.reverse().map((c) =>
+          colors.yellow(`${c.module ? `${c.module}.` : ''}${c.function}`)
+        )
+          .join(' -> '),
+      )
+      // Show the file links for the 2nd and 3rd entries in the call stack
+      if (callStack.length > 1) {
+        const call = callStack[0]
+        console.error(
+          colors.yellow(`  ${call.module ? `${call.module}.` : ''}${call.function}`),
+          `${
+            colors.gray(
+              `${call.fileName}${call.lineNumber ? `:${call.lineNumber}` : ''}${
+                call.columnNumber ? `:${call.columnNumber}` : ''
+              }`,
+            )
+          }`,
+        )
+      }
+      return
+    }
+
+    // If not error, show the call stack if it exists in the log record
+    if (properties._meta?.callStack) {
+      const callStack = getCallStackInfo({
+        callStack: properties._meta?.callStack,
+      }).callStack
+      console.info(
+        '  Call stack:',
+        callStack.reverse().map((c) =>
+          colors.yellow(`${c.module ? `${c.module}.` : ''}${c.function}`)
+        )
+          .join(' -> '),
+      )
+    }
   }
 
   public info(message: string, data?: Record<string, unknown>): void {

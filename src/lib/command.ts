@@ -5,10 +5,6 @@ import { showDebug, showError, showInfo } from '@/relayer/ui/show.ts'
 import type { CommandOutput, RunCommandOptions } from '@/types'
 
 export class RunCommandOutput {
-  // [Symbol.for('Deno.customInspect')](): string {
-  //   return 'RunCommandOutput ' + JSON.stringify(this)
-  // }
-
   private _output: CommandOutput
   constructor(output: CommandOutput) {
     this._output = output
@@ -180,10 +176,11 @@ export async function runCommand(
       }).join(' '),
     ].filter(Boolean).join(' ')
 
-    relayer.debug(`Running command: ${fullCmd}`)
+    relayer.debug(`Running: ${fullCmd}`)
 
-    // TODO: add debug verbosity levels to Relayer to show the bashFullCmd
-    // relayer.debug(`Running command: ${fullCmd}\n> ${bashFullCmd}`)
+    if (relayer.verbose) {
+      relayer.debug(`> ${bashFullCmd}`)
+    }
   }
 
   const command = new Deno.Command(cmdCmd, {
@@ -253,7 +250,7 @@ export async function runCommand(
   ])
 
   if (debug) {
-    showDebug(`Command ${status.success ? 'completed' : 'failed'}:\n  ${fullCmd}`, status)
+    // relayer.debug(`${status.success ? 'Succeeded' : 'Failed'}: ${fullCmd}`)
     if (!status.success) {
       stdout === 'piped' && showDebug(`STDOUT: ${stdoutCollector}`)
       stderr === 'piped' && showDebug(`STDERR: ${stderrCollector}`)
@@ -265,14 +262,21 @@ export async function runCommand(
   }
 
   if (!status.success) {
-    throw new CommandError(`Command failed`, {
+    const error = new CommandError(`Command failed`, {
       code: status.code,
       cmd: fullCmd,
       stdout: stdoutCollector,
       stderr: stderrCollector,
     })
+
+    relayer.error(`[${cmdCmd}] Command failed: ${error.stderr?.replace('\n', '')}`, {
+      _meta: { error },
+    })
+
+    throw error
   }
 
+  // TODO: log the command output
   return new RunCommandOutput({
     stdout: stdoutCollector,
     stderr: stderrCollector,

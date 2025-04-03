@@ -21,7 +21,11 @@ export class Relayer extends RelayerBase {
    * This needs to be called once before getInstance()
    */
   public static async initialize(
-    { logLevel = this.logLevel, reset = false }: { logLevel?: LogLevel; reset?: boolean } = {},
+    { logLevel = this.logLevel, reset = false, verbose = false }: {
+      logLevel?: LogLevel
+      reset?: boolean
+      verbose?: boolean
+    } = {},
   ): Promise<boolean> {
     if (this.initialized && !reset) {
       return true
@@ -30,6 +34,7 @@ export class Relayer extends RelayerBase {
     Logger.appName = this.rootAppName
 
     this.logLevel = logLevel
+    this.verbose = verbose
 
     // Create and configure Logtape logger
     await Logger.initLogger(
