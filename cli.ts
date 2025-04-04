@@ -267,13 +267,15 @@ async function initConfig(
   const config = Config.getInstance()
   const result = await config.initialize(options.config, { logLevel, init })
 
-  // TODO: remove logMessages call once config is migrated to use the new logger
-  relayer.show.logMessages(result.messages)
-
   if (!result.success && result.error instanceof Deno.errors.NotFound) {
+    relayer.show.logMessages(result.messages)
     // Show a friendly message if the config file is not found
     showAction('Please run `llmn init` to create a new project')
     Deno.exit(1)
+  }
+
+  if (options.verbose) {
+    relayer.show.logMessages(result.messages)
   }
 
   if (!result.success) {
