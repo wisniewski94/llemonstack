@@ -2,10 +2,17 @@
  * Show the versions of the services that support it
  */
 
+import { tryRunCommand } from '@/lib/command.ts'
 import { getImageFromCompose, getImagesFromComposeYaml } from '@/lib/compose.ts'
-import { dockerRun, runDockerCommand } from '@/lib/docker.ts'
+import { dockerRun } from '@/lib/docker.ts'
 import { InterfaceRelayer } from '@/relayer/ui/interface.ts'
-import { IServiceImage, ServicesMapType, ServiceType } from '@/types'
+import {
+  IServiceImage,
+  RunCommandOutput,
+  ServicesMapType,
+  ServiceType,
+  TryCatchResult,
+} from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Column, Row, RowType } from '@cliffy/table'
 import { Config } from '../src/core/config/config.ts'
@@ -110,12 +117,12 @@ async function getAppVersions(config: Config, services: ServicesMapType): Promis
 }
 
 async function showImageVersions(config: Config): Promise<RowType[]> {
-  const show = config.relayer.show
+  const relayer = config.relayer
+  const show = relayer.show
 
   // Iterate through all compose files to get images
   // Process all compose files in parallel
   const composeResults = await Promise.all(
-    // TODO: remove the extra async
     config.getComposeFiles({ all: true }).map(async (composeFile) => {
       let images: IServiceImage[] = []
       try {
@@ -164,11 +171,12 @@ async function showImageVersions(config: Config): Promise<RowType[]> {
               return envValue !== undefined ? envValue : (defaultValue || '')
             },
           )
-        } catch (_error) {
-          // ignore error
+        } catch (error) {
+          relayer.error('Error expanding variables in build string', { error })
         }
         continue
       }
+
       // Get image name and version by splitting image string on ":"
       const [_, imageName, version] = serviceImage.image.match(/^(.*?)(?::([^:]*))?$/) as string[]
       serviceImage.version = version
@@ -185,18 +193,33 @@ async function showImageVersions(config: Config): Promise<RowType[]> {
       }
       if (!serviceImage.version || /latest|main/i.test(serviceImage.version || '')) {
         try {
-          const version = (await runDockerCommand('inspect', {
-            args: [
-              '--format',
-              '{{index .Config.Labels "org.opencontainers.image.version"}}',
-              serviceImage.image,
-            ],
-            captureOutput: true,
-            silent: true,
-          })).toString().trim()
-          serviceImage.version = version ? version : 'N/A'
-        } catch (_error) {
-          // ignore error
+          const results = await config.relayer.withLevel<TryCatchResult<RunCommandOutput>>(
+            'silent',
+            () => {
+              return tryRunCommand('docker', {
+                args: [
+                  'inspect',
+                  '--format',
+                  '{{index .Config.Labels "org.opencontainers.image.version"}}',
+                  serviceImage.image,
+                ],
+                captureOutput: true,
+                silent: true,
+              })
+            },
+          )
+
+          let version = 'N/A'
+          if (!results.success) {
+            relayer.debug('Error getting version from docker inspect for {image}', serviceImage)
+          } else {
+            version = results.toString().trim()
+          }
+
+          serviceImage.version = version
+        } catch (error) {
+          // Ignore the error but log it for debugging
+          relayer.debug('Error getting version from docker inspect', error as Error)
         }
       }
     }

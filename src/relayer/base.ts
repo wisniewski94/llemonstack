@@ -333,37 +333,46 @@ export class RelayerBase {
    */
   public withLevel = <T>(level: WithLevelType, fn: () => T | Promise<T>): Promise<T> => {
     // Save the current filter to restore after the function runs
-    // TODO: fix binding of this
-    const originalFilter = this._context._filter
+    let promise: Promise<T> | null = null
 
-    const filter = typeof level === 'function'
-      ? level
-      : level === 'silent'
-      ? silentFilter
-      : getLevelFilter(level)
+    // Catch any errors setting up the context and filter
+    try {
+      const originalFilter = this._context._filter
 
-    // Any explicit filter must be deleted before running the function.
-    // Otherwise, the filter will override the implicit level filter
-    // applied in the run context.
-    // See https://github.com/dahlia/logtape/blob/67a223479f3605c5fd79e7063d05e044944fc7ef/logtape/logger.ts#L545
-    delete this._context._filter
+      const filter = typeof level === 'function'
+        ? level
+        : level === 'silent'
+        ? silentFilter
+        : getLevelFilter(level)
 
-    // A promise is created with the new context and implicit filter level.
-    // The filter is saved and looked up from AsyncLocalStorage.
-    // Any function running within this context will use the new filter.
-    // A better solution is
-    const promise = Logger.runWithContext<T>({
-      ...this._context,
-      _filter: filter,
-    }, fn as () => Promise<T>)
+      // Any explicit filter must be deleted before running the function.
+      // Otherwise, the filter will override the implicit level filter
+      // applied in the run context.
+      // See https://github.com/dahlia/logtape/blob/67a223479f3605c5fd79e7063d05e044944fc7ef/logtape/logger.ts#L545
+      delete this._context._filter
 
-    promise.then((result: T) => {
-      if (originalFilter) {
-        this._context._filter = originalFilter
-      }
-      return result
-    })
-    return promise
+      // A promise is created with the new context and implicit filter level.
+      // The filter is saved and looked up from AsyncLocalStorage.
+      // Any function running within this context will use the new filter.
+      // A better solution is
+      promise = Logger.runWithContext<T>({
+        ...this._context,
+        _filter: filter,
+      }, fn as () => Promise<T>)
+
+      promise.then((result: T) => {
+        if (originalFilter) {
+          this._context._filter = originalFilter
+        }
+        return result
+      })
+    } catch (error) {
+      // Send this error to a meta logger once it's implemented, for now just log it
+      this.error('Unexpected error in RelayerBase.withLevel', error as Error)
+    }
+
+    // Return the promise or a resolved promise if there was an error
+    return promise ?? Promise.resolve(fn())
   }
 
   /**
@@ -375,7 +384,7 @@ export class RelayerBase {
    * @param fn The function to run
    * @returns Promise that resolves to the result of the function
    */
-  public withFilter<T>(filter: Filter, fn: T | Promise<T>): Promise<T> {
+  public withFilter<T>(filter: Filter, fn: () => T | Promise<T>): Promise<T> {
     return this.withLevel(filter, fn)
   }
 

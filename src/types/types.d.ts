@@ -1,3 +1,4 @@
+import { RelayerBase } from '@/relayer/base.ts'
 import { Config, ServicesMapType } from '../core/mod.ts'
 import {
   CommandError as CommandErrorClass,
@@ -9,6 +10,8 @@ export type { DockerComposeOptions, DockerComposePsResult } from '../lib/docker.
 export type { TryCatchError, TryCatchResult } from '../lib/try-catch.ts'
 export type { AppLogRecord } from '../relayer/base.ts'
 export type { ICallStackInfo, ICallStackOptions } from '../relayer/callstack.ts'
+
+export type RelayerInstance = InstanceType<typeof RelayerBase>
 
 export interface LLemonStackConfig {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty
@@ -56,6 +59,7 @@ export interface RunCommandOptions {
   env?: EnvVars
   autoLoadEnv?: boolean
   debug?: boolean
+  relayer?: RelayerInstance
 }
 
 export type OllamaProfile =

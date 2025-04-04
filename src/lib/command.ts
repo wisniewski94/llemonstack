@@ -113,10 +113,9 @@ export async function runCommand(
     env = {},
     autoLoadEnv = true, // If true, load env from .env file
     debug = Config.getInstance().DEBUG ?? false,
+    relayer = Relayer.getInstance('runCommand'),
   }: RunCommandOptions = {},
 ): Promise<RunCommandOutput> {
-  const relayer = Relayer.getInstance(['runCommand'])
-
   // If verbose debug is enabled, show output even if silent is true
   if (debug && relayer.verbose) {
     silent = false
@@ -278,12 +277,7 @@ export async function runCommand(
     const context: AppLogRecord['properties'] = {
       _meta: { error },
     }
-    // When silent is true, prevent error from outputting but still send to Relayer
-    // The calling function can still check the error and re-log it as needed
-    // This is useful for commands that are expected to fail but are not fatal
-    if (silent && !relayer.verbose) {
-      context._filter = () => false
-    }
+
     relayer.error(`[${cmdCmd}] Command failed: ${error.stderr?.replace('\n', '')}`, context)
 
     throw error
