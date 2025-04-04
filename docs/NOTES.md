@@ -16,40 +16,17 @@ container logs in Docker Desktop.
 
 **Code:**
 
-- [x] Add llmn version output to versions script
-
 - [ ] Add verbose logging to each log level? or just to debug
-
-- [ ] Remove all config.initialize() calls except for in cli.ts
 
 - [ ] Replace silent option in scripts with relayer logging
 
 - [ ] Add an info command that shows status of enabled services, including all the exposed endpoints
 
-In Progress..
+- [x] Add llmn version output to versions script
 
-- [ ] Rework types to IInterface ClassType
-
-- [ ] Use Deno.env a the basic global config manager and Config for the complicated stack config
-
-  - [ ] Add LLEMONSTACK_LOG_LEVEL check to logger
-
-- [ ] Adding state observability to Service class for config or other services to monitor changes
-- [x] Migrating config.\_services to ServicesMap
-- [ ] Migrating all scripts to accept { config } param instead of projectName
-- [ ] Move everything to src/commands and src/lib
-
-- !!!! left off in init script updating env files. needs testing
-
-  - [ ] Test to make sure error messages get returned properly
-
-- [ ] Use Map<Service> instead of Record<Service>?
-
-- [ ] Replace all references to Deno.env.get with config.env to ensure correct values are used
-- [ ] Add check in config.initialize to check if this.env.LLEMONSTACK_PROJECT_NAME and projectName are out of sync
-- [ ] Finish the new config script
-- [ ] Finish porting the start script output to llemonstack configs
-- [ ] Move enabled services from env vars to config.json
+- [x] Remove all config.initialize() calls except for in cli.ts
+- [x] Finish the new config script
+- [x] Move enabled services from env vars to config.json
 
 - [x] Create Flowise service subclass to set FLOWISE_API_KEY env var
 
