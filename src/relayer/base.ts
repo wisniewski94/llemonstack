@@ -533,7 +533,7 @@ export class RelayerBase {
    */
   public error(
     message: LogMessageType | Error,
-    dataOrError: LogMessageData = {},
+    dataOrError: LogMessageData | Error = {},
     error?: Error,
   ): void {
     const { message: _message, context } = this._formatErrorContent(message, dataOrError, error)
@@ -542,7 +542,7 @@ export class RelayerBase {
 
   public fatal(
     message: LogMessageType | Error,
-    dataOrError: LogMessageData = {},
+    dataOrError: LogMessageData | Error = {},
     error?: Error,
   ): void {
     const { message: _message, context } = this._formatErrorContent(message, dataOrError, error)
@@ -611,7 +611,7 @@ export class RelayerBase {
    */
   protected _formatErrorContent(
     messageOrError: LogMessageType | Error,
-    dataOrError: LogMessageData = {},
+    dataOrError: LogMessageData | Error = {},
     error?: Error,
   ): { message: LogMessageType; context: AppLogRecord['properties'] } {
     if (messageOrError instanceof Error) {
