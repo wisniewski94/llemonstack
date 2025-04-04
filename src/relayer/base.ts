@@ -73,6 +73,23 @@ export class RelayerBase {
     // Create a new instance
     const instance = new this({ name: id.split(':'), instanceId: id, defaultLevel: this.logLevel })
 
+    // Bind all instance methods to the instance
+    // This fixes issues with unbound methods throwing obfuscated errors due to this being undefined
+    const prototype = Object.getPrototypeOf(instance)
+    const propertyNames = Object.getOwnPropertyNames(prototype)
+    for (const name of propertyNames) {
+      const descriptor = Object.getOwnPropertyDescriptor(prototype, name)
+      if (descriptor && typeof descriptor.value === 'function' && name !== 'constructor') {
+        // Safe type assertion through unknown with specific method type
+        type MethodType = (...args: unknown[]) => unknown
+        const instanceWithMethods = instance as unknown as Record<string, MethodType>
+        const method = instanceWithMethods[name]
+        if (method) {
+          instanceWithMethods[name] = method.bind(instance)
+        }
+      }
+    }
+
     // Save the instance to the map
     this.instances.set(id, instance)
 
@@ -126,7 +143,7 @@ export class RelayerBase {
           return `${level}${category}: ${message}`
         },
       }),
-    }).bind(this)
+    })
   }
 
   public static getFilter({ defaultLevel }: { defaultLevel?: LogLevel } = {}): Filter {
