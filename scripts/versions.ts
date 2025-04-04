@@ -15,6 +15,7 @@ import {
 } from '@/types'
 import { colors } from '@cliffy/ansi/colors'
 import { Column, Row, RowType } from '@cliffy/table'
+import packageJson from '@packageJson' with { type: 'json' }
 import { Config } from '../src/core/config/config.ts'
 
 const MAX_COLUMN_WIDTH = 50
@@ -253,7 +254,10 @@ async function showImageVersions(config: Config): Promise<RowType[]> {
 export async function versions(config: Config): Promise<void> {
   const show = config.relayer.show
 
-  show.action(`Getting versions for ${config.projectName}...`)
+  show.info('LLemonStack CLI v{version}', packageJson)
+
+  show.info(`Project: ${config.projectName}`)
+  show.action(`Getting stack services versions...`)
   show.info(
     'Versions shown may differ from running containers.\n' +
       'Restart the stack to ensure the versions are correct.',

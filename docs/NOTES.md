@@ -16,6 +16,10 @@ container logs in Docker Desktop.
 
 **Code:**
 
+- [x] Add llmn version output to versions script
+
+- [ ] Add verbose logging to each log level? or just to debug
+
 - [ ] Remove all config.initialize() calls except for in cli.ts
 
 - [ ] Replace silent option in scripts with relayer logging
