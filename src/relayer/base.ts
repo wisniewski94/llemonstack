@@ -234,6 +234,11 @@ export class RelayerBase {
     return this
   }
 
+  public setContextKey(key: string, value: unknown) {
+    this._context[key] = value
+    return this
+  }
+
   public silent(silent: boolean = true): InstanceType<typeof RelayerBase> {
     if (silent) {
       // Effectively disable all log messages for any subclass that uses context._filter

@@ -53,6 +53,8 @@ export class Config {
   // Instance Properties: this.*
   //
 
+  protected _relayer: InstanceType<typeof Relayer> | null = null
+
   private _host: Host = Host.getInstance()
 
   public LOG_LEVEL: LogLevel = 'info'
@@ -188,8 +190,12 @@ export class Config {
   /**
    * Get the root relayer instance with the project name set
    */
-  get relayer(): Relayer {
-    return Relayer.getInstance().setContext({ projectName: this.projectName })
+  get relayer(): InstanceType<typeof Relayer> {
+    if (!this._relayer) {
+      this._relayer = Relayer.getInstance()
+    }
+    this._relayer.setContextKey('projectName', this.projectName)
+    return this._relayer
   }
 
   //
@@ -214,11 +220,16 @@ export class Config {
    */
   public async initialize(
     configFile?: string,
-    { logLevel = 'info', init = false }: {
+    { logLevel = 'info', init = false, relayer }: {
       logLevel?: LogLevel // TODO: move logLevel to Relayer
       init?: boolean // If false, return error if config file is invalid
+      relayer?: InstanceType<typeof Relayer>
     } = {},
   ): Promise<TryCatchResult<boolean, Error>> {
+    if (relayer) {
+      this._relayer = relayer
+    }
+
     // If previously cached initialize result, return it
     if (this._initializeResult && this._initializeResult.success) {
       return this._initializeResult

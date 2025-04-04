@@ -265,7 +265,7 @@ async function initConfig(
   relayer.debug('DEBUG enabled in CLI option')
 
   const config = Config.getInstance()
-  const result = await config.initialize(options.config, { logLevel, init })
+  const result = await config.initialize(options.config, { logLevel, init, relayer })
 
   if (!result.success && result.error instanceof Deno.errors.NotFound) {
     relayer.show.logMessages(result.messages)

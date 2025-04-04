@@ -54,7 +54,7 @@ export type DockerComposePsResult = Array<{
 export async function dockerEnv(config?: Config): Promise<Record<string, string>> {
   if (!config) {
     config = Config.getInstance()
-    await config.initialize()
+    await config.initialize() // TODO: remove initialize call
   }
   return {
     LLEMONSTACK_VOLUMES_PATH: config.volumesDir,
