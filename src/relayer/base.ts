@@ -15,7 +15,9 @@ import {
   LogRecord,
   LogtapeLogger,
 } from './logger.ts'
+
 export type LogMethod = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
+type WithLevelType = LogLevel | 'silent' | Filter
 
 export interface AppLogRecord extends LogRecord {
   properties: Record<string, unknown> & {
@@ -32,6 +34,8 @@ export interface AppLogRecord extends LogRecord {
 // TODO: create a proper interface to match Logtape's API
 // Functions are allowed in properties but only when the message is a string or template string
 export type LogMessageData = AppLogRecord['properties'] | LogMessageProperties
+
+const silentFilter: Filter = () => false
 
 /**
  * Relayer handles relaying log and user interaction messages.
@@ -53,16 +57,16 @@ export class RelayerBase {
    * Get the singleton instance of the Relayer
    * @returns The singleton instance of the Relayer
    */
-  public static getInstance<T extends RelayerBase>(
+  public static getInstance(
     name: string | string[] = this.rootAppName,
-  ): T {
+  ) {
     const id = this.getInstanceId(name)
 
     // Return the existing instance if it exists
     if (this.instances.has(id)) {
       const instance = this.instances.get(id)
       if (instance) {
-        return instance as T
+        return instance
       }
     }
 
@@ -72,7 +76,7 @@ export class RelayerBase {
     // Save the instance to the map
     this.instances.set(id, instance)
 
-    return instance as T
+    return instance
   }
 
   /**
@@ -122,7 +126,7 @@ export class RelayerBase {
           return `${level}${category}: ${message}`
         },
       }),
-    })
+    }).bind(this)
   }
 
   public static getFilter({ defaultLevel }: { defaultLevel?: LogLevel } = {}): Filter {
@@ -174,6 +178,10 @@ export class RelayerBase {
     return this._logger
   }
 
+  public get instanceId() {
+    return this._instanceId
+  }
+
   public get verbose() {
     return (this.constructor as typeof RelayerBase).verbose
   }
@@ -190,7 +198,7 @@ export class RelayerBase {
   public silent(silent: boolean = true): InstanceType<typeof RelayerBase> {
     if (silent) {
       // Effectively disable all log messages for any subclass that uses context._filter
-      this._context._filter = () => false
+      this._context._filter = silentFilter
     } else {
       delete this._context._filter
     }
@@ -285,13 +293,20 @@ export class RelayerBase {
    * relayer.debug('This will not output')
    * ```
    *
-   * @param level The log level to run with
+   * @param level The log level, 'silent' or a filter function
    * @param fn The function to run
    * @returns Promise that resolves to the result of the function
    */
-  public withLevel<T>(level: LogLevel, fn: T | Promise<T>): Promise<T> {
+  public withLevel = <T>(level: WithLevelType, fn: () => T | Promise<T>): Promise<T> => {
     // Save the current filter to restore after the function runs
-    const filter = this._context._filter
+    // TODO: fix binding of this
+    const originalFilter = this._context._filter
+
+    const filter = typeof level === 'function'
+      ? level
+      : level === 'silent'
+      ? silentFilter
+      : getLevelFilter(level)
 
     // Any explicit filter must be deleted before running the function.
     // Otherwise, the filter will override the implicit level filter
@@ -305,17 +320,29 @@ export class RelayerBase {
     // A better solution is
     const promise = Logger.runWithContext<T>({
       ...this._context,
-      test: 'some implicit context',
-      _filter: getLevelFilter(level),
+      _filter: filter,
     }, fn as () => Promise<T>)
 
     promise.then((result: T) => {
-      if (filter) {
-        this._context._filter = filter
+      if (originalFilter) {
+        this._context._filter = originalFilter
       }
       return result
     })
     return promise
+  }
+
+  /**
+   * Run a function with a specific filter applied then restore the original filter
+   *
+   * Alias for withLevel(filter, fn)
+   *
+   * @param filter The filter to apply
+   * @param fn The function to run
+   * @returns Promise that resolves to the result of the function
+   */
+  public withFilter<T>(filter: Filter, fn: T | Promise<T>): Promise<T> {
+    return this.withLevel(filter, fn)
   }
 
   //
