@@ -138,6 +138,23 @@ export class RelayerBase {
           if (record.level === 'debug') {
             return `${level}${colors.yellow(category)} ${colors.gray(message)}`
           }
+          if (record.level === 'error') {
+            const error = (record.properties._meta as { error?: unknown })?.error
+            if (error instanceof Error && error?.message) {
+              // Show message and error message if the message doesn't already include the error message
+              if (message && !message.toLowerCase().includes(error.message.toLowerCase())) {
+                return `${level}${colors.yellow(category)} ${colors.red(message)}: ${
+                  colors.gray(error.message)
+                }`
+              } else {
+                // Error message is same as message or message is empty
+                if (!message) {
+                  message = error.message
+                }
+                return `${level}${colors.yellow(category)} ${colors.red(message)}`
+              }
+            }
+          }
           // From https://github.com/dahlia/logtape/blob/67a223479f3605c5fd79e7063d05e044944fc7ef/logtape/formatter.ts#L265
           // return `${timestamp ? `${timestamp} ` : ''}[${level}] ${category}: ${message}`
           return `${level}${category}: ${message}`
