@@ -21,7 +21,7 @@ interface UserLogRecord extends AppLogRecord {
  */
 export class InterfaceRelayer extends RelayerBase {
   public static override getSink(): Sink {
-    return this.log as Sink
+    return this.log.bind(this) as Sink
   }
 
   /**
