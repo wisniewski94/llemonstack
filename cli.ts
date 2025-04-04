@@ -258,6 +258,9 @@ async function initConfig(
   await Relayer.initialize({ logLevel, verbose: options.verbose })
   const relayer = Relayer.getInstance()
 
+  // TODO: set the show relayer
+  // TODO: pass in relayer instance to config
+
   relayer.debug('Initializing in main CLI script...')
   relayer.debug('DEBUG enabled in CLI option')
 

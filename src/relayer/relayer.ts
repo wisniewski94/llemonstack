@@ -11,10 +11,6 @@ export class Relayer extends RelayerBase {
 
   protected _interface: InterfaceRelayer | null = null
 
-  static override getInstance<T extends RelayerBase = Relayer>(name?: string | string[]): T {
-    return super.getInstance<T>(name)
-  }
-
   /**
    * Initialize the Relayer system
    *

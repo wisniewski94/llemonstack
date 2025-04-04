@@ -33,7 +33,7 @@ One global object to manage pirmary script, projects and services config.
 
 Main script loads Config and waits for it to initialize before starting a script.
 
-```
+```ts
 const config = Config.getInstance()
 await config.initialize()
 ```

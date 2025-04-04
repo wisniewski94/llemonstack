@@ -57,21 +57,26 @@ export class RelayerBase {
    * Get the singleton instance of the Relayer
    * @returns The singleton instance of the Relayer
    */
-  public static getInstance(
+  public static getInstance<T extends typeof RelayerBase>(
+    this: T,
     name: string | string[] = this.rootAppName,
-  ) {
+  ): InstanceType<T> {
     const id = this.getInstanceId(name)
 
     // Return the existing instance if it exists
     if (this.instances.has(id)) {
       const instance = this.instances.get(id)
       if (instance) {
-        return instance
+        return instance as InstanceType<T>
       }
     }
 
     // Create a new instance
-    const instance = new this({ name: id.split(':'), instanceId: id, defaultLevel: this.logLevel })
+    const instance = new this({
+      name: id.split(':'),
+      instanceId: id,
+      defaultLevel: this.logLevel,
+    }) as InstanceType<T>
 
     // Bind all instance methods to the instance
     // This fixes issues with unbound methods throwing obfuscated errors due to this being undefined

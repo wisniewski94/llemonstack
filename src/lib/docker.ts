@@ -284,6 +284,7 @@ export async function dockerComposePs<T extends PsFormatType>(
 export async function prepareDockerNetwork(
   network?: string,
 ): Promise<TryCatchResult<RunCommandOutput>> {
+  const relayer = Relayer.getInstance()
   if (!network) {
     network = Config.getInstance().dockerNetworkName
   }
@@ -293,7 +294,7 @@ export async function prepareDockerNetwork(
     silent: true,
   })
   if (!results.success) {
-    Relayer.getInstance().error('Unable to check docker network: {error}', {
+    relayer.error('Unable to check docker network: {error}', {
       error: results.error?.stderr,
     })
   }
@@ -305,7 +306,7 @@ export async function prepareDockerNetwork(
       }),
     ])
     if (!results.success) {
-      Relayer.getInstance().error('Unable to create docker network: {network}: {error}', {
+      relayer.error('Unable to create docker network: {network}: {error}', {
         network,
         error: results.error?.stderr,
       })
