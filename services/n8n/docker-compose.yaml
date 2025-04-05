@@ -13,20 +13,11 @@ include:
 # To switch back to unmodified version, uncomment the following section
 # and comment out the include section above.
 #
-# # n8n requires a postgres database.
-# # include:
-# #   - ../supabase/docker-compose.yaml
-#
 # volumes:
 #   n8n_storage:
 #
 # x-n8n: &service-n8n
 #   image: docker.n8n.io/n8nio/n8n:latest
-#
-#   # Only uncomment depencency health check if include is uncommented above
-#   # depends_on:
-#   #   db: # From ../supabase/docker-compose.yaml
-#   #     condition: service_healthy
 #
 #   environment:
 #     # See https://docs.n8n.io/hosting/configuration/task-runners/

@@ -32,7 +32,8 @@ services:
       - ${LLEMONSTACK_SHARED_VOLUME_PATH:-./shared/}:/data/shared
       # Add tracing.js to the container when debugging
       - ./tracing.js:/usr/local/lib/node_modules/n8n/tracing.js # Uncomment when debugging
-      # - ./docker-entrypoint.sh:/docker-entrypoint.sh # Uncomment when debugging
+      # Bind mount the local docker-entrypoint.sh into the container for easier debugging
+      - ./docker-entrypoint.sh:/docker-entrypoint.sh
 
     environment:
       # See https://docs.n8n.io/hosting/configuration/task-runners/
