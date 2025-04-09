@@ -1,5 +1,5 @@
 # Dockerfile
-FROM n8nio/n8n:latest
+FROM docker.n8n.io/n8nio/n8n:latest
 
 USER root
 
@@ -22,7 +22,7 @@ WORKDIR /usr/local/lib/node_modules/n8n
 # TODO: create a package.json to lock the versions of the dependencies
 
 # Install Node.js OpenTelemetry dependencies locally to n8n
-RUN npm install \
+RUN npm install --no-fund --no-audit --loglevel=info \
     @opentelemetry/api \
     @opentelemetry/sdk-node \
     @opentelemetry/auto-instrumentations-node \
@@ -33,8 +33,13 @@ RUN npm install \
     @opentelemetry/instrumentation \
     @opentelemetry/instrumentation-winston \
     @opentelemetry/winston-transport \
+    || echo "Warning: One or more OpenTelemetry packages failed to install, but build will continue"
+
+RUN npm install \
     winston \
-    flat \
+    flat
+
+RUN npm install \
     langfuse \
     langfuse-langchain
 
