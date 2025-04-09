@@ -60,6 +60,11 @@ export class OllamaService extends Service {
   override async configure(
     { silent = false, config }: IServiceActionOptions,
   ): Promise<TryCatchResult<boolean>> {
+    // If the service is disabled, skip the configuration
+    if (!this.isEnabled()) {
+      return super.configure({ silent, config })
+    }
+
     const gpuDisabled = config.host.isMac()
 
     // Default to host when silent is true
