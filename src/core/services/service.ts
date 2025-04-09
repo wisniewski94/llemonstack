@@ -427,6 +427,7 @@ export class Service {
     const results = await tryDockerCompose('down', {
       composeFile: this.composeFile,
       projectName: this._configInstance.projectName,
+      profiles: this.getProfiles(),
       silent: true,
       captureOutput: true,
     })
