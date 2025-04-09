@@ -27,10 +27,11 @@ export async function checkPrerequisites(): Promise<void> {
 export async function startService(
   config: Config,
   serviceOrName: ServiceType | string,
-  { envVars = {}, profiles: _profiles, createNetwork = true }: {
+  { envVars = {}, profiles: _profiles, createNetwork = true, build = false }: {
     envVars?: EnvVars
     profiles?: string[]
     createNetwork?: boolean
+    build?: boolean
   } = {},
 ): Promise<ServiceType> {
   const show = config.relayer.show
@@ -51,7 +52,7 @@ export async function startService(
     throw new Error(`Docker compose file not found for ${service}: ${composeFile}`)
   }
 
-  const result = await service.start({ envVars, silent: false })
+  const result = await service.start({ envVars, silent: false, build })
   if (!result.success) {
     show.error('Service failed to start', { error: result.error || new Error('Unknown error') })
   }
@@ -70,7 +71,7 @@ export async function startService(
 export async function startServices(
   config: Config,
   services: ServicesMapType,
-  { envVars = {} }: { envVars?: EnvVars } = {},
+  { envVars = {}, build = false }: { envVars?: EnvVars; build?: boolean } = {},
 ) {
   const show = config.relayer.show
 
@@ -80,7 +81,7 @@ export async function startServices(
   // Start all services in parallel
   await Promise.all(services.filterMap(async (service) => {
     try {
-      await startService(config, service, { envVars, createNetwork: false })
+      await startService(config, service, { envVars, createNetwork: false, build })
     } catch (error) {
       show.error(`Failed to start service ${service}:`, { error })
       throw error
@@ -184,10 +185,11 @@ function outputServicesInfo({
 
 export async function start(
   config: Config,
-  { service: serviceOrName, skipOutput = false, hideCredentials = true }: {
+  { service: serviceOrName, skipOutput = false, hideCredentials = true, build = false }: {
     service?: string | ServiceType
     skipOutput?: boolean
     hideCredentials?: boolean
+    build?: boolean
   } = {},
 ): Promise<void> {
   const show = config.relayer.show
@@ -225,7 +227,7 @@ export async function start(
     // Start services
     if (service) {
       // Start a single service
-      await startService(config, service)
+      await startService(config, service, { build })
     } else {
       // Start all services by service group
       for (const [groupName, groupServices] of config.getServicesGroups()) {
@@ -234,21 +236,8 @@ export async function start(
         )
         if (enabledGroupServices.size > 0) {
           show.action(`\nStarting ${groupName} services...`)
-          await startServices(config, enabledGroupServices)
+          await startServices(config, enabledGroupServices, { build })
         }
-      }
-    }
-
-    // Special handling for Ollama
-    const ollamaService = config.getServiceByName('ollama')
-    const ollamaProfile = ollamaService?.getProfiles()[0]
-    // TODO: fix this, doesn't seem correct
-    if (ollamaProfile !== 'ollama-false' && !service || service?.service === 'ollama') {
-      show.action(`\nStarting Ollama...`)
-      if (ollamaProfile === 'ollama-host') {
-        show.info('Using host Ollama, no need to start ollama service')
-      } else {
-        await startService(config, 'ollama', { profiles: [ollamaProfile || ''] })
       }
     }
 

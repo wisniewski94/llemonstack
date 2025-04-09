@@ -71,6 +71,7 @@ main
   .description('Start the LLemonStack services')
   .arguments('[service:string]')
   .option('-n, --no-keys', 'Hide credentials', { default: false })
+  .option('--build', 'Rebuild the services during start', { default: false })
   .action(async (options, service?: string) => {
     const config = await initConfig('start', options)
     const { start } = await import('./scripts/start.ts')
@@ -78,6 +79,7 @@ main
       service,
       skipOutput: !!service,
       hideCredentials: options.keys,
+      build: options.build,
     })
   })
 

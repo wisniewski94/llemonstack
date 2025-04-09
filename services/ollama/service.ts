@@ -39,17 +39,16 @@ export class OllamaService extends Service {
    * @returns {TryCatchResult<boolean>} - The result of the command
    */
   override async start(
-    { envVars = {}, silent = false }: {
+    { envVars = {}, silent = false, build = false }: {
       envVars?: EnvVars
       silent?: boolean
+      build?: boolean
     } = {},
   ): Promise<TryCatchResult<boolean>> {
     if (this.getProfiles().includes('ollama-host')) {
-      const results = success<boolean>(true)
-      results.addMessage('info', 'Skipping Ollama service start, using host bridge')
-      return results
+      return success<boolean>(true, 'Skipping Ollama service start, using host bridge')
     }
-    return await super.start({ envVars, silent })
+    return await super.start({ envVars, silent, build })
   }
 
   /**

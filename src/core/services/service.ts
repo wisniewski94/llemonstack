@@ -399,9 +399,10 @@ export class Service {
    * @returns {TryCatchResult<boolean>} - The result of the command
    */
   public async start(
-    { envVars = {}, silent = false }: {
+    { envVars = {}, silent = false, build = false }: {
       envVars?: EnvVars
       silent?: boolean
+      build?: boolean
     } = {},
   ): Promise<TryCatchResult<boolean>> {
     // TODO: check if config.prepareEnv has run, if not, run it
@@ -412,7 +413,10 @@ export class Service {
       composeFile: this.composeFile,
       profiles: this.getProfiles(),
       ansi: 'never',
-      args: ['-d'],
+      args: [
+        '-d',
+        build ? '--build' : false,
+      ],
       env: envVars,
       silent,
       captureOutput: false,
