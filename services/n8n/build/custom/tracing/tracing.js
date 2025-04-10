@@ -30,7 +30,7 @@ const {
   SpanStatusCode,
   SpanKind,
 } = require('@opentelemetry/api')
-const flatten = require('flat') // flattens objects into a single level
+const { flatten } = require('flat') // flattens objects into a single level
 const { envDetector, hostDetector, processDetector } = require('@opentelemetry/resources')
 
 const LOGPREFIX = '[Tracing]'
