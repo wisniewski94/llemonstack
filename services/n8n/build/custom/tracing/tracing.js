@@ -44,16 +44,19 @@ processOtelEnvironmentVariables()
 console.log(`${LOGPREFIX}: Starting n8n OpenTelemetry instrumentation`)
 
 // Configure OpenTelemetry
-// Turn off auto-instrumentation for dns, net, tls, fs
-// Enable enhancedDatabaseReporting for pg
+// Turn off auto-instrumentation for dns, net, tls, fs, pg
 const autoInstrumentations = getNodeAutoInstrumentations({
   '@opentelemetry/instrumentation-dns': { enabled: false },
   '@opentelemetry/instrumentation-net': { enabled: false },
   '@opentelemetry/instrumentation-tls': { enabled: false },
   '@opentelemetry/instrumentation-fs': { enabled: false },
   '@opentelemetry/instrumentation-pg': {
-    enhancedDatabaseReporting: true,
+    enabled: false,
   },
+  // Enable enhancedDatabaseReporting for pg
+  // '@opentelemetry/instrumentation-pg': {
+  //   enhancedDatabaseReporting: true,
+  // },
 })
 
 registerInstrumentations({
