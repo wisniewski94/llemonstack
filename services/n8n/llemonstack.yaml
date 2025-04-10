@@ -21,6 +21,8 @@ exposes:
     dashboard:
       name: n8n
       url: http://localhost:5678
+      credentials:
+        Account: '[Created by user]'
   internal: # Host name for the stack
     api:
       name: n8n API
