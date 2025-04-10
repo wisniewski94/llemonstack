@@ -5,58 +5,146 @@
 # https://n8n.io/
 # https://docs.n8n.io/hosting/configuration/task-runners/
 
-# Custom n8n docker-compose.yml file to add tracing, ffmpeg, etc.
-include:
-  - ./build/custom/docker-compose.yaml
-#
-# n8n standard version
-# To switch back to unmodified version, uncomment the following section
-# and comment out the include section above.
-#
-# volumes:
-#   n8n_storage:
-#
-# x-n8n: &service-n8n
-#   image: docker.n8n.io/n8nio/n8n:latest
-#
-#   environment:
-#     # See https://docs.n8n.io/hosting/configuration/task-runners/
-#     # Database used by n8n
-#     - DB_TYPE=postgresdb
-#     - DB_TABLE_PREFIX=n8n_
-#     - DB_POSTGRESDB_HOST=${N8N_POSTGRES_HOST:-supavisor}
-#     - DB_POSTGRESDB_USER=${N8N_POSTGRES_USER:-postgres}${POSTGRES_USER_TENANT_SUFFIX:-}
-#     - DB_POSTGRESDB_PASSWORD=${N8N_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}
-#     - DB_POSTGRESDB_SCHEMA=${N8N_POSTGRES_SCHEMA:-public}
-#     - DB_POSTGRESDB_DATABASE=postgres
-#     - N8N_PERSONALIZATION_ENABLED=false
-#     - N8N_ENCRYPTION_KEY
-#     - N8N_USER_MANAGEMENT_JWT_SECRET
-#     - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
-#     - N8N_LOG_LEVEL=${N8N_LOG_LEVEL:-info}
-#     - OLLAMA_HOST # set by start.ts as env var
-#     # Deployment settings
-#     # See https://docs.n8n.io/hosting/configuration/environment-variables/deployment/
-#     - N8N_TEMPLATES_ENABLED=true
-#     # Task runner settings
-#     # See https://docs.n8n.io/hosting/configuration/task-runners/
-#     - N8N_RUNNERS_ENABLED=true
-#     # Disable sending diagnostics, notifications, and templates to n8n servers
-#     # See https://docs.n8n.io/hosting/configuration/configuration-examples/isolation/
-#     - N8N_DIAGNOSTICS_ENABLED=false
-#     # - N8N_VERSION_NOTIFICATIONS_ENABLED=false
-#     # - N8N_TEMPLATES_ENABLED=false
-#     # - EXTERNAL_FRONTEND_HOOKS_URLS=
-#     # - N8N_DIAGNOSTICS_CONFIG_FRONTEND=
-#     # - N8N_DIAGNOSTICS_CONFIG_BACKEND=
-# services:
-#   n8n:
-#     <<: *service-n8n
-#     container_name: n8n
-#     labels:
-#       dev.dozzle.group: Workflows
-#     restart: unless-stopped
-#     ports:
-#       - 5678:5678
-#     volumes:
-#       - n8n_storage:/home/node/.n8n
+networks:
+  default:
+    name: ${LLEMONSTACK_NETWORK_NAME}
+    external: true
+
+volumes:
+  n8n_storage:
+    driver: local
+
+# See https://docs.n8n.io/hosting/configuration/environment-variables/
+x-environment: &common-env
+  # Database used by n8n
+  # See https://docs.n8n.io/hosting/configuration/supported-databases-settings/#postgresdb
+  DB_TYPE: postgresdb # Use postgres with n8n_ table prefix
+  DB_TABLE_PREFIX: n8n_
+  DB_POSTGRESDB_HOST: ${N8N_POSTGRES_HOST:-supavisor}
+  DB_POSTGRESDB_USER: ${N8N_POSTGRES_USER:-postgres}${POSTGRES_USER_TENANT_SUFFIX:-}
+  DB_POSTGRESDB_PASSWORD: ${N8N_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}
+  DB_POSTGRESDB_SCHEMA: ${N8N_POSTGRES_SCHEMA:-public}
+  DB_POSTGRESDB_DATABASE: postgres
+
+  # Disable n8n sending data to n8n servers
+  # See https://docs.n8n.io/hosting/configuration/configuration-examples/isolation/
+  N8N_DIAGNOSTICS_ENABLED: false
+  N8N_SENTRY_DSN: # Unset to disable sentry
+  N8N_DIAGNOSTICS_CONFIG_FRONTEND: # Unset
+  N8N_DIAGNOSTICS_CONFIG_BACKEND: # Unset
+  EXTERNAL_FRONTEND_HOOKS_URLS: # Unset
+
+  # UI notification settings
+  # See https://docs.n8n.io/hosting/configuration/environment-variables/deployment/
+  N8N_VERSION_NOTIFICATIONS_ENABLED: true # Show n8n version notifications in UI
+  N8N_PERSONALIZATION_ENABLED: false # Skip personalization during account creation
+  N8N_TEMPLATES_ENABLED: true # Enable templates in UI
+
+  # Custom & community nodes settings
+  # See https://docs.n8n.io/hosting/configuration/environment-variables/nodes/
+  NODE_FUNCTION_ALLOW_EXTERNAL: "*" # Allows any external node to be imported in n8n code nodes
+  NODE_FUNCTION_ALLOW_BUILTIN: "*" # Allow built-in nodes to be imported in n8n code nodes
+  N8N_COMMUNITY_PACKAGES_ENABLED: true # Allow community packages to be installed
+  N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE: true # Allow community packages to be used as nodes for AI Agents
+  # N8N_CUSTOM_EXTENSIONS # Path to a custom n8n extension
+
+  # Logging settings
+  # See https://docs.n8n.io/hosting/configuration/environment-variables/logs/#n8n-logs
+  N8N_LOG_LEVEL: ${N8N_LOG_LEVEL:-info}
+  DB_LOGGING_ENABLED: false
+  DB_LOGGING_OPTIONS: query,warn # Set to `all` to see all TypeORM logs messages, DB_LOGGING_ENABLED must be true
+  CODE_ENABLE_STDOUT: true # Show code nodes logging in stdout
+
+  # Fix config file permissions warnings
+  N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: true
+
+  # Task runner settings
+  # See https://docs.n8n.io/hosting/configuration/task-runners/#setting-up-external-mode
+  N8N_RUNNERS_ENABLED: true
+  # N8N_RUNNERS_MODE: external
+  # N8N_RUNNERS_AUTH_TOKEN: ${N8N_RUNNERS_AUTH_TOKEN} # Required for external mode
+
+  # Auto configuration settings
+  # These are automatically set by LLemonStack during init or start
+  N8N_ENCRYPTION_KEY: # Set by init script in .env
+  N8N_USER_MANAGEMENT_JWT_SECRET: # Set by init script in .env
+  OLLAMA_HOST: # Set by start script as env var
+
+# Common volumes
+x-volume-n8n-storage: &volume-n8n-storage n8n_storage:/home/node/.n8n
+x-volume-import: &volume-import ${LLEMONSTACK_IMPORT_VOLUME_PATH:-./import/}/n8n:/import
+x-volume-shared: &volume-shared ${LLEMONSTACK_SHARED_VOLUME_PATH:-./shared/}:/data/shared
+
+# Base n8n service definition, shared by all profiles
+x-n8n: &service-n8n
+  container_name: n8n
+  labels:
+    dev.dozzle.group: Workflows
+
+  restart: unless-stopped
+  ports:
+    - 5678:5678 # Changed from 5678 to 5679 to avoid conflict with n8n
+
+  # Add common environment variables and volumes to the service
+  environment: *common-env
+
+  volumes:
+    - *volume-n8n-storage
+    - *volume-import
+    - *volume-shared
+
+# n8n Services Profiles
+services:
+  # Standard n8n service
+  n8n:
+    <<: *service-n8n
+    profiles:
+      - n8n
+    # Use the latest n8n image, no customizations
+    image: docker.n8n.io/n8nio/n8n:latest
+
+  # Custom n8n service with tracing and ffmpeg
+  n8n-custom:
+    <<: *service-n8n
+    profiles:
+      - n8n-custom
+
+    build:
+      context: ./build/custom
+      dockerfile: Dockerfile
+
+    # Add additional volumes to the custom n8n service
+    volumes:
+      - *volume-n8n-storage
+      - *volume-import
+      - *volume-shared
+      # Add tracing.js to the container when debugging
+      - ./build/custom/tracing.js:/usr/local/lib/node_modules/n8n/tracing.js # Uncomment when debugging
+      # Bind mount the local docker-entrypoint.sh into the container for easier debugging
+      - ./build/custom/docker-entrypoint.sh:/docker-entrypoint.sh
+
+    # Add additional environment variables to the custom n8n service
+    environment:
+      <<: *common-env
+
+      # OpenTelemetry
+      # See:
+      # - https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/
+      # - https://docs.honeycomb.io/get-started/start-building/application/traces/
+      OTEL_SDK_DISABLED: ${N8N_OTEL_SDK_DISABLED:-false} # Set to true to disable OpenTelemetry and start n8n normally
+      OTEL_SERVICE_NAME: "n8n"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+
+      # Honeycomb configuration
+      OTEL_EXPORTER_OTLP_ENDPOINT: "${N8N_OTEL_EXPORTER_OTLP_ENDPOINT:-https://api.honeycomb.io}" # Base api endpoint
+      OTEL_EXPORTER_OTLP_HEADERS: "${N8N_OTEL_EXPORTER_OTLP_HEADERS:-x-honeycomb-team: ${HONEYCOMB_API_KEY}}" # Applies to all otel requests
+
+      # NodeSDK log level
+      # See https://www.npmjs.com/package/@opentelemetry/sdk-node
+      # NONE | ERROR | WARN | INFO | DEBUG | VERBOSE | ALL
+      OTEL_LOG_LEVEL: INFO
+
+      # Log level used by build/custom/tracing.js
+      # Set to `debug` to enable verbose logging
+      # Winston log levels: error, warn, info, debug, verbose, silly
+      TRACING_LOG_LEVEL: info
