@@ -16,45 +16,34 @@ RUN echo "Creating machine-id..." && \
     apk add dbus --no-cache && \
     dbus-uuidgen > /var/lib/dbus/machine-id
 
+
+# Install OpenTelemetry dependencies required by tracing.js
+RUN mkdir -p /opt/opentelemetry
+WORKDIR /opt/opentelemetry
+COPY ./tracing/package.json package.json
+COPY ./tracing/package-lock.json package-lock.json
+COPY ./tracing/tracing.js tracing.js
+RUN chown node:node ./*.js
+RUN npm install
+
+# Create a symlink to n8n-core in the OpenTelemetry node_modules directory
+# tracing.js patches n8n-core to trace workflow executions
+RUN mkdir -p /opt/opentelemetry/node_modules/n8n-core
+RUN ln -sf /usr/local/lib/node_modules/n8n/node_modules/n8n-core/* /opt/opentelemetry/node_modules/n8n-core/
+
 # Switch to n8n's installation directory
 WORKDIR /usr/local/lib/node_modules/n8n
 
-# TODO: create a package.json to lock the versions of the dependencies
-
-# Install Node.js OpenTelemetry dependencies locally to n8n
-RUN npm install --no-fund --no-audit --loglevel=info \
-    @opentelemetry/api \
-    @opentelemetry/sdk-node \
-    @opentelemetry/auto-instrumentations-node \
-    @opentelemetry/exporter-trace-otlp-http \
-    @opentelemetry/exporter-logs-otlp-http \
-    @opentelemetry/resources \
-    @opentelemetry/semantic-conventions \
-    @opentelemetry/instrumentation \
-    @opentelemetry/instrumentation-winston \
-    @opentelemetry/winston-transport \
-    || echo "Warning: One or more OpenTelemetry packages failed to install, but build will continue"
-
-RUN npm install \
-    winston \
-    flat
-
-RUN npm install \
-    langfuse \
-    langfuse-langchain
-
-# Copy instrumentation files to n8n directory
-# /usr/local/lib/node_modules/n8n/tracing.js
-COPY ./tracing.js ./
-RUN chown node:node ./*.js
+# Install langfuse dependencies in n8n directory to use langfuse in n8n code nodes
+# RUN npm install \
+#     langfuse \
+#     langfuse-langchain
 
 # Copy entrypoint script
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN echo "Setting entrypoint permissions..." && \
     chmod +x /docker-entrypoint.sh && \
-    chown node:node /docker-entrypoint.sh && \
-    echo "Entrypoint script contents:" && \
-    cat /docker-entrypoint.sh
+    chown node:node /docker-entrypoint.sh
 
 USER node
 

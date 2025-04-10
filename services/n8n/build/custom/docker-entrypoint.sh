@@ -13,7 +13,8 @@ fi
 
 if [ "${OTEL_SDK_DISABLED}" = "false" ]; then
   echo "Starting n8n with OpenTelemetry instrumentation..."
-  exec node --require /usr/local/lib/node_modules/n8n/tracing.js /usr/local/bin/n8n "$@"
+  export NODE_PATH="/opt/opentelemetry/node_modules:/usr/local/lib/node_modules:${NODE_PATH}"
+  exec node --require /opt/opentelemetry/tracing.js /usr/local/bin/n8n "$@"
 else
   echo "OpenTelemetry disabled, starting n8n normally..."
   if [ "$#" -gt 0 ]; then
