@@ -166,11 +166,15 @@ export interface IServiceOptions {
   enabled: boolean
 }
 
-// TODO: globally rename interfaces to use I prefix
 export interface IServiceActionOptions {
   silent?: boolean
   config: Config
   show: InterfaceRelayer
+}
+
+export interface IServiceStartOptions extends IServiceActionOptions {
+  envVars?: EnvVars
+  build?: boolean
 }
 
 // Define the type for the Docker Compose configuration

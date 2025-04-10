@@ -174,7 +174,7 @@ export async function configure(
       }
 
       // If service has it's own configure method, call it
-      await service.configure({ silent: false, config, show: config.relayer.show })
+      await service.configure({ silent: false, config, show })
     }
   }
 

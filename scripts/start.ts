@@ -5,9 +5,8 @@
 import { Config } from '@/core/config/config.ts'
 import { ServicesMap } from '@/core/services/services-map.ts'
 import { runCommand } from '@/lib/command.ts'
-import { prepareDockerNetwork } from '@/lib/docker.ts'
 import { Cell, colors, Column, Row, RowType, showTable } from '@/relayer/ui/show.ts'
-import { EnvVars, ExposeHost, ServicesMapType, ServiceType } from '@/types'
+import { EnvVars, ExposeHost, IServiceStartOptions, ServicesMapType, ServiceType } from '@/types'
 
 /*******************************************************************************
  * FUNCTIONS
@@ -26,20 +25,11 @@ export async function checkPrerequisites(): Promise<void> {
 
 // TODO: update API and all references to startService
 export async function startService(
-  config: Config,
   serviceOrName: ServiceType | string,
-  { envVars = {}, profiles: _profiles, createNetwork = true, build = false }: {
-    envVars?: EnvVars
-    profiles?: string[]
-    createNetwork?: boolean
-    build?: boolean
-  } = {},
+  options: IServiceStartOptions,
 ): Promise<ServiceType> {
-  const show = config.relayer.show
-
-  if (createNetwork) {
-    await prepareDockerNetwork(config.dockerNetworkName)
-  }
+  const config = options.config
+  const show = options.show
 
   const service = (typeof serviceOrName === 'string')
     ? config.getServiceByName(serviceOrName)
@@ -53,7 +43,7 @@ export async function startService(
     throw new Error(`Docker compose file not found for ${service}: ${composeFile}`)
   }
 
-  const result = await service.start({ envVars, silent: false, build })
+  const result = await service.start(options)
   if (!result.success) {
     show.error('Service failed to start', { error: result.error || new Error('Unknown error') })
   }
@@ -69,26 +59,20 @@ export async function startService(
  * @param envVars - The environment variables
  * @param composeFiles - The compose files to use
  */
-export async function startServices(
+async function startServices(
   config: Config,
   services: ServicesMapType,
-  { envVars = {}, build = false, createNetwork = true }: {
+  { envVars = {}, build = false }: {
     envVars?: EnvVars
     build?: boolean
-    createNetwork?: boolean
   } = {},
 ) {
   const show = config.relayer.show
 
-  if (createNetwork) {
-    // Create the network if it doesn't exist
-    await prepareDockerNetwork(config.dockerNetworkName)
-  }
-
   // Start all services in parallel
   await Promise.all(services.filterMap(async (service) => {
     try {
-      await startService(config, service, { envVars, createNetwork: false, build })
+      await startService(service, { envVars, build, config, show })
     } catch (error) {
       show.error(`Failed to start service ${service}:`, { error })
       throw error
@@ -219,12 +203,16 @@ export async function start(
     await checkPrerequisites()
 
     show.action('Setting up environment...')
-    await config.prepareEnv() // TODO: check for errors and show them
+    const prepareEnvResult = await config.prepareEnv()
+    if (!prepareEnvResult.success) {
+      show.logMessages(prepareEnvResult.messages)
+      Deno.exit(1)
+    }
 
     // Start services
     if (service) {
       // Start a single service
-      await startService(config, service, { build, createNetwork: false })
+      await startService(service, { build, config, show })
     } else {
       // Start all services by service group
       for (const [groupName, groupServices] of config.getServicesGroups()) {
@@ -233,7 +221,7 @@ export async function start(
         )
         if (enabledGroupServices.size > 0) {
           show.action(`\nStarting ${groupName} services...`)
-          await startServices(config, enabledGroupServices, { build, createNetwork: false })
+          await startServices(config, enabledGroupServices, { build })
         }
       }
     }

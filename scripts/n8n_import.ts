@@ -7,10 +7,7 @@ import { dockerExec } from '@/lib/docker.ts'
 import { fs, path } from '@/lib/fs.ts'
 import { Config } from '../src/core/config/config.ts'
 
-const config = Config.getInstance()
-await config.initialize()
-
-async function resetN8nImportFolder(importDir: string): Promise<void> {
+async function resetN8nImportFolder(config: Config, importDir: string): Promise<void> {
   const show = config.relayer.show
   show.info(`Clearing import folder: ${importDir}`)
   const credentialsDir = path.join(importDir, 'credentials')
@@ -33,7 +30,7 @@ async function resetN8nImportFolder(importDir: string): Promise<void> {
   await Deno.writeTextFile(path.join(workflowsDir, '.keep'), '')
 }
 
-async function archiveN8nImportFolder(): Promise<void> {
+async function archiveN8nImportFolder(config: Config): Promise<void> {
   const show = config.relayer.show
   const n8nImportDir = path.join(config.importDir, 'n8n')
   const archiveBaseDir = path.join(config.importDir, `.imported`)
@@ -55,7 +52,7 @@ async function archiveN8nImportFolder(): Promise<void> {
   // Copy the directory recursively
   await fs.copy(n8nImportDir, newArchiveDir, { overwrite: true })
 
-  resetN8nImportFolder(n8nImportDir)
+  resetN8nImportFolder(config, n8nImportDir)
 }
 
 /**
@@ -63,7 +60,7 @@ async function archiveN8nImportFolder(): Promise<void> {
  *
  * This ensures the credentials are correct for the current stack configuration.
  */
-async function prepareCredentialsImport(): Promise<void> {
+async function prepareCredentialsImport(config: Config): Promise<void> {
   const show = config.relayer.show
   const credentialsDir = path.join(config.importDir, 'n8n', 'credentials')
   const credentials = Deno.readDir(credentialsDir)
@@ -92,7 +89,7 @@ async function prepareCredentialsImport(): Promise<void> {
 }
 
 async function importToN8n(
-  _config: Config,
+  config: Config,
   { skipPrompt = false, archiveAfterImport = true }: {
     skipPrompt?: boolean
     archiveAfterImport?: boolean
@@ -116,7 +113,7 @@ async function importToN8n(
 
   try {
     // Replace all ${var} template in credentials import folder with env vars
-    await prepareCredentialsImport()
+    await prepareCredentialsImport(config)
 
     const getNumImported = (results: RunCommandOutput) => {
       const matches = results.stdout.match(/Importing (\d+) /)
@@ -167,7 +164,7 @@ async function importToN8n(
       // This will clear the import folder and archive it to import/.imported
       // This prevents accidental overwriting of workflows and credentials
       // when import is run multiple times.
-      await archiveN8nImportFolder()
+      await archiveN8nImportFolder(config)
     }
   } catch (error) {
     show.error('Error during import', { error })
@@ -182,6 +179,10 @@ export async function runImport(
     archive?: boolean
   } = {},
 ): Promise<void> {
-  await config.prepareEnv() // TODO: add logging of errors
+  const prepareEnvResult = await config.prepareEnv()
+  if (!prepareEnvResult.success) {
+    config.relayer.show.logMessages(prepareEnvResult.messages)
+    Deno.exit(1)
+  }
   await importToN8n(config, { skipPrompt, archiveAfterImport: archive })
 }

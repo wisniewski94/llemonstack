@@ -82,7 +82,11 @@ export async function update(
       }
     }
 
-    await config.prepareEnv()
+    const prepareResult = await config.prepareEnv()
+    if (!prepareResult.success) {
+      show.logMessages(prepareResult.messages)
+      Deno.exit(1)
+    }
 
     if (!skipStop) {
       await stop(config, { all: true })

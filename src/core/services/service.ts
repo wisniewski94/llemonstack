@@ -3,11 +3,11 @@ import { path } from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 import { ObservableStruct } from '@/lib/utils/observable.ts'
 import {
-  EnvVars,
   ExposeHost,
   IRepoConfig,
   IServiceActionOptions,
   IServiceOptions,
+  IServiceStartOptions,
   IServiceState,
   ServiceStatusType,
   ServiceYaml,
@@ -398,14 +398,19 @@ export class Service {
    * @returns {TryCatchResult<boolean>} - The result of the command
    */
   public async start(
-    { envVars = {}, silent = false, build = false }: {
-      envVars?: EnvVars
-      silent?: boolean
-      build?: boolean
-    } = {},
+    options: IServiceStartOptions,
   ): Promise<TryCatchResult<boolean>> {
-    // TODO: check if config.prepareEnv has run, if not, run it
-    // prepareEnv will ensure the service and docker network are ready.
+    // Prepare environment if not already prepared
+    if (!options.config.isEnvPrepared()) {
+      const prepareEnvResult = await options.config.prepareEnv()
+      if (!prepareEnvResult.success) {
+        return failure<boolean>(
+          `Failed to prepare environment: ${this.name}`,
+          prepareEnvResult,
+          false,
+        )
+      }
+    }
 
     const results = await tryDockerCompose('up', {
       projectName: this._configInstance.projectName,
@@ -414,10 +419,10 @@ export class Service {
       ansi: 'never',
       args: [
         '-d',
-        build ? '--build' : false,
+        options.build ? '--build' : false,
       ],
-      env: envVars,
-      silent,
+      env: options.envVars,
+      silent: options.silent,
       captureOutput: false,
     })
     if (results.success) {
@@ -426,7 +431,19 @@ export class Service {
     return failure<boolean>(`Failed to start service: ${this.name}`, results, false)
   }
 
-  public async stop(): Promise<TryCatchResult<boolean>> {
+  public async stop(options: IServiceActionOptions): Promise<TryCatchResult<boolean>> {
+    // Prepare environment if not already prepared
+    if (!options.config.isEnvPrepared()) {
+      const prepareEnvResult = await options.config.prepareEnv()
+      if (!prepareEnvResult.success) {
+        return failure<boolean>(
+          `Failed to prepare environment: ${this.name}`,
+          prepareEnvResult,
+          false,
+        )
+      }
+    }
+
     const results = await tryDockerCompose('down', {
       composeFile: this.composeFile,
       projectName: this._configInstance.projectName,

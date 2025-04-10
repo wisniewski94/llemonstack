@@ -183,7 +183,7 @@ Deno.test('Config initialization - templates', async (t) => {
         volumes: 'volumes',
       },
       services: {
-        n8n: { enabled: true },
+        n8n: { enabled: true, profiles: ['n8n'] },
         flowise: { enabled: true },
         openwebui: { enabled: true },
         'browser-use': { enabled: true },

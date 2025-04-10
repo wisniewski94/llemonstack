@@ -266,7 +266,7 @@ export async function versions(config: Config): Promise<void> {
 
   const results = await config.prepareEnv()
   if (!results.success) {
-    show.fatal(results.toString())
+    show.logMessages(results.messages)
     Deno.exit(1)
   }
 

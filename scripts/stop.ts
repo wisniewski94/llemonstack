@@ -99,14 +99,14 @@ async function stopServices(
  * Does not remove orphans.
  * @param {Service} service - The service to stop
  */
-export async function stopService(
+async function stopService(
   config: Config,
   service: ServiceType,
 ): Promise<void> {
   const show = config.relayer.show
   show.action(`Stopping ${service.name}...`)
 
-  const result = await service.stop()
+  const result = await service.stop({ config, show })
 
   if (result.success) {
     show.action(`${service.name} stopped`)
@@ -149,7 +149,12 @@ export async function stop(
     show.action(`Stopping enabled services for project: ${config.projectName}...`)
   }
 
-  await config.prepareEnv() // TODO: check for errors and show them
+  // Wait for env to be prepared before stopping services in parallel
+  const prepareResult = await config.prepareEnv()
+  if (!prepareResult.success) {
+    show.logMessages(prepareResult.messages)
+    Deno.exit(1)
+  }
 
   if (service) {
     await stopService(config, service)

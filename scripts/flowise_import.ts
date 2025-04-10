@@ -3,18 +3,14 @@
  */
 
 import { Config } from '@/core/config/config.ts'
-import { getFlowiseApiKey } from '@/lib/flowise.ts'
 import { fs, path } from '@/lib/fs.ts'
-
-// todo: remove this
-const config = Config.getInstance()
-await config.initialize()
+import { FlowiseService } from '@/services/flowise/service.ts'
 
 const FLOWISE_BASE_URL = 'http://localhost:3001'
-const FLOWISE_IMPORT_DIR = path.join(config.importDir, 'flowise')
-const ARCHIVE_BASE_DIR = path.join(config.importDir, `.imported`)
+const FLOWISE_IMPORT_DIR_BASE = 'flowise'
+const ARCHIVE_BASE_DIR_BASE = `.imported`
 
-async function resetFlowiseImportFolder(importDir: string): Promise<void> {
+async function resetFlowiseImportFolder(config: Config, importDir: string): Promise<void> {
   const show = config.relayer.show
   show.info(`Clearing import folder: ${importDir}`)
   const credentialsDir = path.join(importDir, 'credentials')
@@ -37,29 +33,33 @@ async function resetFlowiseImportFolder(importDir: string): Promise<void> {
   await Deno.writeTextFile(path.join(workflowsDir, '.keep'), '')
 }
 
-async function archiveFlowiseImportFolder(): Promise<void> {
+async function archiveFlowiseImportFolder(config: Config): Promise<void> {
+  const importDir = path.join(config.importDir, FLOWISE_IMPORT_DIR_BASE)
+  const archiveDir = path.join(config.importDir, ARCHIVE_BASE_DIR_BASE)
+
   const show = config.relayer.show
   // Create timestamp for unique archive folder
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-  const newArchiveDir = path.join(ARCHIVE_BASE_DIR, `flowise-${timestamp}`)
+  const newArchiveDir = path.join(archiveDir, `flowise-${timestamp}`)
 
-  show.info(`Archiving import folder: ${FLOWISE_IMPORT_DIR} -> ${newArchiveDir}`)
+  show.info(`Archiving import folder: ${importDir} -> ${newArchiveDir}`)
 
   // Create archive directory if it doesn't exist
   await fs.ensureDir(newArchiveDir)
 
   // Check if import folder exists
-  if (!await fs.exists(FLOWISE_IMPORT_DIR)) {
-    show.warn(`Import folder not found: ${FLOWISE_IMPORT_DIR}`)
+  if (!await fs.exists(importDir)) {
+    show.warn(`Import folder not found: ${importDir}`)
     return
   }
   // Copy the directory recursively
-  await fs.copy(FLOWISE_IMPORT_DIR, newArchiveDir, { overwrite: true })
+  await fs.copy(importDir, newArchiveDir, { overwrite: true })
 
-  resetFlowiseImportFolder(FLOWISE_IMPORT_DIR)
+  resetFlowiseImportFolder(config, importDir)
 }
 
 async function importFolder(
+  config: Config,
   type: 'MULTIAGENT' | 'CHATFLOW',
   { apiKey }: { apiKey: string },
 ) {
@@ -127,7 +127,7 @@ async function importFolder(
 }
 
 async function importToFlowise(
-  _projectName: string,
+  config: Config,
   { skipPrompt = false, archiveAfterImport = true }: {
     skipPrompt?: boolean
     archiveAfterImport?: boolean
@@ -143,9 +143,12 @@ async function importToFlowise(
   }
 
   try {
+    const flowise = config.getServiceByName('flowise') as FlowiseService
+
     // Check if Flowise is running by pinging the API
     show.info('Checking if Flowise is running...')
     try {
+      // TODO: move to flowise service
       const response = await fetch(`${FLOWISE_BASE_URL}/api/v1/ping`)
       if (!response.ok && (await response.text()) !== 'pong') {
         throw new Error(`Failed to ping Flowise API: ${response.status} ${response.statusText}`)
@@ -158,16 +161,22 @@ async function importToFlowise(
       return
     }
 
-    const { apiKey } = await getFlowiseApiKey() || { apiKey: '' }
-    await importFolder('CHATFLOW', { apiKey })
-    await importFolder('MULTIAGENT', { apiKey })
+    const apiResult = await flowise.getApiKey()
+    if (!apiResult.success || !apiResult.data) {
+      show.logMessages(apiResult.messages)
+      Deno.exit(1)
+    }
+    const { apiKey } = apiResult.data
+
+    await importFolder(config, 'CHATFLOW', { apiKey })
+    await importFolder(config, 'MULTIAGENT', { apiKey })
 
     if (archiveAfterImport) {
       // Archive the import folder
       // This will clear the import folder and archive it to import/.imported
       // This prevents accidental overwriting of workflows and credentials
       // when import is run multiple times.
-      await archiveFlowiseImportFolder()
+      await archiveFlowiseImportFolder(config)
     }
   } catch (error) {
     show.error('Error during import', { error })
@@ -176,12 +185,16 @@ async function importToFlowise(
 }
 
 export async function runImport(
-  projectName: string,
+  config: Config,
   { skipPrompt = false, archive = true }: {
     skipPrompt?: boolean
     archive?: boolean
   } = {},
 ): Promise<void> {
-  await config.prepareEnv()
-  await importToFlowise(projectName, { skipPrompt, archiveAfterImport: archive })
+  const prepareEnvResult = await config.prepareEnv()
+  if (!prepareEnvResult.success) {
+    config.relayer.show.logMessages(prepareEnvResult.messages)
+    Deno.exit(1)
+  }
+  await importToFlowise(config, { skipPrompt, archiveAfterImport: archive })
 }

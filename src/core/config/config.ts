@@ -53,7 +53,9 @@ export class Config {
   // Instance Properties: this.*
   //
 
-  protected _relayer: InstanceType<typeof Relayer> | null = null
+  private _envPrepared: boolean = false
+
+  private _relayer: InstanceType<typeof Relayer> | null = null
 
   private _host: Host = Host.getInstance()
 
@@ -88,8 +90,8 @@ export class Config {
   private _autoEnabledServices: ServicesMap = new ServicesMap()
 
   // Base configuration
-  protected _configDir: string = ''
-  protected _configFile: string = ''
+  private _configDir: string = ''
+  private _configFile: string = ''
 
   readonly installDir = INSTALL_DIR
 
@@ -102,7 +104,7 @@ export class Config {
    * Set the config dir and config file path to absolute path
    * @param configFile - The path to the config file
    */
-  protected setConfigFile(configFile: string) {
+  private setConfigFile(configFile: string) {
     this._configFile = fs.path.resolve(Deno.cwd(), configFile)
     this._configDir = fs.path.dirname(this._configFile)
   }
@@ -786,6 +788,10 @@ export class Config {
     return this._setEnv(env)
   }
 
+  public isEnvPrepared(): boolean {
+    return this._envPrepared
+  }
+
   /**
    * Prepare the env for the project and all enabled services
    *
@@ -794,9 +800,21 @@ export class Config {
    * @returns {Promise<TryCatchResult<boolean>>}
    */
   public async prepareEnv(
-    { all = false, silent = false }: { all?: boolean; silent?: boolean } = {},
+    { all = false, silent = false, force = false }: {
+      all?: boolean
+      silent?: boolean
+      force?: boolean
+    } = {},
   ): Promise<TryCatchResult<boolean>> {
     const results = success<boolean>(true)
+
+    // Return early if env is already prepared
+    if (this._envPrepared && !force) {
+      return results
+    }
+
+    // Immediately set _envPrepared to avoid race conditions
+    this._envPrepared = true
 
     // Make sure required base dirs exist
     results.collect(
@@ -814,12 +832,14 @@ export class Config {
 
     if (!results.success) {
       results.addMessage('error', 'Failed to ensure required dirs exist')
+      this._envPrepared = false
     }
 
     // Create the docker network
     const networkResult = await prepareDockerNetwork(this.dockerNetworkName)
     if (!networkResult.success) {
       results.addMessage('error', 'Failed to prepare docker network')
+      this._envPrepared = false
     }
 
     const services = all ? this.getAllServices() : this.getEnabledServices()
@@ -880,6 +900,7 @@ export class Config {
       'dirs',
       'services',
     ] as const
+
     for (const key of requiredKeys) {
       if (!(key in config)) {
         return false

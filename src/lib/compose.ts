@@ -27,6 +27,7 @@ export async function getImagesFromComposeYaml(
 
   // Prevent circular references
   if (processedFiles.has(composeFile)) {
+    // TODO: log this instead of showing warning
     showWarning(`Circular reference detected for ${composeFile}, skipping`)
     return []
   }

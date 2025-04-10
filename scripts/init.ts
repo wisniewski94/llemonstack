@@ -290,7 +290,7 @@ async function startSupabase(
       // Start supabase
       show.info('Starting Supabase...')
 
-      await supabase.start()
+      await supabase.start({ config, show })
       // Wait for 3 seconds to ensure Supabase is fully initialized
       await new Promise((resolve) => setTimeout(resolve, 3000))
     } catch (error) {
@@ -303,7 +303,7 @@ async function startSupabase(
   } else {
     show.info('Attempting to start Supabase again...')
     try {
-      await startService(config, 'supabase')
+      await startService('supabase', { config, show })
       await new Promise((resolve) => setTimeout(resolve, 5000))
     } catch (error) {
       show.error('Error while starting Supabase', { error })
@@ -560,7 +560,7 @@ export async function init(
     // Configure ollama
     const ollamaService = config.getServiceByName('ollama') as OllamaService
     if (ollamaService) {
-      await ollamaService.configure({ silent: false, config })
+      await ollamaService.configure({ silent: false, config, show })
     }
 
     // Save ollama config settings
