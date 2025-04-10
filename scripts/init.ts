@@ -551,11 +551,12 @@ export async function init(
 
     show.action('\nPreparing environment and services. This could take a bit...')
 
-    // Setup supabase env
-    // TODO: turn on debug mode for this or show a message
-    // it clones the repos which could take awhile
-    // For now, we'll let them read the ollama message while it runs in the background
-    await config.prepareEnv({ silent: false })
+    // Prepare environment
+    const prepareEnvResult = await config.prepareEnv({ silent: false })
+    if (!prepareEnvResult.success) {
+      show.logMessages(prepareEnvResult.messages)
+      Deno.exit(1)
+    }
 
     // Configure ollama
     const ollamaService = config.getServiceByName('ollama') as OllamaService
