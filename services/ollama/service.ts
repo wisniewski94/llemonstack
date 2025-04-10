@@ -60,13 +60,14 @@ export class OllamaService extends Service {
       return super.configure(options)
     }
 
-    const gpuDisabled = options.config.host.isMac()
+    const config = this._configInstance
+    const gpuDisabled = config.host.isMac()
 
     // Default to host when silent is true
     let ollamaProfile = 'host'
 
     if (!options.silent) {
-      const { show } = options
+      const show = config.show
       show.header('Ollama Configuration Options')
       show.info('Ollama can run on your host machine or inside a Docker container.')
       show.info('The host option requires manually starting ollama on your host machine.')
@@ -107,7 +108,9 @@ export class OllamaService extends Service {
   }
 
   // deno-lint-ignore require-await
-  override async showAdditionalInfo({ show, config }: IServiceActionOptions): Promise<void> {
+  override async showAdditionalInfo(_options: IServiceActionOptions): Promise<void> {
+    const config = this._configInstance
+    const show = config.show
     if (this.getProfiles()[0] === 'ollama-host') {
       const ollamaUrl = this.getHostEndpoint()?.url || ''
       show.userAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)

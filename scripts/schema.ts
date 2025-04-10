@@ -35,7 +35,7 @@ export async function schema(config: Config, action: string, service: string) {
 
   if (!await isSupabaseStarted(config)) {
     if (show.confirm(`Supabase is not running. Shall we start it?`, true)) {
-      supabaseService = await startService('supabase', { config, show })
+      supabaseService = await startService(config, 'supabase')
       supabaseStarted = true
     }
     // Wait a few seconds for supabase to fully initialize
@@ -68,7 +68,7 @@ export async function schema(config: Config, action: string, service: string) {
 
   if (supabaseStarted && supabaseService) {
     if (show.confirm(`Supabase was started for this operation. Shall we stop it?`)) {
-      await supabaseService.stop({ config, show })
+      await supabaseService.stop()
     }
   }
 }

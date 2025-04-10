@@ -106,7 +106,7 @@ async function stopService(
   const show = config.relayer.show
   show.action(`Stopping ${service.name}...`)
 
-  const result = await service.stop({ config, show })
+  const result = await service.stop()
 
   if (result.success) {
     show.action(`${service.name} stopped`)

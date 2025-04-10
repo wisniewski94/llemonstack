@@ -25,11 +25,11 @@ export async function checkPrerequisites(): Promise<void> {
 
 // TODO: update API and all references to startService
 export async function startService(
+  config: Config,
   serviceOrName: ServiceType | string,
-  options: IServiceStartOptions,
+  options: IServiceStartOptions = {},
 ): Promise<ServiceType> {
-  const config = options.config
-  const show = options.show
+  const show = config.show
 
   const service = (typeof serviceOrName === 'string')
     ? config.getServiceByName(serviceOrName)
@@ -72,7 +72,7 @@ async function startServices(
   // Start all services in parallel
   await Promise.all(services.filterMap(async (service) => {
     try {
-      await startService(service, { envVars, build, config, show })
+      await startService(config, service, { envVars, build })
     } catch (error) {
       show.error(`Failed to start service ${service}:`, { error })
       throw error
@@ -158,7 +158,7 @@ function outputServicesInfo({
   // Show additional info for each service
   // See OllamaService for an example
   services.forEach(async (service) => {
-    await service.showAdditionalInfo({ show, config })
+    await service.showAdditionalInfo()
   })
 
   console.log('\n')
@@ -212,7 +212,7 @@ export async function start(
     // Start services
     if (service) {
       // Start a single service
-      await startService(service, { build, config, show })
+      await startService(config, service, { build })
     } else {
       // Start all services by service group
       for (const [groupName, groupServices] of config.getServicesGroups()) {

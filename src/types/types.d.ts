@@ -13,6 +13,7 @@ export type { AppLogRecord } from '../relayer/base.ts'
 export type { ICallStackInfo, ICallStackOptions } from '../relayer/callstack.ts'
 
 export type RelayerInstance = InstanceType<typeof RelayerBase>
+export type InterfaceRelayerInstance = InstanceType<typeof InterfaceRelayer>
 
 export interface LLemonStackConfig {
   initialized: string // ISO 8601 timestamp if initialized, otherwise empty
@@ -168,8 +169,6 @@ export interface IServiceOptions {
 
 export interface IServiceActionOptions {
   silent?: boolean
-  config: Config
-  show: InterfaceRelayer
 }
 
 export interface IServiceStartOptions extends IServiceActionOptions {

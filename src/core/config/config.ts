@@ -7,6 +7,7 @@ import { isTruthy } from '@/lib/utils/compare.ts'
 import { LogLevel } from '@/relayer/logger.ts'
 import { Relayer } from '@/relayer/relayer.ts'
 import {
+  InterfaceRelayerInstance,
   IServiceConfigState,
   IServiceOptions,
   IServicesGroups,
@@ -212,6 +213,10 @@ export class Config {
     }
     this._relayer.setContextKey('projectName', this.projectName)
     return this._relayer
+  }
+
+  get show(): InterfaceRelayerInstance {
+    return this.relayer.show
   }
 
   //

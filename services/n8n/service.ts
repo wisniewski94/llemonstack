@@ -20,7 +20,8 @@ export class N8nService extends Service {
     let n8nProfile = 'n8n' // Default profile
 
     if (!options.silent) {
-      const { show } = options
+      const show = this._configInstance.show
+
       show.header('n8n Configuration Options')
       show.info('Select the n8n profile you want to use')
 

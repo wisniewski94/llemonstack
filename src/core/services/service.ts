@@ -398,11 +398,13 @@ export class Service {
    * @returns {TryCatchResult<boolean>} - The result of the command
    */
   public async start(
-    options: IServiceStartOptions,
+    options: IServiceStartOptions = {},
   ): Promise<TryCatchResult<boolean>> {
+    const config = this._configInstance
+
     // Prepare environment if not already prepared
-    if (!options.config.isEnvPrepared()) {
-      const prepareEnvResult = await options.config.prepareEnv()
+    if (!config.isEnvPrepared()) {
+      const prepareEnvResult = await config.prepareEnv()
       if (!prepareEnvResult.success) {
         return failure<boolean>(
           `Failed to prepare environment: ${this.name}`,
@@ -431,10 +433,11 @@ export class Service {
     return failure<boolean>(`Failed to start service: ${this.name}`, results, false)
   }
 
-  public async stop(options: IServiceActionOptions): Promise<TryCatchResult<boolean>> {
+  public async stop(_options: IServiceActionOptions = {}): Promise<TryCatchResult<boolean>> {
+    const config = this._configInstance
     // Prepare environment if not already prepared
-    if (!options.config.isEnvPrepared()) {
-      const prepareEnvResult = await options.config.prepareEnv()
+    if (!config.isEnvPrepared()) {
+      const prepareEnvResult = await config.prepareEnv()
       if (!prepareEnvResult.success) {
         return failure<boolean>(
           `Failed to prepare environment: ${this.name}`,
@@ -464,7 +467,7 @@ export class Service {
    */
   // deno-lint-ignore require-await
   public async configure(
-    _options: IServiceActionOptions,
+    _options: IServiceActionOptions = {},
   ): Promise<TryCatchResult<boolean>> {
     return success<boolean>(true)
   }
@@ -474,7 +477,7 @@ export class Service {
    *
    * @returns {Promise<void>}
    */
-  public async showAdditionalInfo(_options: IServiceActionOptions): Promise<void> {
+  public async showAdditionalInfo(_options: IServiceActionOptions = {}): Promise<void> {
     // Override in subclasses to show additional info
   }
 }
