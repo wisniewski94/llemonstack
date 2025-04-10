@@ -71,12 +71,18 @@ export async function startService(
 export async function startServices(
   config: Config,
   services: ServicesMapType,
-  { envVars = {}, build = false }: { envVars?: EnvVars; build?: boolean } = {},
+  { envVars = {}, build = false, createNetwork = true }: {
+    envVars?: EnvVars
+    build?: boolean
+    createNetwork?: boolean
+  } = {},
 ) {
   const show = config.relayer.show
 
-  // Create the network if it doesn't exist
-  await prepareDockerNetwork(config.dockerNetworkName)
+  if (createNetwork) {
+    // Create the network if it doesn't exist
+    await prepareDockerNetwork(config.dockerNetworkName)
+  }
 
   // Start all services in parallel
   await Promise.all(services.filterMap(async (service) => {
@@ -227,7 +233,7 @@ export async function start(
     // Start services
     if (service) {
       // Start a single service
-      await startService(config, service, { build })
+      await startService(config, service, { build, createNetwork: false })
     } else {
       // Start all services by service group
       for (const [groupName, groupServices] of config.getServicesGroups()) {
@@ -236,7 +242,7 @@ export async function start(
         )
         if (enabledGroupServices.size > 0) {
           show.action(`\nStarting ${groupName} services...`)
-          await startServices(config, enabledGroupServices, { build })
+          await startServices(config, enabledGroupServices, { build, createNetwork: false })
         }
       }
     }
