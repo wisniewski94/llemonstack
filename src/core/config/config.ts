@@ -143,11 +143,23 @@ export class Config {
     return fs.path.resolve(Deno.cwd(), this._config.dirs.repos)
   }
 
-  get servicesDir(): string {
+  /**
+   * Get the list of directories containing service config files
+   *
+   * @returns {string[]} List of service directory absolute paths in order of priority
+   */
+  get servicesDirs(): string[] {
+    const dirs: string[] = []
     if (this._config.dirs.services) {
-      return fs.path.resolve(Deno.cwd(), this._config.dirs.services)
+      const configDirs = Array.isArray(this._config.dirs.services)
+        ? this._config.dirs.services
+        : [this._config.dirs.services]
+      for (const dir of configDirs) {
+        dirs.push(fs.path.resolve(Deno.cwd(), dir))
+      }
     }
-    return fs.path.join(this.installDir, 'services')
+    dirs.push(fs.path.join(this.installDir, 'services'))
+    return dirs
   }
 
   get importDir(): string {
@@ -356,97 +368,104 @@ export class Config {
       success: true,
     })
 
-    // Get list of services in services directory
-    const servicesDirResult = await fs.readDir(this.servicesDir)
-    if (servicesDirResult.error || !servicesDirResult.data) {
-      return failure<Record<string, Service>>(
-        'Error reading services directory',
-        {
-          data: null,
-          error: servicesDirResult.error || new Error('Empty directory'),
-          success: false,
-        },
-      )
-    }
+    // Load services from services directory in reverse order of priority
+    // Higher priority services will override lower priority services
+    const servicesDirs = this.servicesDirs.reverse()
 
-    // Load services from services directory
-    for await (const serviceDir of servicesDirResult.data) {
-      if (!serviceDir.isDirectory) {
-        continue
-      }
-      const yamlFilePath = fs.path.join(this.servicesDir, serviceDir.name, SERVICE_CONFIG_FILE_NAME)
-      if (!(await fs.fileExists(yamlFilePath)).data) {
-        result.addMessage('debug', `Service config file not found: ${serviceDir.name}`)
-        continue
-      }
-      const yamlResult = await fs.readYaml<ServiceYaml>(
-        yamlFilePath,
-      )
-      if (!yamlResult.success || !yamlResult.data) {
-        result.addMessage('error', `Error reading service config file: ${serviceDir.name}`, {
-          error: yamlResult.error,
-        })
-        continue
-      }
-
-      const serviceYaml = yamlResult.data
-
-      if (serviceYaml.disabled) {
-        result.addMessage('debug', `Service ${serviceYaml.service} is disabled, skipping`)
-        continue
-      } else {
-        result.addMessage(
-          'debug',
-          `${serviceYaml.name} loaded into ${serviceYaml.service_group} group`,
+    // TODO: refactor into helper functions, run in parallel
+    for (const servicesDir of servicesDirs) {
+      // Get list of services in services directory
+      const servicesDirResult = await fs.readDir(servicesDir)
+      if (servicesDirResult.error || !servicesDirResult.data) {
+        return failure<Record<string, Service>>(
+          'Error reading services directory',
+          {
+            data: null,
+            error: servicesDirResult.error || new Error('Empty directory'),
+            success: false,
+          },
         )
       }
 
-      const serviceConfig = this._config.services[serviceYaml.service] || {}
+      // Load services from services directory
+      for await (const serviceDir of servicesDirResult.data) {
+        if (!serviceDir.isDirectory) {
+          continue
+        }
+        const yamlFilePath = fs.path.join(servicesDir, serviceDir.name, SERVICE_CONFIG_FILE_NAME)
+        if (!(await fs.fileExists(yamlFilePath)).data) {
+          result.addMessage('debug', `Service config file not found: ${serviceDir.name}`)
+          continue
+        }
+        const yamlResult = await fs.readYaml<ServiceYaml>(
+          yamlFilePath,
+        )
+        if (!yamlResult.success || !yamlResult.data) {
+          result.addMessage('error', `Error reading service config file: ${serviceDir.name}`, {
+            error: yamlResult.error,
+          })
+          continue
+        }
 
-      // Create Service constructor options
-      const serviceOptions: IServiceOptions = {
-        serviceYaml,
-        serviceDir: fs.path.join(this.servicesDir, serviceYaml.service),
-        config: this,
-        configSettings: serviceConfig,
-        enabled: serviceConfig.enabled !== false, // Enable service unless explicitly disabled
-      }
+        const serviceYaml = yamlResult.data
 
-      // Check if there's a custom service implementation in the service directory
-      const serviceImplPath = fs.path.join(this.servicesDir, serviceDir.name, 'service.ts')
-      const serviceImplExists = (await fs.fileExists(serviceImplPath)).data
-
-      if (serviceImplExists) {
-        try {
-          // Dynamically import the service implementation
-          const serviceModule = await import(`file://${serviceImplPath}`)
-          const ServiceClass = Object.values(serviceModule)[0] as typeof Service
-
-          if (ServiceClass && typeof ServiceClass === 'function') {
-            const service = new ServiceClass(serviceOptions)
-            this.registerService(service)
-
-            result.addMessage(
-              'debug',
-              `Using custom service implementation for ${serviceYaml.service}`,
-            )
-            continue // Skip the default Service instantiation below
-          }
-        } catch (error) {
+        if (serviceYaml.disabled) {
+          result.addMessage('debug', `Service ${serviceYaml.service} is disabled, skipping`)
+          continue
+        } else {
           result.addMessage(
-            'error',
-            `Error loading custom service implementation for ${serviceYaml.service}`,
-            {
-              error,
-            },
+            'debug',
+            `${serviceYaml.name} loaded into ${serviceYaml.service_group} group`,
           )
         }
+
+        const serviceConfig = this._config.services[serviceYaml.service] || {}
+
+        // Create Service constructor options
+        const serviceOptions: IServiceOptions = {
+          serviceYaml,
+          serviceDir: fs.path.join(servicesDir, serviceYaml.service),
+          config: this,
+          configSettings: serviceConfig,
+          enabled: serviceConfig.enabled !== false, // Enable service unless explicitly disabled
+        }
+
+        // Check if there's a custom service implementation in the service directory
+        const serviceImplPath = fs.path.join(servicesDir, serviceDir.name, 'service.ts')
+        const serviceImplExists = (await fs.fileExists(serviceImplPath)).data
+
+        if (serviceImplExists) {
+          try {
+            // Dynamically import the service implementation
+            const serviceModule = await import(`file://${serviceImplPath}`)
+            const ServiceClass = Object.values(serviceModule)[0] as typeof Service
+
+            if (ServiceClass && typeof ServiceClass === 'function') {
+              const service = new ServiceClass(serviceOptions)
+              this.registerService(service)
+
+              result.addMessage(
+                'debug',
+                `Using custom service implementation for ${serviceYaml.service}`,
+              )
+              continue // Skip the default Service instantiation below
+            }
+          } catch (error) {
+            result.addMessage(
+              'error',
+              `Error loading custom service implementation for ${serviceYaml.service}`,
+              {
+                error,
+              },
+            )
+          }
+        }
+
+        // Load the default Service class if no custom implementation exists
+        const service = new Service(serviceOptions)
+
+        this.registerService(service)
       }
-
-      // Load the default Service class if no custom implementation exists
-      const service = new Service(serviceOptions)
-
-      this.registerService(service)
     }
 
     // After all services are loaded, update the dependencies map

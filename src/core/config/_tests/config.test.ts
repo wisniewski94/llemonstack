@@ -44,8 +44,8 @@ Deno.test('Config', async (t) => {
     const expectedRepoDir = fs.path.join(configInstance.configDir, 'repos')
     assertEquals(configInstance.reposDir, expectedRepoDir)
 
-    const expectedServicesDir = fs.path.join(configInstance.installDir, 'services')
-    assertEquals(configInstance.servicesDir, expectedServicesDir)
+    const expectedServicesDir = [fs.path.join(configInstance.installDir, 'services')]
+    assertEquals(configInstance.servicesDirs, expectedServicesDir)
 
     const expectedImportDir = fs.path.join(Deno.cwd(), 'import')
     assertEquals(configInstance.importDir, expectedImportDir)

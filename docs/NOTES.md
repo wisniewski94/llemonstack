@@ -16,6 +16,11 @@ container logs in Docker Desktop.
 
 **Code:**
 
+- [x] Add support for loading services from project directory
+
+  - [x] Allow overriding core services
+  - [x] Allow defining new services
+
 - [ ] Rework Relayer to not instantiate InterfaceRelay, provide it during init
 
   - [ ] Create InkRelayer
