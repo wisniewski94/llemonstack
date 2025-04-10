@@ -394,6 +394,8 @@ export async function init(
   // Script will fail if another LLemonStack, Supabase, etc. is already running on the required ports.
 
   try {
+    let keepEnv = false
+
     if (config.isProjectInitialized()) {
       show.warn(`Project already initialized: ${config.projectName}`)
       const resetOption: string = await Select.prompt({
@@ -438,24 +440,32 @@ export async function init(
       } else if (resetOption === 'reinitialize') {
         show.info('Using existing config data from .env file')
         await clearConfigFile(config)
+        keepEnv = true
       }
     }
 
-    show.header('Initializing project...')
-
-    if (await envFileExists(config)) {
+    // Check if .env file exists
+    const envExists = await envFileExists(config)
+    if (!envExists) {
+      show.info('.env does not exist, copying from .env.example')
+      await createEnvFile(config)
+    } else if (!keepEnv) {
       show.info('.env file already exists')
       if (show.confirm('Do you want to delete .env and start fresh?', false)) {
-        // TODO: double confirm with user as this will delete all existing env vars
-        await clearEnvFile(config)
-        await createEnvFile(config)
-        show.info('.env recreated from .env.example')
+        // Double confirm with user as this will delete all existing env vars
+        show.warn(
+          'Deleting .env could cause issues with services that already populated a database.',
+        )
+        if (show.confirm('Are you sure you want to delete the .env file?', false)) {
+          await clearEnvFile(config)
+          await createEnvFile(config)
+          show.info('.env recreated from .env.example')
+        } else {
+          show.info('OK, using existing .env file')
+        }
       } else {
         show.info('OK, using existing .env file')
       }
-    } else {
-      show.info('.env does not exist, copying from .env.example')
-      await createEnvFile(config)
     }
 
     // Create a copy of env vars to modify
@@ -572,10 +582,6 @@ export async function init(
     await startSupabase(config, envVars)
     await createServiceSchemas(config)
     show.info('Postgres schemas successfully created')
-
-    // Create config file to indicate project is initialized
-    // TODO: double check config is already creating the file, then remove this
-    // await createConfigFile(config)
 
     if (ollamaService?.useHostOllama()) {
       show.info('\nOllama host option requires Ollama running on your host machine.')
