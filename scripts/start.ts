@@ -3,6 +3,7 @@
  */
 
 import { Config } from '@/core/config/config.ts'
+import { ServicesMap } from '@/core/services/services-map.ts'
 import { runCommand } from '@/lib/command.ts'
 import { prepareDockerNetwork } from '@/lib/docker.ts'
 import { Cell, colors, Column, Row, RowType, showTable } from '@/relayer/ui/show.ts'
@@ -145,14 +146,15 @@ function showServicesInfo(
 }
 
 function outputServicesInfo({
+  services,
   config,
   hideCredentials = false,
 }: {
   config: Config
   hideCredentials?: boolean
+  services: ServicesMapType
 }): void {
   const show = config.relayer.show
-  const services = config.getEnabledServices()
   if (!services.size) {
     show.warn('No services are enabled')
     return
@@ -171,8 +173,8 @@ function outputServicesInfo({
 
   // Show additional info for each service
   // See OllamaService for an example
-  services.forEach((service) => {
-    service.showAdditionalInfo({ show, config })
+  services.forEach(async (service) => {
+    await service.showAdditionalInfo({ show, config })
   })
 
   console.log('\n')
@@ -246,6 +248,7 @@ export async function start(
       await outputServicesInfo({
         config,
         hideCredentials,
+        services: service ? new ServicesMap([service]) : config.getEnabledServices(),
       })
     }
   } catch (error) {

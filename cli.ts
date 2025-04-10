@@ -77,7 +77,7 @@ main
     const { start } = await import('./scripts/start.ts')
     await start(config, {
       service,
-      skipOutput: !!service,
+      skipOutput: false,
       hideCredentials: options.keys,
       build: options.build,
     })
