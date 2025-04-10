@@ -8,7 +8,8 @@
     "repos": ".llemonstack/repos",
     "import": "import",
     "shared": "shared",
-    "volumes": "volumes"
+    "volumes": "volumes",
+    "services": []
   },
   "services": {
     "n8n": { "enabled": true, "profiles": ["n8n"] },

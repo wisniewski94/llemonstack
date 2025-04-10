@@ -26,7 +26,7 @@ export interface LLemonStackConfig {
     import: string
     shared: string
     volumes: string
-    services?: string
+    services?: string | string[]
   }
   services: {
     [key: string]: IServiceConfigState

@@ -155,7 +155,9 @@ export class Config {
         ? this._config.dirs.services
         : [this._config.dirs.services]
       for (const dir of configDirs) {
-        dirs.push(fs.path.resolve(Deno.cwd(), dir))
+        if (dir) {
+          dirs.push(fs.path.resolve(Deno.cwd(), dir))
+        }
       }
     }
     dirs.push(fs.path.join(this.installDir, 'services'))
@@ -799,9 +801,14 @@ export class Config {
     // Make sure required base dirs exist
     results.collect(
       await Promise.all(
-        Object.values(this._config.dirs).map((dir) =>
-          fs.ensureDir(dir, { allowOutsideCwd: false })
-        ),
+        Object.values(this._config.dirs).map((dir) => {
+          if (dir && typeof dir === 'string') {
+            return fs.ensureDir(dir, { allowOutsideCwd: false })
+          } else if (dir && Array.isArray(dir)) {
+            return dir.map((d) => fs.ensureDir(d, { allowOutsideCwd: false }))
+          }
+          return success<boolean>(true)
+        }).flat(),
       ),
     )
 
@@ -901,6 +908,10 @@ export class Config {
 
         for (const subKey of Object.keys(templateObj)) {
           if (!(subKey in projectObj)) {
+            // Handle optional dirs.services key
+            if (key === 'dirs' && subKey === 'services') {
+              return true
+            }
             return false
           }
         }
