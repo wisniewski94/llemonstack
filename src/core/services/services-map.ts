@@ -29,6 +29,20 @@ export class ServicesMap extends Map<string, Service> {
     return true
   }
 
+  // deno-lint-ignore constructor-super
+  constructor(entries: Service[] | [string, Service][]) {
+    if (Array.isArray(entries)) {
+      super(entries.map((service) => {
+        if (service instanceof Service) {
+          return [service.id, service] as [string, Service]
+        }
+        return [service[0], service[1]] as [string, Service]
+      }))
+    } else {
+      super(entries as [string, Service][])
+    }
+  }
+
   /**
    * Add a service to the this services map instance
    *
