@@ -16,6 +16,10 @@ container logs in Docker Desktop.
 
 **Code:**
 
+- [ ] Rework Relayer to not instantiate InterfaceRelay, provide it during init
+
+  - [ ] Create InkRelayer
+
 - [ ] Add verbose logging to each log level? or just to debug
 
 - [ ] Replace silent option in scripts with relayer logging
@@ -51,8 +55,8 @@ container logs in Docker Desktop.
 
 - [x] Rework start / stop scripts to run separate processes for each service. Loading of .env is only supported in the first docker-compose file dir and service names are merged which will lead to conflicts later on.
 
-- [ ] Cleanup settings.json and deno.jsonc after migrating to services/
-- [ ] Search and replace for docker/
+- [x] Cleanup settings.json and deno.jsonc after migrating to services/
+- [x] Search and replace for docker/
 
 - [ ] Create Flowise example templates of Web Scrape QnA configured with pgvector and LiteLLM See
       https://docs.flowiseai.com/use-cases/web-scrape-qna
@@ -248,6 +252,8 @@ docker exec -it --user root n8n sh
 
 **Additional Services:**
 
+- https://github.com/chroma-core/chroma
+- https://github.com/HKUDS/LightRAG
 - https://github.com/langmanus/langmanus
 - https://github.com/danielmiessler/fabric
 - [MLFlow](https://github.com/mlflow/mlflow)
@@ -323,6 +329,7 @@ Not AI, but potentially useful:
 
 **MCP & Code Tools:**
 
+- https://browsermcp.io/ - automate the browser
 - https://github.com/OpenAdaptAI/OmniMCP
 - https://github.com/gumloop/guMCP
 - https://github.com/modelcontextprotocol/inspector

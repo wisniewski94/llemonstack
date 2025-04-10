@@ -27,6 +27,7 @@ volumes:
   - supabase/storage
 
 volumes_seeds:
+  # Source paths are relative to the supabase repo
   - source: docker/volumes/functions/main
     destination: supabase/functions/main
     from_repo: true

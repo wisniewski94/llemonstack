@@ -81,7 +81,7 @@ TryCatch module uses message passing. This should be changed to logging
 instead. The Relayer helper methods can auto fetch the logged messages
 for scripts to display.
 
-```
+```ts
 const results = away tryCatch(doStuff())
 if (!results.success) {
   showLogs('debug', 20) // show last 20 log messages debug or higher
