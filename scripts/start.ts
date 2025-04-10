@@ -169,23 +169,12 @@ function outputServicesInfo({
 
   showServicesInfo(services, 'internal.*', { hideCredentials })
 
-  // TODO: migrate additional ollama info to service subclass
-  // Show any user actions
-  // Show user action if using host Ollama
-  const ollamaService = config.getServiceByName('ollama')
-  if (ollamaService?.getProfiles()[0] === 'ollama-host') {
-    const ollamaUrl = config.getServiceByName('ollama')?.getHostEndpoint()?.url || ''
-    show.userAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
-    show.userAction('  Start Ollama on your computer: `ollama serve`')
-    if (config.isEnabled('n8n')) {
-      show.userAction(`  Set n8n Ollama credential url to: ${ollamaUrl}`)
-      show.userAction(
-        `  Or connect n8n to LiteLLM http://litellm:4000 to proxy requests to Ollama`,
-      )
-    }
-  } else if (config.isEnabled('ollama')) {
-    show.info('Ollama: http://ollama:11434')
-  }
+  // Show additional info for each service
+  // See OllamaService for an example
+  services.forEach((service) => {
+    service.showAdditionalInfo({ show, config })
+  })
+
   console.log('\n')
 }
 

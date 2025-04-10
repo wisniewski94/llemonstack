@@ -1,6 +1,5 @@
 import { Service } from '@/core/services/mod.ts'
 import { TryCatchResult } from '@/lib/try-catch.ts'
-import { showHeader, showInfo } from '@/relayer/ui/show.ts'
 import { IServiceActionOptions } from '@/types'
 import { Select } from '@cliffy/prompt'
 
@@ -11,18 +10,19 @@ export class N8nService extends Service {
    * @returns {TryCatchResult<boolean>} - The result of the configuration
    */
   override async configure(
-    { silent = false, config }: IServiceActionOptions,
+    options: IServiceActionOptions,
   ): Promise<TryCatchResult<boolean>> {
     // If the service is disabled, skip the configuration
     if (!this.isEnabled()) {
-      return super.configure({ silent, config })
+      return super.configure(options)
     }
 
     let n8nProfile = 'n8n' // Default profile
 
-    if (!silent) {
-      showHeader('n8n Configuration Options')
-      showInfo('Select the n8n profile you want to use')
+    if (!options.silent) {
+      const { show } = options
+      show.header('n8n Configuration Options')
+      show.info('Select the n8n profile you want to use')
 
       n8nProfile = await Select.prompt({
         message: 'Which version of n8n do you want to use?',
@@ -41,7 +41,7 @@ export class N8nService extends Service {
 
     this.setProfiles([n8nProfile])
 
-    return super.configure({ silent, config })
+    return super.configure(options)
   }
 }
 

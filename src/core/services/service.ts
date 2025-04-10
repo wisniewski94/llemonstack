@@ -14,7 +14,6 @@ import {
 } from '@/types'
 import { Config } from '../config/config.ts'
 import { getEndpoints, prepareVolumes, setupServiceRepo } from './utils/mod.ts'
-
 /**
  * Service
  *
@@ -448,8 +447,17 @@ export class Service {
    */
   // deno-lint-ignore require-await
   public async configure(
-    { silent: _silent }: IServiceActionOptions,
+    _options: IServiceActionOptions,
   ): Promise<TryCatchResult<boolean>> {
     return success<boolean>(true)
+  }
+
+  /**
+   * Show additional info for the service after it's started
+   *
+   * @returns {Promise<void>}
+   */
+  public async showAdditionalInfo(_options: IServiceActionOptions): Promise<void> {
+    // Override in subclasses to show additional info
   }
 }

@@ -4,6 +4,7 @@ import {
   CommandError as CommandErrorClass,
   RunCommandOutput as RunCommandOutputClass,
 } from '../lib/command.ts'
+import { InterfaceRelayer } from '../relayer/ui/interface.ts'
 
 export type { ServicesMapType, ServiceType } from '../core/mod.ts'
 export type { DockerComposeOptions, DockerComposePsResult } from '../lib/docker.ts'
@@ -169,6 +170,7 @@ export interface IServiceOptions {
 export interface IServiceActionOptions {
   silent?: boolean
   config: Config
+  show: InterfaceRelayer
 }
 
 // Define the type for the Docker Compose configuration

@@ -1,7 +1,7 @@
 import { Service } from '@/core/services/mod.ts'
 import { success, TryCatchResult } from '@/lib/try-catch.ts'
-import { showHeader, showInfo, showWarning } from '@/relayer/ui/show.ts'
 import { EnvVars, ExposeHost, IServiceActionOptions } from '@/types'
+import { colors } from '@cliffy/ansi/colors'
 import { Select } from '@cliffy/prompt'
 
 export class OllamaService extends Service {
@@ -57,26 +57,27 @@ export class OllamaService extends Service {
    * @returns {TryCatchResult<boolean>} - The result of the configuration
    */
   override async configure(
-    { silent = false, config }: IServiceActionOptions,
+    options: IServiceActionOptions,
   ): Promise<TryCatchResult<boolean>> {
     // If the service is disabled, skip the configuration
     if (!this.isEnabled()) {
-      return super.configure({ silent, config })
+      return super.configure(options)
     }
 
-    const gpuDisabled = config.host.isMac()
+    const gpuDisabled = options.config.host.isMac()
 
     // Default to host when silent is true
     let ollamaProfile = 'host'
 
-    if (!silent) {
-      showHeader('Ollama Configuration Options')
-      showInfo('Ollama can run on your host machine or inside a Docker container.')
-      showInfo('The host option requires manually starting ollama on your host machine.')
-      showInfo('If running in Docker, you can choose to run it on the CPU (slow) or a GPU (fast).')
-      showInfo("GPU options require a compatible GPU on the host... because it's not magic.\n")
+    if (!options.silent) {
+      const { show } = options
+      show.header('Ollama Configuration Options')
+      show.info('Ollama can run on your host machine or inside a Docker container.')
+      show.info('The host option requires manually starting ollama on your host machine.')
+      show.info('If running in Docker, you can choose to run it on the CPU (slow) or a GPU (fast).')
+      show.info("GPU options require a compatible GPU on the host... because it's not magic.\n")
       gpuDisabled &&
-        showWarning('GPU options are not currently available on macOS due to Docker limitations.\n')
+        show.warn('GPU options are not currently available on macOS due to Docker limitations.\n')
 
       const gpuMessage = gpuDisabled ? ' (not available on macOS)' : ''
       ollamaProfile = await Select.prompt({
@@ -106,7 +107,24 @@ export class OllamaService extends Service {
     this.setProfiles([ollamaProfile])
     this.setState('enabled', !ollamaProfile.includes('disabled'))
 
-    return super.configure({ silent, config })
+    return super.configure(options)
+  }
+
+  // deno-lint-ignore require-await
+  override async showAdditionalInfo({ show, config }: IServiceActionOptions): Promise<void> {
+    if (this.getProfiles()[0] === 'ollama-host') {
+      const ollamaUrl = this.getHostEndpoint()?.url || ''
+      show.userAction(`\nUsing host Ollama: ${colors.yellow(ollamaUrl)}`)
+      show.userAction(`  Start Ollama on your computer: ${colors.green('ollama serve')}`)
+      if (config.isEnabled('n8n')) {
+        show.userAction(`  Set n8n Ollama credential url to: ${colors.yellow(ollamaUrl)}`)
+        show.userAction(
+          `  Or connect n8n to LiteLLM ${
+            colors.yellow('http://litellm:4000')
+          } to proxy requests to Ollama`,
+        )
+      }
+    }
   }
 }
 
