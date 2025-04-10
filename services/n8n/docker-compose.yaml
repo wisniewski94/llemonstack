@@ -119,7 +119,7 @@ services:
       - *volume-import
       - *volume-shared
       # Add tracing.js to the container when debugging
-      - ./build/custom/tracing.js:/usr/local/lib/node_modules/n8n/tracing.js # Uncomment when debugging
+      - ./build/custom/tracing/tracing.js:/opt/opentelemetry/tracing.js # Uncomment when debugging
       # Bind mount the local docker-entrypoint.sh into the container for easier debugging
       - ./build/custom/docker-entrypoint.sh:/docker-entrypoint.sh
 
