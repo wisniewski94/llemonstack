@@ -82,7 +82,8 @@
     "docs/*.md",
     "volumes/**",
     "examples/**",
-    "services/**/*.js"
+    "services/**/*.js",
+    "services/**/Dockerfile*"
   ],
   "[dockercompose]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

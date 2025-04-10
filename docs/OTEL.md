@@ -367,8 +367,9 @@ sdk.start()
 From
 [this n8n community forum post](https://community.n8n.io/t/swap-smith-langchain-for-langfuse/47748/7).
 
-This example shows how to use Langfuse in the LangChain Code node. Langfuse is used in the example
-code to send traces and fetch the prompt from Langfuse's prompt registry.
+This example shows how to use Langfuse in the LangChain Code node. Langfuse is
+used in the example code to send traces and fetch the prompt from Langfuse's
+prompt registry.
 
 ```bash
 FROM n8nio/n8n:1.53.2
