@@ -3,7 +3,17 @@
  */
 import { Config } from '@/core/config/config.ts'
 import { ServicesMapType, ServiceType } from '@/types'
+import { colors } from '@cliffy/ansi/colors'
 import { Select } from '@cliffy/prompt'
+
+// ⚫  🟢 ⚪  🟡  🔴  🔵
+const STATUS_EMOJIS = {
+  enabled: '🟢',
+  disabled: '⚪',
+  disabledRequired: '🔴', // Required by other services and disabled
+  auto: '🔵', // Auto enabled and not required by other services
+  autoRequired: '🟡', // Auto enabled and required by other services
+}
 
 function getServiceOption(
   service: ServiceType,
@@ -26,19 +36,18 @@ function getServiceOption(
   // Check if the service is auto enabled
   const isAutoEnabled = config.isServiceAutoEnabled(service)
 
-  // ⚫  🟢 ⚪  🟡  🔴  🔵
   const statusEmoji = isAutoEnabled
-    ? required ? '🟡' : '🔵'
+    ? required ? STATUS_EMOJIS.autoRequired : STATUS_EMOJIS.auto
     : isEnabled
-    ? '🟢'
+    ? STATUS_EMOJIS.enabled
     : required
-    ? '🔴'
-    : '⚪'
+    ? STATUS_EMOJIS.disabledRequired
+    : STATUS_EMOJIS.disabled
 
   return {
-    name: `${statusEmoji} ${service.name} - ${service.description} ${
+    name: `${statusEmoji} ${colors.bold.green(service.name)} - ${service.description} ${
       dependents.size > 0
-        ? `\n    ... Required by ${
+        ? `=> required by ${
           dependents
             .map((s) => s?.name || '')
             .join(', ')
@@ -57,6 +66,15 @@ export async function configure(
   const show = config.relayer.show
 
   show.action(`Configuring services for ${config.projectName}...`)
+
+  // Display a key for the status emojis to help users understand the symbols
+  show.info('Status Key:')
+  show.info(`  ${STATUS_EMOJIS.enabled} = Enabled`)
+  show.info(`  ${STATUS_EMOJIS.disabled} = Disabled`)
+  show.info(`  ${STATUS_EMOJIS.auto} = Auto-enabled and not required by other services`)
+  show.info(`  ${STATUS_EMOJIS.autoRequired} = Auto-enabled and required by other services`)
+  show.info(`  ${STATUS_EMOJIS.disabledRequired} = Disabled but required by enabled services`)
+  show.info('')
 
   // Convert groups Map to array for iteration
   // Reverse order to start with group with fewest dependencies (apps)
