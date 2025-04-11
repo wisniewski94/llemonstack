@@ -3,60 +3,30 @@
  *
  * Pulls and builds the latest changes for docker images.
  */
-import { runDockerComposeCommand } from '@/lib/docker.ts'
 import { Config } from '../src/core/config/config.ts'
 import { stop } from './stop.ts'
 import { versions } from './versions.ts'
 
 async function pullImages(config: Config): Promise<void> {
   const show = config.relayer.show
-  // Run pull for each profile in parallel
-  const composeFiles = config.getComposeFiles()
 
-  // Split compose files into batches of 5 to avoid overwhelming the system
+  const services = config.getEnabledServices().toArray()
+
   const batchSize = 4
   const composeBatches = []
 
-  // Create batches from the compose files
-  for (let i = 0; i < composeFiles.length; i += batchSize) {
-    composeBatches.push(composeFiles.slice(i, i + batchSize))
+  // Create batches to not overwhelm the system
+  for (let i = 0; i < services.length; i += batchSize) {
+    composeBatches.push(services.slice(i, i + batchSize))
   }
 
-  // Process each batch sequentially
   for (let i = 0; i < composeBatches.length; i++) {
     const batch = composeBatches[i]
     show.info(`Processing batch ${i + 1} of ${composeBatches.length} (${batch.length} files)`)
 
-    // Pull images in parallel
+    // Update services in parallel
     await Promise.all(
-      batch.map((composeFile) =>
-        runDockerComposeCommand(
-          'pull',
-          {
-            projectName: config.projectName,
-            composeFile,
-            ansi: 'never',
-            // TODO: add support for service specific profiles
-            // ...getProfilesArgs(), // Only pull images for enabled profiles
-          },
-        )
-      ),
-    )
-    // Build images in parallel
-    await Promise.all(
-      batch.map((composeFile) =>
-        runDockerComposeCommand(
-          'build',
-          {
-            projectName: config.projectName,
-            composeFile,
-            ansi: 'never',
-            // TODO: add support for service specific profiles
-            // ...getProfilesArgs(), // Only pull images for enabled profiles
-            args: ['--no-cache'],
-          },
-        )
-      ),
+      batch.map((service) => service.update({ silent: false })),
     )
   }
 }
@@ -66,7 +36,8 @@ export async function update(
   {
     skipStop = false,
     skipPrompt = false,
-  }: { skipStop?: boolean; skipPrompt?: boolean } = {},
+    service: serviceName,
+  }: { skipStop?: boolean; skipPrompt?: boolean; service?: string } = {},
 ): Promise<void> {
   const show = config.relayer.show
   try {
@@ -82,19 +53,29 @@ export async function update(
       }
     }
 
-    const prepareResult = await config.prepareEnv()
-    if (!prepareResult.success) {
-      show.logMessages(prepareResult.messages)
-      Deno.exit(1)
-    }
-
     if (!skipStop) {
       await stop(config, { all: true })
+    } else {
+      const prepareResult = await config.prepareEnv()
+      if (!prepareResult.success) {
+        show.logMessages(prepareResult.messages)
+        Deno.exit(1)
+      }
     }
 
-    // Pull latest images
-    show.action('Pulling latest docker images...')
-    await pullImages(config)
+    if (serviceName) {
+      const service = config.getServiceByName(serviceName)
+      if (!service) {
+        show.error(`Service ${serviceName} not found`)
+        Deno.exit(1)
+      }
+      show.action(`\nPulling latest docker image for ${service.name}...`)
+      await service.update()
+    } else {
+      // Pull latest images
+      show.action('Pulling latest docker images...')
+      await pullImages(config)
+    }
 
     // Show the software versions for images that support it
     show.action('\n------ VERSIONS ------')

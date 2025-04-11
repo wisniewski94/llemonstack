@@ -264,9 +264,9 @@ export async function versions(config: Config): Promise<void> {
   )
   show.header('Docker Image Versions')
 
-  const results = await config.prepareEnv()
-  if (!results.success) {
-    show.logMessages(results.messages)
+  const prepareResult = await config.prepareEnv()
+  if (!prepareResult.success) {
+    show.logMessages(prepareResult.messages)
     Deno.exit(1)
   }
 

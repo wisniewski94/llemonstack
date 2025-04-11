@@ -457,6 +457,35 @@ export class Service {
   }
 
   /**
+   * Update the service
+   * @param {IServiceUpdateOptions} [options] - The update options
+   * @returns {TryCatchResult<boolean>} - The result of the update
+   */
+  public async update(
+    options: IServiceActionOptions = {},
+  ): Promise<TryCatchResult<boolean>> {
+    const result = success<boolean>(true)
+    result.collect([
+      await tryDockerCompose('pull', {
+        projectName: this._configInstance.projectName,
+        composeFile: this.composeFile,
+        profiles: this.getProfiles(),
+        silent: options.silent,
+        ansi: 'never',
+      }),
+      await tryDockerCompose('build', {
+        projectName: this._configInstance.projectName,
+        composeFile: this.composeFile,
+        profiles: this.getProfiles(),
+        silent: options.silent,
+        ansi: 'never',
+        args: ['--no-cache'],
+      }),
+    ])
+    return result
+  }
+
+  /**
    * Configure the service
    * @param {boolean} [silent] - Whether to run the configuration in silent or interactive mode
    * @returns {TryCatchResult<boolean>} - The result of the configuration

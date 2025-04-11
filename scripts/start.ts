@@ -23,7 +23,6 @@ export async function checkPrerequisites(): Promise<void> {
   console.log('✔️ All prerequisites are installed')
 }
 
-// TODO: update API and all references to startService
 export async function startService(
   config: Config,
   serviceOrName: ServiceType | string,
