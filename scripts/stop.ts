@@ -2,33 +2,23 @@
  * Stop the stack by downing docker containers and cleaning up networks.
  */
 
-import {
-  dockerComposePs,
-  type DockerComposePsResult,
-  getDockerNetworks,
-  removeDockerNetwork,
-  runDockerCommand,
-} from '@/lib/docker.ts'
+import { dockerComposePs, type DockerComposePsResult, runDockerCommand } from '@/lib/docker.ts'
 import { colors, RowType, showTable } from '@/relayer/ui/show.ts'
 import { ServicesMapType, ServiceType } from '@/types'
 import { Config, ServicesMap } from '../src/core/mod.ts'
 
-async function removeAllNetworks(config: Config, projectName: string): Promise<void> {
+async function removeAllNetworks(config: Config): Promise<void> {
   const show = config.relayer.show
   const MAX_RETRIES = 3
   const RETRY_DELAY_MS = 2000
 
+  // Try to remove the network up to MAX_RETRIES times
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    try {
-      // Remove all networks for project
-      const networks = await getDockerNetworks({ projectName })
-      if (networks.length > 0) {
-        await removeDockerNetwork(networks, { silent: true })
-      } else {
-        break
-      }
-    } catch (error) {
-      show.error('Failed to remove networks', { error })
+    const result = await config.cleanupDockerNetwork({ silent: true })
+    if (result.success) {
+      break
+    } else {
+      show.error('Failed to remove networks', { error: result.error })
       show.action(
         `Retrying removing networks, attempt ${attempt + 1}/${MAX_RETRIES}...`,
       )
@@ -64,9 +54,6 @@ async function stopServices(
   }
 
   // Stop all services in parallel
-  // TODO: search for all Promise.all to make sure it use's this example
-  // instead of Promise.all(async (service) => { await ...})
-  // The extra async is not needed as it wraps an additional promise for no reason
   await Promise.all(
     services.toArray().map((service) => stopService(config, service)),
   )
@@ -165,7 +152,7 @@ export async function stop(
 
   show.action('Cleaning up networks...')
   if (stopAll) {
-    await removeAllNetworks(config, config.projectName)
+    await removeAllNetworks(config)
   }
   await runDockerCommand('network', {
     args: ['prune', '-f'],

@@ -11,7 +11,7 @@ import type { EnvVars, RunCommandOutput } from '@/types'
 import { Config } from '../core/config/config.ts'
 import Host from '../core/config/host.ts'
 import { runCommand, tryRunCommand } from './command.ts'
-import { tryCatch, TryCatchResult } from './try-catch.ts'
+import { success, tryCatch, TryCatchResult } from './try-catch.ts'
 
 export type DockerCommandOptions = {
   args?: Array<string | false>
@@ -68,28 +68,48 @@ export async function dockerEnv(config?: Config): Promise<Record<string, string>
   }
 }
 
+/**
+ * Get docker networks
+ * @param name - The network name to filter by
+ * @param silent - If true, don't show any output
+ * @returns {Promise<TryCatchResult<string[]>>} The networks
+ */
 export async function getDockerNetworks(
-  { projectName }: { projectName?: string },
-): Promise<string[]> {
-  const networks = await runDockerCommand('network', {
+  { name, silent = true }: { name?: string; silent?: boolean } = {},
+): Promise<TryCatchResult<string[]>> {
+  const results = success<string[]>([])
+  const networks = await tryDocker('network', {
     args: [
       'ls',
-      ...(projectName ? ['--filter', `label=com.docker.compose.project=${projectName}`] : []),
+      ...(name ? ['--filter', `name=${name}`] : []),
       '--format',
       '{{.ID}}',
     ],
     captureOutput: true,
+    silent,
   })
-  return networks.toList()
+  if (networks.success) {
+    results.data = networks.data?.toList() || []
+  } else {
+    results.addMessage('error', 'Failed to get docker networks')
+  }
+  return results
 }
 
+/**
+ * Remove a docker network
+ * @param networks - The network(s) to remove
+ * @param silent - If true, don't show any output
+ * @returns {Promise<TryCatchResult<RunCommandOutput>>} The output of the command
+ */
 export async function removeDockerNetwork(
   networks: string | string[],
   { silent = true }: { silent?: boolean } = {},
-): Promise<RunCommandOutput> {
-  return await runDockerCommand('network', {
+): Promise<TryCatchResult<RunCommandOutput>> {
+  return await tryDocker('network', {
     args: ['rm', '-f', ...(Array.isArray(networks) ? networks : [networks])],
     silent,
+    captureOutput: true,
   })
 }
 
@@ -342,8 +362,6 @@ export async function dockerExec(
     throw new Error(`Compose file not found for ${service}`)
   }
 
-  await prepareDockerNetwork()
-
   return await runCommand('docker', {
     args: [
       'compose',
@@ -387,8 +405,6 @@ export async function dockerRun(
   if (!composeFile) {
     throw new Error(`Compose file not found for ${service}`)
   }
-
-  await prepareDockerNetwork()
 
   return await runDockerComposeCommand('run', {
     projectName,

@@ -1,5 +1,5 @@
 import { Service, ServicesMap } from '@/core/services/mod.ts'
-import { prepareDockerNetwork } from '@/lib/docker.ts'
+import { getDockerNetworks, prepareDockerNetwork, removeDockerNetwork } from '@/lib/docker.ts'
 import { loadEnv } from '@/lib/env.ts'
 import * as fs from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
@@ -18,7 +18,6 @@ import packageJson from '@packageJson' with { type: 'json' }
 import configTemplate from '@templateConfig' with { type: 'json' }
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import Host from './host.ts'
-
 const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
 
 // Absolute path to root of install dir
@@ -793,10 +792,6 @@ export class Config {
     return this._setEnv(env)
   }
 
-  public isEnvPrepared(): boolean {
-    return this._envPrepared
-  }
-
   /**
    * Prepare the env for the project and all enabled services
    *
@@ -815,6 +810,7 @@ export class Config {
 
     // Return early if env is already prepared
     if (this._envPrepared && !force) {
+      results.addMessage('debug', 'Env is already prepared, skipping')
       return results
     }
 
@@ -842,7 +838,9 @@ export class Config {
 
     // Create the docker network
     const networkResult = await prepareDockerNetwork(this.dockerNetworkName)
-    if (!networkResult.success) {
+    if (!networkResult.success && networkResult.data?.stderr.includes('already exists')) {
+      results.addMessage('info', 'Docker network already exists, skipping')
+    } else if (!networkResult.success) {
       results.addMessage('error', 'Failed to prepare docker network')
       this._envPrepared = false
     }
@@ -860,6 +858,23 @@ export class Config {
     )
 
     // Return the results, results.success will be true if all services are ready
+    return results
+  }
+
+  /**
+   * Remove the docker network
+   * @returns {Promise<TryCatchResult<boolean>>}
+   */
+  public async cleanupDockerNetwork(
+    { silent = true }: { silent?: boolean } = {},
+  ): Promise<TryCatchResult<boolean>> {
+    const results = success<boolean>(true)
+    // Remove all networks for project
+    const networksResults = await getDockerNetworks({ name: this.dockerNetworkName, silent })
+    if (networksResults.success && networksResults.data && networksResults.data.length > 0) {
+      results.collect([await removeDockerNetwork(networksResults.data, { silent })])
+    }
+    this._envPrepared = false
     return results
   }
 

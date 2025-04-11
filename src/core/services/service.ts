@@ -403,15 +403,13 @@ export class Service {
     const config = this._configInstance
 
     // Prepare environment if not already prepared
-    if (!config.isEnvPrepared()) {
-      const prepareEnvResult = await config.prepareEnv()
-      if (!prepareEnvResult.success) {
-        return failure<boolean>(
-          `Failed to prepare environment: ${this.name}`,
-          prepareEnvResult,
-          false,
-        )
-      }
+    const prepareEnvResult = await config.prepareEnv()
+    if (!prepareEnvResult.success) {
+      return failure<boolean>(
+        `Failed to prepare environment: ${this.name}`,
+        prepareEnvResult,
+        false,
+      )
     }
 
     const results = await tryDockerCompose('up', {
@@ -436,20 +434,18 @@ export class Service {
   public async stop(_options: IServiceActionOptions = {}): Promise<TryCatchResult<boolean>> {
     const config = this._configInstance
     // Prepare environment if not already prepared
-    if (!config.isEnvPrepared()) {
-      const prepareEnvResult = await config.prepareEnv()
-      if (!prepareEnvResult.success) {
-        return failure<boolean>(
-          `Failed to prepare environment: ${this.name}`,
-          prepareEnvResult,
-          false,
-        )
-      }
+    const prepareEnvResult = await config.prepareEnv()
+    if (!prepareEnvResult.success) {
+      return failure<boolean>(
+        `Failed to prepare environment: ${this.name}`,
+        prepareEnvResult,
+        false,
+      )
     }
 
     const results = await tryDockerCompose('down', {
-      composeFile: this.composeFile,
       projectName: this._configInstance.projectName,
+      composeFile: this.composeFile,
       profiles: this.getProfiles(),
       silent: true,
       captureOutput: true,
