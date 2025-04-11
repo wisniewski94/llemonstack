@@ -122,10 +122,11 @@ main
 main
   .command('update')
   .description('Update the LLemonStack environment')
-  .action(async (options) => {
+  .arguments('[service:string]')
+  .action(async (options, service?: string) => {
     const config = await initConfig('update', options)
     const { update } = await import('./scripts/update.ts')
-    await update(config)
+    await update(config, { service })
   })
 
 // Show all versions of all services in the stack
