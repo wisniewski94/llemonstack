@@ -69,20 +69,6 @@ export class ServicesMap extends Map<string, Service> {
   }
 
   /**
-   * Get compose files for the services in this map
-   *
-   * Returns an array of compose files for the services in this map.
-   * Defaults to only enabled services unless all is true.
-   *
-   * @param {boolean} all - Include all services, even disabled ones
-   * @returns {string[]} - Array of compose files
-   */
-  public getComposeFiles(): string[] {
-    return Array.from(this.values())
-      .map((service) => service.composeFile)
-  }
-
-  /**
    * Get enabled services in this map
    *
    * @returns {ServicesMap} - A new ServicesMap instance with only enabled services

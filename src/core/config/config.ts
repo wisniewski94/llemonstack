@@ -706,24 +706,6 @@ export class Config {
   }
 
   /**
-   * Get services compose yaml files
-   *
-   * Filter out disabled services unless all is true.
-   *
-   * @param {boolean} all - Include all services, even disabled ones
-   * @returns {string[]}
-   */
-  public getComposeFiles({ all = false }: { all?: boolean } = {}): string[] {
-    return Array.from(this._services.values())
-      .map((service) => {
-        return (!all && !service.isEnabled()) ? false : service.composeFile
-      })
-      .filter((value: string | false, index: number, self: (string | false)[]) =>
-        value && self.indexOf(value) === index
-      ) as string[]
-  }
-
-  /**
    * Update the enabled state of a service
    *
    * If enabled is 'auto', the service will be added to the auto enabled services map

@@ -124,15 +124,15 @@ async function showImageVersions(config: Config): Promise<RowType[]> {
   // Iterate through all compose files to get images
   // Process all compose files in parallel
   const composeResults = await Promise.all(
-    config.getComposeFiles({ all: true }).map(async (composeFile) => {
+    config.getAllServices().map(async (service) => {
       let images: IServiceImage[] = []
       try {
-        images = await getImagesFromComposeYaml(composeFile)
-        return { composeFile, images, error: null }
+        images = await getImagesFromComposeYaml(service.composeFile)
+        return { composeFile: service.composeFile, images, error: null }
       } catch (error) {
         if (error instanceof Deno.errors.NotFound) {
-          show.warn(`Compose file (${composeFile}) not found, skipping`)
-          return { composeFile, images: [], error }
+          show.warn(`Compose file (${service.composeFile}) not found, skipping`)
+          return { composeFile: service.composeFile, images: [], error }
         } else {
           throw error
         }
