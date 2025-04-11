@@ -9,15 +9,16 @@ import { Relayer } from '@/relayer/relayer.ts'
 import {
   InterfaceRelayerInstance,
   IServiceConfigState,
-  IServiceOptions,
   IServicesGroups,
   LLemonStackConfig,
-  ServiceYaml,
 } from '@/types'
 import packageJson from '@packageJson' with { type: 'json' }
 import configTemplate from '@templateConfig' with { type: 'json' }
 import { deepMerge } from 'jsr:@std/collections/deep-merge'
-import Host from './host.ts'
+import Host from './lib/host.ts'
+import { loadServices } from './lib/load.ts'
+import { isValidConfig } from './lib/valid.ts'
+
 const SERVICE_CONFIG_FILE_NAME = 'llemonstack.yaml'
 
 // Absolute path to root of install dir
@@ -369,119 +370,23 @@ export class Config {
    * Load services from services directory
    * @returns {Promise<TryCatchResult<Record<string, Service>>>}
    */
-  public async loadServices(): Promise<TryCatchResult<Record<string, Service>>> {
-    const result = new TryCatchResult<Record<string, Service>>({
-      data: {},
-      error: null,
-      success: true,
+  public async loadServices(): Promise<TryCatchResult<boolean>> {
+    const result = success<boolean>(true)
+    const loadResults = await loadServices(this, {
+      config: this._config,
+      servicesDirs: this.servicesDirs,
     })
-
-    // Load services from services directory in reverse order of priority
-    // Higher priority services will override lower priority services
-    const servicesDirs = this.servicesDirs.reverse()
-
-    // TODO: refactor into helper functions, run in parallel
-    for (const servicesDir of servicesDirs) {
-      // Get list of services in services directory
-      const servicesDirResult = await fs.readDir(servicesDir)
-      if (servicesDirResult.error || !servicesDirResult.data) {
-        return failure<Record<string, Service>>(
-          'Error reading services directory',
-          {
-            data: null,
-            error: servicesDirResult.error || new Error('Empty directory'),
-            success: false,
-          },
-        )
-      }
-
-      // Load services from services directory
-      for await (const serviceDir of servicesDirResult.data) {
-        if (!serviceDir.isDirectory) {
-          continue
-        }
-        const yamlFilePath = fs.path.join(servicesDir, serviceDir.name, SERVICE_CONFIG_FILE_NAME)
-        if (!(await fs.fileExists(yamlFilePath)).data) {
-          result.addMessage('debug', `Service config file not found: ${serviceDir.name}`)
-          continue
-        }
-        const yamlResult = await fs.readYaml<ServiceYaml>(
-          yamlFilePath,
-        )
-        if (!yamlResult.success || !yamlResult.data) {
-          result.addMessage('error', `Error reading service config file: ${serviceDir.name}`, {
-            error: yamlResult.error,
-          })
-          continue
-        }
-
-        const serviceYaml = yamlResult.data
-
-        if (serviceYaml.disabled) {
-          result.addMessage('debug', `Service ${serviceYaml.service} is disabled, skipping`)
-          continue
-        } else {
-          result.addMessage(
-            'debug',
-            `${serviceYaml.name} loaded into ${serviceYaml.service_group} group`,
-          )
-        }
-
-        const serviceConfig = this._config.services[serviceYaml.service] || {}
-
-        // Create Service constructor options
-        const serviceOptions: IServiceOptions = {
-          serviceYaml,
-          serviceDir: fs.path.join(servicesDir, serviceYaml.service),
-          config: this,
-          configSettings: serviceConfig,
-          enabled: serviceConfig.enabled !== false, // Enable service unless explicitly disabled
-        }
-
-        // Check if there's a custom service implementation in the service directory
-        const serviceImplPath = fs.path.join(servicesDir, serviceDir.name, 'service.ts')
-        const serviceImplExists = (await fs.fileExists(serviceImplPath)).data
-
-        if (serviceImplExists) {
-          try {
-            // Dynamically import the service implementation
-            const serviceModule = await import(`file://${serviceImplPath}`)
-            const ServiceClass = Object.values(serviceModule)[0] as typeof Service
-
-            if (ServiceClass && typeof ServiceClass === 'function') {
-              const service = new ServiceClass(serviceOptions)
-              this.registerService(service)
-
-              result.addMessage(
-                'debug',
-                `Using custom service implementation for ${serviceYaml.service}`,
-              )
-              continue // Skip the default Service instantiation below
-            }
-          } catch (error) {
-            result.addMessage(
-              'error',
-              `Error loading custom service implementation for ${serviceYaml.service}`,
-              {
-                error,
-              },
-            )
-          }
-        }
-
-        // Load the default Service class if no custom implementation exists
-        const service = new Service(serviceOptions)
-
+    if (loadResults.success && loadResults.data) {
+      loadResults.data.forEach((service) => {
         this.registerService(service)
-      }
+      })
+
+      // After all services are loaded, update the dependencies maps
+      this.updateDependencies()
+      this.updateAutoEnabledServices()
     }
-
-    // After all services are loaded, update the dependencies map
-    this.updateDependencies()
-
-    // After all services are loaded, update the auto enabled services
-    this.updateAutoEnabledServices()
-
+    result.data = loadResults.success
+    result.collect([loadResults])
     return result
   }
 
@@ -889,58 +794,7 @@ export class Config {
    * @returns {boolean}
    */
   private isValidConfig(config: LLemonStackConfig = this._config): boolean {
-    if (!config) {
-      return false
-    }
-
-    // Check if all required top-level keys from the template exist in the project config
-    const requiredKeys = [
-      'initialized',
-      'version',
-      'projectName',
-      'envFile',
-      'dirs',
-      'services',
-    ] as const
-
-    for (const key of requiredKeys) {
-      if (!(key in config)) {
-        return false
-      }
-
-      // For object properties, check if they have the expected structure
-      const templateValue = this._configTemplate[key as keyof typeof this._configTemplate]
-      const projectValue = config[key as keyof LLemonStackConfig]
-
-      if (
-        typeof templateValue === 'object' &&
-        templateValue !== null &&
-        !Array.isArray(templateValue)
-      ) {
-        // If the property is missing or not an object in the project config, it's invalid
-        if (
-          typeof projectValue !== 'object' ||
-          projectValue === null
-        ) {
-          return false
-        }
-
-        // For nested objects like dirs, services, etc., check if all template keys exist
-        const templateObj = templateValue as Record<string, unknown>
-        const projectObj = projectValue as Record<string, unknown>
-
-        for (const subKey of Object.keys(templateObj)) {
-          if (!(subKey in projectObj)) {
-            // Handle optional dirs.services key
-            if (key === 'dirs' && subKey === 'services') {
-              return true
-            }
-            return false
-          }
-        }
-      }
-    }
-    return true
+    return isValidConfig(config, this._configTemplate)
   }
 
   /**

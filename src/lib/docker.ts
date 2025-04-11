@@ -6,12 +6,12 @@
  * TODO: add a catchall method that auto detects 'try' prefix and wraps the result in a TryCatchResult?
  */
 
+import { Config } from '@/core/config/config.ts'
+import Host from '@/core/config/lib/host.ts'
+import { success, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
 import { Relayer } from '@/relayer/relayer.ts'
 import type { EnvVars, RunCommandOutput } from '@/types'
-import { Config } from '../core/config/config.ts'
-import Host from '../core/config/host.ts'
 import { runCommand, tryRunCommand } from './command.ts'
-import { success, tryCatch, TryCatchResult } from './try-catch.ts'
 
 export type DockerCommandOptions = {
   args?: Array<string | false>
