@@ -13,9 +13,17 @@ export class FlowiseService extends Service {
     if (!result.success || !result.data) {
       return envVars
     }
-    const { apiKey, keyName } = result.data
+
+    let { apiKey, keyName } = result.data
+
+    if (apiKey === '') {
+      this._configInstance.relayer.show.warn('Flowise API key not yet generated')
+      apiKey = 'Not Yet Available'
+    }
+
     envVars.FLOWISE_API_KEY = apiKey
     envVars.FLOWISE_API_KEY_NAME = keyName
+
     return envVars
   }
 
