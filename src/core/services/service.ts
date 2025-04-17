@@ -377,11 +377,6 @@ export class Service {
   protected async prepareVolumes(
     { silent: _ = true }: { silent?: boolean } = {},
   ): Promise<TryCatchResult<boolean>> {
-    // If no volumes, skip
-    if (this.volumes.length === 0 && this.volumesSeeds.length === 0) {
-      return success<boolean>(true)
-    }
-
     return await prepareVolumes(this, this._configInstance.volumesDir)
   }
 

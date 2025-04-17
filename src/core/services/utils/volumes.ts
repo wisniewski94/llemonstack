@@ -26,7 +26,7 @@ export async function prepareVolumes(
   const results = success<boolean>(true)
 
   // Return early if service has no volumes or seeds
-  if (service.volumes.length === 0 || service.volumesSeeds.length === 0) {
+  if (service.volumes.length === 0 && service.volumesSeeds.length === 0) {
     return results
   }
 
