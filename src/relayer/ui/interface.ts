@@ -53,7 +53,7 @@ export class InterfaceRelayer extends RelayerBase {
     } else if (level === 'debug') {
       showInfo(`[DEBUG] ${message}`)
       data?._meta?.debug?.forEach((arg) => {
-        showInfo(`  ${typeof arg === 'object' ? Deno.inspect(arg) : arg}`)
+        showInfo(`${typeof arg === 'object' ? Deno.inspect(arg, { colors: true }) : arg}`)
       })
     }
   }
