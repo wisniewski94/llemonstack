@@ -15,3 +15,5 @@ exposes:
     openwebui:
       name: OpenWebUI
       url: http://localhost:8080
+      credentials:
+        Account: '[Created by user]'
