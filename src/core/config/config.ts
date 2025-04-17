@@ -380,14 +380,21 @@ export class Config extends ConfigBase {
       force?: boolean
     } = {},
   ): Promise<TryCatchResult<boolean>> {
-    const results = await super.prepareEnv({ force })
+    const results = success<boolean>(true)
 
-    const services = all ? this.getAllServices() : this.getEnabledServices()
+    // Return early if env is already prepared
+    if (this._envPrepared && !force) {
+      return results
+    }
+
+    // Prepare the env for the project
+    results.collect([await super.prepareEnv({ force })])
 
     // TODO: log messages in services instead of collecting them
     // Services prep could take awhile, so it's better to log messages as they come in
 
-    // Run all service prepareEnv methods in parallel
+    // Prepare the env for all services in parallel
+    const services = all ? this.getAllServices() : this.getEnabledServices()
     results.collect(
       await Promise.all(
         services.map((service) => service.prepareEnv({ silent })),
