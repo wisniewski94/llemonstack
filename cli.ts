@@ -70,7 +70,7 @@ main
   .command('start')
   .description('Start the LLemonStack services')
   .arguments('[service:string]')
-  .option('-n, --no-keys', 'Hide credentials', { default: false })
+  .option('-H, --hide', 'Hide credentials', { default: false })
   .option('--build', 'Rebuild the services during start', { default: false })
   .action(async (options, service?: string) => {
     const config = await initConfig('start', options)
@@ -78,7 +78,7 @@ main
     await start(config, {
       service,
       skipOutput: false,
-      hideCredentials: options.keys,
+      hideCredentials: options.hide,
       build: options.build,
     })
   })
@@ -265,7 +265,11 @@ async function initConfig(
   // TODO: pass in relayer instance to config
 
   relayer.debug('Initializing in main CLI script...')
-  relayer.debug('DEBUG enabled in CLI option')
+  relayer.debug('DEBUG enabled')
+
+  if (options.verbose) {
+    relayer.show.debug('CLI options:', options)
+  }
 
   const config = Config.getInstance()
   const result = await config.initialize(options.config, { logLevel, init, relayer })
