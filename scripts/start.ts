@@ -203,8 +203,8 @@ export async function start(
 
     show.action('Setting up environment...')
     const prepareEnvResult = await config.prepareEnv()
+    show.logMessages(prepareEnvResult.messages)
     if (!prepareEnvResult.success) {
-      show.logMessages(prepareEnvResult.messages)
       Deno.exit(1)
     }
 
