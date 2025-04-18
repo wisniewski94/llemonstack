@@ -28,7 +28,7 @@ LLemonStack can even run local AI models for you via Ollama.
 It provides advanced debugging and tracing capabilities to help you understand exactly how
 your agents work, and most importantly... how to fix them when they break.
 
-![n8n.io - Screenshot](docs/assets/n8n-demo.gif)
+<br />
 
 ## Walkthrough Video
 
