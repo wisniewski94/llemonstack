@@ -7,6 +7,9 @@ description: LLM browser automation from simple prompts
 compose_file: docker-compose.yaml
 service_group: apps
 
+provides:
+  browser-use: browser-use-webui # Name of the container
+
 repo:
   url: https://github.com/browser-use/web-ui.git
   dir: browser-use-web-ui

@@ -72,8 +72,8 @@ x-environment: &common-env
 
 # Common volumes
 x-volume-n8n-storage: &volume-n8n-storage n8n_storage:/home/node/.n8n
-x-volume-import: &volume-import ${LLEMONSTACK_IMPORT_VOLUME_PATH:-./import/}/n8n:/import
-x-volume-shared: &volume-shared ${LLEMONSTACK_SHARED_VOLUME_PATH:-./shared/}:/data/shared
+x-volume-import: &volume-import ${LLEMONSTACK_IMPORT_VOLUME_PATH:-./import}/n8n:/import
+x-volume-shared: &volume-shared ${LLEMONSTACK_SHARED_VOLUME_PATH:-./shared}:/data/shared
 
 # Base n8n service definition, shared by all profiles
 x-n8n: &service-n8n
