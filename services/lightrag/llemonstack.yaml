@@ -1,0 +1,29 @@
+version: 0.2.0 # Config file version
+disabled: true
+
+service: lightrag
+name: LightRAG
+description: Simple and Fast Retrieval-Augmented Generation
+
+compose_file: docker-compose.yaml
+service_group: middleware
+
+provides:
+  lightrag: lightrag
+
+repo:
+  url: https://github.com/HKUDS/LightRAG.git
+  dir: lightrag
+  sparse: true
+  checkFile: docker-compose.yml
+
+volumes:
+  - lightrag/import
+  - lightrag/data
+  - lightrag/backups
+
+exposes:
+  host:
+    dashboard:
+      name: LightRAG
+      url: http://localhost:9621/
