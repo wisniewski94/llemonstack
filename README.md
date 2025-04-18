@@ -33,7 +33,7 @@ your agents work, and most importantly... how to fix them when they break.
 ## Quick Start
 
 Deno and Docker must already be installed.
-See [#install-llemonstack](Install) section below.
+See [Install](#install-llemonstack) section below.
 
 ```bash
 git clone https://github.com/llemonstack/llemonstack.git
