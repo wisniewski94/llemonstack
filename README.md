@@ -42,6 +42,10 @@ your agents work, and most importantly... how to fix them when they break.
 
 ![llmn init](docs/assets/screenshots/init.gif)
 
+`llmn config` - configure stack services
+
+![llmn config](docs/assets/screenshots/config.gif)
+
 `llmn start` - start the stack
 
 ![llmn start](docs/assets/screenshots/start.gif)
@@ -53,12 +57,12 @@ Dashboard & API urls are shown, along with the auto generated credentials.
 ## Key Features
 
 - Create, start, stop & update an entire stack with a single command: `llmn`
+- Auto configs services, generates **secure credentials**
+- Displays enabled services dashboard & API urls
 - Creates isolated stacks per project
-- Auto configs services, including generating secure credentials
-- Auto handles dependencies
-- Re-uses dependencies to reduce memory and CPU requirements
-- Uses Postgres schemas to keep each service's tables isolated
-- Auto builds services from git repos as needed
+- Shares database services to reduce memory and CPU usage
+- Uses postgres schemas to keep service tables isolated
+- Builds services from git repos as needed
 - Includes custom n8n with ffmpeg and telemetry enabled
 - Provides import/export tools with support for auto configuring credentials per stack
 - Includes LiteLLM and Langfuse for easy LLM config & observability
