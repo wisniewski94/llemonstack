@@ -1,21 +1,34 @@
-# 🍋 LLemonStack - Local AI Agent Stack
+# 🍋 LLemonStack: Local AI Agent Stack
 
-A fully featured, open source, low-code AI agent automation platform. Securely running in docker
+Open source, low-code AI agent automation platform, auto-configured and securely running in docker
 containers.
 
-Pre-configured and ready to squeeze. LLemoStack gets you up and running in minutes with
+Get up and running in minutes with
 [n8n](https://n8n.io/), [Flowise](https://flowiseai.com/), [Supabase](https://supabase.com/),
 [Qdrant](https://qdrant.tech/), [Zep](https://www.getzep.com/),
 [LiteLLM](https://github.com/BerriAI/litellm), [Langfuse](https://github.com/langfuse/langfuse),
 [Ollama](https://ollama.com/), and [Browser-Use](https://browser-use.com/) and more.
 
+> 💰 **No cost**, low code AI agent playground
+>
+> ✅ **Up and running in minutes**
+>
+> 🔧 Pre-configured stack of the latest open source AI tools
+>
+> ⚡ Rapid local dev & learning for fun & profit
+>
+> 🚀 Easy deploy to a production cloud
+
+LLemonStack makes it easy to get 17+ leading AI tools installed, configured, and running on your local machine in minutes with a single command line tool.
+
+It was created to make development and testing of complex AI agents as easy as possible without any cost.
+
+LLemonStack can even run local AI models for you via Ollama.
+
+It provides advanced debugging and tracing capabilities to help you understand exactly how
+your agents work, and most importantly... how to fix them when they break.
+
 ![n8n.io - Screenshot](docs/assets/n8n-demo.gif)
-
-## Version
-
-LLemonStack is currently a pre-release version. It works on macOS, Linux and Windows with WSL 2.
-
-The scripts and API are in rapid development. Check the git history and branches.
 
 ## Walkthrough Video
 
@@ -23,8 +36,38 @@ The scripts and API are in rapid development. Check the git history and branches
 
 <br />
 
+## Screenshots
+
+`llmn init` - initialize a new project
+
+![llmn init](docs/assets/screenshots/init.gif)
+
+`llmn start` - start the stack
+
+![llmn start](docs/assets/screenshots/start.gif)
+
+Dashboard & API urls are shown, along with the auto generated credentials.
+
+<br />
+
+## Key Features
+
+- Create, start, stop & update an entire stack with a single command: `llmn`
+- Creates isolated stacks per project
+- Auto configs services, including generating secure credentials
+- Auto handles dependencies
+- Re-uses dependencies to reduce memory and CPU requirements
+- Uses Postgres schemas to keep each service's tables isolated
+- Auto builds services from git repos as needed
+- Includes custom n8n with ffmpeg and telemetry enabled
+- Provides import/export tools with support for auto configuring credentials per stack
+- Includes LiteLLM and Langfuse for easy LLM config & observability
+
+<br />
+
 ## Changelog
 
+- Apr 17, 2025: fix Flowise start and API key issues
 - Apr 1, 2025: v0.3.0 pre-release
 
   - Remove ENABLE\_\* vars from .env and use `llmn config` to enable/disable services
@@ -35,6 +78,8 @@ The scripts and API are in rapid development. Check the git history and branches
 
 ## Known Issues
 
+### Zep
+
 Zep requires a quick workaround fix for a hard coded `public.role_type_num` bug. This is only an
 issue when using the custom service_zep schema created by the init script..
 
@@ -43,30 +88,22 @@ See [examples/zep/README.md](examples/zep/README.md) for details and the quick f
 Zep self hosted (local) is not yet compatible with the n8n node. However, you can run custom code
 in n8n and other stack components to use the local Zep service.
 
+### Flowise
+
+Flowise generates an API key when it's first started. The key is saved to [flowise/config/api.json](volumes/flowise/config/api.json)
+in the project's volumes folder. Re-run `llmn start` to see the API key in the start script
+output or get the key from the api.json file when needed.
+
 <br />
 
-## Overview
+## OS Support
 
-**LLemonStack** installs and runs a fully featured low code AI agent development playground,
-including local LLMs and chat interfaces, from a single command: `llmn start`
+LLemonStack run all services in Docker. It was built on a Macbook M2, tested on Linux and Windows with WSL 2.
 
-Supports running on Linux, Mac, or Windows. Built on a Macbook M2, tested on Linux and Windows with
-WSL 2.
+Mac and Linux, and Windows with WSL 2 enabled should work without any modifications.
 
-### Main objectives of 🍋 LLemonStack are
-
-> - 🚫 💰 **No cost**, low code AI agent playground
-> - ✅ ⌛ **Up and running in minutes**
-> - 🔧 🎁 Pre-configured stack of the latest open source AI tools
-> - ⚡ 🤑 Rapid local dev & learning for fun & profit
-> - 🚀 ☁️ Easy deploy to a production cloud
->
-> 🍋🍋🍋🍋🍋 _5 lemon rating FTW_
-
-Ultimately, LLemonStack aims to provide a comprehensive AI configuration framework & education
-ecosystem... where stuff just works so you can focus on the fun part of building AI agents.
-
-With this first release, we're just scratching the surface of what's possible.
+Running LLemonStack directly on Windows (without WSL 2) needs further testing, but should
+work without major modifications.
 
 <br />
 
@@ -290,68 +327,6 @@ source <(llmn completions zsh)
 
 <br />
 
-## ⚡️ n8n WorkflowQuick Start
-
-TODO: rewrite this section
-
-The main component of the self-hosted AI starter kit is a docker compose file pre-configured with
-network and disk so there isn't much else you need to install. After completing the installation
-steps above, follow the steps below to get started.
-
-1. Open <http://localhost:5678/> in your browser to set up n8n. You'll only have to do this once.
-   You are NOT creating an account with n8n in the setup here, it is only a local account for your
-   instance!
-2. Open the included workflow: <http://localhost:5678/workflow/vTN9y2dLXqTiDfPT>
-3. Create credentials for every service:
-
-   Ollama URL: http://ollama:11434
-
-   Postgres (through Supabase): use DB, username, and password from .env. IMPORTANT: Host is 'db'
-   since that is the name of the service running Supabase
-
-   Qdrant URL: http://qdrant:6333
-
-   Google Drive: Follow
-   [this guide from n8n](https://docs.n8n.io/integrations/builtin/credentials/google/). Don't use
-   localhost for the redirect URI, just use another domain you have, it will still work!
-
-   Alternatively, you can set up
-   [local file triggers](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.localfiletrigger/).
-
-4. Select **Test workflow** to start running the workflow.
-5. If this is the first time you're running the workflow, you may need to wait until Ollama finishes
-   downloading Llama3.1. You can inspect the docker console logs to check on the progress.
-6. Make sure to toggle the workflow as active and copy the "Production" webhook URL!
-7. Open <http://localhost:3000/> in your browser to set up Open WebUI. You'll only have to do this
-   once. You are NOT creating an account with Open WebUI in the setup here, it is only a local
-   account for your instance!
-8. Go to Settings -> Admin Panel -> Functions -> Add Function -> Give name + description then paste
-   in the code from `openwebui/n8n_pipe.py`
-9. Click on the gear icon and set the n8n_url to the production URL for the webhook you copied in a
-   previous step.
-10. Toggle the function on and now it will be available in your model dropdown in the top left!
-
-See https://openwebui.com/functions?query=n8n for more n8n functions.
-
-To open n8n at any time, visit <http://localhost:5678/> in your browser. To open Open WebUI at any
-time, visit <http://localhost:3000/>.
-
-With your n8n instance, you'll have access to over 400 integrations and a suite of basic and
-advanced AI nodes such as
-[AI Agent](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.agent/),
-[Text classifier](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.text-classifier/),
-and
-[Information Extractor](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.information-extractor/)
-nodes. To keep everything local, just remember to use the Ollama node for your language model and
-Qdrant as your vector store.
-
-> [!NOTE]
-> This starter kit is designed to help you get started with self-hosted AI workflows. While it's not
-> fully optimized for production environments, it combines robust components that work well together
-> for proof-of-concept projects. You can customize it to meet your specific needs
-
-<br />
-
 ## Ollama
 
 There are several options for running Ollama locally.
@@ -361,42 +336,23 @@ There are several options for running Ollama locally.
 2. Run ollama in a Docker container
    - There are different options for CPU, Nvidia GPUs, and AMD GPUs
 
-See `ENABLE_OLLAMA` in `.env` for more details.
+Run `llmn config` to enable/disable Ollama and change how Ollama is run.
 
 > [!NOTE]
 > If you have not used your Nvidia GPU with Docker before, please follow the
 > [Ollama Docker instructions](https://github.com/ollama/ollama/blob/main/docs/docker.md).
 
-```bash
-# .env
-ENABLE_OLLAMA=gpu-nvidia
-```
-
-### For AMD GPU users on Linux
-
-```bash
-# .env
-ENABLE_OLLAMA=gpu-amd
-```
-
 ### For Mac / Apple Silicon users
 
-If you're using a Mac with an M1 or newer processor, you can't expose your GPU to the Docker
-instance, unfortunately. There are two options in this case:
+If you're using a Mac with an M1 (Apple Silicon) or newer processor, you can't expose your GPU to the Docker
+instance, unfortunately.
 
-1. Run the starter kit fully on CPU:
+Run `llmn config` to configure Ollama.
 
-   ```bash
-   # .env
-   ENABLE_OLLAMA=cpu
-   ```
+There are two options for Mac Silicon users:
 
-2. Run Ollama on your Mac for faster inference, and connect to that from the n8n instance:
-
-   ```bash
-   # .env
-   ENABLE_OLLAMA=host
-   ```
+1. Run Ollama in Docker using the `Run on CPU` config option
+2. Run Ollama directly on your Mac and use the `Run on Host` config option
 
    Ollama needs to be installed on your mac. See the [Ollama homepage](https://ollama.com/) or run
    `brew install ollama`.
@@ -411,22 +367,15 @@ instance, unfortunately. There are two options in this case:
    See [services/ollama/docker-compose.yaml](docker-compose.yaml) for the specific models used by
    the Docker container.
 
-   Once ollama is running locally and `ENABLE_OLLAMA=host` is set in .env, start the services with
-   `llmn start`
-
    Open WebUI should show the installed models in the dropdown if everything is working correctly.
-
-Additionally, after you run the start script:
-
-1. Head to http://localhost:5678/home/credentials
-2. Click on "Local Ollama service"
-3. Change the base URL to "http://host.docker.internal:11434/"
 
 <br />
 
 ## Upgrading
 
-To update all containers to their latest versions (n8n, Open WebUI, etc.), run the pull script:
+To update all services to their latest versions, run the update script.
+Update will pull the latest Docker images as well as pull and rebuild services use
+a git repo.
 
 ```bash
 # Update docker images to use the latest versions
@@ -504,19 +453,6 @@ Here are solutions to common issues you might encounter:
 - **Supabase Pooler Restarting**: If the supabase-pooler container keeps restarting itself, follow
   the instructions in
   [this GitHub issue](https://github.com/supabase/supabase/issues/30210#issuecomment-2456955578).
-
-- **Supabase Analytics Startup Failure**: If the supabase-analytics container fails to start after
-  changing your Postgres password, delete the folder `supabase/docker/volumes/db/data`.
-
-- **If using Docker Desktop**: Go into the Docker settings and make sure "Expose daemon on
-  tcp://localhost:2375 without TLS" is turned on
-
-To reset supabase, delete the volumes directory, the restart the services.
-
-```bash
-# Run the reset script to reset everything to a clean state
-llmn reset
-```
 
 ### Network Issues
 

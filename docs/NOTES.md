@@ -300,6 +300,13 @@ Not AI, but potentially useful:
 
 - [Leaflet](https://github.com/hyperlink-academy/leaflet) - easily create and share text docs
 - https://github.com/jrz/container-shell/blob/main/shell
+- https://github.com/elysiajs/elysia - typescript framework for web servers, has OAuth plugin
+
+**File Converters**
+
+- https://github.com/VERT-sh/VERT - media files
+- https://github.com/C4illin/ConvertX - 1,000+ file types, no explicit API but can be modified
+- https://github.com/danvergara/morphos - UI + API
 
 **Airtable alternatives:**
 
@@ -321,10 +328,15 @@ Not AI, but potentially useful:
 
 - https://trigger.dev/
 - https://brave.com/search/api/
-- https://scrapecreators.com/ - see Notion doc for full list of scraper APIs
 - https://rapidapi.com/zt4096/api/phindsearch-api - Phind Search API
 - https://www.krea.ai/
 - https://github.com/dstackai/dstack
+
+**LLM Web Scrapers**
+
+- https://github.com/mishushakov/llm-scraper
+- https://scrapecreators.com/
+- see Notion doc for full list of scraper APIs
 
 **AI Tools Directories:**
 
