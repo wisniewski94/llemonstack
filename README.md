@@ -30,6 +30,25 @@ your agents work, and most importantly... how to fix them when they break.
 
 <br />
 
+## Quick Start
+
+Deno and Docker must already be installed.
+See [#install-llemonstack](Install) section below.
+
+```bash
+git clone https://github.com/llemonstack/llemonstack.git
+cd llemonstack
+deno install # Install dependencies
+npm link # Enable the llmn command
+
+# Initialize a new project
+llmn init
+# Optionally configure the stack services
+llmn config
+# Start the stack
+llmn start
+```
+
 ## Walkthrough Video
 
 [![LLemonStack Walkthrough Video](https://img.youtube.com/vi/xRRRSbYE9TY/0.jpg)](https://www.youtube.com/watch?v=xRRRSbYE9TY "LLemonStack Walkthrough Video")
