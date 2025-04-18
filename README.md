@@ -50,7 +50,7 @@ your agents work, and most importantly... how to fix them when they break.
 
 ![llmn start](docs/assets/screenshots/start.gif)
 
-Dashboard & API urls are shown, along with the auto generated credentials.
+On start, dashboard & API urls are shown along with the auto generated credentials.
 
 <br />
 
