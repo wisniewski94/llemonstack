@@ -1,5 +1,4 @@
 version: 0.2.0 # Config file version
-disabled: true
 
 service: lightrag
 name: LightRAG
