@@ -59,10 +59,11 @@ main
 main
   .command('init')
   .description('Initialize the LLemonStack environment')
-  .action(async (options) => {
+  .arguments('[service:string]')
+  .action(async (options, service?: string) => {
     const config = await initConfig('init', options, true)
     const { init } = await import('./scripts/init.ts')
-    await init(config)
+    await init(config, service)
   })
 
 // Start the LLemonStack services
