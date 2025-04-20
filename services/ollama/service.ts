@@ -108,7 +108,7 @@ export class OllamaService extends Service {
   }
 
   // deno-lint-ignore require-await
-  override async showAdditionalInfo(_options: IServiceActionOptions): Promise<void> {
+  override async showStartInfo(_options: IServiceActionOptions): Promise<void> {
     const config = this._configInstance
     const show = config.show
     if (this.getProfiles()[0] === 'ollama-host') {

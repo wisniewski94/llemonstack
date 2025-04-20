@@ -497,7 +497,7 @@ export class Service {
    *
    * @returns {Promise<void>}
    */
-  public async showAdditionalInfo(_options: IServiceActionOptions = {}): Promise<void> {
+  public async showStartInfo(_options: IServiceActionOptions = {}): Promise<void> {
     // Override in subclasses to show additional info
   }
 }

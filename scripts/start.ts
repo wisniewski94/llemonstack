@@ -145,7 +145,7 @@ function outputServicesInfo({
   // Show additional info for each service
   // See OllamaService for an example
   services.forEach(async (service) => {
-    await service.showAdditionalInfo()
+    await service.showStartInfo()
   })
 
   console.log('\n')
