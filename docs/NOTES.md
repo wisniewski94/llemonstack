@@ -16,6 +16,11 @@ container logs in Docker Desktop.
 
 **Code:**
 
+- [ ] Finish configuring LightRAG
+
+  - [ ] Use LiteLLM to proxy LLM queries in LightRAG
+  - [ ] Add LightRAG Ollama compatible endpoint to LiteLLM to allow n8n to query LightRAG
+
 - [x] Add support for loading services from project directory
 
   - [x] Allow overriding core services
@@ -288,6 +293,8 @@ docker exec -it --user root n8n sh
 
 - https://github.com/FlowiseAI/FlowiseChatEmbed
 
+- https://github.com/The-Pocket/PocketFlow
+
 - [open-health](https://github.com/OpenHealthForAll/open-health)
 
 - [verifai](https://github.com/nikolamilosevic86/verifAI) - for detecting hallucinations in document
@@ -364,6 +371,10 @@ Not AI, but potentially useful:
 **Prompts:**
 
 - https://gamma.app/docs/10-INSANE-AI-Prompts-In-20-Minutes-f0epq82zvh5lz5e?mode=doc
+
+**AI Code Documentation**
+
+- https://github.com/The-Pocket/Tutorial-Codebase-Knowledge
 
 ## n8n
 
