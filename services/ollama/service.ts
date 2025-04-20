@@ -47,6 +47,18 @@ export class OllamaService extends Service {
     return await super.start(options)
   }
 
+  override async init(envVars: Record<string, string> = {}): Promise<TryCatchResult<boolean>> {
+    // If the service is disabled, skip the initialization
+    if (!this.isEnabled()) {
+      return super.init(envVars)
+    }
+
+    // Configure Ollama during initialization
+    await this.configure({ silent: false })
+
+    return success<boolean>(true, 'Ollama initialized')
+  }
+
   /**
    * Configure the service
    * @param {boolean} [silent] - Whether to run the configuration in silent or interactive mode
@@ -103,6 +115,9 @@ export class OllamaService extends Service {
 
     this.setProfiles([ollamaProfile])
     this.setState('enabled', !ollamaProfile.includes('disabled'))
+
+    // Save the profile to the config
+    this._configInstance.save()
 
     return super.configure(options)
   }
