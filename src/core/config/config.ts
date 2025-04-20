@@ -245,35 +245,39 @@ export class Config extends ConfigBase {
       envPath = this.envFile, // Set to null to skip loading the .env file
       reload = false,
       expand = true,
+      skipServices = false,
     }: {
       envPath?: string | null
       reload?: boolean
       expand?: boolean
+      skipServices?: boolean
     } = {},
   ): Promise<Record<string, string>> {
     // Load .env file
     const env = await super.loadEnv({ envPath, reload, expand })
 
-    // TODO: load Services env by service group, this will allow services that depend on
-    // lower level services to discover the env settings if needed?
+    if (!skipServices) {
+      // TODO: load Services env by service group, this will allow services that depend on
+      // lower level services to discover the env settings if needed?
 
-    // Call loadEnv on all enabled services
-    // Allow services to modify the env vars as needed
-    for (const [_, service] of this.getEnabledServices()) {
-      // Use a proxy to intercept env var changes and update Deno.env
-      await service.loadEnv(
-        new Proxy(env, {
-          set: (target, prop, value) => {
-            target[prop as string] = value
-            // TODO: think through wether Deno.env should be set or not.
-            // This could cause issues with services stomping on each other's env vars.
-            // But maybe that's a good thing?
-            Deno.env.set(prop as string, value)
-            return true
-          },
-        }),
-        { config: this }, // Pass config instance to prevent circular await config.getInstance()dependencies
-      )
+      // Call loadEnv on all enabled services
+      // Allow services to modify the env vars as needed
+      for (const [_, service] of this.getEnabledServices()) {
+        // Use a proxy to intercept env var changes and update Deno.env
+        await service.loadEnv(
+          new Proxy(env, {
+            set: (target, prop, value) => {
+              target[prop as string] = value
+              // TODO: think through wether Deno.env should be set or not.
+              // This could cause issues with services stomping on each other's env vars.
+              // But maybe that's a good thing?
+              Deno.env.set(prop as string, value)
+              return true
+            },
+          }),
+          { config: this }, // Pass config instance to prevent circular await config.getInstance()dependencies
+        )
+      }
     }
 
     // Update this._env cache with immutable proxy
@@ -314,6 +318,15 @@ export class Config extends ConfigBase {
       ? serviceName
       : this._servicesLookup.get(serviceName)
     return serviceId ? this._services.get(serviceId) || null : null
+  }
+
+  /**
+   * Get a service by the service it provides
+   * @param {string} provides - The service key in llemonstack.yaml, or service.id
+   * @returns {Service | null} The service or null if not found
+   */
+  public getServiceByProvides(provides: string): Service | null {
+    return this._providers.get(provides)?.[0] || null
   }
 
   /**

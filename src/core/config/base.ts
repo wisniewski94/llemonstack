@@ -1,5 +1,5 @@
 import { getDockerNetworks, prepareDockerNetwork, removeDockerNetwork } from '@/lib/docker.ts'
-import { loadEnv } from '@/lib/env.ts'
+import { loadEnv, updateEnv } from '@/lib/env.ts'
 import * as fs from '@/lib/fs.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 import { isTruthy } from '@/lib/utils/compare.ts'
@@ -388,10 +388,30 @@ export class ConfigBase {
     return this._config.version !== ConfigBase.llemonstackVersion
   }
 
-  public setEnvKey(key: string, value: string) {
+  /**
+   * Set an env var in the in memory env object and Deno.env
+   */
+  public setEnvKey(key: string, value: string): Record<string, string> {
     const env = { ...this._env, [key]: value } // Clone _env object to remove immutability
     Deno.env.set(key, value)
     return this._setEnv(env)
+  }
+
+  /**
+   * Update the .env file with the given vars
+   *
+   * Also updates the in memory env object and Deno.env.
+   * @param vars - The vars to set
+   * @returns {Promise<TryCatchResult<boolean>>}
+   */
+  public async setEnvFileVars(vars: Record<string, string>): Promise<TryCatchResult<boolean>> {
+    const env = { ...this._env, ...vars } // Clone _env object to remove immutability
+    Object.entries(vars).forEach(([key, value]) => {
+      Deno.env.set(key, value)
+    })
+    this._setEnv(env) // Update the in memory env object
+
+    return await updateEnv(this.envFile, vars) // Update the .env file
   }
 
   /**

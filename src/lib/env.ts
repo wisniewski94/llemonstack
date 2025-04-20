@@ -184,6 +184,7 @@ export function parseWithoutExpand(text: string): Record<string, string> {
     const { key, interpolated, notInterpolated, unquoted } = match
       ?.groups as LineParseResult
     if (!RE_VALID_KEY.test(key)) {
+      // TODO: replace with logger
       console.warn(
         `Ignored the key "${key}" as it is not a valid identifier: The key need to match the pattern /^[a-zA-Z_][a-zA-Z0-9_]*$/.`,
       )

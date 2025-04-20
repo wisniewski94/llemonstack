@@ -2,158 +2,11 @@
  * Setup required env variables
  */
 import { runDockerCommand } from '@/lib/docker.ts'
-import { updateEnv } from '@/lib/env.ts'
 import { fileExists, path } from '@/lib/fs.ts'
-import {
-  generateJWT,
-  generateRandomBase64,
-  generateSecretKey,
-  generateUUID,
-  supabaseAnonJWTPayload,
-  supabaseServiceJWTPayload,
-} from '@/lib/jwt.ts'
-import { createServiceSchema, isPostgresConnectionValid } from '@/lib/postgres.ts'
-import { failure, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
-import { OllamaService } from '@/services/ollama/service.ts'
 import { Input, Secret, Select } from '@cliffy/prompt'
 import { Config } from '../src/core/config/config.ts'
 import { reset } from './reset.ts'
-
-// Env var key names we care about
-type EnvVarsKeys = keyof {
-  // LLEMONSTACK_PROJECT_NAME: string
-  // Supabase
-  SUPABASE_DASHBOARD_USERNAME: string
-  SUPABASE_DASHBOARD_PASSWORD: string
-  POSTGRES_PASSWORD: string
-  SUPABASE_JWT_SECRET: string
-  SUPABASE_ANON_KEY: string
-  SUPABASE_SERVICE_ROLE_KEY: string
-  SUPABASE_VAULT_ENC_KEY: string
-  // N8N
-  N8N_ENCRYPTION_KEY: string
-  N8N_USER_MANAGEMENT_JWT_SECRET: string
-  // Flowise
-  FLOWISE_PASSWORD: string
-  // Zep
-  ZEP_API_SECRET: string
-  // Neo4j
-  NEO4J_USER: string
-  NEO4J_PASSWORD: string
-  // Browser
-  BROWSER_USE_VNC_PASSWORD: string
-  // OpenAI
-  OPENAI_API_KEY: string
-  // Ollama
-  // ENABLE_OLLAMA: string
-  // LiteLLM
-  LITELLM_MASTER_KEY: string
-  LITELLM_UI_PASSWORD: string
-  LITELLM_SALT_KEY: string
-  // Langfuse
-  LANGFUSE_SALT: string // 32
-  LANGFUSE_ENCRYPTION_KEY: string // 64
-  LANGFUSE_NEXTAUTH_SECRET: string // 32
-  LANGFUSE_INIT_PROJECT_PUBLIC_KEY: string
-  LANGFUSE_INIT_PROJECT_SECRET_KEY: string
-  LANGFUSE_INIT_USER_PASSWORD: string
-  // Minio
-  MINIO_ROOT_PASSWORD: string
-  // Clickhouse
-  CLICKHOUSE_PASSWORD: string
-  // Redis
-  REDIS_PASSWORD: string
-  // Local LLM
-  LOCAL_LLM_OPENAI_API_BASE_URL: string
-  LOCAL_LLM_OPENAI_HOST_PORT: string
-  LOCAL_LLM_OPENAI_API_KEY: string
-}
-
-interface PostgresServiceEnvKeys {
-  user: string
-  pass: string
-  schema?: string
-  custom?: Record<string, string>
-}
-
-// Type for environment variables
-type PostgresEnvVarKeys =
-  | typeof POSTGRES_SERVICES[number][1]['user']
-  | typeof POSTGRES_SERVICES[number][1]['pass']
-  | (typeof POSTGRES_SERVICES[number][1]['schema'] & string)
-
-// Combined type for all environment variables
-type AllEnvVarKeys = EnvVarsKeys | PostgresEnvVarKeys
-
-// Services that support custom postgres user and password
-// TODO: move to services llemonstack.yaml files
-const POSTGRES_SERVICES: Array<[string, PostgresServiceEnvKeys]> = [
-  ['litellm', {
-    user: 'LITELLM_POSTGRES_USER',
-    pass: 'LITELLM_POSTGRES_PASSWORD',
-    schema: 'LITELLM_POSTGRES_SCHEMA',
-  }],
-  ['flowise', { user: 'FLOWISE_POSTGRES_USER', pass: 'FLOWISE_POSTGRES_PASSWORD' }],
-  ['langfuse', {
-    user: 'LANGFUSE_POSTGRES_USER',
-    pass: 'LANGFUSE_POSTGRES_PASSWORD',
-    schema: 'LANGFUSE_POSTGRES_SCHEMA',
-  }],
-  ['zep', {
-    user: 'ZEP_POSTGRES_USER',
-    pass: 'ZEP_POSTGRES_PASSWORD',
-    schema: 'ZEP_POSTGRES_SCHEMA',
-  }],
-  // n8n doesn't need a separate postgres user and password and requires root access.
-  // Most likely schema:create does not currently grant enough permissions on the extensions schema .
-  // n8n uses the primary postgres user and password and auto creates the service_n8n schema.
-  // ['n8n', {
-  //   user: 'N8N_POSTGRES_USER',
-  //   pass: 'N8N_POSTGRES_PASSWORD',
-  //   schema: 'N8N_POSTGRES_SCHEMA',
-  // }],
-]
-
-/**
- * Update the .env file with the given env vars
- * @param envVars - The env vars to update the .env file with
- * @param {Object} options - Options object
- * @param {boolean} options.reload - Reload the env vars from the .env file into Deno.env
- * @param {boolean} options.expand - Expand the env vars
- * @returns {Promise<TryCatchResult<Record<string, string>>>}
- */
-async function updateEnvFile(
-  config: Config,
-  envVars: Record<string, string>,
-  { reload = true, expand = false }: {
-    reload?: boolean
-    expand?: boolean
-  } = {},
-): Promise<TryCatchResult<Record<string, string>>> {
-  const _env = { ...envVars }
-
-  // Make sure LLEMONSTACK_PROJECT_NAME and DEBUG vars are not saved
-  // They're handled by config.json and the cli instead of .env
-  delete _env.LLEMONSTACK_PROJECT_NAME
-  delete _env.DEBUG
-  delete _env.LLEMONSTACK_DEBUG
-
-  const updateResult = await updateEnv(config.envFile, _env)
-
-  if (!updateResult.success) {
-    return failure<Record<string, string>>(
-      `Unable to update env file: ${config.envFile}`,
-      updateResult,
-    )
-  }
-
-  // TODO: test this to make sure its returning properly
-
-  // Reload the env vars and add prepend messages
-  return (
-    await tryCatch(config.loadEnv({ reload, expand }))
-  ).unshiftMessages(updateResult.messages)
-}
+import { stop } from './stop.ts'
 
 async function envFileExists(config: Config): Promise<boolean> {
   return (await fileExists(config.envFile)).data ?? false
@@ -174,6 +27,7 @@ async function createEnvFile(config: Config): Promise<void> {
   }
   try {
     await Deno.copyFile(path.join(config.installDir, '.env.example'), config.envFile)
+    await config.loadEnv({ reload: true, expand: true, skipServices: true })
   } catch (error) {
     throw new Error(`Failed to create .env file: ${error}`)
   }
@@ -198,161 +52,6 @@ function projectNameValidator(value?: string): boolean | string {
 }
 
 /**
- * Set security keys for the project if not set
- * @param envVars - The environment variables to set
- * @returns The updated environment variables
- */
-async function setSecurityKeys(
-  envVars: Record<AllEnvVarKeys, string>,
-): Promise<Record<AllEnvVarKeys, string>> {
-  // Supabase
-  const supabaseKey = envVars.SUPABASE_JWT_SECRET || await generateSecretKey(32)
-  envVars.SUPABASE_JWT_SECRET = supabaseKey
-  envVars.SUPABASE_ANON_KEY = envVars.SUPABASE_ANON_KEY ||
-    await generateJWT(supabaseAnonJWTPayload, supabaseKey)
-  envVars.SUPABASE_SERVICE_ROLE_KEY = envVars.SUPABASE_SERVICE_ROLE_KEY ||
-    await generateJWT(supabaseServiceJWTPayload, supabaseKey)
-  envVars.SUPABASE_VAULT_ENC_KEY = envVars.SUPABASE_VAULT_ENC_KEY || await generateSecretKey(32)
-  envVars.POSTGRES_PASSWORD = envVars.POSTGRES_PASSWORD || await generateSecretKey(32)
-
-  // n8n
-  envVars.N8N_ENCRYPTION_KEY = envVars.N8N_ENCRYPTION_KEY || await generateSecretKey(32)
-  envVars.N8N_USER_MANAGEMENT_JWT_SECRET = envVars.N8N_USER_MANAGEMENT_JWT_SECRET ||
-    await generateSecretKey(32)
-
-  // Zep
-  envVars.ZEP_API_SECRET = envVars.ZEP_API_SECRET || await generateSecretKey(20)
-
-  // Flowise
-  envVars.FLOWISE_PASSWORD = envVars.FLOWISE_PASSWORD || await generateSecretKey(22)
-
-  // Neo4j
-  envVars.NEO4J_PASSWORD = envVars.NEO4J_PASSWORD || await generateSecretKey(32)
-
-  // LiteLLM
-  envVars.LITELLM_MASTER_KEY = envVars.LITELLM_MASTER_KEY || `sk-${await generateSecretKey(32)}`
-  envVars.LITELLM_UI_PASSWORD = envVars.LITELLM_UI_PASSWORD || await generateSecretKey(16)
-  envVars.LITELLM_SALT_KEY = envVars.LITELLM_SALT_KEY || await generateRandomBase64(32)
-
-  // Langfuse
-  envVars.LANGFUSE_SALT = envVars.LANGFUSE_SALT || await generateRandomBase64(32)
-  envVars.LANGFUSE_ENCRYPTION_KEY = envVars.LANGFUSE_ENCRYPTION_KEY || await generateSecretKey(64)
-  envVars.LANGFUSE_NEXTAUTH_SECRET = envVars.LANGFUSE_NEXTAUTH_SECRET ||
-    await generateRandomBase64(32)
-  envVars.LANGFUSE_INIT_PROJECT_PUBLIC_KEY = envVars.LANGFUSE_INIT_PROJECT_PUBLIC_KEY ||
-    `pk-lf-${generateUUID()}`
-  envVars.LANGFUSE_INIT_PROJECT_SECRET_KEY = envVars.LANGFUSE_INIT_PROJECT_SECRET_KEY ||
-    `sk-lf-${generateUUID()}`
-  envVars.LANGFUSE_INIT_USER_PASSWORD = envVars.LANGFUSE_INIT_USER_PASSWORD ||
-    await generateSecretKey(22)
-  // Minio
-  envVars.MINIO_ROOT_PASSWORD = envVars.MINIO_ROOT_PASSWORD || await generateSecretKey(22)
-  // Clickhouse
-  envVars.CLICKHOUSE_PASSWORD = envVars.CLICKHOUSE_PASSWORD || await generateSecretKey(22)
-  // Redis
-  envVars.REDIS_PASSWORD = envVars.REDIS_PASSWORD || await generateSecretKey(22)
-
-  return envVars
-}
-
-/**
- * Replace any password that equals POSTGRES_PASSWORD with ${POSTGRES_PASSWORD} placeholder
- * @param envVars - The environment variables to update
- * @param pgPass - The postgres password
- */
-function replacePostgresPasswords(
-  envVars: Record<string, string>,
-  pgPass: string,
-): Record<string, string> {
-  for (const key in envVars) {
-    if (key !== 'POSTGRES_PASSWORD' && envVars[key] === pgPass) {
-      envVars[key as keyof typeof envVars] = '${POSTGRES_PASSWORD}'
-    }
-  }
-  return envVars
-}
-
-async function startSupabase(
-  config: Config,
-  envVars: Record<AllEnvVarKeys, string>,
-): Promise<void> {
-  const show = config.relayer.show
-  const supabase = config.getServiceByName('supabase')
-
-  if (!supabase) {
-    show.fatal('Supabase service not found')
-    Deno.exit(1)
-  }
-
-  // Make sure supabase is running
-  if (!await supabase.isRunning()) {
-    try {
-      // Start supabase
-      show.info('Starting Supabase...')
-
-      await supabase.start()
-      // Wait for 3 seconds to ensure Supabase is fully initialized
-      await new Promise((resolve) => setTimeout(resolve, 3000))
-    } catch (error) {
-      show.error('Supabase failed to start', { error })
-    }
-  }
-  // Check postgres connection
-  if (await isPostgresConnectionValid({ password: envVars.POSTGRES_PASSWORD })) {
-    show.info('Successfully connected to Supabase postgres')
-  } else {
-    show.info('Attempting to start Supabase again...')
-    try {
-      await startService(config, 'supabase')
-      await new Promise((resolve) => setTimeout(resolve, 5000))
-    } catch (error) {
-      show.error('Error while starting Supabase', { error })
-    }
-    if (!await isPostgresConnectionValid({ password: envVars.POSTGRES_PASSWORD })) {
-      show.fatal('Failed to start Supabase again, unable to continue')
-    }
-  }
-}
-
-/**
- * Create postgres schemas for all services that use postgres
- * @returns The updated environment variables
- */
-async function createServiceSchemas(config: Config): Promise<Record<AllEnvVarKeys, string>> {
-  const show = config.relayer.show
-  const dbPassword = Deno.env.get('POSTGRES_PASSWORD') ?? ''
-  if (!dbPassword) {
-    show.fatal('POSTGRES_PASSWORD is not set in .env file, unable to create postgres schemas')
-  }
-  const dbVars: Record<string, string> = {}
-  for (const service of POSTGRES_SERVICES) {
-    show.info(`Creating schema for ${service[0]}...`)
-    const credentials = await createServiceSchema(service[0], {
-      password: dbPassword,
-    })
-    dbVars[service[1].user] = credentials.username
-    dbVars[service[1].pass] = credentials.password
-    service[1].schema && (dbVars[service[1].schema] = credentials.schema)
-    if (service[1].custom) {
-      for (const [key, value] of Object.entries(service[1].custom)) {
-        dbVars[key] = value
-      }
-    }
-    show.info(`Schema created for ${service[0]}: ${credentials.schema}`)
-  }
-  // Save db vars to .env file
-  // Replace any password that equals POSTGRES_PASSWORD with ${POSTGRES_PASSWORD} placeholder
-  const results = await updateEnvFile(config, replacePostgresPasswords(dbVars, dbPassword), {
-    reload: true,
-    expand: false,
-  })
-  if (!results.success) {
-    show.fatal('Failed to update env file', { error: results.error })
-  }
-  return results.data ?? {}
-}
-
-/**
  * Check if a project with the same project name is already running
  * @param projectName - The name of the project to check
  * @returns True if the project exists, false otherwise
@@ -374,8 +73,27 @@ async function isExistingProject(projectName: string): Promise<boolean> {
   }
 }
 
+async function initService(config: Config, serviceName: string): Promise<void> {
+  const show = config.relayer.show
+
+  const service = config.getServiceByName(serviceName)
+  if (!service) {
+    show.fatal(`Service ${serviceName} not found`)
+  }
+
+  show.action(`Initializing ${service!.name}...`)
+
+  const results = await service!.init()
+
+  show.logMessages(results.messages)
+  if (!results.success) {
+    show.fatal('Failed to initialize service', { error: results.error })
+  }
+}
+
 export async function init(
   config: Config,
+  service?: string,
 ): Promise<void> {
   const show = config.relayer.show
 
@@ -395,6 +113,12 @@ export async function init(
     let keepEnv = false
 
     if (config.isProjectInitialized()) {
+      // Handle single service initialization
+      if (service) {
+        await initService(config, service)
+        Deno.exit(0)
+      }
+
       show.warn(`Project already initialized: ${config.projectName}`)
       const resetOption: string = await Select.prompt({
         message: 'How do you want to proceed?',
@@ -466,11 +190,6 @@ export async function init(
       }
     }
 
-    // Create a copy of env vars to modify
-    let envVars = { ...config.env }
-
-    // console.log('envVars', envVars)
-
     show.info('.env file is ready to configure')
 
     let uniqueName = false
@@ -513,30 +232,25 @@ export async function init(
       show.fatal('Failed to set project name', { error: result.error })
     }
 
-    // Generate random security keys
-    envVars = await setSecurityKeys(envVars)
+    // Initialize services by service group
+    // This ensures any services that need to start dependencies are started first
+    for (const [groupName, groupServices] of config.getServicesGroups()) {
+      if (groupServices.size > 0) {
+        show.action(`\nInitializing ${groupName} services...`)
+        for (const [_, service] of groupServices) {
+          show.info(`Initializing ${service.name}...`)
+          const results = await service.init()
+          show.logMessages(results.messages)
+          // At this stage, services env vars are not loaded yet
+          // Any service that needs env vars of another service during init will not work properly
+        }
+      }
+    }
 
-    show.action('\nSetting up passwords...')
-    show.info('Passwords are stored in the .env file and shown to you when you start the stack\n')
+    // Load env vars for all enabled services
+    await config.loadEnv({ reload: true, expand: true, skipServices: false })
 
-    // Prompt user for passwords
-    // Supabase
-    envVars.SUPABASE_DASHBOARD_PASSWORD = await Secret.prompt({
-      message: 'Enter a password for the Supabase dashboard',
-      hint: 'Grants admin access. Press enter to generate a random password',
-      minLength: 8,
-      hideDefault: true,
-      default: envVars.SUPABASE_DASHBOARD_PASSWORD || await generateSecretKey(16),
-    })
-
-    // Browser VNC
-    envVars.BROWSER_USE_VNC_PASSWORD = await Secret.prompt({
-      message: 'Enter a password for browser-use VNC',
-      hint: 'Used to watch browser-use automation. Press enter to generate a random password',
-      minLength: 6,
-      hideDefault: true,
-      default: envVars.BROWSER_USE_VNC_PASSWORD || await generateSecretKey(12),
-    })
+    const envVars: Record<string, string> = {}
 
     // Prompt for OpenAI API key
     show.action('\nConfigure optional LLM API keys...')
@@ -547,46 +261,18 @@ export async function init(
       hideDefault: true,
     })
 
-    // Checkpoint, save env vars to .env file
-    const envResult = await updateEnvFile(config, envVars, {
-      reload: true,
-      expand: false, // Preserve KEY=${POSTGRES_PASSWORD} format during the init process
-    })
-
+    // Update .env file with the new env vars
+    const envResult = await config.setEnvFileVars(envVars)
+    show.logMessages(envResult.messages)
     if (!envResult.success) {
       show.fatal('Failed to update .env file', { error: envResult.error })
     }
 
-    show.action('\nPreparing environment and services. This could take a bit...')
+    // Stop any services that were started during the initialization process
+    await stop(config, { all: true })
 
-    // Prepare environment
-    const prepareEnvResult = await config.prepareEnv({ silent: false })
-    if (!prepareEnvResult.success) {
-      show.logMessages(prepareEnvResult.messages)
-      Deno.exit(1)
-    }
-
-    // Configure ollama
-    const ollamaService = config.getServiceByName('ollama') as OllamaService
-    if (ollamaService) {
-      await ollamaService.configure({ silent: false })
-    }
-
-    // Save ollama config settings
-    await config.save()
-
-    show.action('\nSetting up postgres schemas...')
-    show.info('This will create a postgres user and schema for each service that supports schemas.')
-    await startSupabase(config, envVars)
-    await createServiceSchemas(config)
-    show.info('Postgres schemas successfully created')
-
-    if (ollamaService?.useHostOllama()) {
-      show.info('\nOllama host option requires Ollama running on your host machine.')
-      show.info('Download Ollama: https://ollama.com/docs/installation')
-      show.userAction('Run `ollama run` on your host machine to start the service\n')
-    }
-    show.userAction('Start the stack with `llmn start`')
+    show.action('\n✅ Initialization complete!')
+    show.userAction('Start the stack with `llmn start` or configure services with `llmn config`')
   } catch (error) {
     show.fatal('Initialization failed', { error })
   }

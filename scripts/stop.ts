@@ -65,7 +65,7 @@ async function stopServices(
   // This is necessary when .env settings are changed and the above docker compose
   // commands did not catch all running containers.
   try {
-    // Get containers separated by newlines
+    // Get any containers that did not stop properly
     const containers = await dockerComposePs(config.projectName) as DockerComposePsResult
     if (containers.length > 0) {
       show.action(`Removing ${containers.length} containers that didn't stop properly...`)

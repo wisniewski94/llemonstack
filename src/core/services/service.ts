@@ -1,5 +1,7 @@
 import { tryDockerCompose, tryDockerComposePs } from '@/lib/docker.ts'
 import { path } from '@/lib/fs.ts'
+import { generateRandomBase64, generateSecretKey, generateUUID } from '@/lib/jwt.ts'
+import { createServiceSchema, isPostgresConnectionValid } from '@/lib/postgres.ts'
 import { failure, success, TryCatchResult } from '@/lib/try-catch.ts'
 import { ObservableStruct } from '@/lib/utils/observable.ts'
 import {
@@ -14,6 +16,7 @@ import {
 } from '@/types'
 import { Config } from '../config/config.ts'
 import { getEndpoints, prepareVolumes, setupServiceRepo } from './utils/mod.ts'
+
 /**
  * Service
  *
@@ -387,6 +390,122 @@ export class Service {
   //
 
   /**
+   * Initialize the service
+   *
+   * @returns {Promise<void>}
+   */
+  public async init(envVars: Record<string, string> = {}): Promise<TryCatchResult<boolean>> {
+    const results = success<boolean>(true)
+
+    const env = await this._configInstance.env
+
+    // Create postgres schema if needed
+    if (this.config.init?.postgres_schema) {
+      const dbEnvKeys = this.config.init.postgres_schema || {}
+
+      // Check if postgres user and password are already set
+      if (env[dbEnvKeys.user] && env[dbEnvKeys.pass]) {
+        results.addMessage('debug', 'Postgres schema already exists, skipping')
+      } else {
+        // Get postgres service
+        const postgresService = this._configInstance.getServiceByProvides('postgres')
+        if (!postgresService) {
+          results.addMessage('error', `Postgres service not found, required by ${this.name}`)
+          return failure<boolean>(`Unable to initialize ${this.name}`, results, false)
+        }
+
+        // Start postgres service if not running
+        if (!await postgresService!.isRunning()) {
+          const postgresResults = await postgresService.start()
+          if (!postgresResults.success) {
+            results.collect([postgresResults])
+            return failure<boolean>(`Unable to initialize ${this.name}`, results, false)
+          }
+          // Wait 3 seconds for postgres to start
+          await new Promise((resolve) => setTimeout(resolve, 3000))
+        }
+
+        if (!env.POSTGRES_PASSWORD) {
+          results.addMessage('error', 'Postgres password not set, required by service')
+          return failure<boolean>(`Unable to initialize ${this.name}`, results, false)
+        }
+
+        // Try to connect up to 3 times to postgres
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          if (await isPostgresConnectionValid({ password: env.POSTGRES_PASSWORD })) {
+            results.addMessage('debug', `Successfully connected to Postgres`)
+            break
+          }
+
+          if (attempt === 3) {
+            results.addMessage('error', 'Failed to connect to Postgres after 3 attempts')
+            return failure<boolean>(`Unable to initialize ${this.name}`, results, false)
+          }
+
+          // Wait longer on each attempt
+          await new Promise((resolve) => setTimeout(resolve, 2000 * attempt))
+        }
+
+        // Postgres is connected, create the schema
+        const credentials = await createServiceSchema(this.service, {
+          password: env.POSTGRES_PASSWORD,
+        })
+
+        // Update env vars with new schema credentials
+        envVars[dbEnvKeys.user] = credentials.username
+        envVars[dbEnvKeys.pass] = credentials.password
+        if (dbEnvKeys.schema) {
+          envVars[dbEnvKeys.schema] = credentials.schema
+        }
+
+        results.addMessage('info', `Created postgres schema for ${this.name}`)
+      }
+    }
+
+    // Generate secure env vars
+    // These are typically API keys and secrets
+    if (this.config.init?.generate) {
+      Object.entries(this.config.init.generate).forEach(([key, settings]) => {
+        if (env[key]) {
+          results.addMessage('debug', `Env var ${key} already set, skipping`)
+          return
+        }
+        if (settings.method === 'generateSecretKey') {
+          envVars[key] = generateSecretKey(settings.length || 32)
+        } else if (settings.method === 'generateRandomBase64') {
+          envVars[key] = generateRandomBase64(settings.length || 32)
+        } else if (settings.method === 'generateUUID') {
+          envVars[key] = generateUUID()
+        }
+        if (settings.prefix) {
+          envVars[key] = `${settings.prefix}${envVars[key]}`
+        }
+        results.addMessage('info', `Set env var ${key} to ${envVars[key]}`)
+      })
+    }
+
+    // Update env file if any of the env vars were generated
+    if (Object.keys(envVars).length > 0) {
+      results.collect([await this._configInstance.setEnvFileVars(envVars)])
+    }
+
+    results.addMessage('info', `✔️ ${this.name} initialized`)
+    return results
+  }
+
+  /**
+   * Configure the service
+   * @param {boolean} [silent] - Whether to run the configuration in silent or interactive mode
+   * @returns {TryCatchResult<boolean>} - The result of the configuration
+   */
+  // deno-lint-ignore require-await
+  public async configure(
+    _options: IServiceActionOptions = {},
+  ): Promise<TryCatchResult<boolean>> {
+    return success<boolean>(true)
+  }
+
+  /**
    * Start the service
    * @param {EnvVars} [envVars] - Environment variables to pass to the service
    * @param {boolean} [silent] - Whether to run the command in silent mode
@@ -478,18 +597,6 @@ export class Service {
       }),
     ])
     return result
-  }
-
-  /**
-   * Configure the service
-   * @param {boolean} [silent] - Whether to run the configuration in silent or interactive mode
-   * @returns {TryCatchResult<boolean>} - The result of the configuration
-   */
-  // deno-lint-ignore require-await
-  public async configure(
-    _options: IServiceActionOptions = {},
-  ): Promise<TryCatchResult<boolean>> {
-    return success<boolean>(true)
   }
 
   /**

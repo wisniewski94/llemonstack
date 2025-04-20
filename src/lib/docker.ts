@@ -51,10 +51,10 @@ export type DockerComposePsResult = Array<{
  *
  * @returns Record<string, string>
  */
+// deno-lint-ignore require-await
 export async function dockerEnv(config?: Config): Promise<Record<string, string>> {
   if (!config) {
     config = Config.getInstance()
-    await config.initialize() // TODO: remove initialize call
   }
   return {
     LLEMONSTACK_VOLUMES_PATH: config.volumesDir,
@@ -233,15 +233,6 @@ export async function runDockerCommand(
 }
 
 function getDockerTargetPlatform(): string {
-  // TODO: remove these old code comments
-  // // Map Deno OS to Docker OS
-  // // const os = Deno.build.os
-  // // const dockerOs = os === 'windows' ? 'windows' : 'linux'
-  // const dockerOs = 'linux'
-
-  // // Map Deno arch to Docker arch
-  // const dockerArch = Deno.build.arch === 'aarch64' ? 'arm64' : 'amd64'
-
   const host = Host.getInstance()
 
   const dockerOs = host.isWindows() ? 'windows' : 'linux'
