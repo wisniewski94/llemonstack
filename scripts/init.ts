@@ -87,6 +87,7 @@ type PostgresEnvVarKeys =
 type AllEnvVarKeys = EnvVarsKeys | PostgresEnvVarKeys
 
 // Services that support custom postgres user and password
+// TODO: move to services llemonstack.yaml files
 const POSTGRES_SERVICES: Array<[string, PostgresServiceEnvKeys]> = [
   ['litellm', {
     user: 'LITELLM_POSTGRES_USER',

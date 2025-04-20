@@ -9,21 +9,40 @@ compose_file: docker-compose.yaml
 service_group: middleware
 
 provides:
-  lightrag: lightrag
+  lightrag: lightrag # Name of the container
+
+depends_on:
+  postgres:
+    condition: service_healthy
+  neo4j:
+    condition: service_healthy
+
+# Get the version of LightRAG from the PKG-INFO file
+# Alternatively, we could get the version from the /health API endpoint, but curl is not installed
+app_version_cmd: [
+  'sh',
+  '-c',
+  "grep -E \"^Version:\" /app/lightrag_hku.egg-info/PKG-INFO | cut -d' ' -f2",
+]
 
 repo:
   url: https://github.com/HKUDS/LightRAG.git
   dir: lightrag
-  sparse: true
-  checkFile: docker-compose.yml
+  sparse: false
+  checkFile: Dockerfile # Make sure Dockerfile is present in the repo
 
 volumes:
-  - lightrag/import
+  - lightrag/inputs
   - lightrag/data
-  - lightrag/backups
 
 exposes:
   host:
     dashboard:
       name: LightRAG
-      url: http://localhost:9621/
+      url: http://localhost:9621
+  internal:
+    lightrag:
+      name: LightRAG
+      url: http://lightrag:9621
+      credentials:
+        API Key: ${LIGHTRAG_API_KEY}

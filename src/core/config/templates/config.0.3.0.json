@@ -17,6 +17,7 @@
     "openwebui": { "enabled": true },
     "browser-use": { "enabled": true },
     "langfuse": { "enabled": true },
+    "lightrag": { "enabled": false },
     "litellm": { "enabled": true },
     "qdrant": { "enabled": true },
     "dozzle": { "enabled": true },

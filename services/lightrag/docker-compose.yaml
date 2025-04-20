@@ -1,3 +1,5 @@
+# LightRAG
+
 networks:
   default:
     name: ${LLEMONSTACK_NETWORK_NAME}
@@ -5,33 +7,27 @@ networks:
 
 services:
   lightrag:
-    build: .
+    build:
+      # Build from lightrag repo
+      context: ${LLEMONSTACK_REPOS_PATH:-.}/lightrag
+    container_name: lightrag
+    labels:
+      dev.dozzle.group: RAG
     ports:
       - "${LIGHTRAG_PORT:-9621}:9621"
     volumes:
+      # rag_storage isn't used since we're using postgres for doc storage, but keeping it here for reference
       - ${LLEMONSTACK_VOLUMES_PATH:-./volumes}/lightrag/data:/app/data/rag_storage
-      - ${LLEMONSTACK_VOLUMES_PATH:-./volumes}/lightrag/inputs:/app/data/rag_storage
-      - ./data/inputs:/app/data/inputs
-      - ./config.ini:/app/config.ini
+      # inputs is the folder where incoming documents are stored and scanned for embedding
+      - ${LLEMONSTACK_VOLUMES_PATH:-./volumes}/lightrag/inputs:/app/data/inputs
       - ./.env:/app/.env
+      - ./healthcheck.py:/app/healthcheck.py
     env_file:
       - .env
     restart: unless-stopped
-
-  neo4j:
-    image: neo4j:5.26.4-community
-    container_name: lightrag-server_neo4j-community
-    restart: always
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    environment:
-      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
-      - NEO4J_apoc_export_file_enabled=true
-      - NEO4J_server_bolt_listen__address=0.0.0.0:7687
-      - NEO4J_server_bolt_advertised__address=neo4j:7687
-    volumes:
-      - ./neo4j/plugins:/var/lib/neo4j/plugins
-      - lightrag_neo4j_import:/var/lib/neo4j/import
-      - lightrag_neo4j_data:/data
-      - lightrag_neo4j_backups:/backups
+    healthcheck:
+      test: ["CMD", "python", "/app/healthcheck.py"]
+      interval: 30s # Perform health check every 30 seconds
+      timeout: 10s # Health check command times out after 10 seconds
+      retries: 3 # Retry up to 3 times if health check fails
+      start_period: 60s # Wait for container to start before beginning health checks
