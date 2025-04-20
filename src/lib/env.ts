@@ -93,12 +93,14 @@ export async function updateEnv(
   }
 
   const envFileContent = readResults.success ? readResults.data || '' : ''
+
   const updatedEnvFileContent = Object.entries(envVars).reduce((acc, [key, value]) => {
     // Keep existing value in .env if envVars value not set
     if (!value) return acc
 
     // Replace existing key value with new value
-    const tmp = acc.replace(new RegExp(`${key}=.*`, 'g'), `${key}=${value}`)
+    const regexp = new RegExp(`^\\s*${key}\\s*=.*`, 'gm')
+    const tmp = acc.replace(regexp, `${key}=${value}`)
 
     // If the key is not found in the .env file, add it to the end of the file
     if (tmp === acc && !acc.includes(`${key}=${value}`)) {
