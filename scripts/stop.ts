@@ -96,7 +96,7 @@ async function stopService(
   const result = await service.stop()
 
   if (result.success) {
-    show.action(`${service.name} stopped`)
+    show.info(`✔️ ${service.name} stopped`)
   } else {
     show.error(`Error stopping ${service.name}`, { error: result })
   }
@@ -150,7 +150,6 @@ export async function stop(
     await stopServices(config, services, { all: stopAll })
   }
 
-  show.action('Cleaning up networks...')
   if (stopAll) {
     await removeAllNetworks(config)
   }
@@ -158,12 +157,5 @@ export async function stop(
     args: ['prune', '-f'],
     silent: true,
   })
-
-  if (service) {
-    show.action(`Service ${service} stopped`)
-  } else if (stopAll) {
-    show.action('All services stopped')
-  } else {
-    show.action('Enabled services stopped')
-  }
+  show.info('✔️ Networks cleaned up')
 }
