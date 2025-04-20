@@ -18,7 +18,6 @@ import { OllamaService } from '@/services/ollama/service.ts'
 import { Input, Secret, Select } from '@cliffy/prompt'
 import { Config } from '../src/core/config/config.ts'
 import { reset } from './reset.ts'
-import { checkPrerequisites, startService } from './start.ts' // Adjust the path as necessary
 
 // Env var key names we care about
 type EnvVarsKeys = keyof {
@@ -381,9 +380,7 @@ export async function init(
   const show = config.relayer.show
 
   try {
-    show.action('Checking prerequisites...')
-    await checkPrerequisites()
-    show.info('Prerequisites met')
+    await config.checkPrerequisites()
   } catch (error) {
     show.fatal(
       'Prerequisites not met, please install the required dependencies and try again.',

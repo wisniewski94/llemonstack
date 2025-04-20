@@ -4,24 +4,12 @@
 
 import { Config } from '@/core/config/config.ts'
 import { ServicesMap } from '@/core/services/services-map.ts'
-import { runCommand } from '@/lib/command.ts'
 import { Cell, colors, Column, Row, RowType, showTable } from '@/relayer/ui/show.ts'
 import { EnvVars, ExposeHost, IServiceStartOptions, ServicesMapType, ServiceType } from '@/types'
 
 /*******************************************************************************
  * FUNCTIONS
  *******************************************************************************/
-
-/**
- * Check if all prerequisites are installed
- */
-export async function checkPrerequisites(): Promise<void> {
-  // Commands will throw an error if the prerequisite is not installed
-  await runCommand('docker --version')
-  await runCommand('docker compose version')
-  await runCommand('git --version')
-  console.log('✔️ All prerequisites are installed')
-}
 
 export async function startService(
   config: Config,
@@ -198,8 +186,7 @@ export async function start(
       Deno.exit(1)
     }
 
-    show.action('Checking prerequisites...')
-    await checkPrerequisites()
+    await config.checkPrerequisites()
 
     show.action('Setting up environment...')
     const prepareEnvResult = await config.prepareEnv()

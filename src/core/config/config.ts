@@ -1,4 +1,5 @@
 import { Service, ServicesMap } from '@/core/services/mod.ts'
+import { runCommand } from '@/lib/command.ts'
 import { success, TryCatchResult } from '@/lib/try-catch.ts'
 import { LogLevel } from '@/relayer/logger.ts'
 import { Relayer } from '@/relayer/relayer.ts'
@@ -98,6 +99,26 @@ export class Config extends ConfigBase {
     }
 
     return await super.initialize(configFile, { logLevel, init })
+  }
+
+  /**
+   * Check if all prerequisites are installed
+   */
+  public async checkPrerequisites(): Promise<void> {
+    // Commands will throw an error if the prerequisite is not installed
+    try {
+      await runCommand('docker --version', { silent: true })
+      await runCommand('docker compose version', { silent: true })
+      await runCommand('git --version', { silent: true })
+    } catch (error) {
+      this.show.error(
+        error as Error,
+      )
+      this.show.fatal(
+        'Prerequisites not met, please install the required dependencies and try again.',
+      )
+    }
+    this.show.info('✔️ All prerequisites are installed')
   }
 
   /**
