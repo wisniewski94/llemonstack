@@ -15,3 +15,9 @@ exposes:
     clickhouse:
       name: ClickHouse
       url: http://clickhouse:8123
+
+init:
+  generate:
+    CLICKHOUSE_PASSWORD:
+      method: generateSecretKey
+      length: 22

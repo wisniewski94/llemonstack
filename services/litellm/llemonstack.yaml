@@ -36,3 +36,20 @@ exposes:
       url: http://litellm:4000
       credentials:
         API Key: ${LITELLM_MASTER_KEY}
+
+init:
+  postgres_schema:
+    user: LITELLM_POSTGRES_USER
+    pass: LITELLM_POSTGRES_PASSWORD
+    schema: LITELLM_POSTGRES_SCHEMA
+  generate:
+    LITELLM_MASTER_KEY:
+      method: generateSecretKey
+      length: 32
+      prefix: sk-
+    LITELLM_UI_PASSWORD:
+      method: generateSecretKey
+      length: 16
+    LITELLM_SALT_KEY:
+      method: generateRandomBase64
+      length: 32

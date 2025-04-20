@@ -46,3 +46,12 @@ exposes:
       url: http://lightrag:9621
       credentials:
         API Key: ${LIGHTRAG_API_KEY}
+
+init:
+  postgres_schema: # Generate postgres schema and populate env vars
+    user: LIGHTRAG_POSTGRES_USER
+    pass: LIGHTRAG_POSTGRES_PASSWORD
+  generate:
+    LIGHTRAG_API_KEY:
+      method: generateSecretKey
+      length: 20

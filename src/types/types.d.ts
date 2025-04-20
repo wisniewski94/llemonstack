@@ -110,6 +110,18 @@ export interface ServiceYaml {
   depends_on?: Record<string, { condition: string }> // The services that the service depends on
   app_version_cmd?: string[] // The command to run to get the version of the service
   exposes?: ExposeHostConfig
+  init?: {
+    postgres_schema?: {
+      user: string
+      pass: string
+      schema?: string
+    }
+    generate?: Record<string, {
+      method: string
+      length?: number
+      prefix?: string
+    }>
+  }
 }
 
 export interface IServiceState {

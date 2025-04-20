@@ -22,3 +22,9 @@ exposes:
     neo4j:
       name: Neo4j API
       url: bolt://neo4j:7687
+
+init:
+  generate:
+    NEO4J_PASSWORD:
+      method: generateSecretKey
+      length: 32

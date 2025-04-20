@@ -38,3 +38,12 @@ exposes:
       url: http://flowise:3000/api/v1/
       credentials:
         API Key: ${FLOWISE_API_KEY}
+
+init:
+  postgres_schema:
+    user: FLOWISE_POSTGRES_USER
+    pass: FLOWISE_POSTGRES_PASSWORD
+  generate:
+    FLOWISE_PASSWORD:
+      method: generateSecretKey
+      length: 22

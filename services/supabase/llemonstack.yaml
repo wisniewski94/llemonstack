@@ -65,3 +65,16 @@ exposes:
     kong:
       name: Supabase Edge Functions
       url: http://kong:8000/functions/v1/[function]
+
+init:
+  generate:
+    SUPABASE_DASHBOARD_PASSWORD:
+      method: generateSecretKey
+      length: 16
+    POSTGRES_PASSWORD:
+      method: generateSecretKey
+      length: 32
+    SUPABASE_VAULT_ENC_KEY:
+      method: generateSecretKey
+      length: 32
+    # JWT keys and dashboard password are generated in service.ts file init method

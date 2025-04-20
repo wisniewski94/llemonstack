@@ -38,3 +38,28 @@ exposes:
     langfuse:
       name: Langfuse
       url: http://langfuse:3000
+
+init:
+  postgres_schema:
+    user: LANGFUSE_POSTGRES_USER
+    pass: LANGFUSE_POSTGRES_PASSWORD
+    schema: LANGFUSE_POSTGRES_SCHEMA
+  generate:
+    LANGFUSE_SALT:
+      method: generateRandomBase64
+      length: 32
+    LANGFUSE_ENCRYPTION_KEY:
+      method: generateSecretKey
+      length: 64
+    LANGFUSE_NEXTAUTH_SECRET:
+      method: generateRandomBase64
+      length: 32
+    LANGFUSE_INIT_PROJECT_PUBLIC_KEY:
+      method: generateUUID
+      prefix: pk-lf-
+    LANGFUSE_INIT_PROJECT_SECRET_KEY:
+      method: generateUUID
+      prefix: sk-lf-
+    LANGFUSE_INIT_USER_PASSWORD:
+      method: generateSecretKey
+      length: 22

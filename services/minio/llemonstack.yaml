@@ -25,3 +25,9 @@ exposes:
     minio:
       name: Minio
       url: http://minio:9000
+
+init:
+  generate:
+    MINIO_ROOT_PASSWORD:
+      method: generateSecretKey
+      length: 22

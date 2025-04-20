@@ -30,3 +30,13 @@ exposes:
     graphiti:
       name: Zep Graphiti
       url: http://graphiti:8003
+
+init:
+  postgres_schema:
+    user: ZEP_POSTGRES_USER
+    pass: ZEP_POSTGRES_PASSWORD
+    schema: ZEP_POSTGRES_SCHEMA
+  generate:
+    ZEP_API_SECRET:
+      method: generateSecretKey
+      length: 20

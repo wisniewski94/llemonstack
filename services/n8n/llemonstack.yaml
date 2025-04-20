@@ -27,3 +27,19 @@ exposes:
     api:
       name: n8n API
       url: http://n8n:5678/api/v1/
+
+init:
+  # n8n doesn't need a separate postgres user and password and requires root access.
+  # Most likely schema:create does not currently grant enough permissions on the extensions schema.
+  # n8n uses the primary postgres user and password and auto creates the service_n8n schema.
+  # postgres_schema:
+  #   user: N8N_POSTGRES_USER
+  #   pass: N8N_POSTGRES_PASSWORD
+  #   schema: N8N_POSTGRES_SCHEMA
+  generate:
+    N8N_ENCRYPTION_KEY:
+      method: generateSecretKey
+      length: 32
+    N8N_USER_MANAGEMENT_JWT_SECRET:
+      method: generateSecretKey
+      length: 32

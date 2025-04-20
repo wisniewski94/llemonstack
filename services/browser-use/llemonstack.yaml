@@ -30,3 +30,9 @@ exposes:
       url: http://0.0.0.0:6080/vnc.html?host=0.0.0.0&port=6080
       credentials:
         Password: ${BROWSER_USE_VNC_PASSWORD}
+
+init:
+  generate:
+    BROWSER_USE_VNC_PASSWORD:
+      method: generateSecretKey
+      length: 12
