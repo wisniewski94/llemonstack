@@ -1,15 +1,15 @@
 # 🍋 LLemonStack: Local AI Agent Stack
 
-Open source, low-code AI agent automation platform, auto-configured and securely running in docker
-containers.
+Open source, low-code AI agent automation platform, auto-configured and securely running in
+docker containers.
 
 Get up and running in minutes with
-[n8n](https://n8n.io/), [Flowise](https://flowiseai.com/), [Supabase](https://supabase.com/),
+[n8n](https://n8n.io/), [Flowise](https://flowiseai.com/), [LightRAG](https://github.com/HKUDS/LightRAG), [Supabase](https://supabase.com/),
 [Qdrant](https://qdrant.tech/), [Zep](https://www.getzep.com/),
 [LiteLLM](https://github.com/BerriAI/litellm), [Langfuse](https://github.com/langfuse/langfuse),
 [Ollama](https://ollama.com/), and [Browser-Use](https://browser-use.com/) and more.
 
-> 💰 **No cost**, low code AI agent playground
+> 💰 **No cost**, no/low code AI agent playground
 >
 > ✅ **Up and running in minutes**
 >
@@ -147,11 +147,14 @@ related headaches are handled for you. Just run the stack and start building AI 
 | [**Supabase**](https://supabase.com/)                | Open source Firebase alternative, Postgres database, and pgvector vector store.                                 |
 | [**Ollama**](https://ollama.com/)                    | Cross-platform LLM platform to install and run the latest local LLMs.                                           |
 | [**Open WebUI**](https://openwebui.com/)             | ChatGPT-like interface to privately interact with your local models and N8N agents.                             |
+| [**LightRAG**](https://github.com/HKUDS/LightRAG)    | Best-in-class RAG system that outperforms naive RAG by 2x in some benchmarks.                                   |
 | [**Qdrant**](https://qdrant.tech/)                   | Open-source, high performance vector store. Included to experiment with different vector stores.                |
 | [**Zep**](https://www.getzep.com/)                   | Open-source chat history and graph vector store. Summarizes chat history to improve LLM response & RAG quality. |
 | [**Browser-Use**](https://browser-use.com/)          | Open-source browser automation tool for automating complex browser interactions from simple prompts.            |
+| [**Dozzle**](https://github.com/amir20/dozzle)       | Real-time log viewer for Docker containers, used to view logs of the stack services.                            |
 
-<br />
+The stack includes several dependency services used to store data for the core services. Neo4J, Redis, Clickhouse, Minio, etc.
+
 <br />
 
 ## Prerequisites
