@@ -262,6 +262,7 @@ docker exec -it --user root n8n sh
 
 **Additional Services:**
 
+- https://github.com/morphik-org/morphik-core - RAG for visual documents
 - https://github.com/chroma-core/chroma
 - https://github.com/HKUDS/LightRAG
 - https://github.com/langmanus/langmanus
