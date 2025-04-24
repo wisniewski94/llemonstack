@@ -56,6 +56,7 @@ export type CommandError = InstanceType<typeof CommandErrorClass>
 
 export interface RunCommandOptions {
   args?: Array<string | false | null | undefined>
+  cwd?: string
   silent?: boolean
   captureOutput?: boolean
   env?: EnvVars

@@ -114,6 +114,7 @@ export async function runCommand(
     autoLoadEnv = true, // If true, load env from .env file
     debug = Config.getInstance().DEBUG ?? false,
     relayer = Relayer.getInstance('runCommand'),
+    cwd = Deno.cwd(),
   }: RunCommandOptions = {},
 ): Promise<RunCommandOutput> {
   // If verbose debug is enabled, show output even if silent is true
@@ -193,6 +194,7 @@ export async function runCommand(
     stdout,
     stderr,
     env: cmdEnv,
+    cwd,
   })
 
   // Spawn the command
