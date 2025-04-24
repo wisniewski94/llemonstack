@@ -164,7 +164,7 @@ Deno.test('Config initialization - templates', async (t) => {
     assertEquals(result.error, null)
   })
 
-  await t.step('isValidConfig validates project config correctly', () => {
+  await t.step('isValidConfig validates project config correctly', async () => {
     // @ts-ignore - temporarily override for testing
     delete Config.instance
     const configInstance = Config.getInstance()
@@ -203,7 +203,7 @@ Deno.test('Config initialization - templates', async (t) => {
     }
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      configInstance.isValidConfig(validConfig),
+      (await configInstance.isValidConfig(validConfig)).success,
       true,
       'Valid config should pass validation',
     )
@@ -214,7 +214,7 @@ Deno.test('Config initialization - templates', async (t) => {
     delete missingKeyConfig.initialized
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      configInstance.isValidConfig(missingKeyConfig),
+      (await configInstance.isValidConfig(missingKeyConfig)).success,
       false,
       'Config missing required key should fail validation',
     )
@@ -226,7 +226,7 @@ Deno.test('Config initialization - templates', async (t) => {
     }
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      configInstance.isValidConfig(missingNestedKeyConfig),
+      (await configInstance.isValidConfig(missingNestedKeyConfig)).success,
       false,
       'Config missing nested key should fail validation',
     )
@@ -234,7 +234,7 @@ Deno.test('Config initialization - templates', async (t) => {
     // Null config
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      configInstance.isValidConfig(null),
+      (await configInstance.isValidConfig(null)).success,
       false,
       'Null config should fail validation',
     )
@@ -246,7 +246,7 @@ Deno.test('Config initialization - templates', async (t) => {
     }
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      configInstance.isValidConfig(invalidDirsConfig),
+      (await configInstance.isValidConfig(invalidDirsConfig)).success,
       false,
       'Config with non-object dirs should fail validation',
     )

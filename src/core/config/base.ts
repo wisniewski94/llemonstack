@@ -230,7 +230,8 @@ export class ConfigBase {
     }
 
     // Check if project config is valid
-    if (!this.isValidConfig()) {
+    result.collect([await this.isValidConfig()])
+    if (!result.success) {
       // Return error if not initializing from template
       if (!init) {
         return failure(`Project config file is invalid: ${this.configFile}`, result, false)
@@ -511,11 +512,44 @@ export class ConfigBase {
   }
 
   /**
-   * Check if the project config is valid
-   * @returns {boolean}
+   * Check if the project config is valid, auto patch missing service keys
+   * @returns {TryCatchResult<boolean>}
    */
-  protected isValidConfig(config: LLemonStackConfig = this._config): boolean {
-    return isValidConfig(config, this._configTemplate)
+  protected async isValidConfig(
+    config: LLemonStackConfig = this._config,
+  ): Promise<TryCatchResult<boolean>> {
+    const result = isValidConfig(config, this._configTemplate)
+    if (
+      !result.success && result.error instanceof Error &&
+      result.error.message.includes('missing required key: services.')
+    ) {
+      const originalServices = Object.keys(this._config?.services || {})
+
+      this.updateConfig(this._configTemplate)
+
+      // Get the list of services that were added by updateConfig
+      const updatedServices = Object.keys(this._config.services)
+      const newServices = updatedServices.filter((service) => !originalServices.includes(service))
+
+      const patchedResult = isValidConfig(this._config, this._configTemplate)
+      if (patchedResult.success) {
+        const saveResult = await this.save()
+        if (saveResult.success) {
+          if (newServices.length > 0) {
+            patchedResult.addMessage(
+              'info',
+              `Adding missing services to config.json: ${newServices.join(', ')}`,
+            )
+          }
+        } else {
+          patchedResult.addMessage('error', 'Failed to save config.json')
+        }
+        return patchedResult
+      } else {
+        result.addMessage('error', 'Failed to patch missing service keys')
+      }
+    }
+    return result
   }
 
   /**

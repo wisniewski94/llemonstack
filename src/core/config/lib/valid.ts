@@ -1,12 +1,17 @@
-import { LLemonStackConfig } from '@/types'
+import { failure, success } from '@/lib/try-catch.ts'
+import { LLemonStackConfig, TryCatchResult } from '@/types'
 
 /**
  * Check if the project config is valid
  * @returns {boolean}
  */
-export function isValidConfig(config: LLemonStackConfig, template: LLemonStackConfig): boolean {
+export function isValidConfig(
+  config: LLemonStackConfig,
+  template: LLemonStackConfig,
+): TryCatchResult<boolean> {
+  const result = success<boolean>(true)
   if (!config) {
-    return false
+    return failure<boolean, Error>('Config is undefined', result, false)
   }
 
   // Check if all required top-level keys from the template exist in the project config
@@ -21,7 +26,7 @@ export function isValidConfig(config: LLemonStackConfig, template: LLemonStackCo
 
   for (const key of requiredKeys) {
     if (!(key in config)) {
-      return false
+      return failure<boolean>(`Config is missing required key: ${key}`, result, false)
     }
 
     // For object properties, check if they have the expected structure
@@ -38,7 +43,7 @@ export function isValidConfig(config: LLemonStackConfig, template: LLemonStackCo
         typeof projectValue !== 'object' ||
         projectValue === null
       ) {
-        return false
+        return failure<boolean>(`Config is missing required key: ${key}`, result, false)
       }
 
       // For nested objects like dirs, services, etc., check if all template keys exist
@@ -49,12 +54,12 @@ export function isValidConfig(config: LLemonStackConfig, template: LLemonStackCo
         if (!(subKey in projectObj)) {
           // Handle optional dirs.services key
           if (key === 'dirs' && subKey === 'services') {
-            return true
+            return result
           }
-          return false
+          return failure<boolean>(`Config is missing required key: ${key}.${subKey}`, result, false)
         }
       }
     }
   }
-  return true
+  return result
 }
