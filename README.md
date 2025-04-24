@@ -330,6 +330,9 @@ llmn stop [service]
 # Show versions of all the stack services
 llmn versions
 
+# View enabled services and other info
+llmn info
+
 # Update the stack services to the latest versions
 llmn update
 
