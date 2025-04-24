@@ -262,6 +262,9 @@ docker exec -it --user root n8n sh
 
 **Additional Services:**
 
+- https://github.com/trycua/cua
+- https://github.com/rowboatlabs/rowboat - tool for building AI agents
+- https://github.com/supercorp-ai/supergateway
 - https://github.com/morphik-org/morphik-core - RAG for visual documents
 - https://github.com/chroma-core/chroma
 - https://github.com/HKUDS/LightRAG
@@ -303,6 +306,9 @@ docker exec -it --user root n8n sh
 
 - [Open Meter](https://docs.litellm.ai/docs/observability/openmeter) - Integrates with LiteLLM to
   auto charge LLM useage to clients
+
+- https://github.com/hcengineering/platform - self hosted Notion + project management
+- https://github.com/colanode/colanode - self hosted Notion alternative with Slack-like chat features
 
 Not AI, but potentially useful:
 
