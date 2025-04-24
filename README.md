@@ -452,8 +452,9 @@ nodes were run in your n8n workflows. It's particularly useful for debugging wor
 
 ## Importing & Exporting n8n Templates
 
-LLemonStack provides script for easy importing and exporting of n8n credentials and workflow
-templates.
+LLemonStack includes an import script for easy importing of credentials and workflows.
+
+n8n and Flowise are currently supported by the import script.
 
 Any template placed in the [import/n8n](import/n8n) directory will be imported.
 
@@ -463,7 +464,7 @@ it easy to auto configure templates with the correct settings for your stack.
 
 See [examples/n8n/credentials](examples/n8n/credentials).
 
-To import a template, simply copy it into the [import/n8n](import/n8n) directory. Then run the
+To import a n8n template, copy the template files into the [import/n8n](import/n8n) directory. Then run the
 import script.
 
 Successfully imported files are then moved to the `import/.imported` directory for safe keeping. The
