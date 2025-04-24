@@ -404,6 +404,52 @@ llmn start
 
 <br />
 
+## Using Custom n8n for Debugging or FFmpeg
+
+LLemonStack includes a custom n8n option that enables advanced debugging features and ffmpeg support for n8n.
+
+The custom n8n Docker container can also be used as a template for additional customization.
+See [services/n8n/](services/n8n/).
+
+To enable the n8n tracing features...
+
+```bash
+# Run the config script
+llmn config
+# Select Enable for n8n
+# Then select the n8n with custom tracing option
+```
+
+Then edit the n8n section of your `.env` file...
+
+1. Set `N8N_OTEL_SDK_DISABLED` to false to enable tracing
+2. Add your Honeycomb API key or change the OTEL_ENDPOINT to a different OTEL provider
+
+```bash
+# Example .env file n8n Honeycomb config...
+
+# OpenTelemetry settings
+N8N_OTEL_SDK_DISABLED=false
+
+# Base endpoint for OpenTelemetry
+N8N_OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
+# Honeycomb settings for OpenTelemetry in n8n container
+HONEYCOMB_API_KEY=your-honeycomb-api-key
+N8N_OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=${HONEYCOMB_API_KEY}
+```
+
+Restart the n8n service...
+
+```bash
+llmn stop n8n
+llmn start n8n
+```
+
+n8n will now send workflow traces to the OTEL provider. The traces allow you to see exactly which
+nodes were run in your n8n workflows. It's particularly useful for debugging workflow errors.
+
+<br />
+
 ## Importing & Exporting n8n Templates
 
 LLemonStack provides script for easy importing and exporting of n8n credentials and workflow
