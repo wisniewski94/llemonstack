@@ -104,7 +104,7 @@ On start, dashboard & API urls are shown along with the auto generated credentia
 
 ### Flowise
 
-Flowise generates an API key when it's first started. The key is saved to [flowise/config/api.json](volumes/flowise/config/api.json)
+Flowise generates an API key when it's first started. The key is saved to `volumes/flowise/config/api.json`
 in the project's volumes folder. Re-run `llmn start` to see the API key in the start script
 output or get the key from the api.json file when needed.
 
@@ -145,6 +145,35 @@ related headaches are handled for you. Just run the stack and start building AI 
 | [**Dozzle**](https://github.com/amir20/dozzle)       | Real-time log viewer for Docker containers, used to view logs of the stack services.                            |
 
 The stack includes several dependency services used to store data for the core services. Neo4J, Redis, Clickhouse, Minio, etc.
+
+<br />
+
+## How it works
+
+LLemonStack is comprised of the following core features:
+
+1. `llmn` CLI command - init, start, stop, config, etc.
+2. [services](services/) folder with `llemonstack.yaml` and `docker-compose.yaml` for each service
+3. `.llemonstack/config.json` and `.env` file for each project
+
+When a new project is initialized with `llmn init`, the script creates `.llemonstack/config.json` and
+`.env` files in the project's folder. The init script auto generates secure credentials for each service, creates unique schemas for services that use postgres, and populates the `.env` file.
+
+The config.json file keeps track of which services are enabled for the project. Services can be enabled or disabled by running `llmn config` or manually editing the config.json file.
+
+Each service's `llemonstack.yaml` file is used to configure the service. The file tracks dependencies,
+dashboard URLs, etc.
+
+When a stack is started with `llmn start`, the config.json file is loaded and each enabled service's
+`docker-compose.yaml` file is used to start the service. Services are grouped into `databases`,
+`middleware` and `apps` tiers, ensuring dependencies are started before the services that depend on them.
+
+LLemonStack automatically takes care of docker networking, ensuring services can talk to each other
+within the stack (internal) and service dashboards can be accessed from the host.
+
+When a stack is stopped with `llmn stop` all services and related docker networks are removed.
+This allows for multiple LLemonStack projects to be created on the same machine without conflicting
+with each other.
 
 <br />
 
