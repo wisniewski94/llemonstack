@@ -175,6 +175,8 @@ When a stack is stopped with `llmn stop` all services and related docker network
 This allows for multiple LLemonStack projects to be created on the same machine without conflicting
 with each other.
 
+See [Adding Services](#adding-services) section below for instructions on adding custom services to a stack.
+
 <br />
 
 ## Prerequisites
@@ -642,3 +644,28 @@ nodes that interact with the local filesystem.
 - [Read/Write Files from Disk](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.filesreadwrite/)
 - [Local File Trigger](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.localfiletrigger/)
 - [Execute Command](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executecommand/)
+
+<br />
+
+## Adding Services
+
+LLemonStack comes pre-configured with many popular services in the [services](./services/) folder.
+
+To add additional services or customize existing services...
+
+1. Create a `services` folder in your project or anywhere on the host machine
+2. Edit the project's `.llemonstack/config.json` file and add the new `services` folder to dirs -> services.
+3. Create a `llemonstack.yaml` and `docker-compose.yaml` file for the new service
+
+When a project is started with `llmn start`, the script scans any services dirs listed in the
+`config.json` file as well as the main services dir where LLemonStack was initially installed.
+
+Services in dirs listed in `config.json` will take priority over the core (default) services if any services
+have the same name.
+
+For each new service, create the following files:
+
+- `llemonstack.yaml`
+- `docker-compose.yaml`
+
+Refer to examples in the [services](./services/) folder.
