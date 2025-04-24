@@ -102,16 +102,6 @@ On start, dashboard & API urls are shown along with the auto generated credentia
 
 ## Known Issues
 
-### Zep
-
-Zep requires a quick workaround fix for a hard coded `public.role_type_num` bug. This is only an
-issue when using the custom service_zep schema created by the init script..
-
-See [examples/zep/README.md](examples/zep/README.md) for details and the quick fix.
-
-Zep self hosted (local) is not yet compatible with the n8n node. However, you can run custom code
-in n8n and other stack components to use the local Zep service.
-
 ### Flowise
 
 Flowise generates an API key when it's first started. The key is saved to [flowise/config/api.json](volumes/flowise/config/api.json)
