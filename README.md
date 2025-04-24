@@ -433,6 +433,18 @@ llmn update
 llmn start
 ```
 
+LLemonStack does not currently auto update it's own code.
+This is by design while the project is in rapid pre-release development.
+
+To update LLemonStack's code to the latest version...
+
+```bash
+# cd into the folder where you initially installed llemonstack
+
+# Pull the latest code changes
+git pull
+```
+
 <br />
 
 ## Using Custom n8n for Debugging or FFmpeg
@@ -669,3 +681,5 @@ For each new service, create the following files:
 - `docker-compose.yaml`
 
 Refer to examples in the [services](./services/) folder.
+
+Please open a GitHub Issue if there is a service you'd like to see added as a core service.
