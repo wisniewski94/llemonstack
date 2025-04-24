@@ -1,3 +1,4 @@
+import { tryRunCommand } from '@/lib/command.ts'
 import { getDockerNetworks, prepareDockerNetwork, removeDockerNetwork } from '@/lib/docker.ts'
 import { loadEnv, updateEnv } from '@/lib/env.ts'
 import * as fs from '@/lib/fs.ts'
@@ -484,6 +485,22 @@ export class ConfigBase {
       results.collect([await removeDockerNetwork(networksResults.data, { silent })])
     }
     this._envPrepared = false
+    return results
+  }
+
+  /**
+   * Get the number of commits the local LLemonStack repo is behind the remote repo
+   * @returns {Promise<TryCatchResult<number>>}
+   */
+  public async getRemoteCommits(): Promise<TryCatchResult<number>> {
+    const results = success<number>(0)
+    const gitResults = await tryRunCommand('git rev-list --count HEAD..@{u}', {
+      silent: true,
+      cwd: this.installDir,
+    })
+    if (gitResults.success && gitResults.data) {
+      results.data = parseInt(gitResults.toString())
+    }
     return results
   }
 

@@ -140,6 +140,15 @@ main
     await versions(config)
   })
 
+main
+  .command('info')
+  .description('Show project info')
+  .action(async (options) => {
+    const config = await initConfig('info', options)
+    const { info } = await import('./scripts/info.ts')
+    await info(config)
+  })
+
 // Import data into services that support it
 const importServices = new EnumType(['n8n', 'flowise'])
 main
@@ -275,15 +284,12 @@ async function initConfig(
   const config = Config.getInstance()
   const result = await config.initialize(options.config, { logLevel, init, relayer })
 
+  relayer.show.logMessages(result.messages)
+
   if (!result.success && result.error instanceof Deno.errors.NotFound) {
-    relayer.show.logMessages(result.messages)
     // Show a friendly message if the config file is not found
     showAction('Please run `llmn init` to create a new project')
     Deno.exit(1)
-  }
-
-  if (options.verbose) {
-    relayer.show.logMessages(result.messages)
   }
 
   if (!result.success) {

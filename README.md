@@ -439,7 +439,10 @@ This is by design while the project is in rapid pre-release development.
 To update LLemonStack's code to the latest version...
 
 ```bash
-# cd into the folder where you initially installed llemonstack
+# Get the LLemonStack install dir
+llmn info
+
+# cd into the Install Dir folder
 
 # Pull the latest code changes
 git pull
