@@ -90,6 +90,7 @@ On start, dashboard & API urls are shown along with the auto generated credentia
 
 ## Changelog
 
+- Apr 24, 2025: Added custom migration to supabase to enable pgvector extension by default
 - Apr 20, 2025: Added LightRAG
 - Apr 17, 2025: fix Flowise start and API key issues
 - Apr 1, 2025: v0.3.0 pre-release

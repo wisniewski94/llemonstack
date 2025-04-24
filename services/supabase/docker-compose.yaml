@@ -206,6 +206,8 @@ services:
       - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
       - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/db/logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
       - ${LLEMONSTACK_REPOS_PATH:-.}/supabase/docker/volumes/db/pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
+      # Custom migrations to enable vector extension
+      - ./migrations.sql:/docker-entrypoint-initdb.d/migrations/999-migrations.sql:Z
 
   vector:
     extends:
