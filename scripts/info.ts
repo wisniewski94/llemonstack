@@ -38,5 +38,11 @@ export async function info(
 
   show.info(`\nLLemonStack Install Dir: ${colors.yellow(config.installDir)}`)
   show.info(`Project Config File: ${colors.yellow(config.configFile)}`)
-  show.info(`Services Dirs:\n  - ${colors.yellow(config.servicesDirs.join('\n  - '))}\n`)
+
+  const dirs = config.servicesDirs
+  if (dirs.length === 1) {
+    show.info(`Services Dir: ${colors.yellow(dirs[0])}`)
+  } else {
+    show.info(`Services Dirs:\n  ${colors.yellow('- ' + dirs.join('\n  - '))}`)
+  }
 }
