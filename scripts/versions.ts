@@ -168,7 +168,9 @@ async function showImageVersions(config: Config): Promise<RowType[]> {
           serviceImage.build = serviceImage.build.replace(
             /\${([A-Za-z0-9_]+):-([^}]*)}/g,
             (_match, varName, defaultValue) => {
-              const envValue = Deno.env.get(varName)
+              const envValue = varName === 'LLEMONSTACK_REPOS_PATH'
+                ? config.reposDir
+                : config.env[varName]
               return envValue !== undefined ? envValue : (defaultValue || '')
             },
           )
@@ -210,7 +212,7 @@ async function showImageVersions(config: Config): Promise<RowType[]> {
             },
           )
 
-          let version = 'N/A'
+          let version = ''
           if (!results.success) {
             relayer.debug('Error getting version from docker inspect for {image}', serviceImage)
           } else {

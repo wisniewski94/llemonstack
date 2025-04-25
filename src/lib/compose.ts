@@ -79,13 +79,16 @@ export async function getImagesFromComposeYaml(
         const containerName = service?.container_name
 
         // Check if the service has an image directly
-        if (service && service.image) {
+        if (service && service.image && !service.build) {
           serviceImages.push({
             service: serviceName,
             image: service.image,
             containerName: containerName || serviceName,
           })
         } else if (service && service.build) {
+          if (!service.build.dockerfile) {
+            service.build.dockerfile = 'Dockerfile'
+          }
           serviceImages.push({
             service: serviceName,
             image: '',
