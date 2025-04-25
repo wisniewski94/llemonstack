@@ -14,12 +14,6 @@ depends_on:
   redis:
     condition: service_healthy
 
-# app_version_cmd: [
-#   'sh',
-#   '-c',
-#   "grep -E \"^Version:\" /app/lightrag_hku.egg-info/PKG-INFO | cut -d' ' -f2",
-# ]
-
 repo:
   url: https://github.com/mendableai/firecrawl.git
   dir: firecrawl
