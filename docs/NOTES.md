@@ -257,6 +257,7 @@ docker exec -it --user root n8n sh
 
 **Additional Services:**
 
+- https://github.com/unclecode/crawl4ai
 - https://github.com/khoj-ai/khoj
 - https://github.com/trycua/cua
 - https://github.com/rowboatlabs/rowboat - tool for building AI agents
