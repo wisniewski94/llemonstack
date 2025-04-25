@@ -1,0 +1,46 @@
+version: 0.2.0 # Config file version
+
+service: firecrawl
+name: Firecrawl
+description: Scrape, crawl and extract websites into LLM-friendly structured data.
+
+compose_file: docker-compose.yaml
+service_group: middleware
+
+provides:
+  firecrawl: firecrawl # Name of the container
+
+depends_on:
+  redis:
+    condition: service_healthy
+
+# app_version_cmd: [
+#   'sh',
+#   '-c',
+#   "grep -E \"^Version:\" /app/lightrag_hku.egg-info/PKG-INFO | cut -d' ' -f2",
+# ]
+
+repo:
+  url: https://github.com/mendableai/firecrawl.git
+  dir: firecrawl
+  sparse: false
+  checkFile: apps/api/Dockerfile # Make sure Dockerfile is present in the repo
+
+exposes:
+  host:
+    dashboard:
+      name: Firecrawl Queues
+      url: http://localhost:3002/admin/${FIRECRAWL_BULL_KEY}/queues
+  internal:
+    firecrawl-api:
+      name: Firecrawl API
+      url: http://firecrawl:3002/v1/
+    playwright:
+      name: Playwright Service
+      url: http://playwright-service:3000/scrape
+
+init:
+  generate:
+    FIRECRAWL_BULL_KEY:
+      method: generateSecretKey
+      length: 20

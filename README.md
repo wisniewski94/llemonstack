@@ -7,7 +7,7 @@ Get up and running in minutes with
 [n8n](https://n8n.io/), [Flowise](https://flowiseai.com/), [LightRAG](https://github.com/HKUDS/LightRAG), [Supabase](https://supabase.com/),
 [Qdrant](https://qdrant.tech/), [Zep](https://www.getzep.com/),
 [LiteLLM](https://github.com/BerriAI/litellm), [Langfuse](https://github.com/langfuse/langfuse),
-[Ollama](https://ollama.com/), and [Browser-Use](https://browser-use.com/) and more.
+[Ollama](https://ollama.com/), [Firecrawl](https://github.com/mendableai/firecrawl), [Browser-Use](https://browser-use.com/) and more.
 
 > 💰 **No cost**, no/low code AI agent playground
 >
@@ -130,20 +130,21 @@ related headaches are handled for you. Just run the stack and start building AI 
 
 <!-- markdownlint-disable MD013 MD033 -->
 
-| Tool                                                 | Description                                                                                                     |
-| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| [**n8n**](https://n8n.io/)                           | Low-code automation platform with over 400 integrations and advanced AI components.                             |
-| [**Flowise**](https://flowiseai.com/)                | No/low code AI agent builder, pairs very well with n8n.                                                         |
-| [**Langfuse**](https://github.com/langfuse/langfuse) | LLM observability platform. Configured to auto log LiteLLM queries.                                             |
-| [**LiteLLM**](https://github.com/BerriAI/litellm)    | LLM request proxy. Allows for cost control and observability of LLM token usage in the stack.                   |
-| [**Supabase**](https://supabase.com/)                | Open source Firebase alternative, Postgres database, and pgvector vector store.                                 |
-| [**Ollama**](https://ollama.com/)                    | Cross-platform LLM platform to install and run the latest local LLMs.                                           |
-| [**Open WebUI**](https://openwebui.com/)             | ChatGPT-like interface to privately interact with your local models and N8N agents.                             |
-| [**LightRAG**](https://github.com/HKUDS/LightRAG)    | Best-in-class RAG system that outperforms naive RAG by 2x in some benchmarks.                                   |
-| [**Qdrant**](https://qdrant.tech/)                   | Open-source, high performance vector store. Included to experiment with different vector stores.                |
-| [**Zep**](https://www.getzep.com/)                   | Open-source chat history and graph vector store. Summarizes chat history to improve LLM response & RAG quality. |
-| [**Browser-Use**](https://browser-use.com/)          | Open-source browser automation tool for automating complex browser interactions from simple prompts.            |
-| [**Dozzle**](https://github.com/amir20/dozzle)       | Real-time log viewer for Docker containers, used to view logs of the stack services.                            |
+| Tool                                                     | Description                                                                                             |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| [**n8n**](https://n8n.io/)                               | Low-code automation platform with over 400 integrations and advanced AI components.                     |
+| [**Flowise**](https://flowiseai.com/)                    | No/low code AI agent builder, pairs very well with n8n.                                                 |
+| [**Langfuse**](https://github.com/langfuse/langfuse)     | LLM observability platform. Configured to auto log LiteLLM queries.                                     |
+| [**LiteLLM**](https://github.com/BerriAI/litellm)        | LLM request proxy. Allows for cost control and observability of LLM token usage in the stack.           |
+| [**Supabase**](https://supabase.com/)                    | Open source Firebase alternative, Postgres database, and pgvector vector store.                         |
+| [**Ollama**](https://ollama.com/)                        | Cross-platform LLM platform to install and run the latest local LLMs.                                   |
+| [**Open WebUI**](https://openwebui.com/)                 | ChatGPT-like interface to privately interact with your local models and N8N agents.                     |
+| [**LightRAG**](https://github.com/HKUDS/LightRAG)        | Best-in-class RAG system that outperforms naive RAG by 2x in some benchmarks.                           |
+| [**Qdrant**](https://qdrant.tech/)                       | Open-source, high performance vector store. Included to experiment with different vector stores.        |
+| [**Zep**](https://www.getzep.com/)                       | Chat history and graph vector store. (Deprecated) Zep CE is no longer maintained, use LightRAG instead. |
+| [**Browser-Use**](https://browser-use.com/)              | Open-source browser automation tool for automating complex browser interactions from simple prompts.    |
+| [**Dozzle**](https://github.com/amir20/dozzle)           | Real-time log viewer for Docker containers, used to view logs of the stack services.                    |
+| [**Firecrawl**](https://github.com/mendableai/firecrawl) | API for scraping & crawling websites and extracting data into LLM-friendly content.                     |
 
 The stack includes several dependency services used to store data for the core services. Neo4J, Redis, Clickhouse, Minio, etc.
 
@@ -491,8 +492,7 @@ N8N_OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=${HONEYCOMB_API_KEY}
 Restart the n8n service...
 
 ```bash
-llmn stop n8n
-llmn start n8n
+llmn restart n8n
 ```
 
 n8n will now send workflow traces to the OTEL provider. The traces allow you to see exactly which

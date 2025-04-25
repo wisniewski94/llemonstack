@@ -28,6 +28,7 @@
     "neo4j": { "enabled": true },
     "clickhouse": { "enabled": true },
     "zep": { "enabled": false },
-    "prometheus": { "enabled": false }
+    "prometheus": { "enabled": false },
+    "firecrawl": { "enabled": false }
   }
 }
