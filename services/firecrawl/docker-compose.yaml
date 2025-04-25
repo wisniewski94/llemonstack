@@ -86,6 +86,14 @@ services:
     ports:
       - "${PORT:-3002}:${INTERNAL_PORT:-3002}"
     command: ["pnpm", "run", "start:production"]
+    volumes:
+      - ./healthcheck.js:/healthcheck.js
+    healthcheck:
+      test: ["CMD", "node", "/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   worker:
     <<: *common-service
