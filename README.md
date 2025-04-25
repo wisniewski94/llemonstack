@@ -5,9 +5,10 @@ docker containers.
 
 Get up and running in minutes with
 [n8n](https://n8n.io/), [Flowise](https://flowiseai.com/), [LightRAG](https://github.com/HKUDS/LightRAG), [Supabase](https://supabase.com/),
-[Qdrant](https://qdrant.tech/), [Zep](https://www.getzep.com/),
+[Qdrant](https://qdrant.tech/),
 [LiteLLM](https://github.com/BerriAI/litellm), [Langfuse](https://github.com/langfuse/langfuse),
-[Ollama](https://ollama.com/), [Firecrawl](https://github.com/mendableai/firecrawl), [Browser-Use](https://browser-use.com/) and more.
+[Ollama](https://ollama.com/), [Firecrawl](https://github.com/mendableai/firecrawl), [Craw4AI](https://github.com/unclecode/crawl4ai),
+[Browser-Use](https://browser-use.com/) and more.
 
 > 💰 **No cost**, no/low code AI agent playground
 >
@@ -146,6 +147,7 @@ related headaches are handled for you. Just run the stack and start building AI 
 | [**Browser-Use**](https://browser-use.com/)              | Open-source browser automation tool for automating complex browser interactions from simple prompts.    |
 | [**Dozzle**](https://github.com/amir20/dozzle)           | Real-time log viewer for Docker containers, used to view logs of the stack services.                    |
 | [**Firecrawl**](https://github.com/mendableai/firecrawl) | API for scraping & crawling websites and extracting data into LLM-friendly content.                     |
+| [**Craw4AI**](https://github.com/unclecode/crawl4ai)     | Dashboard & API for scraping & crawling websites and extracting data into LLM-friendly content.         |
 
 The stack includes several dependency services used to store data for the core services. Neo4J, Redis, Clickhouse, Minio, etc.
 

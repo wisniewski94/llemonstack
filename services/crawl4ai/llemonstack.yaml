@@ -1,0 +1,33 @@
+version: 0.2.0 # Config file version
+
+service: crawl4ai
+name: Crawl4AI
+description: Scrape, crawl and extract websites into LLM-friendly structured data.
+
+compose_file: docker-compose.yaml
+service_group: middleware
+
+provides:
+  crawl4ai: crawl4ai # Name of the container
+
+repo:
+  url: https://github.com/unclecode/crawl4ai.git
+  dir: crawl4ai
+  sparse: false
+  checkFile: Dockerfile # Make sure Dockerfile is present in the repo
+
+app_version_cmd: [
+  'sh',
+  '-c',
+  "grep -o '[0-9]\\+\\.[0-9]\\+\\.[0-9]\\+' /tmp/project/crawl4ai/__version__.py",
+]
+
+exposes:
+  host:
+    dashboard:
+      name: Crawl4AI
+      url: http://localhost:11235
+  internal:
+    crawl4ai:
+      name: Crawl4AI
+      url: http://crawl4ai:11235

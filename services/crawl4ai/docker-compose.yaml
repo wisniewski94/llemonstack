@@ -1,0 +1,49 @@
+networks:
+  default:
+    name: ${LLEMONSTACK_NETWORK_NAME}
+    external: true
+
+# Shared configuration for all environments
+x-base-config: &base-config
+  ports:
+    - "11235:11235" # Gunicorn port
+  environment:
+    - OPENAI_API_KEY=${CRAWL4AI_OPENAI_API_KEY:-${OPENAI_API_KEY:-}}
+    - DEEPSEEK_API_KEY=${CRAWL4AI_DEEPSEEK_API_KEY:-${DEEPSEEK_API_KEY:-}}
+    - ANTHROPIC_API_KEY=${CRAWL4AI_ANTHROPIC_API_KEY:-${ANTHROPIC_API_KEY:-}}
+    - GROQ_API_KEY=${CRAWL4AI_GROQ_API_KEY:-${GROQ_API_KEY:-}}
+    - TOGETHER_API_KEY=${CRAWL4AI_TOGETHER_API_KEY:-${TOGETHER_API_KEY:-}}
+    - MISTRAL_API_KEY=${CRAWL4AI_MISTRAL_API_KEY:-${MISTRAL_API_KEY:-}}
+    - GEMINI_API_TOKEN=${CRAWL4AI_GEMINI_API_TOKEN:-${GEMINI_API_TOKEN:-}}
+  volumes:
+    - /dev/shm:/dev/shm # Chromium performance
+  deploy:
+    resources:
+      limits:
+        memory: 4G
+      reservations:
+        memory: 1G
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:11235/health"]
+    interval: 30s
+    timeout: 10s
+    retries: 3
+    start_period: 40s
+  user: "appuser"
+
+services:
+  crawl4ai:
+    # Optional image instead of building from source
+    # image: ${CRAWL4AI_IMAGE:-unclecode/crawl4ai:${CRAWL4AI_TAG:-latest}}
+
+    build:
+      context: ${LLEMONSTACK_REPOS_PATH:-.}/crawl4ai
+      dockerfile: Dockerfile
+      args:
+        INSTALL_TYPE: ${CRAWL4AI_INSTALL_TYPE:-default}
+        ENABLE_GPU: ${CRAWL4AI_ENABLE_GPU:-false}
+
+    container_name: crawl4ai
+
+    <<: *base-config

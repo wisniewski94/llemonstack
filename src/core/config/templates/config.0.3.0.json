@@ -29,6 +29,7 @@
     "clickhouse": { "enabled": "auto" },
     "zep": { "enabled": false },
     "prometheus": { "enabled": "auto" },
-    "firecrawl": { "enabled": false }
+    "firecrawl": { "enabled": false },
+    "crawl4ai": { "enabled": false }
   }
 }
