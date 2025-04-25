@@ -16,15 +16,10 @@ container logs in Docker Desktop.
 
 **Code:**
 
-- [ ] Finish configuring LightRAG
+- [ ] Add support for .env.example for each service instead of using a global .env.example
 
-  - [ ] Use LiteLLM to proxy LLM queries in LightRAG
-  - [ ] Add LightRAG Ollama compatible endpoint to LiteLLM to allow n8n to query LightRAG
-
+- [x] Finish configuring LightRAG
 - [x] Add support for loading services from project directory
-
-  - [x] Allow overriding core services
-  - [x] Allow defining new services
 
 - [ ] Rework Relayer to not instantiate InterfaceRelay, provide it during init
 
@@ -262,6 +257,7 @@ docker exec -it --user root n8n sh
 
 **Additional Services:**
 
+- https://github.com/khoj-ai/khoj
 - https://github.com/trycua/cua
 - https://github.com/rowboatlabs/rowboat - tool for building AI agents
 - https://github.com/supercorp-ai/supergateway
@@ -360,6 +356,7 @@ Not AI, but potentially useful:
 
 **MCP & Code Tools:**
 
+- https://github.com/mendableai/firecrawl-mcp-server
 - https://browsermcp.io/ - automate the browser
 - https://github.com/OpenAdaptAI/OmniMCP
 - https://github.com/gumloop/guMCP
