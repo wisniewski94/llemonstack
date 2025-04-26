@@ -2,10 +2,6 @@
 
 This is just a scratchpad for WIP project notes to keep the main README clean.
 
-CURRENT STATE: LiteLLM works with Langfuse as configured but LiteLLM was getting unauthorized
-errors. If this happens, try stopping and restarting the stack. Then look at langfuse and litellm
-container logs in Docker Desktop.
-
 ## TODO
 
 **Record Videos:**
@@ -16,69 +12,39 @@ container logs in Docker Desktop.
 
 **Code:**
 
+- [ ] Mount a volume to crawl4ai for saving screenshots
+
+- [ ] Replace zep with graphiti: https://github.com/getzep/graphiti and add MCP server
+
 - [ ] Add support for .env.example for each service instead of using a global .env.example
 
-- [x] Finish configuring LightRAG
-- [x] Add support for loading services from project directory
+- [ ] Update info command to show endpoints for running services
 
-- [ ] Rework Relayer to not instantiate InterfaceRelay, provide it during init
+- [ ] Add LightRAG MCP server
 
-  - [ ] Create InkRelayer
+- [ ] Add RAGFlow service
 
-- [ ] Add verbose logging to each log level? or just to debug
-
-- [ ] Replace silent option in scripts with relayer logging
-
-- [ ] Add an info command that shows status of enabled services, including all the exposed endpoints
-
+- [x] Remove the imports folder from repo, add to service.ts files
 - [x] Add llmn version output to versions script
-
 - [x] Remove all config.initialize() calls except for in cli.ts
 - [x] Finish the new config script
 - [x] Move enabled services from env vars to config.json
-
 - [x] Create Flowise service subclass to set FLOWISE_API_KEY env var
-
 - [x] Move ALL_COMPOSE_SERVICES to Config
-
   - [x] Load from yaml''s from services/ dir then cache in config.json
-
 - [x] Create helper function in logger lib for outputting TryCatchResult messages
-
 - [x] Test init script to make sure it's working with new Config lib
-
-- [ ] Replace fs.existsSync with Deno.stat
-
 - [x] Create service lib
   - [x] Load & parse service llemonstack.yaml
 - [x] Refactor to use Config lib
 - [x] Add tryCatch to libs
-
-- [x] Run `docker network create ${LLEMONSTACK_NETWORK_NAME}` before starting all services, or pull dummy-analytics out to separate compose file and start it to create the network?
-
+- [x] Run `docker network create ${LLEMONSTACK_NETWORK_NAME}` before starting all services
 - [x] In all services compose files, set the network to external, set the default network name
-
 - [x] Rework start / stop scripts to run separate processes for each service. Loading of .env is only supported in the first docker-compose file dir and service names are merged which will lead to conflicts later on.
-
 - [x] Cleanup settings.json and deno.jsonc after migrating to services/
-- [x] Search and replace for docker/
-
-- [ ] Create Flowise example templates of Web Scrape QnA configured with pgvector and LiteLLM See
-      https://docs.flowiseai.com/use-cases/web-scrape-qna
-- [ ] Configure OpenWeb UI to use postgres
-- [ ] Rebuild example n8n templates to use LiteLLM, use env.LITELLM_API_KEY
-
-- [ ] Publish llemonstack as a npm module to install globally
-
-  - [ ] Create .llemonstack dir in user home and store registry of projects
-    - [ ] Check registry on init to make sure there aren't conflicts with the volumes
-    - [ ] OR move all non bind-mount volumes to bind mount
-  - [ ] Refactor to use .llemonstack dir for all config, repos, etc.
-  - [x] Register llmn as bin alias for cli.ts
-  - [x] Create an install script that installs deno and git and checks for docker
-  - [ ] Update README.md with instructions on installing through npm
-  - [x] Update README.md with `llmn` commands instead of `deno run`
-
+- [x] Register llmn as bin alias for cli.ts
+- [x] Create an install script that installs deno and git and checks for docker
+- [x] Update README.md with `llmn` commands instead of `deno run`
 - [x] Disable supabase-analytics, it eats memory and CPU & is not needed
 - [x] Move supabase volumes to ./volumes to make backup easier and protect against .repos deletion
 - [x] Add dozzle labels to services to group logging See https://dozzle.dev/guide/container-groups
@@ -120,48 +86,34 @@ container logs in Docker Desktop.
 - [x] Create a setup script to generate random passwords and JWT secrets
 - [x] Update install instructions for deno
 
-- [ ] Create cli.ts script to handle the CLI args and help text
-
 **Someday / low priority:**
 
+- [ ] Create Flowise example templates of Web Scrape QnA configured with pgvector and LiteLLM See
+      https://docs.flowiseai.com/use-cases/web-scrape-qna
+- [ ] Configure OpenWeb UI to use postgres
+- [ ] Rebuild example n8n templates to use LiteLLM, use env.LITELLM_API_KEY
+- [ ] Publish llemonstack as a npm module to install globally
+- [ ] Replace fs.existsSync with Deno.stat
+- [ ] Rework Relayer to not instantiate InterfaceRelay, provide it during init
+- [ ] Add verbose logging to each log level? or just to debug
+- [ ] Replace silent option in scripts with relayer logging
 - [ ] Add llemonstack labels to containers when started to make it easier to `docker ps` to inspect
-
   - Especiallly important when multiple services use the same service name in the future.
-
 - [ ] Create preconfigured styles for showTable
-
 - [ ] Add browser-use-bridge to broswer-use container to use in n8n
       https://github.com/draphonix/browser-n8n-local
       https://www.npmjs.com/package/n8n-nodes-browser-use
       Provides an API for n8n to connect to control browser-use
-
 - [ ] Remove all container_name from docker-compose.yml to allow for multiple stacks to run at the
       same time
 - [ ] During init, set a unique base port and then set all exposed (host) ports to an offset. This
       allows for multiple stacks to run simultaneously
-
 - [ ] Use a global .llemonstack directory to manage all projects
-
   - [ ] Check for project name collisions since the docker volumes will collide if the project name
         is the same
-
-- [ ] Configure zep to use LiteLLM proxy
-
-- [ ] Refactor scripts with [Repo Prompt](https://repoprompt.com/)?
-
-  - [ ] Implement config files for each service, make it easier to add services without modifying
-        code
-  - [ ] Split functions into libs
-  - [ ] Create standalone exec to run all script commands
-
+- [ ] Refactor with [Repo Prompt](https://repoprompt.com/)?
 - [ ] Patch n8n LangChain to auto config Langfuse for LangChain code nodes
-
-  See [OTEL](OTEL.md)
-
 - [ ] Ceate custom n8n node to use Langfuse to get prompts
-
-- [ ] Setup [OTEL observability](OTEL.md)
-
 - [ ] Create an install script that installs deno, docker, etc. See
       https://github.com/SigNoz/signoz/blob/main/deploy/install.sh as good example
 - [ ] Configure LiteLLM to cache qdrant embeddings
@@ -169,13 +121,7 @@ container logs in Docker Desktop.
 - [ ] Configure LiteLLM to use supabase for request logs:
       https://docs.litellm.ai/docs/observability/supabase_integration
 - [ ] Switch to Open Router for LLM calls
-- [ ] Add skyvern to automate browsers
-- [ ] Update README with instructions on using the n8n-custom-ffmpeg image
-- [ ] Switch to [execa](https://github.com/sindresorhus/execa) for running shell commands if needed
-      on Windows
-- [ ] Add log streaming
-- [ ] Create script to populate the supabase and random key.env vars on first install
-  - [ ] Use `openssl rand -base64 64` to generate a random key?
+- [ ] Switch to [execa](https://github.com/sindresorhus/execa) for running shell commands if needed on Windows
 - [ ] Document how to use podman on mac to enable ollama GPU support
 
 **Where to Promote:**
@@ -257,14 +203,13 @@ docker exec -it --user root n8n sh
 
 **Additional Services:**
 
-- https://github.com/unclecode/crawl4ai
+- https://github.com/getzep/graphiti
 - https://github.com/khoj-ai/khoj
 - https://github.com/trycua/cua
 - https://github.com/rowboatlabs/rowboat - tool for building AI agents
 - https://github.com/supercorp-ai/supergateway
 - https://github.com/morphik-org/morphik-core - RAG for visual documents
 - https://github.com/chroma-core/chroma
-- https://github.com/HKUDS/LightRAG
 - https://github.com/Darwin-lfl/langmanus
 - https://github.com/danielmiessler/fabric
 - [MLFlow](https://github.com/mlflow/mlflow)
@@ -273,7 +218,6 @@ docker exec -it --user root n8n sh
 - https://github.com/langflow-ai/langflow
   - visual agent builder generates LangChain code to run in production
 - https://github.com/infiniflow/ragflow
-  - requires mysql & elasticsearch (not yet in the stack)
 - https://github.com/arc53/DocsGPT
 - https://github.com/Mintplex-Labs/anything-llm
 - https://github.com/langgenius/dify
@@ -357,6 +301,10 @@ Not AI, but potentially useful:
 
 **MCP & Code Tools:**
 
+- https://mcp.so/
+- https://glama.ai/
+- https://smithery.ai/
+
 - https://github.com/mendableai/firecrawl-mcp-server
 - https://browsermcp.io/ - automate the browser
 - https://github.com/OpenAdaptAI/OmniMCP
@@ -433,46 +381,3 @@ docker logs?
 
 - [NVidia Container Toolkit](https://github.com/NVIDIA/nvidia-container-toolkit) for running docker
   containers with gpu access
-
-<br />
-
-## Zep Notes
-
-n8n uses LangChain under the hood. There's also two variations of the zep SDK, one for the OSS CE
-version and one for Cloud. LangChain has an older version of the OSS zep version that uses `api/v1`
-endpoing instead of `api/v2`. This means when the "cloud" toggle is off in the zep n8n node, n8n's
-zep SDK will be trying to connect to zep via the v1 api.
-
-The latest version of the zep Docker image only provides the api/v2 endpoint.
-
-There are a few possibilities to solve this:
-
-1. Rolled back the zep docker image version to <=0.27.2
-
-- See
-  https://github.com/n8n-io/n8n/blob/master/packages/%40n8n/nodes-langchain/nodes/memory/MemoryZep/MemoryZep.node.ts
-
-2. Wait for LangChain and n8n to update to the latest zep-js SDK
-
-3. [DOES NOT WORK] Toggle on the "cloud" option in n8n zep node and use a reverse proxy
-
-See https://community.n8n.io/t/new-zep-ce-support-in-n8n/61542/2
-
-For the reverse proxy, `api.getzep.com` needs to be mapped to the `zep` docker container. Also, the
-ports need to be mapped 443 -> 8010.
-
-Traefik is a possible solution for the reverse proxy.
-
-Reverse proxy was successfully configured using nginx to forward traffic to zep:8000. Authentication
-worked but the zep server returned a 404 for `/api/v2/collections` endpoint. It appears the CE
-version has a different API schema.
-
-```
-# Zep server log
-2025-03-08T08:21:07.426Z INFO HTTP Request Served {"proto": "HTTP/1.0", "method": "GET", "path": "/api/v2/collections", "request_id": "", "duration": "122.166µs", "status": 404, "response_size": 19}
-```
-
-The ONLY solution at this time is to roll back the zep container image to 0.27 until langchain and
-n8n update their zep-js package version.
-
-<br />
