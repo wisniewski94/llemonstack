@@ -1,6 +1,6 @@
 import { Config } from '@/core/config/config.ts'
 import { Service } from '@/core/services/service.ts'
-import { path } from '@/lib/fs.ts'
+import { ensureDir, isDirEmpty, path } from '@/lib/fs.ts'
 import { failure, success } from '@/lib/try-catch.ts'
 import { TryCatchResult } from '@/types'
 
@@ -25,6 +25,26 @@ export class FlowiseService extends Service {
     envVars.FLOWISE_API_KEY_NAME = keyName
 
     return envVars
+  }
+
+  /**
+   * Add the Flowise import subfolders
+   */
+  override async prepareVolumes(
+    { silent = true }: { silent?: boolean } = {},
+  ): Promise<TryCatchResult<boolean>> {
+    const results = await super.prepareVolumes({ silent })
+    const importDir = path.join(this._configInstance.importDir, 'flowise')
+    await ensureDir(importDir)
+    const importDirEmpty = await isDirEmpty(importDir)
+    if (!importDirEmpty.success) {
+      return results.collect([importDirEmpty])
+    }
+    if (importDirEmpty.data) {
+      await ensureDir(path.join(importDir, 'agentflows'))
+      await ensureDir(path.join(importDir, 'chatflows'))
+    }
+    return results
   }
 
   /**

@@ -15,7 +15,7 @@ import {
   ServiceYaml,
 } from '@/types'
 import { Config } from '../config/config.ts'
-import { getEndpoints, prepareVolumes, setupServiceRepo } from './utils/mod.ts'
+import { getEndpoints, prepareServiceVolumes, setupServiceRepo } from './utils/mod.ts'
 
 /**
  * Service
@@ -380,7 +380,7 @@ export class Service {
   protected async prepareVolumes(
     { silent: _ = true }: { silent?: boolean } = {},
   ): Promise<TryCatchResult<boolean>> {
-    return await prepareVolumes(this, this._configInstance.volumesDir)
+    return await prepareServiceVolumes(this, this._configInstance.volumesDir)
   }
 
   //

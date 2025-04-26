@@ -1,9 +1,30 @@
 import { Service } from '@/core/services/mod.ts'
+import { ensureDir, isDirEmpty, path } from '@/lib/fs.ts'
 import { TryCatchResult } from '@/lib/try-catch.ts'
 import { IServiceActionOptions } from '@/types'
 import { Select } from '@cliffy/prompt'
 
 export class N8nService extends Service {
+  /**
+   * Add the n8n import subfolders
+   */
+  override async prepareVolumes(
+    { silent = true }: { silent?: boolean } = {},
+  ): Promise<TryCatchResult<boolean>> {
+    const results = await super.prepareVolumes({ silent })
+    const importDir = path.join(this._configInstance.importDir, 'n8n')
+    await ensureDir(importDir)
+    const importDirEmpty = await isDirEmpty(importDir)
+    if (!importDirEmpty.success) {
+      return results.collect([importDirEmpty])
+    }
+    if (importDirEmpty.data) {
+      await ensureDir(path.join(importDir, 'credentials'))
+      await ensureDir(path.join(importDir, 'workflows'))
+    }
+    return results
+  }
+
   /**
    * Configure the service
    * @param {boolean} [silent] - Whether to run the configuration in silent or interactive mode

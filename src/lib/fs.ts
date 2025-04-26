@@ -99,6 +99,19 @@ export async function ensureDir(
   return results
 }
 
+export async function isDirEmpty(dirPath: string): Promise<TryCatchResult<boolean>> {
+  const results = await readDir(dirPath)
+  if (!results.success || !results.data) {
+    return failure<boolean>(`Error reading directory: ${dirPath}`, results, false)
+  }
+  for await (const _ of results.data) {
+    // Return false if the directory is not empty
+    return success<boolean>(false)
+  }
+  // Return true if the directory is empty
+  return success<boolean>(true)
+}
+
 export async function readDir(
   dirPath: string,
 ): Promise<TryCatchResult<AsyncIterable<Deno.DirEntry>>> {

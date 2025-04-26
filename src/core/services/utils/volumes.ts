@@ -19,7 +19,7 @@ function getRelativePath(pathStr: string): string {
  * @param volumesDir - The base volumes where the service volumes will be created
  * @returns A TryCatchResult<boolean> indicating success or failure
  */
-export async function prepareVolumes(
+export async function prepareServiceVolumes(
   service: ServiceType,
   volumesDir: string,
 ): Promise<TryCatchResult<boolean>> {
