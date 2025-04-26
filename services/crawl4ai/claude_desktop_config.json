@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "crawl4ai": {
+      "command": "npx",
+      "args": ["mcp-remote", "http://localhost:11235/mcp/sse"]
+    }
+  }
+}
