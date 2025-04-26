@@ -15,4 +15,3 @@ dist/
 
 # Ignore all files in import folder except .keep and README.md
 import/*
-!import/README.md
