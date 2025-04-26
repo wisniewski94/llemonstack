@@ -17,6 +17,7 @@ x-base-config: &base-config
     - GEMINI_API_TOKEN=${CRAWL4AI_GEMINI_API_TOKEN:-${GEMINI_API_TOKEN:-}}
   volumes:
     - /dev/shm:/dev/shm # Chromium performance
+    - ./config.yml:/app/config.yml
   deploy:
     resources:
       limits:

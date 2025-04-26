@@ -26,7 +26,7 @@ exposes:
   host:
     dashboard:
       name: Crawl4AI
-      url: http://localhost:11235
+      url: http://localhost:11235/playground/
   internal:
     crawl4ai:
       name: Crawl4AI
