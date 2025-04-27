@@ -143,10 +143,11 @@ main
 main
   .command('info')
   .description('Show project info')
+  .option('-H, --hide', 'Hide credentials', { default: false })
   .action(async (options) => {
     const config = await initConfig('info', options)
     const { info } = await import('./scripts/info.ts')
-    await info(config)
+    await info({ config, hideCredentials: options.hide })
   })
 
 // Import data into services that support it

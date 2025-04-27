@@ -78,6 +78,15 @@ export class ServicesMap extends Map<string, Service> {
   }
 
   /**
+   * Get services in this map that are not enabled
+   *
+   * @returns {ServicesMap} - A new ServicesMap instance with only disabled services
+   */
+  public getDisabled(): ServicesMap {
+    return this.filter((service) => !service.isEnabled())
+  }
+
+  /**
    * Filter and map services by a function
    *
    * If function returns false, the service is not included in the results.
@@ -127,6 +136,21 @@ export class ServicesMap extends Map<string, Service> {
    */
   public filter(filter: (service: Service) => boolean): ServicesMap {
     return new ServicesMap([...this.entries()].filter(([_, service]) => filter(service)))
+  }
+
+  /**
+   * Filter services by an async function
+   *
+   * @param filter - The function to filter by
+   * @returns A new Services instance with only the services that match the function
+   */
+  public async filterAsync(filter: (service: Service) => Promise<boolean>): Promise<ServicesMap> {
+    const services = this.toArray()
+    const results = await Promise.all(services.map(filter))
+
+    return new ServicesMap(
+      [...this.entries()].filter((_, index) => results[index]),
+    )
   }
 
   /**
