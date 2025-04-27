@@ -13,6 +13,7 @@ export interface TableOptions {
   color?: (str: string) => string
   indent?: number
   padding?: number
+  sort?: boolean
 }
 
 /**
@@ -43,8 +44,15 @@ export function showTable(
     color: tableColor,
     indent = 2,
     padding = 2,
+    sort = false,
   }: TableOptions = {},
 ): Table {
+  if (sort) {
+    rows = rows.sort((a, b) => {
+      return String(a[0] || '').localeCompare(String(b[0] || ''))
+    })
+  }
+
   if (!border && header) {
     // Push header onto rows to preserve column alignment for headers
     rows.unshift(header.map((h) => colors.underline(h as string)))

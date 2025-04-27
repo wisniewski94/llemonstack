@@ -67,15 +67,20 @@ async function startServices(
   }))
 }
 
-function showServicesInfo(
+export function showServicesInfo(
   services: ServicesMapType,
   hostContext: string,
-  { hideCredentials = false }: { hideCredentials?: boolean } = {},
+  { hideCredentials = false, showAll = false, showInfo = true }: {
+    hideCredentials?: boolean
+    showAll?: boolean // When true, shows all services even if they have no host info
+    showInfo?: boolean // When true, shows info about the service
+  } = {},
 ) {
   // Sort services by name
-  services.toArray().sort((a, b) => a.name.localeCompare(b.name))
+  const sortedServices = services.toArray().sort((a, b) => a.name.localeCompare(b.name))
+
   const rows: RowType[] = []
-  services.forEach((service) => {
+  sortedServices.forEach((service) => {
     const hosts = service.getEndpoints(hostContext)
     hosts?.forEach((host: ExposeHost) => {
       const name = ['api', 'dashboard'].includes((host.name || '').trim().toLowerCase())
@@ -98,13 +103,23 @@ function showServicesInfo(
           new Cell(credentials),
         ]),
       )
-      if (host.info) {
+      if (showInfo && host.info) {
         rows.push([
           undefined,
           new Cell(colors.gray(host.info || '')).colSpan(3).align('left'),
         ])
       }
     })
+    if (showAll && (!hosts || hosts.length === 0)) {
+      rows.push(
+        Row.from([
+          colors.green(service.name),
+          undefined,
+          undefined,
+          undefined,
+        ]),
+      )
+    }
   })
   const table = showTable(['Service', 'URL', '', 'Credentials'], rows, {
     maxColumnWidth: 0,
