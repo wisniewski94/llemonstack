@@ -44,6 +44,10 @@ export async function loadServices(
       if (!serviceDir.isDirectory) {
         continue
       }
+      // Skip directories that start with an underscore
+      if (serviceDir.name.startsWith('_')) {
+        continue
+      }
       const yamlFilePath = path.join(servicesDir, serviceDir.name, SERVICE_CONFIG_FILE_NAME)
       if (!(await fileExists(yamlFilePath)).data) {
         result.addMessage('debug', `Service config file not found: ${serviceDir.name}`)
