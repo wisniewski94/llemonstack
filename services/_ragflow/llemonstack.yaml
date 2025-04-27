@@ -1,0 +1,51 @@
+version: 0.2.0 # Config file version
+
+service: ragflow
+name: RAGFlow
+description: RAGFlow is a tool for creating and managing RAG pipelines.
+
+compose_file: docker-compose.yaml
+service_group: apps
+
+provides:
+  ragflow: ragflow # Name of the container
+
+depends_on:
+  postgres:
+    condition: service_healthy
+  elasticsearch:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+  minio:
+    condition: service_healthy
+
+repo:
+  url: https://github.com/infiniflow/ragflow
+  dir: ragflow
+  sparse: false
+  checkFile: Dockerfile # Make sure Dockerfile is present in the repo
+
+# volumes:
+#   - ragflow/data
+
+# exposes:
+#   host:
+#     dashboard:
+#       name: LightRAG
+#       url: http://localhost:9621
+#   internal:
+#     lightrag:
+#       name: LightRAG
+#       url: http://lightrag:9621
+#       credentials:
+#         API Key: ${LIGHTRAG_API_KEY}
+
+init:
+  postgres_schema: # Generate postgres schema and populate env vars
+    user: RAGFLOW_POSTGRES_USER
+    pass: RAGFLOW_POSTGRES_PASSWORD
+  # generate:
+  #   RAGFLOW_API_KEY:
+  #     method: generateSecretKey
+  #     length: 20
