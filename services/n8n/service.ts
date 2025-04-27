@@ -5,6 +5,10 @@ import { IServiceActionOptions } from '@/types'
 import { Select } from '@cliffy/prompt'
 
 export class N8nService extends Service {
+  override get containerNames(): string[] {
+    return this.getProfiles()
+  }
+
   /**
    * Add the n8n import subfolders
    */

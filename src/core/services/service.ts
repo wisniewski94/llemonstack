@@ -157,6 +157,15 @@ export class Service {
     return Object.entries(this._config.provides || {}) ?? []
   }
 
+  /**
+   * Get the names for the docker containers provided by the service
+   *
+   * @returns {string[]} The container names
+   */
+  public get containerNames(): string[] {
+    return Object.values(this._config.provides || {}) ?? []
+  }
+
   //
   // Public Methods
   //
@@ -230,9 +239,8 @@ export class Service {
   protected async checkState(): Promise<TryCatchResult<IServiceState>> {
     const results = success<IServiceState>(this._state as unknown as IServiceState)
 
-    const serviceNames = this._config.provides
-      ? Object.values(this._config.provides)
-      : [this.service]
+    const serviceNames = this.containerNames
+
     const psResults = await tryDockerComposePs(
       this._configInstance.projectName,
       { services: serviceNames },

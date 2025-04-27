@@ -5,6 +5,13 @@ import { colors } from '@cliffy/ansi/colors'
 import { Select } from '@cliffy/prompt'
 
 export class OllamaService extends Service {
+  override get containerNames(): string[] {
+    if (this.getProfiles().includes('ollama-host')) {
+      return []
+    }
+    return this.getProfiles()
+  }
+
   /**
    * Get the Ollama host based on the current profile
    * @returns The Ollama host URL
@@ -98,7 +105,10 @@ export class OllamaService extends Service {
             value: 'ollama-host',
           },
           Select.separator('----- Run in Docker Container 🐳 -----'),
-          { name: '[CPU] Run on CPU, slow but compatible', value: 'cpu' },
+          {
+            name: '[CPU] Run on CPU, slow but compatible',
+            value: 'ollama-cpu',
+          },
           {
             name: `[AMD] Run on AMD GPU ${gpuMessage} `,
             value: 'ollama-gpu-amd',
