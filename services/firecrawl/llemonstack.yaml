@@ -8,7 +8,8 @@ compose_file: docker-compose.yaml
 service_group: middleware
 
 provides:
-  firecrawl: firecrawl # Name of the container
+  firecrawl: firecrawl-api # Name of the container
+  firecrawl-playwright: firecrawl-playwright-service # Name of the container
 
 depends_on:
   redis:

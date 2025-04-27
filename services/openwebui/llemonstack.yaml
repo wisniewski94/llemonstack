@@ -8,7 +8,7 @@ compose_file: docker-compose.yaml
 service_group: apps
 
 provides:
-  openwebui: openwebui # Name of the container
+  openwebui: open-webui # Name of the container
 
 exposes:
   host:
