@@ -4,7 +4,7 @@
 
 import { tryRunCommand } from '@/lib/command.ts'
 import { getImageFromCompose, getImagesFromComposeYaml } from '@/lib/compose.ts'
-import { dockerRun } from '@/lib/docker.ts'
+import { dockerComposeRun } from '@/lib/docker.ts'
 import { InterfaceRelayer } from '@/relayer/ui/interface.ts'
 import {
   IServiceImage,
@@ -62,17 +62,18 @@ async function getAppVersion(
       show.error(`Error getting image for ${service.name}`, { error })
     }
     serviceImage = {
-      service: service.name,
+      service: service.containerNames[0],
       containerName: '',
       image: '',
     }
   }
   try {
-    const version = (await dockerRun(
+    const version = (await dockerComposeRun(
       config.projectName,
-      service.service,
+      service.composeFile,
+      service.containerNames[0],
       entrypoint,
-      { args: cmdArgs },
+      { args: cmdArgs, profiles: service.getProfiles() },
     )).toString().trim()
     // Get the last line of the output in case the version output multiple lines
     serviceImage.version = version.split('\n').pop() || ''

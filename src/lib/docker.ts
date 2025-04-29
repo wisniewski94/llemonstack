@@ -377,24 +377,20 @@ export async function dockerExec(
  * @param {string} cmd - The command to run
  * @param {Object} options - The options for the Command
  */
-export async function dockerRun(
+export async function dockerComposeRun(
   projectName: string,
-  service: string,
+  composeFile: string,
+  containerName: string,
   cmd: string,
-  { composeFile, args, silent = true, captureOutput = false }: {
-    composeFile?: string
+  { args, silent = true, captureOutput = false, profiles }: {
     args?: Array<string | false>
     silent?: boolean
     captureOutput?: boolean
+    profiles?: string[]
   } = {},
 ): Promise<RunCommandOutput> {
   if (!composeFile) {
-    const config = Config.getInstance()
-    await config.initialize()
-    composeFile = config.getServiceByName(service)?.composeFile || undefined
-  }
-  if (!composeFile) {
-    throw new Error(`Compose file not found for ${service}`)
+    throw new Error(`Compose file not found for ${containerName}`)
   }
 
   return await runDockerComposeCommand('run', {
@@ -404,11 +400,12 @@ export async function dockerRun(
       '--rm',
       '--entrypoint',
       cmd,
-      service,
+      containerName,
       ...(args || []),
     ],
     captureOutput,
     silent,
+    profiles,
   })
 }
 
