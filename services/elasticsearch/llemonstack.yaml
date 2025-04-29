@@ -1,0 +1,44 @@
+version: 0.2.0 # Config file version
+
+service: elasticsearch
+name: Elasticsearch
+description: RESTful Search Engine
+
+compose_file: docker-compose.yaml
+service_group: databases
+
+provides:
+  elasticsearch: elasticsearch # Name of the container
+  kibana: kibana
+
+volumes:
+  - elasticsearch/elasticsearch
+  - elasticsearch/kibana
+
+exposes:
+  host:
+    dashbaord:
+      name: Elasticsearch Kibana
+      url: http://localhost:${KIBANA_PORT:-5601}
+      credentials:
+        Username: elastic
+        Password: ${ELASTICSEARCH_PASSWORD}
+  internal:
+    elasticsearch:
+      name: Elasticsearch
+      url: http://elasticsearch:9200
+      credentials:
+        Username: elastic
+        Password: ${ELASTICSEARCH_PASSWORD}
+
+init:
+  generate:
+    ELASTICSEARCH_PASSWORD:
+      method: generateSecretKey
+      length: 20
+    KIBANA_PASSWORD:
+      method: generateSecretKey
+      length: 20
+    KIBANA_ENCRYPTION_KEY:
+      method: generateSecretKey
+      length: 32

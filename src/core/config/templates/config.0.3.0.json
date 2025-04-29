@@ -30,6 +30,7 @@
     "zep": { "enabled": false },
     "prometheus": { "enabled": "auto" },
     "firecrawl": { "enabled": false },
-    "crawl4ai": { "enabled": false }
+    "crawl4ai": { "enabled": false },
+    "elasticsearch": { "enabled": "auto" }
   }
 }
