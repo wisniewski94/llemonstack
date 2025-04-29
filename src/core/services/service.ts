@@ -601,7 +601,7 @@ export class Service {
         profiles: this.getProfiles(),
         silent: options.silent,
         ansi: 'never',
-        args: ['--no-cache'],
+        args: ['--pull', '--no-cache'],
       }),
     ])
     return result
