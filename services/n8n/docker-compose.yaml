@@ -52,7 +52,7 @@ x-environment: &common-env
   # See https://docs.n8n.io/hosting/configuration/environment-variables/logs/#n8n-logs
   N8N_LOG_LEVEL: ${N8N_LOG_LEVEL:-info}
   DB_LOGGING_ENABLED: false
-  DB_LOGGING_OPTIONS: query,warn # Set to `all` to see all TypeORM logs messages, DB_LOGGING_ENABLED must be true
+  DB_LOGGING_OPTIONS: query # Set to `all` to see all TypeORM logs messages, DB_LOGGING_ENABLED must be true
   CODE_ENABLE_STDOUT: true # Show code nodes logging in stdout
 
   # Fix config file permissions warnings
