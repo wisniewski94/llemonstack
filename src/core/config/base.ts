@@ -8,7 +8,6 @@ import { LogLevel } from '@/relayer/logger.ts'
 import { LLemonStackConfig } from '@/types'
 import packageJson from '@packageJson' with { type: 'json' }
 import configTemplate from '@templateConfig' with { type: 'json' }
-import { deepMerge } from 'jsr:@std/collections/deep-merge'
 import Host from './lib/host.ts'
 import { isValidConfig } from './lib/valid.ts'
 
@@ -231,15 +230,16 @@ export class ConfigBase {
     }
 
     // Check if project config is valid
-    result.collect([await this.isValidConfig()])
-    if (!result.success) {
-      // Return error if not initializing from template
-      if (!init) {
-        return failure(`Project config file is invalid: ${this.configFile}`, result, false)
+    const isValidResult = this.isValidConfig()
+    if (!isValidResult.success) {
+      // Attempt to update config.json from template
+      result.collect([await this.updateConfig()])
+
+      if (!result.success) {
+        return failure(`Error updating project config file: ${this.configFile}`, result, false)
       }
-      this.updateConfig(this._configTemplate)
-      result.addMessage('info', 'Project config file is invalid, updating from template')
-      updated = true
+
+      result.addMessage('info', 'Successfully updated config.json')
     }
 
     // Load .env file
@@ -532,66 +532,89 @@ export class ConfigBase {
    * Check if the project config is valid, auto patch missing service keys
    * @returns {TryCatchResult<boolean>}
    */
-  protected async isValidConfig(
+  protected isValidConfig(
     config: LLemonStackConfig = this._config,
-  ): Promise<TryCatchResult<boolean>> {
-    const result = isValidConfig(config, this._configTemplate)
-    if (
-      !result.success && result.error instanceof Error &&
-      result.error.message.includes('missing required key: services.')
-    ) {
-      const originalServices = Object.keys(this._config?.services || {})
-
-      this.updateConfig(this._configTemplate)
-
-      // Get the list of services that were added by updateConfig
-      const updatedServices = Object.keys(this._config.services)
-      const newServices = updatedServices.filter((service) => !originalServices.includes(service))
-
-      const patchedResult = isValidConfig(this._config, this._configTemplate)
-      if (patchedResult.success) {
-        const saveResult = await this.save()
-        if (saveResult.success) {
-          if (newServices.length > 0) {
-            patchedResult.addMessage(
-              'info',
-              `Adding missing services to config.json: ${newServices.join(', ')}`,
-            )
-          }
-        } else {
-          patchedResult.addMessage('error', 'Failed to save config.json')
-        }
-        return patchedResult
-      } else {
-        result.addMessage('error', 'Failed to patch missing service keys')
-      }
-    }
-    return result
+    template: LLemonStackConfig = this._configTemplate,
+  ): TryCatchResult<boolean> {
+    return isValidConfig(config, template)
   }
 
   /**
-   * Merge the template with the current project config to ensure all keys are present
+   * Attempt to update the current project config.json with the template
    * @param template - The template to merge with the current project config
    */
-  protected updateConfig(template: LLemonStackConfig = this._configTemplate): LLemonStackConfig {
+  protected async updateConfig(
+    template: LLemonStackConfig = this._configTemplate,
+  ): Promise<TryCatchResult<boolean>> {
+    const result = success<boolean>(true)
+
     if (!this._config) {
       this._config = { ...template }
-      return this._config
+      result.addMessage('info', 'No config.json found, creating from template')
+      return result
     }
 
-    const merged = deepMerge(
-      template as unknown as Record<string, unknown>,
-      { ...this._config } as unknown as Record<string, unknown>,
-    ) as unknown as LLemonStackConfig
+    const addMissingKeys = (
+      obj1: LLemonStackConfig | Record<string, unknown>,
+      obj2: LLemonStackConfig | Record<string, unknown>,
+      ref: string = '',
+    ) => {
+      const originalKeys = Object.keys(obj2 || {})
+      const newKeys = Object.keys(obj1 || {}).filter((key) => !originalKeys.includes(key))
+      if (newKeys.length > 0) {
+        result.addMessage(
+          'info',
+          `Adding missing keys to config.json${ref ? ` [${ref}]` : ''}: ${newKeys.join(', ')}`,
+        )
+      }
+      return {
+        ...obj1,
+        ...obj2,
+      }
+    }
 
-    // Set version to template version
-    merged.version = template.version
+    // Manually merge to avoid duplicating services profiles with a deep merge
 
+    const merged = addMissingKeys(template, this._config) as LLemonStackConfig
+
+    merged.dirs = addMissingKeys(
+      template.dirs,
+      this._config.dirs,
+      'dirs',
+    ) as LLemonStackConfig['dirs']
+
+    // Update version to template version
+    if (merged.version !== template.version) {
+      merged.version = template.version
+      result.addMessage('info', 'Updated config.json version')
+    }
+
+    // Update initialized date if needed
     if (!merged.initialized) {
       merged.initialized = new Date().toISOString()
+      result.addMessage('info', 'Initialized config.json')
     }
 
+    // Update services to include new services from template
+    merged.services = addMissingKeys(
+      template.services,
+      this._config.services,
+      'services',
+    ) as LLemonStackConfig['services']
+
+    // Make sure new config is valid before saving
+    result.collect([this.isValidConfig(merged, template)])
+    if (!result.success) {
+      result.addMessage('error', 'Failed to auto update config.json, please manually update it')
+      return result
+    }
+
+    // Update the config
     this._config = merged
-    return this._config
+
+    // Save the config
+    result.collect([await this.save()])
+
+    return result
   }
 }

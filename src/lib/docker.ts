@@ -11,7 +11,7 @@ import Host from '@/core/config/lib/host.ts'
 import { success, tryCatch, TryCatchResult } from '@/lib/try-catch.ts'
 import { Relayer } from '@/relayer/relayer.ts'
 import type { EnvVars, RunCommandOutput } from '@/types'
-import { runCommand, tryRunCommand } from './command.ts'
+import { CommandError, runCommand, tryRunCommand } from './command.ts'
 
 export type DockerCommandOptions = {
   args?: Array<string | false>
@@ -125,7 +125,7 @@ export async function removeDockerNetwork(
 export async function tryDockerCompose(
   cmd: string, // Docker compose command: up, down, etc.
   options: DockerComposeOptions = {},
-): Promise<TryCatchResult<RunCommandOutput>> {
+): Promise<TryCatchResult<RunCommandOutput, CommandError>> {
   return await tryCatch(runDockerComposeCommand(cmd, options))
 }
 
@@ -141,7 +141,7 @@ export async function tryDockerCompose(
 export async function tryDocker(
   cmd: string,
   options: DockerCommandOptions = {},
-): Promise<TryCatchResult<RunCommandOutput>> {
+): Promise<TryCatchResult<RunCommandOutput, CommandError>> {
   return await tryCatch(runDockerCommand(cmd, options))
 }
 

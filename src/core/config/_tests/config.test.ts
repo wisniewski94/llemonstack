@@ -164,7 +164,7 @@ Deno.test('Config initialization - templates', async (t) => {
     assertEquals(result.error, null)
   })
 
-  await t.step('isValidConfig validates project config correctly', async () => {
+  await t.step('isValidConfig validates project config correctly', () => {
     // @ts-ignore - temporarily override for testing
     delete Config.instance
     const configInstance = Config.getInstance()
@@ -203,7 +203,7 @@ Deno.test('Config initialization - templates', async (t) => {
     }
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      (await configInstance.isValidConfig(validConfig)).success,
+      configInstance.isValidConfig(validConfig).success,
       true,
       'Valid config should pass validation',
     )
@@ -214,7 +214,7 @@ Deno.test('Config initialization - templates', async (t) => {
     delete missingKeyConfig.initialized
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      (await configInstance.isValidConfig(missingKeyConfig)).success,
+      configInstance.isValidConfig(missingKeyConfig).success,
       false,
       'Config missing required key should fail validation',
     )
@@ -226,7 +226,7 @@ Deno.test('Config initialization - templates', async (t) => {
     }
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      (await configInstance.isValidConfig(missingNestedKeyConfig)).success,
+      configInstance.isValidConfig(missingNestedKeyConfig).success,
       false,
       'Config missing nested key should fail validation',
     )
@@ -234,7 +234,7 @@ Deno.test('Config initialization - templates', async (t) => {
     // Null config
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      (await configInstance.isValidConfig(null)).success,
+      configInstance.isValidConfig(null).success,
       false,
       'Null config should fail validation',
     )
@@ -246,13 +246,13 @@ Deno.test('Config initialization - templates', async (t) => {
     }
     assertEquals(
       // @ts-ignore - accessing private method for testing
-      (await configInstance.isValidConfig(invalidDirsConfig)).success,
+      configInstance.isValidConfig(invalidDirsConfig).success,
       false,
       'Config with non-object dirs should fail validation',
     )
   })
 
-  await t.step('updateConfig merges template with current config', () => {
+  await t.step('updateConfig merges template with current config', async () => {
     // @ts-ignore - temporarily override for testing
     delete Config.instance
     const configInstance = Config.getInstance()
@@ -286,7 +286,9 @@ Deno.test('Config initialization - templates', async (t) => {
     }
 
     // @ts-ignore - accessing private method for testing
-    configInstance.updateConfig(template)
+    const result = await configInstance.updateConfig(template)
+
+    assertEquals(result.success, true)
 
     // @ts-ignore - accessing private property for testing
     const updatedConfig = configInstance._config
