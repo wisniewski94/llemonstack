@@ -54,5 +54,8 @@
       "*.yaml",
       "*.yml"
     ]
+  },
+  "test": {
+    "exclude": [".llemonstack/", "shared/", "volumes/", "import/", "tmp/"]
   }
 }
