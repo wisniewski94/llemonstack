@@ -575,6 +575,15 @@ export class Service {
     if (results.success) {
       return success<boolean>(true, `${this.name} successfully stopped!`)
     }
+
+    // If the service is disabled and the error is about a missing file, return success
+    if (
+      !this.isEnabled() &&
+      results.error?.stderr?.toString().toLowerCase().includes('no such file')
+    ) {
+      return success<boolean>(true, `${this.name} already stopped`)
+    }
+
     return failure<boolean>(`Failed to stop service: ${this.name}`, results, false)
   }
 

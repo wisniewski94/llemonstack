@@ -280,7 +280,9 @@ export async function runCommand(
       _meta: { error },
     }
 
-    relayer.error(`[${cmdCmd}] Command failed: ${error.stderr?.replace('\n', '')}`, context)
+    if (!silent || debug) {
+      relayer.error(`[${cmdCmd}] Command failed: ${error.stderr?.replace('\n', '')}`, context)
+    }
 
     throw error
   }
