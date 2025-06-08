@@ -6,9 +6,22 @@ USER root
 # Install required packages
 RUN echo "Installing required packages..." && \
     apk add --no-cache \
-    ffmpeg && \
+    ffmpeg \
+    # Added for Puppeteer
+    chromium \
+    nss \
+    glib \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    udev \
+    ttf-liberation \
+    font-noto-emoji && \
     rm -rf /var/cache/apk/* && \
-    echo "FFmpeg installed: $(ffmpeg -version | head -n 1)"
+    echo "FFmpeg installed: $(ffmpeg -version | head -n 1)" && \
+    echo "Chromium installed: $(chromium-browser --version)"
 
 # Create machine-id
 # This fixes OTEL log error messages
@@ -30,6 +43,16 @@ RUN npm install
 # tracing.js patches n8n-core to trace workflow executions
 RUN mkdir -p /opt/opentelemetry/node_modules/n8n-core
 RUN ln -sf /usr/local/lib/node_modules/n8n/node_modules/n8n-core/* /opt/opentelemetry/node_modules/n8n-core/
+
+# Tell Puppeteer to use installed Chrome instead of downloading it
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Install n8n-nodes-puppeteer in a permanent location
+RUN mkdir -p /opt/n8n-custom-nodes && \
+    cd /opt/n8n-custom-nodes && \
+    npm install n8n-nodes-puppeteer && \
+    chown -R node:node /opt/n8n-custom-nodes
 
 # Switch to n8n's installation directory
 WORKDIR /usr/local/lib/node_modules/n8n
